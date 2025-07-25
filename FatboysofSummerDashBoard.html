@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Score / Minute Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body, html {
             margin: 0;
@@ -21,6 +22,15 @@
     </style>
 </head>
 <body>
+    <nav class="bg-gray-800 text-white p-4">
+        <ul class="flex flex-wrap gap-4 justify-center">
+            <li><a href="TribesRivalsTeamsDashboard.html" class="hover:underline">Teams</a></li>
+            <li><a href="TribesScrimWatcher.html" class="hover:underline">Scrim Watcher</a></li>
+            <li><a href="TournamentManager.html" class="hover:underline">Tournament Manager</a></li>
+            <li><a href="TwitchFeedDisplays.html" class="hover:underline">Twitch Feeds</a></li>
+            <li><a href="FatboysofSummerDashBoard.html" class="hover:underline">Fatboys Dashboard</a></li>
+        </ul>
+    </nav>
     <canvas id="scoreChart"></canvas>
 
     <script>
