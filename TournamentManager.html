@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament Manager</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .player-text {
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
+  </style>
+</head>
+<body class="text-white">
+  <div id="root"></div>
+  <script type="text/babel">
+    const POSITIONS = ['HoF', 'LD', 'MD', 'MO', 'HO', 'LO', 'Capper'];
+
+    const TeamCard = ({ team, onDraftPlayer, allPlayers, draftedPlayers }) => {
+      const [selectedPlayer, setSelectedPlayer] = React.useState('');
+      const [filterPosition, setFilterPosition] = React.useState('All');
+      const availablePlayers = allPlayers
+        .filter(p => !draftedPlayers.includes(p.name))
+        .filter(p => filterPosition === 'All' || p.primaryRole === filterPosition)
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      const handleDraft = () => {
+        if (selectedPlayer) {
+          const player = allPlayers.find(p => p.name === selectedPlayer);
+          onDraftPlayer(team.id, {
+            name: selectedPlayer,
+            position: player.primaryRole,
+            isCaptain: team.players.length === 0
+          });
+          setSelectedPlayer('');
+          setFilterPosition('All');
+        }
+      };
+
+      return (
+        <div className="glass-effect p-6 m-4 w-80">
+          <h3 className="text-xl font-bold mb-2">{team.name} ({team.tag})</h3>
+          <ul className="mb-4">
+            {team.players.map((player, index) => (
+              <li key={index} className="text-sm player-text">
+                {player.name} - {player.position} {player.isCaptain ? '(Captain)' : ''}
+              </li>
+            ))}
+          </ul>
+          <select
+            value={filterPosition}
+            onChange={(e) => setFilterPosition(e.target.value)}
+            className="w-full p-2 mb-2 bg-gray-800 text-white rounded"
+          >
+            <option value="All">All Positions</option>
+            {POSITIONS.map(pos => (
+              <option key={pos} value={pos}>{pos}</option>
+            ))}
+          </select>
+          <select
+            value={selectedPlayer}
+            onChange={(e) => setSelectedPlayer(e.target.value)}
+            className="w-full p-2 mb-2 bg-gray-800 text-white rounded"
+          >
+            <option value="">Select Player</option>
+            {availablePlayers.map(player => (
+              <option key={player.name} value={player.name}>
+                {player.name} (Primary: {player.primaryRole}, Secondary: {player.secondaryRole})
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleDraft}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            disabled={!selectedPlayer}
+          >
+            Draft Player
+          </button>
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [teams, setTeams] = React.useState(() => {
+        const savedTeams = localStorage.getItem('draftTeams');
+        return savedTeams ? JSON.parse(savedTeams) : [];
+      });
+      const [newTeamName, setNewTeamName] = React.useState('');
+      const [newTeamTag, setNewTeamTag] = React.useState('');
+      const [newCaptain, setNewCaptain] = React.useState('');
+      const [allPlayers, setAllPlayers] = React.useState(() => {
+        const savedPlayers = localStorage.getItem('draftPool');
+        return savedPlayers ? JSON.parse(savedPlayers) : [];
+      });
+      const [removedPlayers, setRemovedPlayers] = React.useState(() => {
+        const savedRemoved = localStorage.getItem('removedPlayers');
+        return savedRemoved ? JSON.parse(savedRemoved) : [];
+      });
+
+      const draftedPlayers = teams.flatMap(team => team.players.map(p => p.name));
+
+      React.useEffect(() => {
+        localStorage.setItem('draftTeams', JSON.stringify(teams));
+        localStorage.setItem('draftPool', JSON.stringify(allPlayers));
+        localStorage.setItem('removedPlayers', JSON.stringify(removedPlayers));
+      }, [teams, allPlayers, removedPlayers]);
+
+      const addTeam = () => {
+        if (newTeamName && newTeamTag && newCaptain) {
+          const selectedCaptain = allPlayers.find(p => p.name === newCaptain);
+          if (!selectedCaptain) {
+            alert('Please select a valid captain from the draft pool!');
+            return;
+          }
+          setTeams([...teams, {
+            id: Date.now(),
+            name: newTeamName,
+            tag: newTeamTag,
+            players: [{ name: newCaptain, position: 'Capper', isCaptain: true }]
+          }]);
+          setNewTeamName('');
+          setNewTeamTag('');
+          setNewCaptain('');
+        } else {
+          alert('Please fill in all fields to create a team!');
+        }
+      };
+
+      const draftPlayer = (teamId, player) => {
+        setTeams(teams.map(team =>
+          team.id === teamId
+            ? { ...team, players: [...team.players, player] }
+            : team
+        ));
+      };
+
+      const startNewDraft = () => {
+        setTeams([]);
+        setNewTeamName('');
+        setNewTeamTag('');
+        setNewCaptain('');
+      };
+
+      const saveDraft = () => {
+        localStorage.setItem('draftTeams', JSON.stringify(teams));
+        localStorage.setItem('draftPool', JSON.stringify(allPlayers));
+        localStorage.setItem('removedPlayers', JSON.stringify(removedPlayers));
+        alert('Draft and teams saved successfully!');
+      };
+
+      const clearSavedData = () => {
+        localStorage.removeItem('draftTeams');
+        localStorage.removeItem('draftPool');
+        localStorage.removeItem('removedPlayers');
+        setTeams([]);
+        setAllPlayers([]);
+        setRemovedPlayers([]);
+        setNewTeamName('');
+        setNewTeamTag('');
+        setNewCaptain('');
+        alert('Saved data cleared! Starting fresh.');
+      };
+
+      const exportData = () => {
+        try {
+          const data = {
+            draftPool: allPlayers,
+            draftTeams: teams,
+            removedPlayers: removedPlayers
+          };
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
+          const filename = `tournament-data-${timestamp}.json`;
+          const jsonStr = JSON.stringify(data, null, 2);
+          if (!jsonStr) {
+            throw new Error('Failed to serialize data to JSON.');
+          }
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          alert(`Data exported successfully as ${filename}!`);
+        } catch (error) {
+          console.error('Export failed:', error);
+          alert(`Failed to export data: ${error.message}. Check the browser console for more details.`);
+        }
+      };
+
+      const importData = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (
+              data &&
+              Array.isArray(data.draftPool) &&
+              data.draftPool.every(p => p && typeof p === 'object' && p.name && p.primaryRole && p.secondaryRole) &&
+              Array.isArray(data.draftTeams) &&
+              Array.isArray(data.removedPlayers)
+            ) {
+              setAllPlayers(data.draftPool.sort((a, b) => a.name.localeCompare(b.name)));
+              setTeams(data.draftTeams);
+              setRemovedPlayers(data.removedPlayers);
+              localStorage.setItem('removedPlayers', JSON.stringify(data.removedPlayers));
+              alert('Data imported successfully!');
+            } else {
+              alert('Invalid file format. Please import a valid tournament data file with player names, primary roles, secondary roles, and removed players list.');
+            }
+          } catch (error) {
+            alert('Error parsing file. Please ensure it is a valid JSON file.');
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      };
+
+      const importCSV = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const text = e.target.result;
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            if (lines.length < 1) {
+              alert('CSV file is empty!');
+              return;
+            }
+
+            const headers = lines[0].split(',').map(header => header.trim().replace(/^"|"$/g, ''));
+            if (headers[0] !== 'Name' || headers[1] !== 'Primary Role' || headers[2] !== 'Secondary Role') {
+              alert('Invalid CSV format. Expected headers: Name, Primary Role, Secondary Role');
+              return;
+            }
+
+            const importedPlayers = lines.slice(1).map(line => {
+              const values = line.split(',').map(value => value.trim().replace(/^"|"$/g, ''));
+              if (values.length < 3) return null;
+              return {
+                name: values[0],
+                primaryRole: values[1],
+                secondaryRole: values[2]
+              };
+            }).filter(player => player && player.name && POSITIONS.includes(player.primaryRole) && POSITIONS.includes(player.secondaryRole));
+
+            if (importedPlayers.length === 0) {
+              alert('No valid players found in CSV file.');
+              return;
+            }
+
+            setAllPlayers(importedPlayers.sort((a, b) => a.name.localeCompare(b.name)));
+            localStorage.setItem('draftPool', JSON.stringify(importedPlayers));
+            alert('Players imported successfully from CSV!');
+          } catch (error) {
+            console.error('Error parsing CSV:', error);
+            alert('Error parsing CSV file. Please ensure it is correctly formatted.');
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      };
+
+      return (
+        <div className="container mx-auto p-4">
+          <h1 className="text-4xl font-bold text-center mb-8">Tournament Manager</h1>
+
+          {/* Links to Related Pages */}
+          <div className="glass-effect p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Related Pages</h2>
+            <div className="flex gap-4">
+              <a
+                href="https://t24085.github.io/DraftSignUp/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Draft Sign-Up Sheet
+              </a>
+              <a
+                href="https://t24085.github.io/Tournament-Bracket/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Tournament Bracket System
+              </a>
+            </div>
+          </div>
+
+          {/* Import CSV for Player List */}
+          <div className="glass-effect p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Import Player List</h2>
+            <div className="mb-4">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={importCSV}
+                className="w-full p-2 bg-gray-800 text-white rounded"
+                id="import-csv"
+              />
+              <p className="text-sm text-gray-400 mt-2">
+                Import a CSV file with columns: Name, Primary Role, Secondary Role (exported from the Draft Sign-Up Sheet).
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <button
+                onClick={startNewDraft}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Start New Draft
+              </button>
+              <button
+                onClick={saveDraft}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Save Draft
+              </button>
+              <button
+                onClick={clearSavedData}
+                className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Clear Saved Data
+              </button>
+              <button
+                onClick={exportData}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Export Data
+              </button>
+              <div className="col-span-1 md:col-span-4">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importData}
+                  className="w-full p-2 bg-gray-800 text-white rounded"
+                  id="import-data"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Create Team Section */}
+          <div className="glass-effect p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Create Team</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                placeholder="Team Name"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                className="p-2 bg-gray-800 text-white rounded"
+              />
+              <input
+                type="text"
+                placeholder="Team Tag"
+                value={newTeamTag}
+                onChange={(e) => setNewTeamTag(e.target.value)}
+                className="p-2 bg-gray-800 text-white rounded"
+              />
+              <select
+                value={newCaptain}
+                onChange={(e) => setNewCaptain(e.target.value)}
+                className="p-2 bg-gray-800 text-white rounded"
+              >
+                <option value="">Select Captain</option>
+                {allPlayers
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(player => (
+                    <option key={player.name} value={player.name}>
+                      {player.name} (Primary: {player.primaryRole}, Secondary: {player.secondaryRole})
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <button
+              onClick={addTeam}
+              className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Create Team
+            </button>
+          </div>
+
+          {/* Team Drafting Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {teams.map(team => (
+              <TeamCard
+                key={team.id}
+                team={team}
+                onDraftPlayer={draftPlayer}
+                allPlayers={allPlayers}
+                draftedPlayers={draftedPlayers}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

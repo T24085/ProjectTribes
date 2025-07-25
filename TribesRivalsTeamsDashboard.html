@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tribes Rivals Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .team-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .team-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+        }
+        .history-section {
+            background: linear-gradient(135deg, #1a202c, #2d3748);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #2d3748; /* Darker background for better contrast */
+            color: #e2e8f0; /* Light gray text for readability */
+            padding: 2rem;
+            border-radius: 0.5rem;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+        }
+        .modal-content a {
+            color: #60a5fa; /* Blue for links to stand out */
+        }
+        .modal-content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white font-sans">
+    <!-- Header -->
+    <header class="bg-gray-800 py-6 shadow-lg">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-400">Tribes Rivals Dashboard</h1>
+            <p class="mt-2 text-lg text-gray-300">Your hub for all Tribes Rivals teams and history</p>
+        </div>
+    </header>
+
+    <!-- Team Grid -->
+    <section class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-semibold text-center mb-8">Select a Team</h2>
+        <div class="team-grid">
+            <!-- Avalanche -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://www.team-avalanche.online/" target="_blank">
+                    <img src="https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true" alt="Avalanche team logo with snowy mountain and jetpack motif" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Avalanche [aV!]</h3>
+                    <p class="text-gray-400">Captain: @Tritium Jones</p>
+                    <button onclick="showRoster('Avalanche')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('Avalanche')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- ePidemic -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-ePi/" target="_blank">
+                    <img src="https://github.com/T24085/Team-ePi/blob/main/ePi.png?raw=true" alt="ePidemic team logo with biohazard and jetpack design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">ePidemic [ePi]</h3>
+                    <p class="text-gray-400">Captain: @[ePi] Convik</p>
+                    <button onclick="showRoster('ePidemic')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('ePidemic')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- DPRK -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/TeamDPRK/" target="_blank">
+                    <img src="https://github.com/T24085/TeamDPRK/blob/main/TeamDPRKLogo3.png?raw=true" alt="DPRK team logo with red star and futuristic tribal design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">DPRK</h3>
+                    <p class="text-gray-400">Captain: ColonelFatso</p>
+                    <button onclick="showRoster('DPRK')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('DPRK')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- Zen -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-Zen/" target="_blank">
+                    <img src="https://github.com/T24085/Team-Zen/blob/main/Zenlogo.png?raw=true" alt="Zen team logo with minimalist tribal and jetpack symbol" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Zen [ℨ]</h3>
+                    <p class="text-gray-400">Captain: @ℨ Gigz</p>
+                    <button onclick="showRoster('Zen')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('Zen')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- TXM -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-TXM/" target="_blank">
+                    <img src="https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true" alt="Texas Militia team logo with lone star and tribal motif" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Texas Militia [TXM]</h3>
+                    <p class="text-gray-400">Captain: @OpCats</p>
+                    <button onclick="showRoster('TXM')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('TXM')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- Flag Pole Smokers -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-FPS/" target="_blank">
+                    <img src="https://github.com/T24085/Team-FPS/blob/main/FPSlogo.png?raw=true" alt="Flag Pole Smokers team logo with flag and smoke design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Flag Pole Smokers [FPS]</h3>
+                    <p class="text-gray-400">Captain: @S...</p>
+                    <button onclick="showRoster('FPS')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('FPS')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- Flying Tractors -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-FT/" target="_blank">
+                    <img src="https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true" alt="Flying Tractors team logo with tractor and jetpack imagery" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Flying Tractors [^T^]</h3>
+                    <p class="text-gray-400">Captain: @p...</p>
+                    <button onclick="showRoster('Flying Tractors')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('FT')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- Hegemony of Euros -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-HOE/" target="_blank">
+                    <img src="https://github.com/T24085/Team-HOE/blob/main/HoE.png?raw=true" alt="Hegemony of Euros team logo with European and tribal elements" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Hegemony of Euros [HoE]</h3>
+                    <p class="text-gray-400">Captain: @[ɧơɛ] Katar Xwokark</p>
+                    <button onclick="showRoster('HoE')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('HoE')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- KTL -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-KTL/" target="_blank">
+                    <img src="https://github.com/T24085/Team-KTL/blob/main/KTLlogo.png?raw=true" alt="KTL team logo with futuristic tribal design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">KTL</h3>
+                    <p class="text-gray-400">Captain: @n0xide</p>
+                    <button onclick="showRoster('KTL')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                </div>
+            </div>
+            <!-- Magic -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-Magic/" target="_blank">
+                    <img src="https://github.com/T24085/Team-Magic/blob/main/Magic.png?raw=true" alt="Magic team logo with mystical and tribal symbols" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Magic [Wiz]</h3>
+                    <p class="text-gray-400">Captain: @[wiz] Lange</p>
+                    <button onclick="showRoster('Magic')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('Magic')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- null -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-Null/" target="_blank">
+                    <img src="https://github.com/T24085/Team-Null/blob/main/NullLogo.png?raw=true" alt="null team logo with abstract tribal design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">null</h3>
+                    <p class="text-gray-400">Captain: @_...</p>
+                    <button onclick="showRoster('null')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                </div>
+            </div>
+            <!-- Toxic Aimers -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-Toxic-Aimers/" target="_blank">
+                    <img src="https://github.com/T24085/Team-Toxic-Aimers/blob/main/ToxicAimersLogo.png?raw=true" alt="Toxic Aimers team logo with toxic and tribal motifs" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Toxic Aimers</h3>
+                    <p class="text-gray-400">Captain: @R...</p>
+                    <button onclick="showRoster('Toxic Aimers')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                </div>
+            </div>
+            <!-- Tribal Therapy -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-Tribal-Therapy/" target="_blank">
+                    <img src="https://github.com/T24085/Team-Tribal-Therapy/blob/main/T_TLogo.png?raw=true" alt="Tribal Therapy team logo with calming tribal design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Tribal Therapy [T_T]</h3>
+                    <p class="text-gray-400">Captain: Blitz</p>
+                    <button onclick="showRoster('Tribal Therapy')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('Tribal Therapy')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+            <!-- Viva la Revolución -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-R/" target="_blank">
+                    <img src="https://github.com/T24085/Team-R/blob/main/Rlogo.png?raw=true" alt="Viva la Revolución team logo with revolutionary tribal symbols" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">Viva la Revolución [R]</h3>
+                    <p class="text-gray-400">Captain: @Borpalkitty</p>
+                    <button onclick="showRoster('Viva la Revolución')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                </div>
+            </div>
+            <!-- UE -->
+            <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
+                <a href="https://t24085.github.io/Team-UE/" target="_blank">
+                    <img src="https://github.com/T24085/Team-UE/blob/main/UE.png?raw=true" alt="UE team logo with futuristic tribal design" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4 text-center">
+                    <h3 class="text-xl font-bold">UE</h3>
+                    <p class="text-gray-400">Captain: DeadManWalking</p>
+                    <button onclick="showRoster('UE')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('UE')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- History Section -->
+    <section class="history-section py-12">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-semibold text-center mb-8">History of Tribes</h2>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <p class="text-lg mb-4">
+                    The Tribes series, a groundbreaking collection of science fiction first-person shooter video games, began with <em>Starsiege: Tribes</em> in 1998, developed by Dynamix, a subsidiary of Sierra Entertainment. Set in the far future (2471–3940), the series is a spin-off from the mecha simulation series <em>Metaltech</em>. Its narrative revolves around a conflict sparked by the creation of the first cybrid, a bio-cybernetic AI named Prometheus, in 2471. By 2602, Prometheus leads a cybrid rebellion against humanity, which is eventually quelled, setting the stage for the tribal conflicts that define the series. <em>Starsiege: Tribes</em> introduced innovative mechanics like jetpacks, skiing, and large-scale multiplayer battles, earning it a reputation as one of the most influential FPS games.
+                </p>
+                <p class="text-lg mb-4">
+                    The series continued with <em>Tribes 2</em> (2001), which expanded on the original's mechanics with enhanced graphics, more complex maps, and up to 128-player matches, fostering a vibrant competitive scene. <em>Tribes: Aerial Assault</em> (2002) brought the series to consoles, while <em>Tribes: Vengeance</em> (2004) focused on a single-player campaign alongside multiplayer. <em>Tribes: Ascend</em> (2012), developed by Hi-Rez Studios, revitalized the franchise with modern graphics and free-to-play mechanics, receiving critical acclaim (IGN: 9/10, PC Gamer: 88/100). The latest installment, <em>Tribes 3: Rivals</em>, announced in November 2023 and launched in Early Access on March 12, 2024, by Prophecy Games, returns to the series' roots with team-based capture-the-flag gameplay, jetpacks, and skiing, though it has struggled with player retention.
+                </p>
+                <p class="text-lg mb-4">
+                    Tribes revolutionized the FPS genre by introducing dynamic movement systems and large-scale team-based gameplay, influencing titles like <em>Halo</em>. Its competitive community, marked by fierce rivalries between teams like 5150 and South Side Stoners, laid the groundwork for modern esports, with the Tribes Shoutcast Network pioneering professional commentary. The series' emphasis on teamwork, speed, and strategy, coupled with its passionate community, has kept it alive through fan-driven servers and mods, culminating in the excitement surrounding <em>Tribes 3: Rivals</em>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Central Streams -->
+    <section class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-semibold text-center mb-8">Hubcast Central Streams</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+                <h3 class="text-xl font-bold">TootZ</h3>
+                <a href="https://www.twitch.tv/tootzgaming" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+                <h3 class="text-xl font-bold">OoOoO</h3>
+                <a href="https://www.twitch.tv/oo0oo_live" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+                <h3 class="text-xl font-bold">Hawxter</h3>
+                <a href="https://www.twitch.tv/hawxter_" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Draft Tournament Stats -->
+    <section class="container mx-auto px-4 py-12">
+        <h2 class="text-3xl font-semibold text-center mb-8">Draft Tournament Stats</h2>
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+            <p class="text-lg mb-4">Check out the latest results and statistics for the Fat Boys of Summer Draft Tournament.</p>
+            <a href="https://t24085.github.io/FatBoysofSummerDraft/dashboard" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded inline-block">View Tournament Stats</a>
+        </div>
+    </section>
+
+    <!-- Modal for Roster -->
+    <div id="rosterModal" class="modal">
+        <div class="modal-content">
+            <h2 id="rosterTitle" class="text-2xl font-bold mb-4"></h2>
+            <p id="rosterContent" class="text-lg"></p>
+            <button onclick="closeModal()" class="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded">Close</button>
+        </div>
+    </div>
+
+    <!-- Modal for Streams -->
+    <div id="streamsModal" class="modal">
+        <div class="modal-content">
+            <h2 id="streamsTitle" class="text-2xl font-bold mb-4"></h2>
+            <div id="streamsContent" class="text-lg"></div>
+            <button onclick="closeModal()" class="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded">Close</button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">© 2025 Tribes Rivals Dashboard. All rights reserved.</p>
+            <p class="text-gray-400">Built for the Tribes Rivals community.</p>
+        </div>
+    </footer>
+
+    <script>
+        const rosters = {
+            'Avalanche': 'Captain: @Trinium Jones\nCore: BakaToma, Franchez, Dean, Ggglygy, Wriggles, Def_Monk\nAce: Proj',
+            'ePidemic': 'Captain: @[ePi] Convik\nCore: Goshawk, Emma, Nanox, Blu, TartarosK\nBench: apo',
+            'DPRK': 'Roster information not available.',
+            'Zen': 'Captain: @ℨ Gigz\nCore: Beamz, Hydroxide, Gnome, Slyce, Mikesters, Twin\nBench: Flocks\nNote: DM Cats/Glem to update the roster',
+            'TXM': 'Captain: @OpCats (LO/LD)\nCore: Prizzo, Cryof, Amyou, Thatguy, Visis, Jive, Freefood, Howsya\nBench: Txredneck',
+            'FPS': 'Captain: @S...\nCore: Brit, Icedwinds, Dugong, Beldark, Realhumanbeing, Simmons, Nightstar\nBench: Kilfaxi, Morokor',
+            'Flying Tractors': 'Captain: @p...\nCore: Bizow, Zao, Dreadtitan, nato, LightningMcMeme, Orvid, Bazz-B',
+            'HoE': 'Captain: @[ɧơɛ] Katar Xwokark\nCore: Gotlub, Mansku, Lord Buschguy, björnbär, Waffleking, TribalChief\nBench: cym3, Gwej, tumi, ThermoFlux, unam',
+            'KTL': 'Captain: @n0xide\nCore: =ACE=, Navy, ctrl, kwago, Paragon, SecondSight, Torment, Alphakrab',
+            'Magic': 'Captain: @[wiz] Lange\nCore: Rebeltrooper, XRY, Dust, Cinnamon, Songsteal, Sek, SplitSecond\nBench: Snakke, Lester',
+            'null': 'Captain: @_...\nCore: Blaspheme, Annaberries, xQ, muuki, exhumaxer, corbeling, mikeax2\nBench: ryan',
+            'Toxic Aimers': 'Captain: @R...\nCore: Song, Sek, Hatuey, DareDevilMoon, Nerve, Radishblue, Trey\nBench: Sin, Stork',
+            'Tribal Therapy': 'Captain: Blitz\nCore: apc, Hosh, Luna, Rock, Rell, Iinferno, Makasuro, CheesyDean, ContingencyPlan\nBench: Nykie4Life',
+            'Viva la Revolución': 'Captain: @Borpalkitty\nCore: Visis, Barthy, OperationCats, Jive, Oo 0 oO, Hitch, Zack, Kadenzah',
+            'UE': 'DeadManWalking, Pablo, TTVfoenixx, Loot, Nykie4life, Stimzees, The Quacken .'
+        };
+
+        const streams = {
+            'Avalanche': [
+                { name: 'Wriggles', url: 'https://www.twitch.tv/wrigglespk' },
+                { name: 'TritiumJones', url: 'https://www.twitch.tv/tritiumjones' },
+                { name: 'Dean', url: 'https://www.twitch.tv/wholuvsdean' },
+                { name: 'PROJ', url: 'https://www.twitch.tv/prj_tv' },
+                { name: 'Ggglygy', url: 'https://www.twitch.tv/ggglygy' },
+                { name: 'BakaToma', url: 'https://www.twitch.tv/bakatoma1' }
+            ],
+            'ePidemic': [
+                { name: 'Kenxai', url: 'https://www.twitch.tv/kenxai' },
+                { name: 'Makasuro', url: 'https://www.twitch.tv/makasuro' }
+            ],
+            'DPRK': [
+                { name: 'CheezeCaek', url: 'https://www.twitch.tv/cheezecaek' },
+                { name: 'silynn', url: 'https://www.twitch.tv/cheddox' },
+                { name: 'ColonelFatso', url: 'https://www.twitch.tv/colonelfatso' },
+                { name: 'Pandora', url: 'https://www.twitch.tv/pandoracast' },
+                { name: 'Nemesis', url: 'https://www.twitch.tv/seansguitarworldbang' }
+            ],
+            'Zen': [
+                { name: 'Mikesters', url: 'https://www.twitch.tv/mikesters17' },
+                { name: 'Nikebeamz', url: 'https://www.twitch.tv/nikebeamz' }
+            ],
+            'TXM': [
+                { name: 'Prizzo', url: 'https://www.twitch.tv/prizzo4real' },
+                { name: 'OperationCats', url: 'https://www.twitch.tv/operationcats' },
+                { name: 'Goshawk', url: 'https://www.twitch.tv/g0shawk' },
+                { name: 'Visis', url: 'https://www.twitch.tv/visisgaming' },
+                { name: 'Cryof', url: 'https://www.twitch.tv/cryofzshooter' },
+                { name: 'Jive', url: 'https://www.twitch.tv/heavenlyjive' },
+                { name: 'freefood', url: 'https://www.twitch.tv/freefoodd' },
+                { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
+            ],
+            'FPS': [
+                { name: 'SulliedSoc', url: 'https://www.twitch.tv/SulliedSoc' },
+                { name: 'Beldark', url: 'https://www.twitch.tv/beldarkk' }
+            ],
+            'FT': [
+                { name: 'Mikeax2', url: 'https://www.twitch.tv/mikeax2' },
+                { name: 'nato', url: 'https://www.twitch.tv/natopotato262' },
+                { name: 'playb0x', url: 'https://www.twitch.tv/playb0x' }
+            ],
+            'HoE': [
+                { name: 'Katar', url: 'https://www.twitch.tv/karolk10' },
+                { name: 'gwej', url: 'https://www.twitch.tv/gwej' },
+                { name: 'cym3', url: 'https://www.twitch.tv/cymm3' }
+            ],
+            'Magic': [
+                { name: 'XRY', url: 'https://www.twitch.tv/xry_tv' },
+                { name: 'Splitsecond', url: 'https://www.twitch.tv/splitsecondta' },
+                { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
+            ],
+            'Tribal Therapy': [
+                { name: 'iinferno', url: 'https://www.twitch.tv/bschrift/video/2399902418' },
+                { name: 'Paprika (YT)', url: 'https://www.youtube.com/@0Luna_' },
+                { name: 'Blitz', url: 'https://www.twitch.tv/slohp0k3' }
+            ],
+            'UE': [
+                { name: 'PabloSexcrobar', url: 'https://www.twitch.tv/eltimablo' },
+                { name: 'RoamenCota', url: 'https://www.twitch.tv/roamencota' },
+                { name: 'Simmons', url: 'https://www.twitch.tv/simmons572' },
+                { name: 'Def_Monk (YT)', url: 'https://www.youtube.com/@defmonk0/streams' },
+                { name: 'Deadmanwalking (YT)', url: 'https://www.youtube.com/@DeadManWalking-UF-/streams' }
+            ]
+        };
+
+        function showRoster(team) {
+            const modal = document.getElementById('rosterModal');
+            const title = document.getElementById('rosterTitle');
+            const content = document.getElementById('rosterContent');
+            title.textContent = `${team} Roster`;
+            content.textContent = rosters[team] || 'No roster information available.';
+            modal.style.display = 'flex';
+        }
+
+        function showStreams(team) {
+            const modal = document.getElementById('streamsModal');
+            const title = document.getElementById('streamsTitle');
+            const content = document.getElementById('streamsContent');
+            title.textContent = `${team} Streams`;
+            content.innerHTML = '';
+            if (streams[team] && streams[team].length > 0) {
+                streams[team].forEach(stream => {
+                    const link = document.createElement('p');
+                    link.innerHTML = `<a href="${stream.url}" target="_blank" class="text-blue-400 hover:underline">${stream.name}</a>`;
+                    content.appendChild(link);
+                });
+            } else {
+                content.textContent = 'No streams available for this team.';
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('rosterModal').style.display = 'none';
+            document.getElementById('streamsModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,607 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament Twitch Feeds Display (Mobile)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #1a202c;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100%;
+      padding: 10px;
+    }
+    header {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    @supports not (backdrop-filter: blur(10px)) {
+      header {
+        background: #2d3748;
+      }
+    }
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+    .form-section div {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .form-section input[type="text"], .form-section select {
+      padding: 8px;
+      background-color: rgba(45, 55, 72, 0.8);
+      color: white;
+      border: 1px solid #4a5568;
+      border-radius: 4px;
+      width: 100%;
+    }
+    .form-section button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .add-streamer-form button {
+      background-color: #48bb78;
+      color: white;
+    }
+    .add-streamer-form button:hover {
+      background-color: #38a169;
+    }
+    .remove-match-form button {
+      background-color: #f56565;
+      color: white;
+    }
+    .remove-match-form button:hover {
+      background-color: #e53e3e;
+    }
+    .filter-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .filter-section button {
+      background-color: #3182ce;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .filter-section button:hover {
+      background-color: #2b6cb0;
+    }
+    .filter-options {
+      display: none;
+      margin-top: 10px;
+      background: rgba(45, 55, 72, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 4px;
+      padding: 10px;
+      width: 100%;
+      max-width: 300px;
+      overflow-y: auto;
+    }
+    .filter-options .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 0;
+      font-size: 14px;
+    }
+    .filter-options input[type="checkbox"] {
+      accent-color: #3182ce;
+    }
+    .filter-options label {
+      color: white;
+      cursor: pointer;
+    }
+    .filter-options button {
+      margin-top: 5px;
+      width: 100%;
+    }
+    .feedback-message {
+      margin-left: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    .feedback-message.success {
+      color: #48bb78;
+    }
+    .feedback-message.error {
+      color: #f56565;
+    }
+    .stream-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px 0;
+    }
+    .stream-box {
+      position: relative;
+      background-color: #2d3748;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 200px; /* Reduced for mobile */
+    }
+    .stream-label {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px; /* Smaller font for mobile */
+      font-weight: bold;
+    }
+    .stream-player {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .donation-section {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .donation-section p {
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .pp-BC4EF2QC9T5GA {
+      text-align: center;
+      border: none;
+      border-radius: 0.25rem;
+      min-width: 200px;
+      padding: 0 1rem;
+      height: 2.5rem;
+      font-weight: bold;
+      background-color: #FFD140;
+      color: #000000;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 0.8rem;
+      line-height: 1rem;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .load-more {
+      background-color: #3182ce;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 10px auto;
+      display: block;
+    }
+    .load-more:hover {
+      background-color: #2b6cb0;
+    }
+    /* Chat Panel Styles */
+    .chat-panel {
+      display: none;
+      width: 100%;
+      height: 100%;
+      background: rgba(45, 55, 72, 0.9);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 40;
+      padding: 10px;
+      flex-direction: column;
+    }
+    @supports not (backdrop-filter: blur(10px)) {
+      .chat-panel {
+        background: #2d3748;
+      }
+    }
+    .chat-panel select {
+      padding: 8px;
+      background-color: rgba(45, 55, 72, 0.8);
+      color: white;
+      border: 1px solid #4a5568;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+    .chat-panel iframe {
+      flex: 1;
+      border: none;
+      border-radius: 4px;
+    }
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #3182ce;
+      color: white;
+      padding: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 50;
+    }
+    .chat-toggle:hover {
+      background-color: #2b6cb0;
+    }
+    .chat-panel.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="form-section">
+        <div class="add-streamer-form">
+          <input type="text" id="new-streamer" placeholder="Enter Twitch Channel Name">
+          <button onclick="addStreamer()">Add Streamer</button>
+          <span id="add-feedback" class="feedback-message success">Streamer Added!</span>
+        </div>
+        <div class="remove-match-form">
+          <select id="remove-match-select">
+            <option value="">Select Match to Remove</option>
+          </select>
+          <button onclick="removeMatch()">Remove Match</button>
+          <span id="remove-feedback" class="feedback-message error">Match Removed!</span>
+        </div>
+      </div>
+      <div class="filter-section">
+        <button onclick="toggleFilter()">Filter Streams</button>
+        <div class="filter-options" id="filter-options">
+          <div id="filter-checkboxes"></div>
+          <button onclick="hideSelectedChannels()">Hide Selected</button>
+          <button onclick="showAllChannels()">Show All</button>
+        </div>
+      </div>
+      <div class="donation-section">
+        <p>Support the Tribes 3: Rivals Tournament!</p>
+        <form action="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
+          <input class="pp-BC4EF2QC9T5GA" type="submit" value="Support the Tribes Rivals Multi Display" />
+          <img src="https://www.paypalobjects.com/images/Debit_Credit_APM.svg" alt="cards" />
+          <section style="font-size: 0.75rem;"> Powered by <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal" style="height:0.875rem;vertical-align:middle;"/></section>
+        </form>
+      </div>
+    </header>
+    <div class="stream-container" id="stream-container"></div>
+    <button class="load-more" id="load-more" onclick="loadMoreStreams()">Load More</button>
+    <!-- Chat Panel -->
+    <div class="chat-panel" id="chat-panel">
+      <select id="chat-channel-select" onchange="updateChat()">
+        <option value="">Select Channel Chat</option>
+      </select>
+      <iframe id="chat-iframe" src="https://www.twitch.tv/embed/twitch/chat?parent=t24085.github.io"></iframe>
+    </div>
+    <!-- Chat Toggle Button -->
+    <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
+  </div>
+
+  <script src="https://embed.twitch.tv/embed/v1.js"></script>
+  <script>
+    let channels = JSON.parse(localStorage.getItem('twitchChannels') || '[]')
+      .map(ch => ch.toLowerCase())
+      .map(ch => {
+        const originalMap = {
+          'oo0oo_live': 'Oo0oO_Live',
+          'twitch': 'twitch',
+          'shroud': 'shroud',
+          'playb0x': 'playb0x',
+          'cheezecaek': 'cheezecaek',
+          'ta_vorpalkitty': 'ta_vorpalkitty',
+          'bschrift': 'bschrift',
+          'heavenlyjive': 'heavenlyjive',
+          'z4t01': 'z4t01',
+          'wrigglespk': 'wrigglespk',
+          'karolk10': 'karolk10',
+          'splitsecondta': 'splitsecondta',
+          'operationcats': 'operationcats',
+          'simmons572': 'simmons572',
+          'tritiumjones': 'tritiumjones',
+          'beldarkk': 'beldarkk',
+          'skrooner': 'skrooner',
+          'mikesters17': 'mikesters17',
+          'dreadtitan': 'dreadtitan',
+          'visisgaming': 'visisgaming',
+          'pandoracast': 'pandoracast',
+          'isoitiro': 'isoitiro',
+          'vaxitylol': 'vaxitylol',
+          'seansguitarworldbang': 'seansguitarworldbang',
+          'prizzo4real': 'prizzo4real',
+          'apcizzle': 'apcizzle',
+          'slowpok3': 'slowpok3',
+          'iamyougaming': 'iamyougaming',
+          'mastinmusic': 'mastinmusic',
+          'wholuvsdean': 'wholuvsdean',
+          'more_horchata': 'more_horchata',
+          'prj_tv': 'prj_tv',
+          'lordbuschguy': 'lordbuschguy',
+          'gnome827': 'gnome827',
+          'cloutac': 'cloutac'
+        };
+        return originalMap[ch] || ch;
+      }) || [
+      'twitch', 'shroud',
+      'playb0x', 'cheezecaek', 'ta_vorpalkitty', 'bschrift', 'heavenlyjive',
+      'z4t01', 'wrigglespk', 'karolk10', 'splitsecondta', 'operationcats',
+      'simmons572', 'tritiumjones', 'beldarkk', 'skrooner', 'mikesters17',
+      'dreadtitan', 'visisgaming', 'pandoracast', 'isoitiro', 'vaxitylol',
+      'seansguitarworldbang', 'prizzo4real', 'apcizzle', 'slowpok3', 'iamyougaming',
+      'mastinmusic', 'wholuvsdean', 'more_horchata', 'Oo0oO_Live', 'lordbuschguy',
+      'gnome827', 'cloutac'
+    ];
+    console.log('Channels length:', channels.length);
+    let streamCount = channels.length;
+    let hiddenChannels = JSON.parse(localStorage.getItem('hiddenChannels') || '[]').map(ch => ch.toLowerCase());
+    let currentChatChannel = channels[0] || 'twitch'; // Default to first channel
+    let visibleCount = 6; // Initial number of streams to show
+
+    function saveChannels() {
+      localStorage.setItem('twitchChannels', JSON.stringify(channels.map(ch => ch.toLowerCase())));
+      localStorage.setItem('hiddenChannels', JSON.stringify(hiddenChannels));
+    }
+
+    // Validate Twitch channel name (case-insensitive)
+    function isValidTwitchChannel(channel) {
+      return /^[a-zA-Z0-9_]{4,25}$/i.test(channel);
+    }
+
+    // Render streams (alphabetized, limited initial load)
+    function renderStreams() {
+      const streamContainer = document.getElementById('stream-container');
+      streamContainer.innerHTML = '';
+
+      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel.toLowerCase())).sort();
+      const channelsToShow = visibleChannels.slice(0, visibleCount);
+      console.log('Visible channels length:', visibleChannels.length, 'Showing:', channelsToShow.length);
+      channelsToShow.forEach((channel, index) => {
+        const streamIndex = index + 1;
+        const streamBox = document.createElement('div');
+        streamBox.className = 'stream-box';
+        streamBox.id = `stream-${streamIndex}`;
+        streamBox.innerHTML = `
+          <div class="stream-label">Match ${streamIndex}</div>
+          <iframe class="stream-player" src="https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${window.location.hostname}" allowfullscreen="true"></iframe>
+        `;
+        streamContainer.appendChild(streamBox);
+      });
+      document.getElementById('load-more').style.display = visibleCount < visibleChannels.length ? 'block' : 'none';
+      populateRemoveDropdown();
+      populateFilterCheckboxes();
+      populateChatDropdown();
+    }
+
+    // Load more streams
+    function loadMoreStreams() {
+      visibleCount += 6; // Load 6 more streams
+      renderStreams();
+    }
+
+    // Populate remove dropdown (alphabetized)
+    function populateRemoveDropdown() {
+      const select = document.getElementById('remove-match-select');
+      select.innerHTML = '<option value="">Select Match to Remove</option>';
+      channels.sort().forEach((channel, index) => {
+        const option = document.createElement('option');
+        option.value = index + 1;
+        option.textContent = `Match ${index + 1}: ${channel}`;
+        select.appendChild(option);
+      });
+      console.log('Remove dropdown options:', select.options.length);
+    }
+
+    // Populate filter checkboxes (alphabetized)
+    function populateFilterCheckboxes() {
+      const container = document.getElementById('filter-checkboxes');
+      container.innerHTML = '';
+      channels.sort().forEach((channel, index) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="filter-${channel.toLowerCase()}" value="${channel}">
+          <label for="filter-${channel.toLowerCase()}">Match ${index + 1}: ${channel}</label>
+        `;
+        container.appendChild(div);
+      });
+      console.log('Filter checkboxes count:', container.children.length);
+    }
+
+    // Populate chat channel dropdown (alphabetized)
+    function populateChatDropdown() {
+      const select = document.getElementById('chat-channel-select');
+      select.innerHTML = '<option value="">Select Channel Chat</option>';
+      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel.toLowerCase())).sort();
+      visibleChannels.forEach((channel, index) => {
+        const option = document.createElement('option');
+        option.value = channel;
+        option.textContent = `Match ${index + 1}: ${channel}`;
+        select.appendChild(option);
+      });
+      select.value = currentChatChannel && visibleChannels.includes(currentChatChannel) ? currentChatChannel : (visibleChannels[0] || '');
+      updateChat();
+      console.log('Chat dropdown options:', select.options.length);
+    }
+
+    // Update chat iframe
+    function updateChat() {
+      const select = document.getElementById('chat-channel-select');
+      const channel = select.value;
+      const iframe = document.getElementById('chat-iframe');
+      if (channel) {
+        currentChatChannel = channel;
+        iframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?parent=${window.location.hostname}`;
+      } else {
+        iframe.src = 'about:blank';
+      }
+    }
+
+    // Toggle chat panel
+    function toggleChat() {
+      const chatPanel = document.getElementById('chat-panel');
+      chatPanel.classList.toggle('active');
+    }
+
+    function addStreamer() {
+      const newStreamerInput = document.getElementById('new-streamer');
+      const channelName = newStreamerInput.value.trim();
+      const lowercaseChannel = channelName.toLowerCase();
+
+      if (!channelName) {
+        alert('Please enter a Twitch channel name.');
+        return;
+      }
+
+      if (!isValidTwitchChannel(channelName)) {
+        alert('Invalid Twitch channel name. Use 4-25 alphanumeric characters or underscores.');
+        return;
+      }
+
+      if (channels.map(ch => ch.toLowerCase()).includes(lowercaseChannel)) {
+        alert('This channel is already added.');
+        return;
+      }
+
+      streamCount++;
+      channels.push(channelName);
+      saveChannels();
+      renderStreams();
+
+      const feedback = document.getElementById('add-feedback');
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 2000);
+
+      newStreamerInput.value = '';
+    }
+
+    function removeMatch() {
+      const select = document.getElementById('remove-match-select');
+      const selectedIndex = parseInt(select.value);
+
+      if (!selectedIndex) {
+        alert('Please select a match to remove.');
+        return;
+      }
+
+      const removedChannel = channels[selectedIndex - 1];
+      channels.splice(selectedIndex - 1, 1);
+      streamCount--;
+      if (currentChatChannel === removedChannel) {
+        currentChatChannel = channels[0] || '';
+      }
+      saveChannels();
+      renderStreams();
+
+      const feedback = document.getElementById('remove-feedback');
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 2000);
+    }
+
+    function toggleFilter() {
+      const filterOptions = document.getElementById('filter-options');
+      filterOptions.style.display = filterOptions.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function hideSelectedChannels() {
+      const checkboxes = document.querySelectorAll('#filter-checkboxes input:checked');
+      const selectedChannels = Array.from(checkboxes).map(cb => cb.value);
+      if (selectedChannels.length === 0) {
+        alert('Please select at least one channel to hide.');
+        return;
+      }
+      hiddenChannels = [...new Set([...hiddenChannels, ...selectedChannels.map(ch => ch.toLowerCase())])];
+      if (selectedChannels.map(ch => ch.toLowerCase()).includes(currentChatChannel.toLowerCase())) {
+        currentChatChannel = channels.filter(ch => !hiddenChannels.includes(ch.toLowerCase()))[0] || '';
+      }
+      saveChannels();
+      renderStreams();
+
+      const feedback = document.getElementById('remove-feedback');
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 2000);
+    }
+
+    function showAllChannels() {
+      hiddenChannels = [];
+      saveChannels();
+      renderStreams();
+
+      const feedback = document.getElementById('add-feedback');
+      feedback.textContent = 'Showing all streams!';
+      feedback.style.display = 'inline';
+      setTimeout(() => {
+        feedback.style.display = 'none';
+      }, 2000);
+    }
+
+    // Initial render
+    renderStreams();
+  </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP to allow YouTube and Twitch iframes -->
+    <meta http-equiv="Content-Security-Policy" content="frame-src https://player.twitch.tv https://www.youtube.com; default-src 'self'; img-src *; style-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'">
+    <title>Hegemony of Euros [HoE] - TRIBES 3: Rivals</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom CSS for European-inspired blue and gold design */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(30, 58, 138, 0.8), 0 0 20px rgba(30, 58, 138, 0.6);
+        }
+        .glow-border {
+            box-shadow: 0 0 15px rgba(30, 58, 138, 0.5);
+        }
+        .hover-scale {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.03);
+            opacity: 0.95;
+        }
+        /* Star pattern background with HoE logo overlay */
+        .gradient-bg {
+            background: linear-gradient(rgba(30, 58, 138, 0.1), rgba(30, 58, 138, 0.1)), url('https://github.com/T24085/Team-HOE/blob/main/HoE.png?raw=true');
+            background-size: 50px;
+            background-repeat: repeat;
+        }
+        /* Header and footer with star pattern */
+        .header-footer-bg {
+            background: linear-gradient(rgba(30, 27, 75, 0.9), rgba(30, 27, 75, 0.9)), url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="rgba(255,215,0,0.1)"%3E%3Cpath d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/%3E%3C/svg%3E');
+            background-size: 30px;
+        }
+        /* Roster card with parchment texture */
+        .roster-card {
+            background: linear-gradient(rgba(243, 244, 246, 0.8), rgba(243, 244, 246, 0.8)), url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="rgba(30,58,138,0.1)" stroke-width="1"%3E%3Cpath d="M10 10h80v80H10z"/%3E%3Cpath d="M20 20h60v60H20z"/%3E%3C/svg%3E');
+            background-size: 50px;
+            border-radius: 8px;
+        }
+        /* Parallax background styles */
+        .parallax-hero {
+            background-image: url('https://github.com/T24085/Team-HOE/blob/main/EUROFlag.png?raw=true');
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            position: relative;
+            transform: scale(1.0);
+            transition: transform 0.5s ease;
+        }
+        .parallax-hero:hover {
+            transform: scale(1.02);
+        }
+        .parallax-roster {
+            background-image: url('https://github.com/T24085/Team-HOE/blob/main/EuroArch.jpg?raw=true');
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            position: relative;
+            transform: scale(1.0);
+            transition: transform 0.5s ease;
+        }
+        .parallax-roster:hover {
+            transform: scale(1.02);
+        }
+        /* Overlay for readability */
+        .parallax-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Video container */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            margin-bottom: 2rem;
+            border: 2px solid #FFD700;
+            border-radius: 8px;
+        }
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        /* Video grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+        /* Responsive adjustments */
+        @media (max-width: 1000px) {
+            .stream-container {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg text-gray-100 font-serif">
+    <!-- Header Section -->
+    <header class="header-footer-bg p-6 sticky top-0 z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center">
+                <!-- Team Logo -->
+                <img src="https://github.com/T24085/Team-HOE/blob/main/HoE.png?raw=true" alt="Hegemony of Euros [HoE] Logo" class="w-16 h-16 rounded-full border-2 border-yellow-400">
+                <h1 class="ml-4 text-3xl font-bold glow-text">Hegemony of Euros [HoE]</h1>
+            </div>
+            <nav>
+                <ul class="flex space-x-6">
+                    <li><a href="#home" class="text-gray-100 hover:text-yellow-300 transition">Home</a></li>
+                    <li><a href="#featured-video" class="text-gray-100 hover:text-yellow-300 transition">Featured Videos</a></li>
+                    <li><a href="#streams" class="text-gray-100 hover:text-yellow-300 transition">Streams</a></li>
+                    <li><a href="#roster" class="text-gray-100 hover:text-yellow-300 transition">Roster</a></li>
+                    <li><a href="#about" class="text-gray-100 hover:text-yellow-300 transition">About</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section with Parallax Background -->
+    <section id="home" class="parallax-hero py-20 text-center relative">
+        <div class="parallax-overlay"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="text-5xl font-bold mb-4 glow-text">
+                <span class="text-blue-800">Welcome</span>
+                <span class="text-gray-100">to</span>
+                <span class="text-yellow-400">Hegemony</span>
+                <span class="text-blue-800">of</span>
+                <span class="text-gray-100">Euros!</span>
+            </h2>
+            <p class="text-xl mb-8 text-gray-100">Unifying Europe’s finest in TRIBES 3: Rivals, dominating the Wilderzone with strategic precision and continental pride.</p>
+            <a href="https://store.steampowered.com/app/2687970/TRIBES_3_Rivals/" target="_blank" class="bg-blue-800 hover:bg-blue-700 text-gray-100 font-bold py-3 px-6 rounded-lg border-2 border-yellow-400 hover-scale">Play TRIBES 3: Rivals</a>
+        </div>
+    </section>
+
+    <!-- Featured Videos Section -->
+    <section id="featured-video" class="py-16 bg-gray-800 bg-opacity-80">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 glow-text">
+                <span class="text-blue-800">Featured</span>
+                <span class="text-gray-100">Videos</span>
+            </h2>
+            <div class="video-grid">
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/KECIGdkH0Sg?start=11" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/zNovTE56lNQ?start=471" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+                <div class="video-container">
+                    <iframe src="https://www.youtube.com/embed/Lj1ByqBFGio" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Streams Section -->
+    <section id="streams" class="py-16 bg-gray-800 bg-opacity-80">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-12 glow-text">
+                <span class="text-yellow-400">Team</span>
+                <span class="text-blue-800">Streams</span>
+            </h2>
+            <div class="stream-container">
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">cym3</h3>
+                    <a href="https://www.twitch.tv/cymm3" target="_blank" class="text-yellow-400 hover:text-yellow-300">twitch.tv/cymm3</a>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Gwej</h3>
+                    <a href="https://www.twitch.tv/gwej" target="_blank" class="text-yellow-400 hover:text-yellow-300">twitch.tv/gwej</a>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Katar</h3>
+                    <a href="https://www.twitch.tv/karolk10" target="_blank" class="text-yellow-400 hover:text-yellow-300">twitch.tv/karolk10</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roster Section with Parallax Background -->
+    <section id="roster" class="parallax-roster py-16 relative">
+        <div class="parallax-overlay"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="text-4xl font-bold text-center mb-12 glow-text">
+                <span class="text-gray-100">Team</span>
+                <span class="text-yellow-400">Roster</span>
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Captains -->
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Katar</h3>
+                    <p class="text-yellow-400">Captain</p>
+                    <a href="https://www.twitch.tv/karolk10" target="_blank" class="text-yellow-400 hover:text-yellow-300">twitch.tv/karolk10</a>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Xwokark</h3>
+                    <p class="text-yellow-400">Captain</p>
+                </div>
+                <!-- Core Members -->
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Gotlub</h3>
+                    <p class="text-yellow-400">Core Member</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Mansku</h3>
+                    <p class="text-yellow-400">Core Member</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Lord Buschguy</h3>
+                    <p class="text-yellow-400">Core Member</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">björnbär</h3>
+                    <p class="text-yellow-400">Core Member</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Waffleking</h3>
+                    <p class="text-yellow-400">Core Member</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">TribalChief</h3>
+                    <p class="text-yellow-400">Core Member</p>
+                </div>
+                <!-- Bench -->
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">cym3</h3>
+                    <p class="text-yellow-400">Bench</p>
+                    <a href="https://www.twitch.tv/cymm3" target="_blank" class="text-yellow-400 hover:text-yellow-300">twitch.tv/cymm3</a>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">Gwej</h3>
+                    <p class="text-yellow-400">Bench</p>
+                    <a href="https://www.twitch.tv/gwej" target="_blank" class="text-yellow-400 hover:text-yellow-300">twitch.tv/gwej</a>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">tumi</h3>
+                    <p class="text-yellow-400">Bench</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">ThermoFlux</h3>
+                    <p class="text-yellow-400">Bench</p>
+                </div>
+                <div class="roster-card p-6 glow-border hover-scale">
+                    <h3 class="text-xl font-semibold text-gray-100">unam</h3>
+                    <p class="text-yellow-400">Bench</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-16 bg-gray-800 bg-opacity-80">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold mb-8 glow-text">
+                <span class="text-blue-800">About</span>
+                <span class="text-gray-100">Hegemony</span>
+                <span class="text-yellow-400">of</span>
+                <span class="text-blue-800">Euros!</span>
+            </h2>
+            <p class="text-lg mb-4 text-gray-100">Hegemony of Euros [HoE] is a powerhouse competitive team in *TRIBES 3: Rivals*, uniting Europe’s finest players under the leadership of Captains Katar and Xwokark. With strategic brilliance and continental pride, HoE dominates the Wilderzone with unmatched precision and unity.</p>
+            <p class="text-lg text-gray-100">Join us on Twitch to witness Europe’s elite in action!</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="header-footer-bg py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-100">© 2025 Hegemony of Euros [HoE]. All rights reserved.</p>
+            <p>Follow us on <a href="https://x.com/HoE" target="_blank" class="text-yellow-400 hover:text-yellow-300">@HoE</a></p>
+        </div>
+    </footer>
+</body>
+</html>

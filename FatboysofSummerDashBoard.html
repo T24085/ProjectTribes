@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Score / Minute Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="scoreChart"></canvas>
+
+    <script>
+        const players = ["PR0J", "DareDevilMoon", "Dugong", "Nemesis", "nomlfir", "kwago", "Annihilation", "DeadManWalking", "Barracuda",
+            "emma", "Gnome", "Tartarosk", "Ggglygy", "Dean", "TribalChief", "Tumi", "Torment", "Darkness93",
+            "CheezeCaek", "Wriggles", "Bag", "Goshawk", "waffleking", "SulliedSoc", "Bored", "Ryan (sub)", "NyaN",
+            "Lange", "Mikesters", "Izza", "Kenxai", "OperationsCats (sub)", "Buschguy", "Booleanaire", "Hitch",
+            "Mansku", "shadowwalker140i", "Hanosandy", "Zato", "ColonelFatso", "RebelTrooper", "Beldark", "Hawxter",
+            "Annaberries", "Panda", "LethalScout", "gotlub", "howsya", "Tritium Jones", "snakke", "Jive", "Franchez",
+            "björnbär", "_oahra", "HC_Joker", "Kadenzah", "Pablo Sexcrowbar", "freefood", "big jim", "BakaToma",
+            "Prizzo", "pLayb0x", "Mikea(x2)", "sajent", "Nykie4life", "GreenRain", "Def_Monk", "Tears", "XRY",
+            "Cryof", "Zao", "Nightstar", "cym3", "Simmons", "realhumanbeing"];
+        const score_minute = [403.951, 216.703, 377.823, 113.821, 374.141, 224.917, 93.854, 175.671, 215.216,
+            138.080, 365.541, 381.836, 309.784, 295.854, 400.532, 276.899, 133.203, 131.318,
+            338.742, 271.127, 268.605, 265.131, 328.702, 147.554, 168.824, 97.497, 188.047,
+            144.731, 301.104, 315.278, 333.333, 319.801, 337.782, 250.989, 71.689, 83.957,
+            234.837, 221.491, 149.060, 216.980, 366.275, 278.819, 229.877, 256.463, 332.286,
+            224.324, 150.071, 194.597, 355.988, 148.751, 297.753, 308.876, 376.143, 239.212,
+            290.226, 191.626, 130.771, 284.394, 320.887, 295.711, 247.605, 176.358, 245.783,
+            226.202, 81.885, 199.161, 147.340, 306.637, 341.259, 306.637, 140.666, 276.696,
+            145.347, 194.985, 216.537];
+
+        const ctxScore = document.getElementById('scoreChart').getContext('2d');
+        new Chart(ctxScore, {
+            type: 'scatter',
+            data: {
+                labels: players,
+                datasets: [{
+                    label: 'Score / Minute',
+                    data: score_minute.map((v, i) => ({ x: i, y: v })),
+                    backgroundColor: players.map((_, i) => `hsl(${i * 360 / players.length}, 70%, 50%)`),
+                    borderColor: players.map((_, i) => `hsl(${i * 360 / players.length}, 70%, 30%)`),
+                    borderWidth: 1,
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                scales: {
+                    x: { title: { display: true, text: 'Players' }, ticks: { callback: (i) => players[i], maxRotation: 90, minRotation: 90 } },
+                    y: { title: { display: true, text: 'Score / Minute' }, beginAtZero: true, suggestedMax: 450 }
+                },
+                plugins: {
+                    tooltip: { callbacks: { label: (context) => `${players[context.raw.x]}: ${context.raw.y}` } },
+                    legend: { display: false }
+                },
+                maintainAspectRatio: false,
+                responsive: true
+            }
+        });
+    </script>
+</body>
+</html>

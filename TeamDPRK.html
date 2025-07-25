@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[DPRK] Tribes Rivals Team</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ed1c24;
+            color: #fff;
+            background-image: url('https://github.com/T24085/TeamDPRK/blob/main/DPRKPuppy.png?raw=true');
+            background-repeat: repeat-y;
+            background-size: contain;
+            background-position: center top;
+            background-attachment: scroll;
+            overflow-x: hidden;
+            position: relative;
+            z-index: 0;
+            min-height: 100vh;
+        }
+        header {
+            position: relative;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background-color: #003087;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+        header img {
+            height: 60px;
+            margin-right: 20px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        nav {
+            position: fixed;
+            top: 80px;
+            width: 100%;
+            background-color: #003087;
+            padding: 1em;
+            text-align: center;
+            z-index: 1002;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        nav.visible {
+            opacity: 1;
+        }
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 1em;
+            font-weight: bold;
+        }
+        nav a:hover {
+            color: #ed1c24;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 1em;
+            margin-top: 100px;
+            position: relative;
+            z-index: 1;
+            background: transparent;
+            min-height: calc(100vh - 80px);
+        }
+        .team-intro, .team-info, .stats-section, .tournament-wins, .featured-videos {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2em;
+            border-radius: 8px;
+            margin-bottom: 2em;
+            text-align: center;
+            color: #003087;
+        }
+        .team-intro h2, .team-info h2, .stats-section h2, .tournament-wins h2, .featured-videos h2 {
+            color: #ed1c24;
+        }
+        .team-members {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1em;
+            margin-top: 2em;
+        }
+        .member {
+            background-color: #003087;
+            color: white;
+            padding: 1em;
+            border-radius: 8px;
+            text-align: center;
+            height: 400px;
+            overflow: hidden;
+            border: 2px solid #fff;
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+        }
+        .member h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: #ed1c24;
+        }
+        .member p {
+            margin: 0.5em 0 0;
+            font-size: 0.9em;
+            color: #fff;
+        }
+        .member iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+            margin-top: 0.5em;
+        }
+        .member a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            margin-top: 0.5em;
+        }
+        .member a:hover {
+            color: #ed1c24;
+        }
+        .member:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .stats-table, .wins-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+        }
+        .stats-table th, .stats-table td, .wins-table th, .wins-table td {
+            border: 1px solid #fff;
+            padding: 8px;
+            text-align: left;
+        }
+        .stats-table th, .wins-table th {
+            background-color: #ed1c24;
+            color: #fff;
+        }
+        .stats-table td, .wins-table td {
+            color: #003087;
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1em;
+            margin-top: 2em;
+        }
+        .video-item iframe {
+            width: 100%;
+            height: 200px;
+            border: none;
+            border-radius: 8px;
+        }
+        footer {
+            background-color: #003087;
+            color: #fff;
+            text-align: center;
+            padding: 1em;
+            width: 100%;
+            margin-top: 2em;
+        }
+        footer img {
+            max-width: 150px;
+            margin-top: 10px;
+        }
+        @media (max-width: 600px) {
+            .team-members, .video-grid {
+                grid-template-columns: 1fr;
+            }
+            .member iframe, .video-item iframe {
+                height: 200px;
+            }
+            .stats-table, .wins-table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const domain = window.location.hostname;
+            console.log('Domain detected:', domain);
+            const twitchIframes = document.querySelectorAll('iframe[src*="twitch.tv"]');
+            twitchIframes.forEach(function(iframe) {
+                const src = iframe.src;
+                const channelMatch = src.match(/channel=([^&]+)/);
+                if (channelMatch) {
+                    const channel = channelMatch[1];
+                    iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${domain}&muted=true`;
+                    console.log(`Updated iframe for channel: ${channel} with parent: ${domain}`);
+                } else {
+                    console.error('No channel found in iframe src:', src);
+                }
+            });
+        });
+
+        window.addEventListener('scroll', function() {
+            const nav = document.querySelector('nav');
+            const body = document.body;
+            if (window.scrollY > 100) {
+                nav.classList.add('visible');
+                body.classList.add('scrolled');
+            } else {
+                nav.classList.remove('visible');
+                body.classList.remove('scrolled');
+            }
+        });
+
+        window.addEventListener('load', function() {
+            const container = document.querySelector('.container');
+            if (window.innerHeight >= document.documentElement.scrollHeight) {
+                container.style.marginTop = '100px';
+            }
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <img src="https://github.com/T24085/TeamDPRK/blob/main/TeamDPRKLogo3.png?raw=true" alt="DPRK Logo">
+        <h1>[DPRK] Tribes Rivals</h1>
+    </header>
+    <nav>
+        <a href="#team-intro">Team Intro</a>
+        <a href="#featured-videos">Featured Videos</a>
+        <a href="#team">Team</a>
+        <a href="#stats">Stats</a>
+        <a href="#tournament-wins">Tournament Wins</a>
+        <a href="#contact">Contact</a>
+    </nav>
+    <div class="container">
+        <div class="team-intro" id="team-intro">
+            <h2>Team Introduction</h2>
+            <p>Welcome to [DPRK] Tribes Rivals, a formidable force in the competitive Tribes Rivals community, built on a foundation of skill, strategy, and unwavering dedication. Established with a vision to dominate the battlefield, our team is led by a dynamic leadership trio that drives our success. Glem, our esteemed Leader, brings versatility to the team with a flex role, most often excelling as a Medium Offense player, adapting to any situation with precision and tactical brilliance. CheezeCaeke, our Co-Leader, oversees operations with a steady hand, specializing as a HOF Heavy On Flag player, while ColonelFatso, our Captain, commands the frontline as a Capper, ensuring our strategies are executed flawlessly.</p>
+            <p>Our core principles revolve around teamwork, discipline, and continuous improvement. We foster an environment where every player’s contribution is valued, from the strategic minds to the agile defenders. Our roster is a blend of seasoned veterans and rising stars, each bringing unique strengths to the table. Meet our key players: Nemesis, a skilled Capper who dominates flag captures; Rhino, a stalwart Light Defense specialist; Halogen, another Light Defense powerhouse; and Panda, our Heavy Offense enforcer. Together, we uphold a commitment to excellence, pushing the boundaries of competitive play while building a legacy of victory in the Tribes Rivals arena.</p>
+        </div>
+        <div class="featured-videos" id="featured-videos">
+            <h2>Featured Videos</h2>
+            <p>Check out some of our best moments!</p>
+            <div class="video-grid">
+                <div class="video-item">
+                    <iframe src="https://www.youtube.com/embed/NjAn60913lI" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="video-item">
+                    <iframe src="https://www.youtube.com/embed/WuB7DHNsIvs" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="team-info" id="team">
+            <h2>Team</h2>
+            <p>Meet our roster below and join us in the fight!</p>
+            <div class="team-members">
+                <div class="member">
+                    <h3>Glem</h3>
+                    <p>Leader (Flex, Medium Offense)</p>
+                    <iframe width="100%" height="300" src="https://www.youtube.com/embed?listType=user_uploads&list=glem7761WithGuns" frameborder="0" allowfullscreen></iframe>
+                    <a href="https://www.youtube.com/@Tribes3RIvalsHighlights49GirlsWithGuns" target="_blank">YouTube Channel</a>
+                </div>
+                <div class="member">
+                    <h3>CheezeCaeke</h3>
+                    <p>Co-Leader (HOF Heavy On Flag)</p>
+                    <iframe src="https://player.twitch.tv/?channel=cheezecaek&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
+                    <a href="https://www.youtube.com/@glem7761" target="_blank">YouTube Channel</a>
+                </div>
+                <div class="member">
+                    <h3>ColonelFatso</h3>
+                    <p>Captain (Capper)</p>
+                    <iframe src="https://player.twitch.tv/?channel=colonelfatso&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
+                </div>
+                <div class="member">
+                    <h3>Nemesis</h3>
+                    <p>Capper</p>
+                    <iframe src="https://player.twitch.tv/?channel=seansguitarworldbang&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
+                </div>
+                <div class="member">
+                    <h3>Rhino</h3>
+                    <p>Light Defense</p>
+                </div>
+                <div class="member">
+                    <h3>Halogen</h3>
+                    <p>Light Defense</p>
+                </div>
+                <div class="member">
+                    <h3>Panda</h3>
+                    <p>Heavy Offense</p>
+                    <iframe src="https://player.twitch.tv/?channel=pandoracast&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
+                </div>
+            </div>
+        </div>
+        <div class="stats-section" id="stats">
+            <h2>Player Stats</h2>
+            <table class="stats-table">
+                <tr>
+                    <th>Player</th>
+                    <th>Role</th>
+                    <th>Score</th>
+                    <th>Kills</th>
+                    <th>Assists</th>
+                    <th>Score per Minute</th>
+                    <th>Kills per Minute</th>
+                    <th>Captures per Minute</th>
+                    <th>Returns per Minute</th>
+                </tr>
+                <tr>
+                    <td>Glem</td>
+                    <td>Leader</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>CheezeCaeke</td>
+                    <td>Co-Leader</td>
+                    <td>35595</td>
+                    <td>181</td>
+                    <td>110</td>
+                    <td>338.742</td>
+                    <td>1.722</td>
+                    <td>0.010</td>
+                    <td>0.114</td>
+                </tr>
+                <tr>
+                    <td>ColonelFatso</td>
+                    <td>Captain</td>
+                    <td>36930</td>
+                    <td>108</td>
+                    <td>170</td>
+                    <td>216.980</td>
+                    <td>0.635</td>
+                    <td>0.035</td>
+                    <td>0.170</td>
+                </tr>
+                <tr>
+                    <td>Nemesis</td>
+                    <td>Capper</td>
+                    <td>16075</td>
+                    <td>42</td>
+                    <td>47</td>
+                    <td>113.821</td>
+                    <td>0.297</td>
+                    <td>0.028</td>
+                    <td>0.021</td>
+                </tr>
+                <tr>
+                    <td>Rhino</td>
+                    <td>Light Defense</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Halogen</td>
+                    <td>Light Defense</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Panda</td>
+                    <td>Heavy Offense</td>
+                    <td>56555</td>
+                    <td>275</td>
+                    <td>187</td>
+                    <td>332.286</td>
+                    <td>1.616</td>
+                    <td>0.000</td>
+                    <td>0.165</td>
+                </tr>
+            </table>
+        </div>
+        <div class="tournament-wins" id="tournament-wins">
+            <h2>Tournament Wins</h2>
+            <table class="wins-table">
+                <tr>
+                    <th>Tournament</th>
+                    <th>Year</th>
+                    <th>Result</th>
+                </tr>
+                <tr>
+                    <td>Tribes Rivals FatBoys of Summer Draft</td>
+                    <td>2025</td>
+                    <td>2nd Place</td>
+                </tr>
+                <tr>
+                    <td>Tribes Rivals March Draft</td>
+                    <td>2025</td>
+                    <td>2nd Place</td>
+                </tr>
+                <tr>
+                    <td>Draft Tournament</td>
+                    <td>2025</td>
+                    <td>1st Place, 3rd Place</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <footer>
+        <p>© 2025 [DPRK] Tribes Rivals. All rights reserved.</p>
+        <img src="https://github.com/T24085/TeamDPRK/blob/main/DPRKLOGO.png?raw=true" alt="DPRK Logo">
+    </footer>
+</body>
+</html>
