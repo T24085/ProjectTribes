@@ -26,6 +26,8 @@
             transform: scale(1.05);
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
         }
+        .live-indicator { display: none; }
+        .live-indicator.live { display: inline-block; }
         .history-section {
             background: linear-gradient(135deg, #1a202c, #2d3748);
         }
@@ -65,7 +67,10 @@
             .then(res => res.text())
             .then(html => {
                 document.getElementById("nav-placeholder").innerHTML = html;
-                if (window.twitchOAuth) twitchOAuth.updateNav();
+                if (window.twitchOAuth) {
+                    twitchOAuth.updateNav();
+                    twitchOAuth.initFollowedStreamsHover();
+                }
             });
     </script>
     <!-- Header -->
@@ -86,7 +91,7 @@
                     <img src="https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true" alt="Avalanche team logo with snowy mountain and jetpack motif" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Avalanche [aV!]</h3>
+                    <h3 class="text-xl font-bold">Avalanche [aV!]<span id="live-Avalanche" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @Tritium Jones</p>
                     <button onclick="showRoster('Avalanche')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('Avalanche')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -98,7 +103,7 @@
                     <img src="https://github.com/T24085/Team-ePi/blob/main/ePi.png?raw=true" alt="ePidemic team logo with biohazard and jetpack design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">ePidemic [ePi]</h3>
+                    <h3 class="text-xl font-bold">ePidemic [ePi]<span id="live-ePidemic" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @[ePi] Convik</p>
                     <button onclick="showRoster('ePidemic')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('ePidemic')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -110,7 +115,7 @@
                     <img src="https://github.com/T24085/TeamDPRK/blob/main/TeamDPRKLogo3.png?raw=true" alt="DPRK team logo with red star and futuristic tribal design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">DPRK</h3>
+                    <h3 class="text-xl font-bold">DPRK<span id="live-DPRK" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: ColonelFatso</p>
                     <button onclick="showRoster('DPRK')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('DPRK')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -122,7 +127,7 @@
                     <img src="https://github.com/T24085/Team-Zen/blob/main/Zenlogo.png?raw=true" alt="Zen team logo with minimalist tribal and jetpack symbol" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Zen [ℨ]</h3>
+                    <h3 class="text-xl font-bold">Zen [ℨ]<span id="live-Zen" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @ℨ Gigz</p>
                     <button onclick="showRoster('Zen')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('Zen')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -134,7 +139,7 @@
                     <img src="https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true" alt="Texas Militia team logo with lone star and tribal motif" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Texas Militia [TXM]</h3>
+                    <h3 class="text-xl font-bold">Texas Militia [TXM]<span id="live-TXM" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @OpCats</p>
                     <button onclick="showRoster('TXM')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('TXM')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -146,7 +151,7 @@
                     <img src="https://github.com/T24085/Team-FPS/blob/main/FPSlogo.png?raw=true" alt="Flag Pole Smokers team logo with flag and smoke design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Flag Pole Smokers [FPS]</h3>
+                    <h3 class="text-xl font-bold">Flag Pole Smokers [FPS]<span id="live-FPS" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @S...</p>
                     <button onclick="showRoster('FPS')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('FPS')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -158,7 +163,7 @@
                     <img src="https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true" alt="Flying Tractors team logo with tractor and jetpack imagery" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Flying Tractors [^T^]</h3>
+                    <h3 class="text-xl font-bold">Flying Tractors [^T^]<span id="live-FT" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @p...</p>
                     <button onclick="showRoster('Flying Tractors')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('FT')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -170,7 +175,7 @@
                     <img src="https://github.com/T24085/Team-HOE/blob/main/HoE.png?raw=true" alt="Hegemony of Euros team logo with European and tribal elements" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Hegemony of Euros [HoE]</h3>
+                    <h3 class="text-xl font-bold">Hegemony of Euros [HoE]<span id="live-HoE" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @[ɧơɛ] Katar Xwokark</p>
                     <button onclick="showRoster('HoE')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('HoE')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -182,7 +187,7 @@
                     <img src="https://github.com/T24085/Team-KTL/blob/main/KTLlogo.png?raw=true" alt="KTL team logo with futuristic tribal design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">KTL</h3>
+                    <h3 class="text-xl font-bold">KTL<span id="live-KTL" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @n0xide</p>
                     <button onclick="showRoster('KTL')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                 </div>
@@ -193,7 +198,7 @@
                     <img src="https://github.com/T24085/Team-Magic/blob/main/Magic.png?raw=true" alt="Magic team logo with mystical and tribal symbols" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Magic [Wiz]</h3>
+                    <h3 class="text-xl font-bold">Magic [Wiz]<span id="live-Magic" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @[wiz] Lange</p>
                     <button onclick="showRoster('Magic')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('Magic')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -205,7 +210,7 @@
                     <img src="https://github.com/T24085/Team-Null/blob/main/NullLogo.png?raw=true" alt="null team logo with abstract tribal design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">null</h3>
+                    <h3 class="text-xl font-bold">null<span id="live-null" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @_...</p>
                     <button onclick="showRoster('null')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                 </div>
@@ -216,7 +221,7 @@
                     <img src="https://github.com/T24085/Team-Toxic-Aimers/blob/main/ToxicAimersLogo.png?raw=true" alt="Toxic Aimers team logo with toxic and tribal motifs" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Toxic Aimers</h3>
+                    <h3 class="text-xl font-bold">Toxic Aimers<span id="live-Toxic-Aimers" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @R...</p>
                     <button onclick="showRoster('Toxic Aimers')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                 </div>
@@ -227,7 +232,7 @@
                     <img src="https://github.com/T24085/Team-Tribal-Therapy/blob/main/T_TLogo.png?raw=true" alt="Tribal Therapy team logo with calming tribal design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Tribal Therapy [T_T]</h3>
+                    <h3 class="text-xl font-bold">Tribal Therapy [T_T]<span id="live-Tribal-Therapy" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: Blitz</p>
                     <button onclick="showRoster('Tribal Therapy')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('Tribal Therapy')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -239,7 +244,7 @@
                     <img src="https://github.com/T24085/Team-R/blob/main/Rlogo.png?raw=true" alt="Viva la Revolución team logo with revolutionary tribal symbols" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Viva la Revolución [R]</h3>
+                    <h3 class="text-xl font-bold">Viva la Revolución [R]<span id="live-Viva-la-Revolución" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @Borpalkitty</p>
                     <button onclick="showRoster('Viva la Revolución')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                 </div>
@@ -250,7 +255,7 @@
                     <img src="https://github.com/T24085/Team-UE/blob/main/UE.png?raw=true" alt="UE team logo with futuristic tribal design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">UE</h3>
+                    <h3 class="text-xl font-bold">UE<span id="live-UE" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: DeadManWalking</p>
                     <button onclick="showRoster('UE')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('UE')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
@@ -455,6 +460,37 @@
             document.getElementById('streamsModal').style.display = 'none';
         }
 
+        function updateTeamLiveStatus() {
+            const teamLogins = {};
+            for (const [team, list] of Object.entries(streams)) {
+                teamLogins[team] = list
+                    .map(s => {
+                        const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
+                        return m ? m[1].toLowerCase() : null;
+                    })
+                    .filter(Boolean);
+            }
+            const allLogins = [...new Set(Object.values(teamLogins).flat())];
+            if (allLogins.length === 0) return;
+
+            const query = allLogins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
+            fetch('https://api.twitch.tv/helix/streams?' + query, {
+                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const liveSet = new Set((data.data || []).map(s => s.user_login.toLowerCase()));
+                    for (const [team, logins] of Object.entries(teamLogins)) {
+                        const id = 'live-' + team.replace(/\s+/g, '-');
+                        const el = document.getElementById(id);
+                        if (el && logins.some(l => liveSet.has(l))) {
+                            el.classList.add('live');
+                        }
+                    }
+                })
+                .catch(err => console.error('Failed to fetch live teams', err));
+        }
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
@@ -463,6 +499,7 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            updateTeamLiveStatus();
             if (window.twitchOAuth && twitchOAuth.getToken()) {
                 twitchOAuth.fetchFollowedStreams().then(followed => {
                     if (!followed || followed.length === 0) return;
