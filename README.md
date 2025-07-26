@@ -6,7 +6,7 @@ This repository contains a collection of static HTML pages for the community aro
 
 - **TribesRivalsTeamsDashboard.html** – Main dashboard linking to individual team pages, streaming links, and historical information.
 - **TournamentManager.html** – React-based page for managing tournaments and importing sign-up data.
-- **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters.
+- **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters. Includes a chat box powered by Twitch embeds that appears alongside the match streams.
 - **TwitchFeedDisplays.html** – Layout for watching multiple Twitch streams at once.
 - **TwitchFeedMobile.html** – Mobile-friendly version of the Twitch feeds display.
 - **FatboysofSummerDashBoard.html** – Score-per-minute chart for a draft tournament.
