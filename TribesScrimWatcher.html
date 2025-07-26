@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tribes Rivals Scrim Watcher</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="oauth.js"></script>
     <style>
         body {
             background: linear-gradient(to right, #0f172a, #4c1d95);
@@ -54,7 +55,10 @@
     <script>
         fetch("nav.html")
             .then(res => res.text())
-            .then(html => { document.getElementById("nav-placeholder").innerHTML = html; });
+            .then(html => {
+                document.getElementById("nav-placeholder").innerHTML = html;
+                if (window.twitchOAuth) twitchOAuth.updateNav();
+            });
     </script>
     <header class="text-center py-6">
         <h1 class="text-4xl font-bold text-violet-400">Tribes Rivals Scrim Watcher</h1>
