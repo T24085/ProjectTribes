@@ -53,6 +53,41 @@
     }
   }
 
+  function updateFollowedStreamsPanel() {
+    const panel = document.getElementById('followed-streams-panel');
+    if (!panel) return;
+    panel.innerHTML = 'Loading...';
+    fetchFollowedStreams().then(streams => {
+      if (!streams || streams.length === 0) {
+        panel.innerHTML = '<p class="text-sm">No followed streams live.</p>';
+        return;
+      }
+      panel.innerHTML = '';
+      streams.forEach(stream => {
+        const a = document.createElement('a');
+        a.href = `https://www.twitch.tv/${stream.user_login}`;
+        a.textContent = stream.user_name;
+        a.target = '_blank';
+        a.className = 'block hover:underline mb-2';
+        panel.appendChild(a);
+      });
+    });
+  }
+
+  function initFollowedStreamsHover() {
+    const toggle = document.getElementById('followed-streams-toggle');
+    const panel = document.getElementById('followed-streams-panel');
+    if (!toggle || !panel) return;
+
+    const show = () => panel.classList.replace('hidden', 'visible');
+    const hide = () => panel.classList.replace('visible', 'hidden');
+
+    toggle.addEventListener('mouseenter', show);
+    toggle.addEventListener('mouseleave', hide);
+    panel.addEventListener('mouseenter', show);
+    panel.addEventListener('mouseleave', hide);
+  }
+
   function loginWithTwitch() {
     const scope = 'user:read:email user:read:follows';
 
@@ -86,6 +121,7 @@
     const userSpan = document.getElementById('twitch-user');
 
     if (!btn) return;
+    const panel = document.getElementById('followed-streams-panel');
     if (getToken()) {
       btn.textContent = 'Sign out';
       btn.onclick = logoutTwitch;
@@ -97,10 +133,12 @@
           }
         });
       }
+      updateFollowedStreamsPanel();
     } else {
       btn.textContent = 'Sign in with Twitch';
       btn.onclick = loginWithTwitch;
       if (userSpan) userSpan.style.display = 'none';
+      if (panel) panel.innerHTML = '';
 
     }
   }
@@ -111,9 +149,14 @@
     getToken,
     fetchUser,
     fetchFollowedStreams,
+    updateFollowedStreamsPanel,
+    initFollowedStreamsHover,
     updateNav,
   };
 
-  handleRedirect();
-  document.addEventListener('DOMContentLoaded', updateNav);
+handleRedirect();
+document.addEventListener('DOMContentLoaded', () => {
+  updateNav();
+  initFollowedStreamsHover();
+});
 })();

@@ -38,7 +38,10 @@
       .then(res => res.text())
       .then(html => {
         document.getElementById("nav-placeholder").innerHTML = html;
-        if (window.twitchOAuth) twitchOAuth.updateNav();
+        if (window.twitchOAuth) {
+          twitchOAuth.updateNav();
+          twitchOAuth.initFollowedStreamsHover();
+        }
       });
   </script>
   <div id="root"></div>
