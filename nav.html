@@ -1,5 +1,5 @@
 <nav class="bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg sticky top-0 z-50">
-    <div class="container mx-auto">
+    <div class="container mx-auto relative">
         <ul class="flex flex-wrap justify-center gap-6 py-2 text-lg font-semibold">
             <li><a href="TribesRivalsTeamsDashboard.html" class="hover:text-blue-400 transition">Teams</a></li>
             <li><a href="TribesScrimWatcher.html" class="hover:text-blue-400 transition">Scrim Watcher</a></li>
@@ -8,6 +8,13 @@
             <li><a href="https://t24085.github.io/FatBoysofSummerDraft/dashboard" class="hover:text-blue-400 transition">Fatboys Dashboard</a></li>
         </ul>
         <button id="twitch-login-btn" class="ml-4 bg-purple-600 text-white py-1 px-3 rounded hover:bg-purple-700"></button>
+        <button id="followed-streams-toggle" class="ml-2 bg-gray-700 text-white py-1 px-3 rounded hover:bg-gray-800">Followed Streams</button>
         <span id="twitch-user" class="ml-2 text-purple-300" style="display:none;"></span>
+        <div id="followed-streams-panel" class="followed-streams-panel hidden absolute right-0 top-full bg-gray-800 text-white p-4 w-64 max-h-80 overflow-y-auto shadow-lg"></div>
     </div>
 </nav>
+<style>
+  #followed-streams-panel { transition: transform 0.3s ease; }
+  #followed-streams-panel.hidden { transform: translateX(100%); }
+  #followed-streams-panel.visible { transform: translateX(0); }
+</style>
