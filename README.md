@@ -18,6 +18,10 @@ Open `TribesRivalsTeamsDashboard.html` in your browser to access the main dashbo
 Each team page provides roster info and may link to Twitch or YouTube streams.
 
 The project is purely static—clone or download the repository and open the HTML files locally or host them via any static file hosting service.
+## Shared Navigation
+
+The main navigation menu is stored in `nav.html`. Each page dynamically loads this file using JavaScript so the links stay consistent across the site.
+
 
 ## Credits
 
