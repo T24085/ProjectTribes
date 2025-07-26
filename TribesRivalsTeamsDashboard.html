@@ -305,6 +305,12 @@
         </div>
     </section>
 
+    <!-- Followed Streams -->
+    <section id="followed-streams" class="container mx-auto px-4 py-12" style="display:none;">
+        <h2 class="text-3xl font-semibold text-center mb-8">Your Followed Streams</h2>
+        <div id="followedStreamsList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </section>
+
     <!-- Modal for Roster -->
     <div id="rosterModal" class="modal">
         <div class="modal-content">
@@ -455,6 +461,24 @@
                 closeModal();
             }
         };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.twitchOAuth && twitchOAuth.getToken()) {
+                twitchOAuth.fetchFollowedStreams().then(followed => {
+                    if (!followed || followed.length === 0) return;
+                    const section = document.getElementById('followed-streams');
+                    const list = document.getElementById('followedStreamsList');
+                    followed.forEach(stream => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-gray-800 p-6 rounded-lg shadow-lg text-center';
+                        div.innerHTML = `<h3 class="text-xl font-bold">${stream.user_name}</h3>` +
+                            `<a href="https://www.twitch.tv/${stream.user_login}" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>`;
+                        list.appendChild(div);
+                    });
+                    section.style.display = 'block';
+                });
+            }
+        });
     </script>
 </body>
 </html>

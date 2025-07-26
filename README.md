@@ -25,6 +25,7 @@ The main navigation menu is stored in `nav.html`. Each page dynamically loads th
 ## Twitch Authentication
 
 Certain pages include a "Sign in with Twitch" button. Logging in stores your access token in `localStorage` so the site can personalize Twitch feeds. The login uses the [Twitch OAuth implicit flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#implicit-code-flow).
+When signed in, the main dashboard shows your Twitch username and displays any live channels you follow.
 
 
 ## Credits
