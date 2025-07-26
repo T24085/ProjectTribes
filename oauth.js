@@ -15,6 +15,7 @@
     localStorage.removeItem(STORAGE_KEY);
   }
 
+
   async function fetchUser() {
     const token = getToken();
     if (!token) return null;
@@ -54,6 +55,7 @@
 
   function loginWithTwitch() {
     const scope = 'user:read:email user:read:follows';
+
     const url =
       'https://id.twitch.tv/oauth2/authorize' +
       `?client_id=${CLIENT_ID}` +
@@ -82,6 +84,7 @@
   function updateNav() {
     const btn = document.getElementById('twitch-login-btn');
     const userSpan = document.getElementById('twitch-user');
+
     if (!btn) return;
     if (getToken()) {
       btn.textContent = 'Sign out';
@@ -98,6 +101,7 @@
       btn.textContent = 'Sign in with Twitch';
       btn.onclick = loginWithTwitch;
       if (userSpan) userSpan.style.display = 'none';
+
     }
   }
 
