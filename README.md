@@ -6,7 +6,7 @@ This repository contains a collection of static HTML pages for the community aro
 
 - **TribesRivalsTeamsDashboard.html** – Main dashboard linking to individual team pages, streaming links, and historical information.
 - **TournamentManager.html** – React-based page for managing tournaments and importing sign-up data.
-- **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters.
+- **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters. Includes a chat box powered by Twitch embeds that appears alongside the match streams.
 - **TwitchFeedDisplays.html** – Layout for watching multiple Twitch streams at once.
 - **TwitchFeedMobile.html** – Mobile-friendly version of the Twitch feeds display.
 - **FatboysofSummerDashBoard.html** – Score-per-minute chart for a draft tournament.
@@ -25,9 +25,9 @@ The main navigation menu is stored in `nav.html`. Each page dynamically loads th
 ## Twitch Authentication
 
 Certain pages include a "Sign in with Twitch" button. Logging in stores your access token in `localStorage` so the site can personalize Twitch feeds. The login uses the [Twitch OAuth implicit flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#implicit-code-flow).
-When signed in, the main dashboard shows your Twitch username and displays any live channels you follow.
+When signed in, the main dashboard shows your Twitch username.
 
-In the navigation bar a **Followed Streams** button now appears once you're logged in. Hovering over it slides in a panel listing your currently live followed channels.
+In the navigation bar a **Followed Streams** button now appears once you're logged in. Hovering over it slides in a panel listing any roster channels that are live on Twitch.
 
 
 The teams dashboard also checks each roster's streamers against Twitch and highlights teams that are currently live.
