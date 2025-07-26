@@ -50,17 +50,12 @@
     </style>
 </head>
 <body class="font-sans">
-    <nav class="bg-gray-900 bg-opacity-90 backdrop-blur-md shadow-lg sticky top-0 z-50">
-        <div class="container mx-auto">
-            <ul class="flex flex-wrap justify-center gap-6 py-2 text-lg font-semibold">
-                <li><a href="TribesRivalsTeamsDashboard.html" class="hover:text-blue-400 transition">Teams</a></li>
-                <li><a href="TribesScrimWatcher.html" class="hover:text-blue-400 transition">Scrim Watcher</a></li>
-                <li><a href="TournamentManager.html" class="hover:text-blue-400 transition">Tournament Manager</a></li>
-                <li><a href="TwitchFeedDisplays.html" class="hover:text-blue-400 transition">Twitch Feeds</a></li>
-                <li><a href="https://t24085.github.io/FatBoysofSummerDraft/dashboard" class="hover:text-blue-400 transition">Fatboys Dashboard</a></li>
-            </ul>
-        </div>
-    </nav>
+    <div id="nav-placeholder"></div>
+    <script>
+        fetch("nav.html")
+            .then(res => res.text())
+            .then(html => { document.getElementById("nav-placeholder").innerHTML = html; });
+    </script>
     <header class="text-center py-6">
         <h1 class="text-4xl font-bold text-violet-400">Tribes Rivals Scrim Watcher</h1>
     </header>
