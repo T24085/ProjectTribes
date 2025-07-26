@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="oauth.js"></script>
   <style>
     body {
       background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
@@ -35,7 +36,10 @@
   <script>
     fetch("nav.html")
       .then(res => res.text())
-      .then(html => { document.getElementById("nav-placeholder").innerHTML = html; });
+      .then(html => {
+        document.getElementById("nav-placeholder").innerHTML = html;
+        if (window.twitchOAuth) twitchOAuth.updateNav();
+      });
   </script>
   <div id="root"></div>
   <script type="text/babel">

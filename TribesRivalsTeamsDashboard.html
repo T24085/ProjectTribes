@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tribes Rivals Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="oauth.js"></script>
     <style>
         body {
             background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
@@ -62,7 +63,10 @@
     <script>
         fetch("nav.html")
             .then(res => res.text())
-            .then(html => { document.getElementById("nav-placeholder").innerHTML = html; });
+            .then(html => {
+                document.getElementById("nav-placeholder").innerHTML = html;
+                if (window.twitchOAuth) twitchOAuth.updateNav();
+            });
     </script>
     <!-- Header -->
     <header class="bg-gray-800 py-6 shadow-lg">
