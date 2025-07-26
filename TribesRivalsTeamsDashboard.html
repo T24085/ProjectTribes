@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tribes Rivals Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="oauth.js"></script>
     <style>
         body {
             background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
@@ -62,7 +63,10 @@
     <script>
         fetch("nav.html")
             .then(res => res.text())
-            .then(html => { document.getElementById("nav-placeholder").innerHTML = html; });
+            .then(html => {
+                document.getElementById("nav-placeholder").innerHTML = html;
+                if (window.twitchOAuth) twitchOAuth.updateNav();
+            });
     </script>
     <!-- Header -->
     <header class="bg-gray-800 py-6 shadow-lg">
@@ -301,6 +305,12 @@
         </div>
     </section>
 
+    <!-- Followed Streams -->
+    <section id="followed-streams" class="container mx-auto px-4 py-12" style="display:none;">
+        <h2 class="text-3xl font-semibold text-center mb-8">Your Followed Streams</h2>
+        <div id="followedStreamsList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    </section>
+
     <!-- Modal for Roster -->
     <div id="rosterModal" class="modal">
         <div class="modal-content">
@@ -451,6 +461,24 @@
                 closeModal();
             }
         };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.twitchOAuth && twitchOAuth.getToken()) {
+                twitchOAuth.fetchFollowedStreams().then(followed => {
+                    if (!followed || followed.length === 0) return;
+                    const section = document.getElementById('followed-streams');
+                    const list = document.getElementById('followedStreamsList');
+                    followed.forEach(stream => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-gray-800 p-6 rounded-lg shadow-lg text-center';
+                        div.innerHTML = `<h3 class="text-xl font-bold">${stream.user_name}</h3>` +
+                            `<a href="https://www.twitch.tv/${stream.user_login}" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>`;
+                        list.appendChild(div);
+                    });
+                    section.style.display = 'block';
+                });
+            }
+        });
     </script>
 </body>
 </html>
