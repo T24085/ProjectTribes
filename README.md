@@ -30,6 +30,8 @@ When signed in, the main dashboard shows your Twitch username and displays any l
 In the navigation bar a **Followed Streams** button now appears once you're logged in. Hovering over it slides in a panel listing your currently live followed channels.
 
 
+The teams dashboard also checks each roster's streamers against Twitch and highlights teams that are currently live.
+
 ## Credits
 
 © 2025 Tribes Rivals community. Individual team pages contain their respective credits.
