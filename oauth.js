@@ -169,18 +169,30 @@
     });
   }
 
-  function initFollowedStreamsHover() {
+  function initFollowedStreamsMenu() {
     const toggle = document.getElementById('followed-streams-toggle');
     const panel = document.getElementById('followed-streams-panel');
     if (!toggle || !panel) return;
 
-    const show = () => panel.classList.replace('hidden', 'visible');
-    const hide = () => panel.classList.replace('visible', 'hidden');
+    const togglePanel = (e) => {
+      e.stopPropagation();
+      if (panel.classList.contains('visible')) {
+        panel.classList.replace('visible', 'hidden');
+      } else {
+        panel.classList.replace('hidden', 'visible');
+      }
+    };
 
-    toggle.addEventListener('mouseenter', show);
-    toggle.addEventListener('mouseleave', hide);
-    panel.addEventListener('mouseenter', show);
-    panel.addEventListener('mouseleave', hide);
+    const handleClickOutside = (e) => {
+      if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+        if (panel.classList.contains('visible')) {
+          panel.classList.replace('visible', 'hidden');
+        }
+      }
+    };
+
+    toggle.addEventListener('click', togglePanel);
+    document.addEventListener('click', handleClickOutside);
   }
 
   function loginWithTwitch() {
@@ -246,13 +258,13 @@
     fetchFollowedStreams,
     fetchLiveTeamStreams,
     updateFollowedStreamsPanel,
-    initFollowedStreamsHover,
+    initFollowedStreamsMenu,
     updateNav,
   };
 
 handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
-  initFollowedStreamsHover();
+  initFollowedStreamsMenu();
 });
 })();
