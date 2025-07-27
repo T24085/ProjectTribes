@@ -147,8 +147,8 @@
     }
   }
 
-  function updateFollowedStreamsPanel() {
-    const panel = document.getElementById('followed-streams-panel');
+  function updateLiveTeamsPanel() {
+    const panel = document.getElementById('live-teams-panel');
     if (!panel) return;
     panel.innerHTML = 'Loading...';
     fetchLiveTeamStreams().then(streams => {
@@ -169,18 +169,30 @@
     });
   }
 
-  function initFollowedStreamsHover() {
-    const toggle = document.getElementById('followed-streams-toggle');
-    const panel = document.getElementById('followed-streams-panel');
+  function initLiveTeamsMenu() {
+    const toggle = document.getElementById('live-teams-toggle');
+    const panel = document.getElementById('live-teams-panel');
     if (!toggle || !panel) return;
 
-    const show = () => panel.classList.replace('hidden', 'visible');
-    const hide = () => panel.classList.replace('visible', 'hidden');
+    const togglePanel = (e) => {
+      e.stopPropagation();
+      if (panel.classList.contains('visible')) {
+        panel.classList.replace('visible', 'hidden');
+      } else {
+        panel.classList.replace('hidden', 'visible');
+      }
+    };
 
-    toggle.addEventListener('mouseenter', show);
-    toggle.addEventListener('mouseleave', hide);
-    panel.addEventListener('mouseenter', show);
-    panel.addEventListener('mouseleave', hide);
+    const handleClickOutside = (e) => {
+      if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+        if (panel.classList.contains('visible')) {
+          panel.classList.replace('visible', 'hidden');
+        }
+      }
+    };
+
+    toggle.addEventListener('click', togglePanel);
+    document.addEventListener('click', handleClickOutside);
   }
 
   function loginWithTwitch() {
@@ -216,7 +228,7 @@
     const userSpan = document.getElementById('twitch-user');
 
     if (!btn) return;
-    const panel = document.getElementById('followed-streams-panel');
+    const panel = document.getElementById('live-teams-panel');
     if (getToken()) {
       btn.textContent = 'Sign out';
       btn.onclick = logoutTwitch;
@@ -228,7 +240,7 @@
           }
         });
       }
-      updateFollowedStreamsPanel();
+        updateLiveTeamsPanel();
     } else {
       btn.textContent = 'Sign in with Twitch';
       btn.onclick = loginWithTwitch;
@@ -245,14 +257,14 @@
     fetchUser,
     fetchFollowedStreams,
     fetchLiveTeamStreams,
-    updateFollowedStreamsPanel,
-    initFollowedStreamsHover,
+    updateLiveTeamsPanel,
+    initLiveTeamsMenu,
     updateNav,
   };
 
 handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
-  initFollowedStreamsHover();
+  initLiveTeamsMenu();
 });
 })();
