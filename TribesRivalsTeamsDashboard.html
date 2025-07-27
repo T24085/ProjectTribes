@@ -69,8 +69,8 @@
                 document.getElementById("nav-placeholder").innerHTML = html;
                 if (window.twitchOAuth) {
                     twitchOAuth.updateNav();
-                    twitchOAuth.initFollowedStreamsMenu();
-                    const panel = document.getElementById('followed-streams-panel');
+                    twitchOAuth.initLiveTeamsMenu();
+                    const panel = document.getElementById('live-teams-panel');
                     if (panel) panel.style.top = '9rem';
 
                 }
@@ -313,10 +313,10 @@
         </div>
     </section>
 
-    <!-- Followed Streams -->
-    <section id="followed-streams" class="container mx-auto px-4 py-12" style="display:none;">
-        <h2 class="text-3xl font-semibold text-center mb-8">Your Followed Streams</h2>
-        <div id="followedStreamsList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+    <!-- Live Teams -->
+    <section id="live-teams" class="container mx-auto px-4 py-12" style="display:none;">
+        <h2 class="text-3xl font-semibold text-center mb-8">Live Teams</h2>
+        <div id="liveTeamsList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
     </section>
 
     <!-- Modal for Roster -->
@@ -506,8 +506,8 @@
             if (window.twitchOAuth && twitchOAuth.getToken()) {
                 twitchOAuth.fetchFollowedStreams().then(followed => {
                     if (!followed || followed.length === 0) return;
-                    const section = document.getElementById('followed-streams');
-                    const list = document.getElementById('followedStreamsList');
+                    const section = document.getElementById('live-teams');
+                    const list = document.getElementById('liveTeamsList');
                     followed.forEach(stream => {
                         const div = document.createElement('div');
                         div.className = 'bg-gray-800 p-6 rounded-lg shadow-lg text-center';
