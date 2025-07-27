@@ -172,6 +172,7 @@
   function initLiveTeamsMenu() {
     const toggle = document.getElementById('live-teams-toggle');
     const panel = document.getElementById('live-teams-panel');
+
     if (!toggle || !panel) return;
 
     const togglePanel = (e) => {
@@ -257,14 +258,18 @@
     fetchUser,
     fetchFollowedStreams,
     fetchLiveTeamStreams,
+
     updateLiveTeamsPanel,
     initLiveTeamsMenu,
+
     updateNav,
   };
 
 handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
+
   initLiveTeamsMenu();
+
 });
 })();

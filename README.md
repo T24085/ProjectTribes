@@ -29,6 +29,7 @@ When signed in, the main dashboard shows your Twitch username.
 
 In the navigation bar a **Live Teams** button appears after you sign in with Twitch. Clicking the button toggles a side menu that slides in from the left. On the teams dashboard the menu is positioned just below the "Tribes Rivals Dashboard" heading and above the "Select a Team" section. Clicking anywhere outside the menu closes it. Because the site queries the Twitch API using your token, being logged in is required for this list to populate.
 
+
 The teams dashboard also checks each roster's streamers against Twitch and highlights teams that are currently live.
 
 ## Credits
