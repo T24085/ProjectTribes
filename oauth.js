@@ -121,6 +121,9 @@
   }
 
   async function fetchLiveTeamStreams() {
+    const token = getToken();
+    if (!token) return [];
+
     const logins = Object.values(TEAM_STREAMS).flat()
       .map(s => {
         const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
@@ -131,10 +134,13 @@
     const query = logins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
     try {
       const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
-        headers: { 'Client-Id': CLIENT_ID }
+        headers: {
+          'Client-ID': CLIENT_ID,
+          'Authorization': 'Bearer ' + token
+        }
       });
       const json = await res.json();
-      return json.data || [];
+      return Array.isArray(json.data) ? json.data : [];
     } catch (err) {
       console.error('Failed to fetch team streams', err);
       return [];
