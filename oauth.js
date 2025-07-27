@@ -123,6 +123,7 @@
   async function fetchLiveTeamStreams() {
     const token = getToken();
     if (!token) return [];
+
     const logins = Object.values(TEAM_STREAMS).flat()
       .map(s => {
         const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
