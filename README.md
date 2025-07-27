@@ -27,8 +27,7 @@ The main navigation menu is stored in `nav.html`. Each page dynamically loads th
 Certain pages include a "Sign in with Twitch" button. Logging in stores your access token in `localStorage` so the site can personalize Twitch feeds. The login uses the [Twitch OAuth implicit flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#implicit-code-flow).
 When signed in, the main dashboard shows your Twitch username.
 
-In the navigation bar a **Followed Streams** button appears after you sign in with Twitch. Hovering over it slides in a panel listing any roster channels that are live on Twitch. Because the site queries the Twitch API using your token, being logged in is required for this list to populate.
-0
+In the navigation bar a **Followed Streams** button appears after you sign in with Twitch. Clicking the button toggles a side menu that slides in from the left beneath the header and lists any roster channels currently live. Clicking anywhere outside the menu closes it. Because the site queries the Twitch API using your token, being logged in is required for this list to populate.
 
 The teams dashboard also checks each roster's streamers against Twitch and highlights teams that are currently live.
 
