@@ -3,6 +3,73 @@
   const REDIRECT_URI = 'https://t24085.github.io/ProjectTribes/TribesRivalsTeamsDashboard.html';
   const STORAGE_KEY = 'twitch_token';
 
+  const TEAM_STREAMS = {
+    'Avalanche': [
+      { name: 'Wriggles', url: 'https://www.twitch.tv/wrigglespk' },
+      { name: 'TritiumJones', url: 'https://www.twitch.tv/tritiumjones' },
+      { name: 'Dean', url: 'https://www.twitch.tv/wholuvsdean' },
+      { name: 'PROJ', url: 'https://www.twitch.tv/prj_tv' },
+      { name: 'Ggglygy', url: 'https://www.twitch.tv/ggglygy' },
+      { name: 'BakaToma', url: 'https://www.twitch.tv/bakatoma1' }
+    ],
+    'ePidemic': [
+      { name: 'Kenxai', url: 'https://www.twitch.tv/kenxai' },
+      { name: 'Makasuro', url: 'https://www.twitch.tv/makasuro' }
+    ],
+    'DPRK': [
+      { name: 'CheezeCaek', url: 'https://www.twitch.tv/cheezecaek' },
+      { name: 'silynn', url: 'https://www.twitch.tv/cheddox' },
+      { name: 'ColonelFatso', url: 'https://www.twitch.tv/colonelfatso' },
+      { name: 'Pandora', url: 'https://www.twitch.tv/pandoracast' },
+      { name: 'Nemesis', url: 'https://www.twitch.tv/seansguitarworldbang' }
+    ],
+    'Zen': [
+      { name: 'Mikesters', url: 'https://www.twitch.tv/mikesters17' },
+      { name: 'Nikebeamz', url: 'https://www.twitch.tv/nikebeamz' }
+    ],
+    'TXM': [
+      { name: 'Prizzo', url: 'https://www.twitch.tv/prizzo4real' },
+      { name: 'OperationCats', url: 'https://www.twitch.tv/operationcats' },
+      { name: 'Goshawk', url: 'https://www.twitch.tv/g0shawk' },
+      { name: 'Visis', url: 'https://www.twitch.tv/visisgaming' },
+      { name: 'Cryof', url: 'https://www.twitch.tv/cryofzshooter' },
+      { name: 'Jive', url: 'https://www.twitch.tv/heavenlyjive' },
+      { name: 'freefood', url: 'https://www.twitch.tv/freefoodd' },
+      { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
+    ],
+    'FPS': [
+      { name: 'SulliedSoc', url: 'https://www.twitch.tv/SulliedSoc' },
+      { name: 'Beldark', url: 'https://www.twitch.tv/beldarkk' }
+    ],
+    'FT': [
+      { name: 'Mikeax2', url: 'https://www.twitch.tv/mikeax2' },
+      { name: 'nato', url: 'https://www.twitch.tv/natopotato262' },
+      { name: 'playb0x', url: 'https://www.twitch.tv/playb0x' }
+    ],
+    'HoE': [
+      { name: 'Katar', url: 'https://www.twitch.tv/karolk10' },
+      { name: 'gwej', url: 'https://www.twitch.tv/gwej' },
+      { name: 'cym3', url: 'https://www.twitch.tv/cymm3' }
+    ],
+    'Magic': [
+      { name: 'XRY', url: 'https://www.twitch.tv/xry_tv' },
+      { name: 'Splitsecond', url: 'https://www.twitch.tv/splitsecondta' },
+      { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
+    ],
+    'Tribal Therapy': [
+      { name: 'iinferno', url: 'https://www.twitch.tv/bschrift' },
+      { name: 'Blitz', url: 'https://www.twitch.tv/slohp0k3' },
+      { name: 'apc', url: 'https://www.twitch.tv/apcizzle' },
+      { name: 'Makasuro', url: 'https://www.twitch.tv/makasuro' }
+    ],
+    'UE': [
+      { name: 'PabloSexcrobar', url: 'https://www.twitch.tv/eltimablo' },
+      { name: 'RoamenCota', url: 'https://www.twitch.tv/roamencota' },
+      { name: 'Simmons', url: 'https://www.twitch.tv/simmons572' },
+      { name: 'Ghost_Loot', url: 'https://www.twitch.tv/ghost_loot' }
+    ]
+  };
+
   function getToken() {
     return localStorage.getItem(STORAGE_KEY);
   }
@@ -53,23 +120,50 @@
     }
   }
 
+  async function fetchLiveTeamStreams() {
+    const token = getToken();
+    if (!token) return [];
+    const logins = Object.values(TEAM_STREAMS).flat()
+      .map(s => {
+        const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
+        return m ? m[1].toLowerCase() : null;
+      })
+      .filter(Boolean);
+    if (logins.length === 0) return [];
+    const query = logins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
+    try {
+      const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
+        headers: {
+          'Client-ID': CLIENT_ID,
+          'Authorization': 'Bearer ' + token
+        }
+      });
+      const json = await res.json();
+      return Array.isArray(json.data) ? json.data : [];
+    } catch (err) {
+      console.error('Failed to fetch team streams', err);
+      return [];
+    }
+  }
+
   function updateFollowedStreamsPanel() {
     const panel = document.getElementById('followed-streams-panel');
     if (!panel) return;
     panel.innerHTML = 'Loading...';
-    fetchFollowedStreams().then(streams => {
+    fetchLiveTeamStreams().then(streams => {
       if (!streams || streams.length === 0) {
-        panel.innerHTML = '<p class="text-sm">No followed streams live.</p>';
+        panel.innerHTML = '<p class="text-sm">No team streams live.</p>';
         return;
       }
       panel.innerHTML = '';
       streams.forEach(stream => {
-        const a = document.createElement('a');
-        a.href = `https://www.twitch.tv/${stream.user_login}`;
-        a.textContent = stream.user_name;
-        a.target = '_blank';
-        a.className = 'block hover:underline mb-2';
-        panel.appendChild(a);
+        const div = document.createElement('div');
+        div.className = 'live-box';
+        div.innerHTML = `
+          <span class="live-dot">\u25CF</span>
+          <a href="https://www.twitch.tv/${stream.user_login}" target="_blank" class="hover:underline">${stream.user_name}</a>
+        `;
+        panel.appendChild(div);
       });
     });
   }
@@ -149,6 +243,7 @@
     getToken,
     fetchUser,
     fetchFollowedStreams,
+    fetchLiveTeamStreams,
     updateFollowedStreamsPanel,
     initFollowedStreamsHover,
     updateNav,
