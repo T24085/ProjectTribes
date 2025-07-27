@@ -69,7 +69,9 @@
                 document.getElementById("nav-placeholder").innerHTML = html;
                 if (window.twitchOAuth) {
                     twitchOAuth.updateNav();
-                    twitchOAuth.initFollowedStreamsHover();
+                    twitchOAuth.initFollowedStreamsMenu();
+                    const panel = document.getElementById('followed-streams-panel');
+                    if (panel) panel.style.top = '9rem';
                 }
             });
     </script>
