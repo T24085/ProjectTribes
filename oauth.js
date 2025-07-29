@@ -56,7 +56,7 @@
       { name: 'Splitsecond', url: 'https://www.twitch.tv/splitsecondta' },
       { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
     ],
-    'Tribal Therapy': [
+    'DeadStop': [
       { name: 'iinferno', url: 'https://www.twitch.tv/bschrift' },
       { name: 'Blitz', url: 'https://www.twitch.tv/slohp0k3' },
       { name: 'apc', url: 'https://www.twitch.tv/apcizzle' },

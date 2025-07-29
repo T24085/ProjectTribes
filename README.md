@@ -12,7 +12,18 @@ This repository contains a collection of static HTML pages for the community aro
 - **FatboysofSummerDashBoard.html** – Score-per-minute chart for a draft tournament.
 - **TeamBuilder.html** – Simple form for creating your own team with a logo and banner stored in your browser.
 - **MontageBay.html** – Submit montage video links and view them all in one place.
-- **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, Tribal Therapy, Toxic Aimers, and Unhandled Exception.
+- **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, DeadStop, Toxic Aimers, and Unhandled Exception.
+
+## Quick Links
+
+You can open these pages directly after starting the server:
+
+- [Tribes Rivals Dashboard](TribesRivalsTeamsDashboard.html)
+- [Scrim Watcher](TribesScrimWatcher.html)
+- [Tournament Manager](TournamentManager.html)
+- [Twitch Feeds](TwitchFeedDisplays.html)
+- [Mobile Twitch Feeds](TwitchFeedMobile.html)
+- [Fatboys Dashboard](https://t24085.github.io/FatBoysofSummerDraft/dashboard)
 
 ## Quick Links
 
