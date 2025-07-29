@@ -1,6 +1,6 @@
 # Project Tribes
 
-This repository contains a collection of static HTML pages for the community around **Tribes 3: Rivals**. Each page focuses on tournament information, team rosters, or related utilities. Because all files are static, you can simply open them in a web browser—no web server or build step is required.
+This repository contains a collection of static HTML pages for the community around **Tribes 3: Rivals**. Each page focuses on tournament information, team rosters, or related utilities. Most pages remain fully static, but the repo now includes a small Node.js server that stores custom teams and montage links.
 
 ## Pages
 
@@ -16,10 +16,14 @@ This repository contains a collection of static HTML pages for the community aro
 
 ## Usage
 
-Open `TribesRivalsTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs.
-Each team page provides roster info and may link to Twitch or YouTube streams.
+Open `TribesRivalsTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs. Each team page provides roster info and may link to Twitch or YouTube streams.
 
-The project is purely static—clone or download the repository and open the HTML files locally or host them via any static file hosting service. Because there is no backend, the **Create Team** and **Montage Bay** pages save data in your browser's `localStorage` so your entries persist on the same machine.
+Install dependencies with `npm install` and start the backend using `node server.js`. The server serves these static files and exposes two REST endpoints:
+
+- `GET /api/teams` and `POST /api/teams` – store custom team info in `data/teams.json`.
+- `GET /api/montages` and `POST /api/montages` – store montage links in `data/montages.json`.
+
+The **Create Team** and **Montage Bay** pages call these endpoints instead of relying on `localStorage`.
 ## Shared Navigation
 
 The main navigation menu is stored in `nav.html`. Each page dynamically loads this file using JavaScript so the links stay consistent across the site.

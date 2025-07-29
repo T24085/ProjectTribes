@@ -45,9 +45,9 @@
     });
   }
 
-  function loadTeams() {
+  async function loadTeams() {
     const list = document.getElementById('team-list');
-    const teams = JSON.parse(localStorage.getItem('customTeams')||'[]');
+    const teams = await fetch('/api/teams').then(r=>r.json());
     list.innerHTML = '';
     teams.forEach(team => {
       const div = document.createElement('div');
@@ -69,9 +69,11 @@
     const logoData = await dataUrlFromFile(logoFile);
     const bannerData = await dataUrlFromFile(bannerFile);
 
-    const teams = JSON.parse(localStorage.getItem('customTeams')||'[]');
-    teams.push({name, logo: logoData, banner: bannerData});
-    localStorage.setItem('customTeams', JSON.stringify(teams));
+    await fetch('/api/teams', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, logo: logoData, banner: bannerData})
+    });
     loadTeams();
     e.target.reset();
   });
