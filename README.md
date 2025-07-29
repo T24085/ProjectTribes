@@ -14,6 +14,19 @@ This repository contains a collection of static HTML pages for the community aro
 - **MontageBay.html** – Submit montage video links and view them all in one place.
 - **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, Tribal Therapy, Toxic Aimers, and Unhandled Exception.
 
+## Quick Links
+
+You can open these pages directly after starting the server:
+
+- [Tribes Rivals Dashboard](TribesRivalsTeamsDashboard.html)
+- [Scrim Watcher](TribesScrimWatcher.html)
+- [Tournament Manager](TournamentManager.html)
+- [Twitch Feeds](TwitchFeedDisplays.html)
+- [Mobile Twitch Feeds](TwitchFeedMobile.html)
+- [Create Team](TeamBuilder.html)
+- [Montage Bay](MontageBay.html)
+- [Fatboys Dashboard](https://t24085.github.io/FatBoysofSummerDraft/dashboard)
+
 ## Usage
 
 Open `TribesRivalsTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs. Each team page provides roster info and may link to Twitch or YouTube streams.
