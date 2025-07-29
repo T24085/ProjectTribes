@@ -301,10 +301,10 @@
       .then(res => res.text())
       .then(html => {
         document.getElementById("nav-placeholder").innerHTML = html;
-        if (window.twitchOAuth) {
-          twitchOAuth.updateNav();
-          twitchOAuth.initFollowedStreamsHover();
-        }
+          if (window.twitchOAuth) {
+            twitchOAuth.updateNav();
+            twitchOAuth.initLiveTeamsMenu();
+          }
       });
   </script>
   <div class="container">
