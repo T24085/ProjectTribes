@@ -120,17 +120,9 @@
     }
   }
 
-  async function fetchLiveTeamStreams() {
+  async function fetchLiveStreams(logins) {
     const token = getToken();
-    if (!token) return [];
-
-    const logins = Object.values(TEAM_STREAMS).flat()
-      .map(s => {
-        const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
-        return m ? m[1].toLowerCase() : null;
-      })
-      .filter(Boolean);
-    if (logins.length === 0) return [];
+    if (!token || !Array.isArray(logins) || logins.length === 0) return [];
     const query = logins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
     try {
       const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
@@ -142,9 +134,20 @@
       const json = await res.json();
       return Array.isArray(json.data) ? json.data : [];
     } catch (err) {
-      console.error('Failed to fetch team streams', err);
+      console.error('Failed to fetch live streams', err);
       return [];
     }
+  }
+
+
+  async function fetchLiveTeamStreams() {
+    const logins = Object.values(TEAM_STREAMS).flat()
+      .map(s => {
+        const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
+        return m ? m[1].toLowerCase() : null;
+      })
+      .filter(Boolean);
+    return fetchLiveStreams(logins);
   }
 
   function updateLiveTeamsPanel() {
@@ -179,9 +182,7 @@
       if (panel.classList.contains('visible')) {
         panel.classList.replace('visible', 'hidden');
       } else {
-
         updateLiveTeamsPanel();
-
         panel.classList.replace('hidden', 'visible');
       }
     };
@@ -259,10 +260,10 @@
     getToken,
     fetchUser,
     fetchFollowedStreams,
+    fetchLiveStreams,
     fetchLiveTeamStreams,
     updateLiveTeamsPanel,
     initLiveTeamsMenu,
-
     updateNav,
   };
 
@@ -270,6 +271,5 @@ handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
   initLiveTeamsMenu();
-
 });
 })();
