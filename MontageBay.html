@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Montage Bay</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="oauth.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch('nav.html').then(r=>r.text()).then(html=>{
+      document.getElementById('nav-placeholder').innerHTML = html;
+      if (window.twitchOAuth) {
+        twitchOAuth.updateNav();
+        twitchOAuth.initLiveTeamsMenu();
+      }
+    });
+  </script>
+
+  <main class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold mb-4 text-center">Montage Bay</h1>
+    <form id="montage-form" class="space-y-4 max-w-xl mx-auto">
+      <input id="montage-title" type="text" placeholder="Title" class="w-full p-2 rounded bg-gray-800" required>
+      <input id="montage-url" type="url" placeholder="Video URL (YouTube, Twitch, etc.)" class="w-full p-2 rounded bg-gray-800" required>
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Add Montage</button>
+    </form>
+    <section id="montage-list" class="mt-8 space-y-8"></section>
+  </main>
+
+  <script>
+  function embedMarkup(url) {
+    if(/youtube\.com\/watch\?v=([^&]+)/i.test(url)) {
+      const id = url.match(/v=([^&]+)/i)[1];
+      return `<iframe class="w-full h-64" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`;
+    }
+    if(/youtu\.be\/([^?]+)/i.test(url)) {
+      const id = url.match(/youtu\.be\/([^?]+)/i)[1];
+      return `<iframe class="w-full h-64" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`;
+    }
+    if(/twitch\.tv\/videos\/(\d+)/i.test(url)) {
+      const id = url.match(/videos\/(\d+)/i)[1];
+      return `<iframe class="w-full h-64" src="https://player.twitch.tv/?video=${id}&parent=${location.hostname}" frameborder="0" allowfullscreen></iframe>`;
+    }
+    return `<video class="w-full" controls src="${url}"></video>`;
+  }
+
+  function loadMontages() {
+    const list = document.getElementById('montage-list');
+    const montages = JSON.parse(localStorage.getItem('montages')||'[]');
+    list.innerHTML = '';
+    montages.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'bg-gray-800 p-4 rounded';
+      div.innerHTML = `<h2 class="text-xl font-semibold mb-2">${m.title}</h2>${embedMarkup(m.url)}`;
+      list.appendChild(div);
+    });
+  }
+
+  document.getElementById('montage-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = document.getElementById('montage-title').value.trim();
+    const url = document.getElementById('montage-url').value.trim();
+    const montages = JSON.parse(localStorage.getItem('montages')||'[]');
+    montages.push({title,url});
+    localStorage.setItem('montages', JSON.stringify(montages));
+    loadMontages();
+    e.target.reset();
+  });
+
+  document.addEventListener('DOMContentLoaded', loadMontages);
+  </script>
+</body>
+</html>

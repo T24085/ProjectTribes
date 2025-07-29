@@ -6,17 +6,19 @@
             <li><a href="TournamentManager.html" class="hover:text-blue-400 transition">Tournament Manager</a></li>
             <li><a href="TwitchFeedDisplays.html" class="hover:text-blue-400 transition">Twitch Feeds</a></li>
             <li><a href="https://t24085.github.io/FatBoysofSummerDraft/dashboard" class="hover:text-blue-400 transition">Fatboys Dashboard</a></li>
+            <li><a href="TeamBuilder.html" class="hover:text-blue-400 transition">Create Team</a></li>
+            <li><a href="MontageBay.html" class="hover:text-blue-400 transition">Montage Bay</a></li>
         </ul>
         <button id="twitch-login-btn" class="ml-4 bg-purple-600 text-white py-1 px-3 rounded hover:bg-purple-700"></button>
-        <button id="followed-streams-toggle" class="ml-2 bg-gray-700 text-white py-1 px-3 rounded hover:bg-gray-800">Followed Streams</button>
+        <button id="live-teams-toggle" class="ml-2 bg-gray-700 text-white py-1 px-3 rounded hover:bg-gray-800">Live Teams</button>
         <span id="twitch-user" class="ml-2 text-purple-300" style="display:none;"></span>
-        <div id="followed-streams-panel" class="followed-streams-panel hidden absolute right-0 top-full bg-gray-800 text-white p-4 w-64 max-h-80 overflow-y-auto shadow-lg"></div>
     </div>
 </nav>
+<div id="live-teams-panel" class="live-teams-panel hidden fixed left-0 top-36 bottom-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto shadow-lg"></div>
 <style>
-  #followed-streams-panel { transition: transform 0.3s ease; }
-  #followed-streams-panel.hidden { transform: translateX(100%); }
-  #followed-streams-panel.visible { transform: translateX(0); }
+  #live-teams-panel { transition: transform 0.3s ease; }
+  #live-teams-panel.hidden { transform: translateX(-100%); }
+  #live-teams-panel.visible { transform: translateX(0); }
   .live-box {
     display: flex;
     align-items: center;

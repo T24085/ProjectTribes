@@ -241,6 +241,21 @@
     .chat-toggle:hover {
       background-color: #2b6cb0;
     }
+    .live-box {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      background-color: #4a5568;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .live-dot {
+      color: #48bb78;
+      font-size: 1rem;
+      line-height: 1;
+    }
     @media (max-width: 1200px) {
       .stream-container {
         grid-template-columns: repeat(3, 1fr);
@@ -301,10 +316,10 @@
       .then(res => res.text())
       .then(html => {
         document.getElementById("nav-placeholder").innerHTML = html;
-        if (window.twitchOAuth) {
-          twitchOAuth.updateNav();
-          twitchOAuth.initFollowedStreamsHover();
-        }
+          if (window.twitchOAuth) {
+            twitchOAuth.updateNav();
+            twitchOAuth.initLiveTeamsMenu();
+          }
       });
   </script>
   <div class="container">
@@ -340,6 +355,7 @@
         </form>
       </div>
     </header>
+    <div id="live-channel-banner" class="flex flex-wrap px-4 py-2"></div>
     <div class="stream-container" id="stream-container"></div>
     <!-- Chat Panel -->
     <div class="chat-panel" id="chat-panel">
@@ -354,7 +370,7 @@
 
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
   <script>
-    // Note: No API credentials or live stream filtering (removed for simplicity)
+    // If logged in with Twitch, live channels are fetched and shown first
     let channels = JSON.parse(localStorage.getItem('twitchChannels')) || [
       '2xevil',
       'apcizzle',
@@ -426,12 +442,12 @@
       return /^[a-zA-Z0-9_]{4,25}$/.test(channel);
     }
 
-    // Render streams (no API calls)
+    // Render streams in their current order
     function renderStreams() {
       const streamContainer = document.getElementById('stream-container');
       streamContainer.innerHTML = '';
 
-      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel)).sort();
+      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel));
       console.log('Visible channels length:', visibleChannels.length);
       visibleChannels.forEach((channel, index) => {
         const streamIndex = index + 1;
@@ -453,7 +469,7 @@
     function populateRemoveDropdown() {
       const select = document.getElementById('remove-match-select');
       select.innerHTML = '<option value="">Select Match to Remove</option>';
-      channels.sort().forEach((channel, index) => {
+      channels.forEach((channel, index) => {
         const option = document.createElement('option');
         option.value = index + 1;
         option.textContent = `Match ${index + 1}: ${channel}`;
@@ -466,7 +482,7 @@
     function populateFilterCheckboxes() {
       const container = document.getElementById('filter-checkboxes');
       container.innerHTML = '';
-      channels.sort().forEach((channel, index) => {
+      channels.forEach((channel, index) => {
         const div = document.createElement('div');
         div.className = 'checkbox-item';
         div.innerHTML = `
@@ -507,6 +523,44 @@
       }
     }
 
+    function updateLiveChannels() {
+      const banner = document.getElementById('live-channel-banner');
+      if (window.twitchOAuth && twitchOAuth.getToken()) {
+        if (banner) banner.textContent = 'Loading...';
+        twitchOAuth.fetchLiveStreams(channels).then(streams => {
+          const liveSet = new Set(streams.map(s => s.user_login.toLowerCase()));
+          channels.sort((a, b) => {
+            const aLive = liveSet.has(a.toLowerCase());
+            const bLive = liveSet.has(b.toLowerCase());
+            if (aLive === bLive) return a.localeCompare(b);
+            return aLive ? -1 : 1;
+          });
+          if (banner) {
+            if (streams.length === 0) {
+              banner.textContent = 'No channels live.';
+            } else {
+              banner.innerHTML = '';
+              streams.forEach(stream => {
+                const div = document.createElement('div');
+                div.className = 'live-box';
+                div.innerHTML = `<span class="live-dot">\u25CF</span>` +
+                  `<a href="https://www.twitch.tv/${stream.user_login}" target="_blank" class="hover:underline">${stream.user_name}</a>`;
+                banner.appendChild(div);
+              });
+            }
+          }
+          renderStreams();
+        }).catch(err => {
+          console.error('Failed to fetch live streams', err);
+          if (banner) banner.textContent = '';
+          renderStreams();
+        });
+      } else {
+        if (banner) banner.innerHTML = '';
+        renderStreams();
+      }
+    }
+
     // Toggle chat panel on mobile
     function toggleChat() {
       const chatPanel = document.getElementById('chat-panel');
@@ -536,7 +590,7 @@
       channels.push(channelName);
       channels.sort(); // Sort after adding new channel
       saveChannels();
-      renderStreams();
+      updateLiveChannels();
 
       const feedback = document.getElementById('add-feedback');
       feedback.style.display = 'inline';
@@ -564,7 +618,7 @@
         currentChatChannel = channels[0] || '';
       }
       saveChannels();
-      renderStreams();
+      updateLiveChannels();
 
       const feedback = document.getElementById('remove-feedback');
       feedback.style.display = 'inline';
@@ -590,7 +644,7 @@
         currentChatChannel = channels.filter(ch => !hiddenChannels.includes(ch))[0] || '';
       }
       saveChannels();
-      renderStreams();
+      updateLiveChannels();
 
       const feedback = document.getElementById('remove-feedback');
       feedback.style.display = 'inline';
@@ -602,7 +656,7 @@
     function showAllChannels() {
       hiddenChannels = [];
       saveChannels();
-      renderStreams();
+      updateLiveChannels();
 
       const feedback = document.getElementById('add-feedback');
       feedback.textContent = 'Showing all streams!';
@@ -613,7 +667,7 @@
     }
 
     // Initial render
-    renderStreams();
+    updateLiveChannels();
   </script>
 </body>
 </html>
