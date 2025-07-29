@@ -25,18 +25,6 @@ You can open these pages directly after starting the server:
 - [Mobile Twitch Feeds](TwitchFeedMobile.html)
 - [Fatboys Dashboard](https://t24085.github.io/FatBoysofSummerDraft/dashboard)
 
-## Quick Links
-
-You can open these pages directly after starting the server:
-
-- [Tribes Rivals Dashboard](TribesRivalsTeamsDashboard.html)
-- [Scrim Watcher](TribesScrimWatcher.html)
-- [Tournament Manager](TournamentManager.html)
-- [Twitch Feeds](TwitchFeedDisplays.html)
-- [Mobile Twitch Feeds](TwitchFeedMobile.html)
-- [Create Team](TeamBuilder.html)
-- [Montage Bay](MontageBay.html)
-- [Fatboys Dashboard](https://t24085.github.io/FatBoysofSummerDraft/dashboard)
 
 ## Usage
 
