@@ -120,17 +120,9 @@
     }
   }
 
-  async function fetchLiveTeamStreams() {
+  async function fetchLiveStreams(logins) {
     const token = getToken();
-    if (!token) return [];
-
-    const logins = Object.values(TEAM_STREAMS).flat()
-      .map(s => {
-        const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
-        return m ? m[1].toLowerCase() : null;
-      })
-      .filter(Boolean);
-    if (logins.length === 0) return [];
+    if (!token || !Array.isArray(logins) || logins.length === 0) return [];
     const query = logins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
     try {
       const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
@@ -142,13 +134,23 @@
       const json = await res.json();
       return Array.isArray(json.data) ? json.data : [];
     } catch (err) {
-      console.error('Failed to fetch team streams', err);
+      console.error('Failed to fetch live streams', err);
       return [];
     }
   }
 
-  function updateFollowedStreamsPanel() {
-    const panel = document.getElementById('followed-streams-panel');
+  async function fetchLiveTeamStreams() {
+    const logins = Object.values(TEAM_STREAMS).flat()
+      .map(s => {
+        const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
+        return m ? m[1].toLowerCase() : null;
+      })
+      .filter(Boolean);
+    return fetchLiveStreams(logins);
+  }
+
+  function updateLiveTeamsPanel() {
+    const panel = document.getElementById('live-teams-panel');
     if (!panel) return;
     panel.innerHTML = 'Loading...';
     fetchLiveTeamStreams().then(streams => {
@@ -169,18 +171,31 @@
     });
   }
 
-  function initFollowedStreamsHover() {
-    const toggle = document.getElementById('followed-streams-toggle');
-    const panel = document.getElementById('followed-streams-panel');
+  function initLiveTeamsMenu() {
+    const toggle = document.getElementById('live-teams-toggle');
+    const panel = document.getElementById('live-teams-panel');
     if (!toggle || !panel) return;
 
-    const show = () => panel.classList.replace('hidden', 'visible');
-    const hide = () => panel.classList.replace('visible', 'hidden');
+    const togglePanel = (e) => {
+      e.stopPropagation();
+      if (panel.classList.contains('visible')) {
+        panel.classList.replace('visible', 'hidden');
+      } else {
+        updateLiveTeamsPanel();
+        panel.classList.replace('hidden', 'visible');
+      }
+    };
 
-    toggle.addEventListener('mouseenter', show);
-    toggle.addEventListener('mouseleave', hide);
-    panel.addEventListener('mouseenter', show);
-    panel.addEventListener('mouseleave', hide);
+    const handleClickOutside = (e) => {
+      if (!panel.contains(e.target) && !toggle.contains(e.target)) {
+        if (panel.classList.contains('visible')) {
+          panel.classList.replace('visible', 'hidden');
+        }
+      }
+    };
+
+    toggle.addEventListener('click', togglePanel);
+    document.addEventListener('click', handleClickOutside);
   }
 
   function loginWithTwitch() {
@@ -216,7 +231,7 @@
     const userSpan = document.getElementById('twitch-user');
 
     if (!btn) return;
-    const panel = document.getElementById('followed-streams-panel');
+    const panel = document.getElementById('live-teams-panel');
     if (getToken()) {
       btn.textContent = 'Sign out';
       btn.onclick = logoutTwitch;
@@ -228,7 +243,7 @@
           }
         });
       }
-      updateFollowedStreamsPanel();
+        updateLiveTeamsPanel();
     } else {
       btn.textContent = 'Sign in with Twitch';
       btn.onclick = loginWithTwitch;
@@ -244,15 +259,16 @@
     getToken,
     fetchUser,
     fetchFollowedStreams,
+    fetchLiveStreams,
     fetchLiveTeamStreams,
-    updateFollowedStreamsPanel,
-    initFollowedStreamsHover,
+    updateLiveTeamsPanel,
+    initLiveTeamsMenu,
     updateNav,
   };
 
 handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
-  initFollowedStreamsHover();
+  initLiveTeamsMenu();
 });
 })();
