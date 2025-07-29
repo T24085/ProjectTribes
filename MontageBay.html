@@ -58,7 +58,7 @@
     });
   }
 
-  document.getElementById('montage-form').addEventListener('submit', (e) => {
+  document.getElementById('montage-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const title = document.getElementById('montage-title').value.trim();
     const url = document.getElementById('montage-url').value.trim();
