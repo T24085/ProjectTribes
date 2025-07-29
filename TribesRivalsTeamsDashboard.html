@@ -289,15 +289,21 @@
         <h2 class="text-3xl font-semibold text-center mb-8">Hubcast Central Streams</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-xl font-bold">TootZ</h3>
+                <h3 class="text-xl font-bold">TootZ
+                    <span id="hub-live-tootzgaming" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span>
+                </h3>
                 <a href="https://www.twitch.tv/tootzgaming" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
             </div>
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-xl font-bold">OoOoO</h3>
+                <h3 class="text-xl font-bold">OoOoO
+                    <span id="hub-live-oo0oo_live" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span>
+                </h3>
                 <a href="https://www.twitch.tv/oo0oo_live" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
             </div>
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-xl font-bold">Hawxter</h3>
+                <h3 class="text-xl font-bold">Hawxter
+                    <span id="hub-live-hawxter_" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span>
+                </h3>
                 <a href="https://www.twitch.tv/hawxter_" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
             </div>
         </div>
@@ -493,6 +499,26 @@
                 .catch(err => console.error('Failed to fetch live teams', err));
         }
 
+        const hubCasters = ['tootzgaming', 'oo0oo_live', 'hawxter_'];
+
+        function updateHubcasterStatus() {
+            const query = hubCasters.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
+            fetch('https://api.twitch.tv/helix/streams?' + query, {
+                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const liveSet = new Set((data.data || []).map(s => s.user_login.toLowerCase()));
+                    hubCasters.forEach(login => {
+                        const el = document.getElementById('hub-live-' + login);
+                        if (el && liveSet.has(login)) {
+                            el.classList.add('live');
+                        }
+                    });
+                })
+                .catch(err => console.error('Failed to fetch hubcasters', err));
+        }
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
@@ -502,6 +528,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             updateTeamLiveStatus();
+            updateHubcasterStatus();
             if (window.twitchOAuth && twitchOAuth.getToken()) {
                 twitchOAuth.fetchFollowedStreams().then(followed => {
                     if (!followed || followed.length === 0) return;
