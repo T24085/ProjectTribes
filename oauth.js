@@ -179,7 +179,9 @@
       if (panel.classList.contains('visible')) {
         panel.classList.replace('visible', 'hidden');
       } else {
+
         updateLiveTeamsPanel();
+
         panel.classList.replace('hidden', 'visible');
       }
     };
@@ -260,6 +262,7 @@
     fetchLiveTeamStreams,
     updateLiveTeamsPanel,
     initLiveTeamsMenu,
+
     updateNav,
   };
 
@@ -267,5 +270,6 @@ handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
   initLiveTeamsMenu();
+
 });
 })();
