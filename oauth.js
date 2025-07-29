@@ -172,7 +172,6 @@
   function initLiveTeamsMenu() {
     const toggle = document.getElementById('live-teams-toggle');
     const panel = document.getElementById('live-teams-panel');
-
     if (!toggle || !panel) return;
 
     const togglePanel = (e) => {
@@ -180,6 +179,9 @@
       if (panel.classList.contains('visible')) {
         panel.classList.replace('visible', 'hidden');
       } else {
+
+        updateLiveTeamsPanel();
+
         panel.classList.replace('hidden', 'visible');
       }
     };
@@ -258,7 +260,6 @@
     fetchUser,
     fetchFollowedStreams,
     fetchLiveTeamStreams,
-
     updateLiveTeamsPanel,
     initLiveTeamsMenu,
 
@@ -268,7 +269,6 @@
 handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
-
   initLiveTeamsMenu();
 
 });
