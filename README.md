@@ -10,6 +10,8 @@ This repository contains a collection of static HTML pages for the community aro
 - **TwitchFeedDisplays.html** – Layout for watching multiple Twitch streams at once.
 - **TwitchFeedMobile.html** – Mobile-friendly version of the Twitch feeds display.
 - **FatboysofSummerDashBoard.html** – Score-per-minute chart for a draft tournament.
+- **TeamBuilder.html** – Simple form for creating your own team with a logo and banner stored in your browser.
+- **MontageBay.html** – Submit montage video links and view them all in one place.
 - **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, Tribal Therapy, Toxic Aimers, and Unhandled Exception.
 
 ## Usage
@@ -17,7 +19,7 @@ This repository contains a collection of static HTML pages for the community aro
 Open `TribesRivalsTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs.
 Each team page provides roster info and may link to Twitch or YouTube streams.
 
-The project is purely static—clone or download the repository and open the HTML files locally or host them via any static file hosting service.
+The project is purely static—clone or download the repository and open the HTML files locally or host them via any static file hosting service. Because there is no backend, the **Create Team** and **Montage Bay** pages save data in your browser's `localStorage` so your entries persist on the same machine.
 ## Shared Navigation
 
 The main navigation menu is stored in `nav.html`. Each page dynamically loads this file using JavaScript so the links stay consistent across the site.
