@@ -228,16 +228,16 @@
                     <button onclick="showRoster('Toxic Aimers')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                 </div>
             </div>
-            <!-- Tribal Therapy -->
+            <!-- DeadStop -->
             <div class="team-card bg-gray-800 rounded-lg overflow-hidden shadow-lg">
-                <a href="https://t24085.github.io/Team-Tribal-Therapy/" target="_blank">
-                    <img src="https://github.com/T24085/Team-Tribal-Therapy/blob/main/T_TLogo.png?raw=true" alt="Tribal Therapy team logo with calming tribal design" class="w-full h-48 object-cover">
+                <a href="https://t24085.github.io/Team-DeadStop/" target="_blank">
+                    <img src="https://github.com/T24085/Team-DeadStop/blob/main/DSLogo.png?raw=true" alt="DeadStop team logo with calming tribal design" class="w-full h-48 object-cover">
                 </a>
                 <div class="p-4 text-center">
-                    <h3 class="text-xl font-bold">Tribal Therapy [T_T]<span id="live-Tribal-Therapy" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
+                    <h3 class="text-xl font-bold">DeadStop [DS]<span id="live-DeadStop" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: Blitz</p>
-                    <button onclick="showRoster('Tribal Therapy')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
-                    <button onclick="showStreams('Tribal Therapy')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
+                    <button onclick="showRoster('DeadStop')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showStreams('DeadStop')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
                 </div>
             </div>
             <!-- Viva la Revolución -->
@@ -289,15 +289,21 @@
         <h2 class="text-3xl font-semibold text-center mb-8">Hubcast Central Streams</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-xl font-bold">TootZ</h3>
+                <h3 class="text-xl font-bold">TootZ
+                    <span id="hub-live-tootzgaming" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span>
+                </h3>
                 <a href="https://www.twitch.tv/tootzgaming" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
             </div>
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-xl font-bold">OoOoO</h3>
+                <h3 class="text-xl font-bold">OoOoO
+                    <span id="hub-live-oo0oo_live" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span>
+                </h3>
                 <a href="https://www.twitch.tv/oo0oo_live" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
             </div>
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-xl font-bold">Hawxter</h3>
+                <h3 class="text-xl font-bold">Hawxter
+                    <span id="hub-live-hawxter_" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span>
+                </h3>
                 <a href="https://www.twitch.tv/hawxter_" target="_blank" class="text-blue-400 hover:underline">Watch on Twitch</a>
             </div>
         </div>
@@ -358,7 +364,7 @@
             'Magic': 'Captain: @[wiz] Lange\nCore: Rebeltrooper, XRY, Dust, Cinnamon, Songsteal, Sek, SplitSecond\nBench: Snakke, Lester',
             'null': 'Captain: @_...\nCore: Blaspheme, Annaberries, xQ, muuki, exhumaxer, corbeling, mikeax2\nBench: ryan',
             'Toxic Aimers': 'Captain: @R...\nCore: Song, Sek, Hatuey, DareDevilMoon, Nerve, Radishblue, Trey\nBench: Sin, Stork',
-            'Tribal Therapy': 'Captain: Blitz\nCore: apc, Hosh, Luna, Rock, Rell, Iinferno, Makasuro, CheesyDean, ContingencyPlan\nBench: Nykie4Life',
+            'DeadStop': 'Captain: Blitz\nCore: apc, Hosh, Luna, Rock, Rell, Iinferno, Makasuro, CheesyDean, ContingencyPlan\nBench: Nykie4Life',
             'Viva la Revolución': 'Captain: @Borpalkitty\nCore: Visis, Barthy, OperationCats, Jive, Oo 0 oO, Hitch, Zack, Kadenzah',
             'UE': 'DeadManWalking, Pablo, TTVfoenixx, Loot, Nykie4life, Stimzees, The Quacken .'
         };
@@ -416,7 +422,7 @@
                 { name: 'Splitsecond', url: 'https://www.twitch.tv/splitsecondta' },
                 { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
             ],
-            'Tribal Therapy': [
+            'DeadStop': [
                 { name: 'iinferno', url: 'https://www.twitch.tv/bschrift/video/2399902418' },
                 { name: 'Paprika (YT)', url: 'https://www.youtube.com/@0Luna_' },
                 { name: 'Blitz', url: 'https://www.twitch.tv/slohp0k3' }
@@ -493,6 +499,26 @@
                 .catch(err => console.error('Failed to fetch live teams', err));
         }
 
+        const hubCasters = ['tootzgaming', 'oo0oo_live', 'hawxter_'];
+
+        function updateHubcasterStatus() {
+            const query = hubCasters.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
+            fetch('https://api.twitch.tv/helix/streams?' + query, {
+                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const liveSet = new Set((data.data || []).map(s => s.user_login.toLowerCase()));
+                    hubCasters.forEach(login => {
+                        const el = document.getElementById('hub-live-' + login);
+                        if (el && liveSet.has(login)) {
+                            el.classList.add('live');
+                        }
+                    });
+                })
+                .catch(err => console.error('Failed to fetch hubcasters', err));
+        }
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
@@ -502,6 +528,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             updateTeamLiveStatus();
+            updateHubcasterStatus();
             if (window.twitchOAuth && twitchOAuth.getToken()) {
                 twitchOAuth.fetchFollowedStreams().then(followed => {
                     if (!followed || followed.length === 0) return;

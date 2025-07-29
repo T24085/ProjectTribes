@@ -1,0 +1,17 @@
+{
+  "name": "projecttribes",
+  "version": "1.0.0",
+  "description": "This repository contains a collection of static HTML pages for the community around **Tribes 3: Rivals**. Each page focuses on tournament information, team rosters, or related utilities. Because all files are static, you can simply open them in a web browser—no web server or build step is required.",
+  "main": "oauth.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}
