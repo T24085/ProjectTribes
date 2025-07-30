@@ -46,9 +46,11 @@
     return `<video class="w-full" controls src="${url}"></video>`;
   }
 
-  async function loadMontages() {
+  const STORAGE_KEY = 'tribes_montages';
+
+  function loadMontages() {
     const list = document.getElementById('montage-list');
-    const montages = await fetch('/api/montages').then(r=>r.json());
+    const montages = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     list.innerHTML = '';
     montages.forEach(m => {
       const div = document.createElement('div');
@@ -62,11 +64,10 @@
     e.preventDefault();
     const title = document.getElementById('montage-title').value.trim();
     const url = document.getElementById('montage-url').value.trim();
-    await fetch('/api/montages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({title, url})
-    });
+    const montage = {title, url};
+    const montages = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    montages.push(montage);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(montages));
     loadMontages();
     e.target.reset();
   });

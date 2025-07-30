@@ -45,9 +45,11 @@
     });
   }
 
-  async function loadTeams() {
+  const STORAGE_KEY = 'tribes_custom_teams';
+
+  function loadTeams() {
     const list = document.getElementById('team-list');
-    const teams = await fetch('/api/teams').then(r=>r.json());
+    const teams = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
     list.innerHTML = '';
     teams.forEach(team => {
       const div = document.createElement('div');
@@ -69,11 +71,10 @@
     const logoData = await dataUrlFromFile(logoFile);
     const bannerData = await dataUrlFromFile(bannerFile);
 
-    await fetch('/api/teams', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({name, logo: logoData, banner: bannerData})
-    });
+    const team = {name, logo: logoData, banner: bannerData};
+    const teams = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    teams.push(team);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(teams));
     loadTeams();
     e.target.reset();
   });
