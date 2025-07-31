@@ -118,6 +118,9 @@
       margin-top: 5px;
       width: 100%;
     }
+    .game-search {
+      display: none;
+    }
     .feedback-message {
       margin-left: 10px;
       font-size: 14px;
@@ -426,6 +429,9 @@
       <div class="filter-section">
         <button id="toggle-live-btn" onclick="toggleLiveOnly()">Show Only Live</button>
       </div>
+      <div class="filter-section">
+        <button id="toggle-game-search" onclick="toggleGameSearch()">Find Streams by Game</button>
+      </div>
       <div class="donation-section">
         <p>Support the Tribes 3: Rivals Multi Display!</p>
         <form action="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
@@ -448,7 +454,9 @@
     <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
   </div>
 
-  <section class="game-section">
+
+  <section class="game-search" style="margin:24px 0">
+
     <h2>Live by Game</h2>
     <div class="game-search">
       <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)">
@@ -841,6 +849,13 @@
       const btn = document.getElementById('toggle-live-btn');
       if (btn) btn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
       renderStreams();
+    }
+
+    function toggleGameSearch() {
+      const section = document.querySelector('.game-search');
+      if (section) {
+        section.style.display = section.style.display === 'none' || !section.style.display ? 'block' : 'none';
+      }
     }
 
     function hideSelectedChannels() {
