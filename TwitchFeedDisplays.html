@@ -346,6 +346,9 @@
           <button onclick="showAllChannels()">Show All</button>
         </div>
       </div>
+      <div class="filter-section">
+        <button id="toggle-live-btn" onclick="toggleLiveOnly()">Show Only Live</button>
+      </div>
       <div class="donation-section">
         <p>Support the Tribes 3: Rivals Multi Display!</p>
         <form action="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
@@ -367,6 +370,121 @@
     <!-- Chat Toggle Button for Mobile -->
     <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
   </div>
+
+  <section style="margin:24px 0">
+    <h2>Live by Game</h2>
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+      <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)" style="flex:1; padding:8px;">
+      <button id="gameSearchBtn">Search</button>
+    </div>
+
+    <div style="display:flex; gap:24px; align-items:flex-start;">
+      <div style="flex:1;">
+        <h3 id="gameTitle">—</h3>
+        <div id="streamsGrid"
+             style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
+      </div>
+
+      <div style="flex:1; min-width:360px;">
+        <div id="playerContainer" style="aspect-ratio:16/9; width:100%; background:#000; position:relative;">
+          <iframe id="twitchPlayer" allowfullscreen
+                  style="position:absolute; inset:0; width:100%; height:100%; border:0"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const TWITCH_CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
+    const getToken = () => (window.twitchOAuth && twitchOAuth.getToken()) || localStorage.getItem('twitch_access_token');
+
+    const parentHost = encodeURIComponent(location.hostname || (new URL(document.baseURI)).hostname);
+
+    async function helix(path) {
+      const token = getToken();
+      if (!token) {
+        alert('Please sign in with Twitch first.');
+        throw new Error('No Twitch token');
+      }
+      const res = await fetch(`https://api.twitch.tv/helix${path}`, {
+        headers: {
+          'Client-ID': TWITCH_CLIENT_ID,
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error(`Helix error ${res.status}: ${await res.text()}`);
+      return res.json();
+    }
+
+    async function searchCategory(query) {
+      const data = await helix(`/search/categories?query=${encodeURIComponent(query)}&first=5`);
+      return (data.data && data.data[0]) || null;
+    }
+
+    async function getStreamsByGameId(gameId, limit = 20) {
+      const data = await helix(`/streams?game_id=${encodeURIComponent(gameId)}&first=${limit}`);
+      return data.data || [];
+    }
+
+    function setPlayer(channelLogin) {
+      const iframe = document.getElementById('twitchPlayer');
+      if (!iframe) return;
+      if (!channelLogin) return iframe.removeAttribute('src');
+      iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channelLogin)}&parent=${parentHost}`;
+    }
+
+    function renderStreams(gameName, streams) {
+      const titleEl = document.getElementById('gameTitle');
+      if (!titleEl) return;
+      titleEl.textContent = streams.length ? `Live in ${gameName}` : `No one live in ${gameName} right now`;
+
+      const grid = document.getElementById('streamsGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      streams.forEach(s => {
+        const card = document.createElement('button');
+        card.style = 'text-align:left; background:#111; color:#eee; border:1px solid #333; border-radius:8px; padding:8px; cursor:pointer;';
+        const thumb = (s.thumbnail_url || '').replace('{width}', 320).replace('{height}', 180) + `&rand=${Math.random()}`;
+        card.innerHTML = `
+          <img src="${thumb}" alt="" style="width:100%; border-radius:6px;">
+          <div style="margin-top:6px; font-weight:600;">${s.user_name || s.display_name}</div>
+          <div style="font-size:12px; color:#ccc;">${s.title || ''}</div>
+          <div style="font-size:12px; color:#aaa; margin-top:4px;">${s.viewer_count ?? 0} viewers</div>
+        `;
+        const login = s.user_login || s.user_name;
+        card.onclick = () => setPlayer(login);
+        grid.appendChild(card);
+      });
+
+      if (streams.length) setPlayer(streams[0].user_login || streams[0].user_name);
+      else setPlayer(null);
+    }
+
+    async function runGameSearch(q) {
+      try {
+        const cat = await searchCategory(q);
+        if (!cat) {
+          document.getElementById('gameTitle').textContent = `No category found for “${q}”`;
+          document.getElementById('streamsGrid').innerHTML = '';
+          setPlayer(null);
+          return;
+        }
+        const streams = await getStreamsByGameId(cat.id, 20);
+        renderStreams(cat.name, streams);
+      } catch (e) {
+        console.error(e);
+        alert(e.message);
+      }
+    }
+
+    document.getElementById('gameSearchBtn').addEventListener('click', () => {
+      const q = document.getElementById('gameQuery').value.trim() || 'Tribes 3: Rivals';
+      runGameSearch(q);
+    });
+
+    runGameSearch('Tribes 3: Rivals');
+  </script>
 
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
   <script>
@@ -431,6 +549,8 @@
     let streamCount = channels.length;
     let hiddenChannels = JSON.parse(localStorage.getItem('hiddenChannels')) || [];
     let currentChatChannel = channels[0] || 'twitch'; // Default to first channel
+    let showOnlyLive = JSON.parse(localStorage.getItem('showOnlyLive')) || false;
+    let liveSet = new Set();
 
     function saveChannels() {
       localStorage.setItem('twitchChannels', JSON.stringify(channels));
@@ -447,8 +567,14 @@
       const streamContainer = document.getElementById('stream-container');
       streamContainer.innerHTML = '';
 
-      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel));
+      const visibleChannels = channels.filter(channel =>
+        !hiddenChannels.includes(channel) &&
+        (!showOnlyLive || liveSet.has(channel.toLowerCase()))
+      );
       console.log('Visible channels length:', visibleChannels.length);
+      if (visibleChannels.length === 0) {
+        streamContainer.innerHTML = '<p class="loading">No streams to display.</p>';
+      }
       visibleChannels.forEach((channel, index) => {
         const streamIndex = index + 1;
         const streamBox = document.createElement('div');
@@ -460,16 +586,16 @@
         `;
         streamContainer.appendChild(streamBox);
       });
-      populateRemoveDropdown();
-      populateFilterCheckboxes();
-      populateChatDropdown();
+      populateRemoveDropdown(visibleChannels);
+      populateFilterCheckboxes(visibleChannels);
+      populateChatDropdown(visibleChannels);
     }
 
     // Populate remove dropdown
-    function populateRemoveDropdown() {
+    function populateRemoveDropdown(list) {
       const select = document.getElementById('remove-match-select');
       select.innerHTML = '<option value="">Select Match to Remove</option>';
-      channels.forEach((channel, index) => {
+      (list || channels).forEach((channel, index) => {
         const option = document.createElement('option');
         option.value = index + 1;
         option.textContent = `Match ${index + 1}: ${channel}`;
@@ -479,10 +605,10 @@
     }
 
     // Populate filter checkboxes
-    function populateFilterCheckboxes() {
+    function populateFilterCheckboxes(list) {
       const container = document.getElementById('filter-checkboxes');
       container.innerHTML = '';
-      channels.forEach((channel, index) => {
+      (list || channels).forEach((channel, index) => {
         const div = document.createElement('div');
         div.className = 'checkbox-item';
         div.innerHTML = `
@@ -495,10 +621,10 @@
     }
 
     // Populate chat channel dropdown
-    function populateChatDropdown() {
+    function populateChatDropdown(list) {
       const select = document.getElementById('chat-channel-select');
       select.innerHTML = '<option value="">Select Channel Chat</option>';
-      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel)).sort();
+      const visibleChannels = (list || channels.filter(channel => !hiddenChannels.includes(channel))).sort();
       visibleChannels.forEach((channel, index) => {
         const option = document.createElement('option');
         option.value = channel;
@@ -528,7 +654,7 @@
       if (window.twitchOAuth && twitchOAuth.getToken()) {
         if (banner) banner.textContent = 'Loading...';
         twitchOAuth.fetchLiveStreams(channels).then(streams => {
-          const liveSet = new Set(streams.map(s => s.user_login.toLowerCase()));
+          liveSet = new Set(streams.map(s => s.user_login.toLowerCase()));
           channels.sort((a, b) => {
             const aLive = liveSet.has(a.toLowerCase());
             const bLive = liveSet.has(b.toLowerCase());
@@ -632,6 +758,14 @@
       filterOptions.style.display = filterOptions.style.display === 'none' ? 'block' : 'none';
     }
 
+    function toggleLiveOnly() {
+      showOnlyLive = !showOnlyLive;
+      localStorage.setItem('showOnlyLive', JSON.stringify(showOnlyLive));
+      const btn = document.getElementById('toggle-live-btn');
+      if (btn) btn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
+      renderStreams();
+    }
+
     function hideSelectedChannels() {
       const checkboxes = document.querySelectorAll('#filter-checkboxes input:checked');
       const selectedChannels = Array.from(checkboxes).map(cb => cb.value);
@@ -667,6 +801,8 @@
     }
 
     // Initial render
+    const liveBtn = document.getElementById('toggle-live-btn');
+    if (liveBtn) liveBtn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
     updateLiveChannels();
   </script>
 </body>
