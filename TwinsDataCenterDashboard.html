@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fat Boys of Summer Draft Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React and Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <style>
+        /* Custom styles with background image */
+        body {
+            background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            overflow-x: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Subtle overlay for readability */
+            z-index: 1;
+        }
+        .container {
+            position: relative;
+            z-index: 2; /* Ensure content is above overlay */
+        }
+        .neon-glow {
+            box-shadow: 0 0 8px #ff6f61, 0 0 16px #ffcc5c, 0 0 24px #c94c4c;
+            transition: all 0.3s ease;
+        }
+        .neon-glow:hover {
+            box-shadow: 0 0 12px #ffcc5c, 0 0 20px #ff6f61, 0 0 32px #f9a602;
+            transform: translateY(-4px) scale(1.05);
+        }
+        .link-card {
+            background: rgba(30, 10, 30, 0.85);
+            border: 2px solid #ffcc5c;
+            position: relative;
+            overflow: hidden;
+        }
+        .link-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 204, 92, 0.3),
+                transparent
+            );
+            transition: 0.5s;
+        }
+        .link-card:hover::before {
+            left: 100%;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .pulse-animation {
+            animation: pulse 2.5s infinite;
+        }
+        .category-title {
+            text-shadow: 0 0 8px #ff6f61, 0 0 16px #ffcc5c;
+        }
+        .credit-note {
+            text-shadow: 0 0 8px #ff6f61, 0 0 16px #ffcc5c;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Link data with categories
+        const links = [
+            {
+                category: "Overview",
+                items: [
+                    { name: "Main Document", url: "https://docs.google.com/spreadsheets/d/1M5dJfcEiItfreB-Ohi5TjncRmc-JFBPbetRbRT1ixZs/edit?gid=2039709796#gid=2039709796" },
+                    { name: "Team Performance", url: "https://t24085.github.io/FatBoysofSummerDraft/TeamPerformance" }
+                ]
+            },
+            {
+                category: "Score Statistics",
+                items: [
+                    { name: "Score (Raw)", url: "https://t24085.github.io/FatBoysofSummerDraft/scoreraw" },
+                    { name: "Score (Team Data)", url: "https://t24085.github.io/FatBoysofSummerDraft/scoredatateam" },
+                    { name: "Score per Minute", url: "https://t24085.github.io/FatBoysofSummerDraft/" },
+                    { name: "Score/KillsMinute Players", url: "https://t24085.github.io/FatBoysofSummerDraft/killsscoreminute" }
+                ]
+            },
+            {
+                category: "Kills Statistics",
+                items: [
+                    { name: "Kills (Raw)", url: "https://t24085.github.io/FatBoysofSummerDraft/killsraw" },
+                    { name: "Kills per Minute", url: "https://t24085.github.io/FatBoysofSummerDraft/killsminute" },
+                    { name: "Kills (Team Data)", url: "https://t24085.github.io/FatBoysofSummerDraft/killsdatateam" }
+                ]
+            },
+            {
+                category: "Assists Statistics",
+                items: [
+                    { name: "Assists (Raw)", url: "https://t24085.github.io/FatBoysofSummerDraft/assistsraw" },
+                    { name: "Assists per Minute", url: "https://t24085.github.io/FatBoysofSummerDraft/assistsminute" },
+                    { name: "Assists (Team Data)", url: "https://t24085.github.io/FatBoysofSummerDraft/assiststeamdata" }
+                ]
+            },
+            {
+                category: "Captures Statistics",
+                items: [
+                    { name: "Captures (Raw)", url: "https://t24085.github.io/FatBoysofSummerDraft/capturesraw" },
+                    { name: "Captures per Minute", url: "https://t24085.github.io/FatBoysofSummerDraft/capturesminute" },
+                    { name: "Captures (Team Data)", url: "https://t24085.github.io/FatBoysofSummerDraft/capturesteamdata" }
+                ]
+            },
+            {
+                category: "Returns Statistics",
+                items: [
+                    { name: "Returns (Raw)", url: "https://t24085.github.io/FatBoysofSummerDraft/returnsraw" },
+                    { name: "Returns per Minute", url: "https://t24085.github.io/FatBoysofSummerDraft/returnsminute" },
+                    { name: "Returns (Team Data)", url: "https://t24085.github.io/FatBoysofSummerDraft/returnsteamdata" }
+                ]
+            }
+        ];
+
+        // LinkCard component
+        const LinkCard = ({ name, url }) => {
+            return (
+                <a
+                    href={url}
+                    className="link-card p-6 rounded-lg neon-glow transition duration-300 transform"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <h3 className="text-lg font-semibold text-orange-200">{name}</h3>
+                </a>
+            );
+        };
+
+        // CategorySection component
+        const CategorySection = ({ category, items }) => {
+            return (
+                <div className="mb-12">
+                    <h2 className="text-3xl font-bold mb-6 text-pink-300 category-title">{category}</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {items.map((item, index) => (
+                            <LinkCard key={index} name={item.name} url={item.url} />
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Main Dashboard component
+        const Dashboard = () => {
+            return (
+                <div className="container mx-auto p-8">
+                    <p className="text-xl text-center mb-4 text-orange-200 credit-note">
+                        Special thanks to Twin for 18 hours of dedicated work on the Main Document!
+                    </p>
+                    <h1 className="text-5xl font-extrabold text-center mb-12 text-orange-200 pulse-animation category-title">
+                        Fat Boys of Summer Draft Dashboard
+                    </h1>
+                    {links.map((section, index) => (
+                        <CategorySection
+                            key={index}
+                            category={section.category}
+                            items={section.items}
+                        />
+                    ))}
+                </div>
+            );
+        };
+
+        // Render the Dashboard
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<Dashboard />);
+    </script>
+</body>
+</html>
