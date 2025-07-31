@@ -346,6 +346,9 @@
           <button onclick="showAllChannels()">Show All</button>
         </div>
       </div>
+      <div class="filter-section">
+        <button id="toggle-live-btn" onclick="toggleLiveOnly()">Show Only Live</button>
+      </div>
       <div class="donation-section">
         <p>Support the Tribes 3: Rivals Multi Display!</p>
         <form action="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
@@ -431,6 +434,8 @@
     let streamCount = channels.length;
     let hiddenChannels = JSON.parse(localStorage.getItem('hiddenChannels')) || [];
     let currentChatChannel = channels[0] || 'twitch'; // Default to first channel
+    let showOnlyLive = JSON.parse(localStorage.getItem('showOnlyLive')) || false;
+    let liveSet = new Set();
 
     function saveChannels() {
       localStorage.setItem('twitchChannels', JSON.stringify(channels));
@@ -447,8 +452,14 @@
       const streamContainer = document.getElementById('stream-container');
       streamContainer.innerHTML = '';
 
-      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel));
+      const visibleChannels = channels.filter(channel =>
+        !hiddenChannels.includes(channel) &&
+        (!showOnlyLive || liveSet.has(channel.toLowerCase()))
+      );
       console.log('Visible channels length:', visibleChannels.length);
+      if (visibleChannels.length === 0) {
+        streamContainer.innerHTML = '<p class="loading">No streams to display.</p>';
+      }
       visibleChannels.forEach((channel, index) => {
         const streamIndex = index + 1;
         const streamBox = document.createElement('div');
@@ -460,16 +471,16 @@
         `;
         streamContainer.appendChild(streamBox);
       });
-      populateRemoveDropdown();
-      populateFilterCheckboxes();
-      populateChatDropdown();
+      populateRemoveDropdown(visibleChannels);
+      populateFilterCheckboxes(visibleChannels);
+      populateChatDropdown(visibleChannels);
     }
 
     // Populate remove dropdown
-    function populateRemoveDropdown() {
+    function populateRemoveDropdown(list) {
       const select = document.getElementById('remove-match-select');
       select.innerHTML = '<option value="">Select Match to Remove</option>';
-      channels.forEach((channel, index) => {
+      (list || channels).forEach((channel, index) => {
         const option = document.createElement('option');
         option.value = index + 1;
         option.textContent = `Match ${index + 1}: ${channel}`;
@@ -479,10 +490,10 @@
     }
 
     // Populate filter checkboxes
-    function populateFilterCheckboxes() {
+    function populateFilterCheckboxes(list) {
       const container = document.getElementById('filter-checkboxes');
       container.innerHTML = '';
-      channels.forEach((channel, index) => {
+      (list || channels).forEach((channel, index) => {
         const div = document.createElement('div');
         div.className = 'checkbox-item';
         div.innerHTML = `
@@ -495,10 +506,10 @@
     }
 
     // Populate chat channel dropdown
-    function populateChatDropdown() {
+    function populateChatDropdown(list) {
       const select = document.getElementById('chat-channel-select');
       select.innerHTML = '<option value="">Select Channel Chat</option>';
-      const visibleChannels = channels.filter(channel => !hiddenChannels.includes(channel)).sort();
+      const visibleChannels = (list || channels.filter(channel => !hiddenChannels.includes(channel))).sort();
       visibleChannels.forEach((channel, index) => {
         const option = document.createElement('option');
         option.value = channel;
@@ -528,7 +539,7 @@
       if (window.twitchOAuth && twitchOAuth.getToken()) {
         if (banner) banner.textContent = 'Loading...';
         twitchOAuth.fetchLiveStreams(channels).then(streams => {
-          const liveSet = new Set(streams.map(s => s.user_login.toLowerCase()));
+          liveSet = new Set(streams.map(s => s.user_login.toLowerCase()));
           channels.sort((a, b) => {
             const aLive = liveSet.has(a.toLowerCase());
             const bLive = liveSet.has(b.toLowerCase());
@@ -632,6 +643,14 @@
       filterOptions.style.display = filterOptions.style.display === 'none' ? 'block' : 'none';
     }
 
+    function toggleLiveOnly() {
+      showOnlyLive = !showOnlyLive;
+      localStorage.setItem('showOnlyLive', JSON.stringify(showOnlyLive));
+      const btn = document.getElementById('toggle-live-btn');
+      if (btn) btn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
+      renderStreams();
+    }
+
     function hideSelectedChannels() {
       const checkboxes = document.querySelectorAll('#filter-checkboxes input:checked');
       const selectedChannels = Array.from(checkboxes).map(cb => cb.value);
@@ -667,6 +686,8 @@
     }
 
     // Initial render
+    const liveBtn = document.getElementById('toggle-live-btn');
+    if (liveBtn) liveBtn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
     updateLiveChannels();
   </script>
 </body>
