@@ -259,6 +259,83 @@
       font-size: 1rem;
       line-height: 1;
     }
+    .game-section {
+      margin: 24px 0;
+    }
+    .game-search {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .game-search input {
+      flex: 1;
+      padding: 8px;
+      background-color: rgba(45, 55, 72, 0.8);
+      color: white;
+      border: 1px solid #4a5568;
+      border-radius: 4px;
+    }
+    .game-search button {
+      background-color: #3182ce;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .game-search button:hover {
+      background-color: #2b6cb0;
+    }
+    .game-results {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+    #streamsGrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .game-player {
+      aspect-ratio: 16/9;
+      width: 100%;
+      background: #000;
+      position: relative;
+    }
+    .game-player iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .game-card {
+      text-align: left;
+      background: #2d3748;
+      color: #eee;
+      border: 1px solid #4a5568;
+      border-radius: 8px;
+      padding: 8px;
+      cursor: pointer;
+    }
+    .game-card img {
+      width: 100%;
+      border-radius: 6px;
+    }
+    .game-card .title {
+      margin-top: 6px;
+      font-weight: 600;
+    }
+    .game-card .desc {
+      font-size: 12px;
+      color: #ccc;
+    }
+    .game-card .viewers {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 4px;
+    }
     @media (max-width: 1200px) {
       .stream-container {
         grid-template-columns: repeat(3, 1fr);
@@ -377,24 +454,24 @@
     <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
   </div>
 
+
   <section class="game-search" style="margin:24px 0">
+
     <h2>Live by Game</h2>
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-      <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)" style="flex:1; padding:8px;">
+    <div class="game-search">
+      <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)">
       <button id="gameSearchBtn">Search</button>
     </div>
 
-    <div style="display:flex; gap:24px; align-items:flex-start;">
-      <div style="flex:1;">
+    <div class="game-results">
+      <div class="flex-1">
         <h3 id="gameTitle">—</h3>
-        <div id="streamsGrid"
-             style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
+        <div id="streamsGrid"></div>
       </div>
 
-      <div style="flex:1; min-width:360px;">
-        <div id="playerContainer" style="aspect-ratio:16/9; width:100%; background:#000; position:relative;">
-          <iframe id="twitchPlayer" allowfullscreen
-                  style="position:absolute; inset:0; width:100%; height:100%; border:0"></iframe>
+      <div class="flex-1 min-w-[360px]">
+        <div id="playerContainer" class="game-player">
+          <iframe id="twitchPlayer" allowfullscreen></iframe>
         </div>
       </div>
     </div>
@@ -427,7 +504,7 @@
       return (data.data && data.data[0]) || null;
     }
 
-    async function getStreamsByGameId(gameId, limit = 20) {
+    async function getStreamsByGameId(gameId, limit = 54) {
       const data = await helix(`/streams?game_id=${encodeURIComponent(gameId)}&first=${limit}`);
       return data.data || [];
     }
@@ -439,7 +516,7 @@
       iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channelLogin)}&parent=${parentHost}`;
     }
 
-    function renderStreams(gameName, streams) {
+    function renderGameStreams(gameName, streams) {
       const titleEl = document.getElementById('gameTitle');
       if (!titleEl) return;
       titleEl.textContent = streams.length ? `Live in ${gameName}` : `No one live in ${gameName} right now`;
@@ -450,13 +527,13 @@
 
       streams.forEach(s => {
         const card = document.createElement('button');
-        card.style = 'text-align:left; background:#111; color:#eee; border:1px solid #333; border-radius:8px; padding:8px; cursor:pointer;';
+        card.className = 'game-card';
         const thumb = (s.thumbnail_url || '').replace('{width}', 320).replace('{height}', 180) + `&rand=${Math.random()}`;
         card.innerHTML = `
-          <img src="${thumb}" alt="" style="width:100%; border-radius:6px;">
-          <div style="margin-top:6px; font-weight:600;">${s.user_name || s.display_name}</div>
-          <div style="font-size:12px; color:#ccc;">${s.title || ''}</div>
-          <div style="font-size:12px; color:#aaa; margin-top:4px;">${s.viewer_count ?? 0} viewers</div>
+          <img src="${thumb}" alt="">
+          <div class="title">${s.user_name || s.display_name}</div>
+          <div class="desc">${s.title || ''}</div>
+          <div class="viewers">${s.viewer_count ?? 0} viewers</div>
         `;
         const login = s.user_login || s.user_name;
         card.onclick = () => setPlayer(login);
@@ -476,8 +553,10 @@
           setPlayer(null);
           return;
         }
-        const streams = await getStreamsByGameId(cat.id, 20);
+
+        const streams = await getStreamsByGameId(cat.id, 54);
         renderStreams(cat.name, streams);
+
       } catch (e) {
         console.error(e);
         alert(e.message);
