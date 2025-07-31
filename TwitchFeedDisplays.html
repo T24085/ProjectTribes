@@ -129,6 +129,10 @@
     .feedback-message.error {
       color: #f56565;
     }
+    .game-search {
+      display: none;
+      margin: 24px 0;
+    }
     .stream-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -349,6 +353,9 @@
       <div class="filter-section">
         <button id="toggle-live-btn" onclick="toggleLiveOnly()">Show Only Live</button>
       </div>
+      <div class="filter-section">
+        <button id="toggle-game-search-btn" onclick="toggleGameSearch()">Find Streams by Game</button>
+      </div>
       <div class="donation-section">
         <p>Support the Tribes 3: Rivals Multi Display!</p>
         <form action="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
@@ -359,6 +366,24 @@
       </div>
     </header>
     <div id="live-channel-banner" class="flex flex-wrap px-4 py-2"></div>
+    <section class="game-search" id="game-search">
+      <h2>Live by Game</h2>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+        <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)" style="flex:1; padding:8px;">
+        <button id="gameSearchBtn">Search</button>
+      </div>
+      <div style="display:flex; gap:24px; align-items:flex-start;">
+        <div style="flex:1;">
+          <h3 id="gameTitle">—</h3>
+          <div id="streamsGrid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
+        </div>
+        <div style="flex:1; min-width:360px;">
+          <div id="playerContainer" style="aspect-ratio:16/9; width:100%; background:#000; position:relative;">
+            <iframe id="twitchPlayer" allowfullscreen style="position:absolute; inset:0; width:100%; height:100%; border:0"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
     <div class="stream-container" id="stream-container"></div>
     <!-- Chat Panel -->
     <div class="chat-panel" id="chat-panel">
@@ -371,28 +396,6 @@
     <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
   </div>
 
-  <section style="margin:24px 0">
-    <h2>Live by Game</h2>
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
-      <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)" style="flex:1; padding:8px;">
-      <button id="gameSearchBtn">Search</button>
-    </div>
-
-    <div style="display:flex; gap:24px; align-items:flex-start;">
-      <div style="flex:1;">
-        <h3 id="gameTitle">—</h3>
-        <div id="streamsGrid"
-             style="display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:12px;"></div>
-      </div>
-
-      <div style="flex:1; min-width:360px;">
-        <div id="playerContainer" style="aspect-ratio:16/9; width:100%; background:#000; position:relative;">
-          <iframe id="twitchPlayer" allowfullscreen
-                  style="position:absolute; inset:0; width:100%; height:100%; border:0"></iframe>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <script>
     const TWITCH_CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
@@ -482,6 +485,15 @@
       const q = document.getElementById('gameQuery').value.trim() || 'Tribes 3: Rivals';
       runGameSearch(q);
     });
+
+    function toggleGameSearch() {
+      const section = document.getElementById('game-search');
+      const btn = document.getElementById('toggle-game-search-btn');
+      if (!section) return;
+      const isHidden = section.style.display === 'none' || !section.style.display;
+      section.style.display = isHidden ? 'block' : 'none';
+      if (btn) btn.textContent = isHidden ? 'Hide Game Search' : 'Find Streams by Game';
+    }
 
     runGameSearch('Tribes 3: Rivals');
   </script>
@@ -765,6 +777,7 @@
       if (btn) btn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
       renderStreams();
     }
+
 
     function hideSelectedChannels() {
       const checkboxes = document.querySelectorAll('#filter-checkboxes input:checked');
