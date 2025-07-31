@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Score / Minute Chart</title>
+    <title>Twins Tournament Data Center</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="oauth.js"></script>
@@ -36,7 +36,13 @@
             });
     </script>
 
-    <canvas id="scoreChart"></canvas>
+    <h1 class="text-3xl font-bold text-center mt-4">Twins Tournament Data Center</h1>
+    <canvas id="scoreChart" class="mt-4"></canvas>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+        <iframe class="w-full h-96 bg-white" src="https://docs.google.com/spreadsheets/d/1M5dJfcEiItfreB-Ohi5TjncRmc-JFBPbetRbRT1ixZs/preview"></iframe>
+        <iframe class="w-full h-96 bg-white" src="https://docs.google.com/spreadsheets/d/18czntt-rJvPamT0tnEYJVSgn7O-HJn_kfai9OTEOZ44/preview"></iframe>
+        <iframe class="w-full h-96 bg-white" src="https://docs.google.com/spreadsheets/d/19lOvDGNiaUJ7wkBwgROez_UXkjhrJQe21i07lPrhab8/preview"></iframe>
+    </div>
 
     <script>
         const players = ["PR0J", "DareDevilMoon", "Dugong", "Nemesis", "nomlfir", "kwago", "Annihilation", "DeadManWalking", "Barracuda",

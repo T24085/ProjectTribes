@@ -9,7 +9,8 @@ This repository contains a collection of static HTML pages for the community aro
 - **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters. Includes a chat box powered by Twitch embeds that appears alongside the match streams.
 - **TwitchFeedDisplays.html** – Layout for watching multiple Twitch streams at once.
 - **TwitchFeedMobile.html** – Mobile-friendly version of the Twitch feeds display.
-- **FatboysofSummerDashBoard.html** – Score-per-minute chart for a draft tournament.
+- **TwinsTournamentDataCenter.html** – Score-per-minute chart and documents for the tournament.
+- **UpcomingEvents.html** – Schedule of upcoming events with the Twins image.
 - **TeamBuilder.html** – Simple form for creating your own team with a logo and banner stored in your browser.
 - **MontageBay.html** – Submit montage video links and view them all in one place.
 - **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, DeadStop, Toxic Aimers, and Unhandled Exception.
@@ -23,7 +24,8 @@ You can open these pages directly:
 - [Tournament Manager](TournamentManager.html)
 - [Twitch Feeds](TwitchFeedDisplays.html)
 - [Mobile Twitch Feeds](TwitchFeedMobile.html)
-- [Fatboys Dashboard](https://t24085.github.io/FatBoysofSummerDraft/dashboard)
+- [Twins Tournament Data Center](TwinsTournamentDataCenter.html)
+- [Upcoming Events](UpcomingEvents.html)
 
 
 ## Usage
