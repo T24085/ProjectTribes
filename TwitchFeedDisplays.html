@@ -421,7 +421,7 @@
       return (data.data && data.data[0]) || null;
     }
 
-    async function getStreamsByGameId(gameId, limit = 20) {
+    async function getStreamsByGameId(gameId, limit = 54) {
       const data = await helix(`/streams?game_id=${encodeURIComponent(gameId)}&first=${limit}`);
       return data.data || [];
     }
@@ -470,7 +470,7 @@
           setPlayer(null);
           return;
         }
-        const streams = await getStreamsByGameId(cat.id, 20);
+        const streams = await getStreamsByGameId(cat.id, 54);
         renderStreams(cat.name, streams);
       } catch (e) {
         console.error(e);
