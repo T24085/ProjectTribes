@@ -433,7 +433,7 @@
       iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channelLogin)}&parent=${parentHost}`;
     }
 
-    function renderStreams(gameName, streams) {
+    function renderGameStreams(gameName, streams) {
       const titleEl = document.getElementById('gameTitle');
       if (!titleEl) return;
       titleEl.textContent = streams.length ? `Live in ${gameName}` : `No one live in ${gameName} right now`;
@@ -471,7 +471,7 @@
           return;
         }
         const streams = await getStreamsByGameId(cat.id, 20);
-        renderStreams(cat.name, streams);
+        renderGameStreams(cat.name, streams);
       } catch (e) {
         console.error(e);
         alert(e.message);
