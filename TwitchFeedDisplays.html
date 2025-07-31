@@ -435,7 +435,6 @@
       </div>
       <div class="filter-section">
         <button id="toggle-game-search-btn" onclick="toggleGameSearch()">Find Streams by Game</button>
-
       </div>
       <div class="donation-section">
         <p>Support the Tribes 3: Rivals Multi Display!</p>
@@ -451,7 +450,8 @@
       <h2>Live by Game</h2>
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
         <input id="gameQuery" placeholder="Search game (e.g., Tribes 3: Rivals)" style="flex:1; padding:8px;">
-        <button id="gameSearchBtn">Search</button>
+        <button id="gameSearchBtn" type="button">Search</button>
+
       </div>
       <div style="display:flex; gap:24px; align-items:flex-start;">
         <div style="flex:1;">
@@ -563,9 +563,18 @@
       }
     }
 
-    document.getElementById('gameSearchBtn').addEventListener('click', () => {
+    document.getElementById('gameSearchBtn').addEventListener('click', (e) => {
+      e.preventDefault();
       const q = document.getElementById('gameQuery').value.trim() || 'Tribes 3: Rivals';
       runGameSearch(q);
+    });
+
+    document.getElementById('gameQuery').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const q = document.getElementById('gameQuery').value.trim() || 'Tribes 3: Rivals';
+        runGameSearch(q);
+      }
     });
 
     function toggleGameSearch() {
@@ -859,6 +868,7 @@
       if (btn) btn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
       renderStreams();
     }
+
 
     function hideSelectedChannels() {
       const checkboxes = document.querySelectorAll('#filter-checkboxes input:checked');
