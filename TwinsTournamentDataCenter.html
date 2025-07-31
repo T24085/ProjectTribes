@@ -152,12 +152,14 @@
             {
                 category: "Additional Sheets",
                 items: [
-                    { name: "Draft #7 (9v9) June 21st 2025 (Public)", url: "https://docs.google.com/spreadsheets/d/1M5dJfcEiItfreB-Ohi5TjncRmc-JFBPbetRbRT1ixZs/edit?gid=589907287#gid=589907287" },
-                    { name: "Additional Stats Document", url: "https://docs.google.com/spreadsheets/d/18czntt-rJvPamT0tnEYJVSgn7O-HJn_kfai9OTEOZ44/" },
-                    { name: "Draft #5 Statistics (cooked)", url: "https://docs.google.com/spreadsheets/d/19lOvDGNiaUJ7wkBwgROez_UXkjhrJQe21i07lPrhab8" }
+
+                    { name: "Draft #7 (9v9) June 21st 2025 (Public)", url: "https://docs.google.com/spreadsheets/d/1M5dJfcEiItfreB-Ohi5TjncRmc-JFBPbetRbRT1ixZs/edit?gid=589907287#gid=589907287", embed: true },
+                    { name: "Additional Stats Document", url: "https://docs.google.com/spreadsheets/d/18czntt-rJvPamT0tnEYJVSgn7O-HJn_kfai9OTEOZ44/", embed: true },
+                    { name: "Draft #5 Statistics (cooked)", url: "https://docs.google.com/spreadsheets/d/19lOvDGNiaUJ7wkBwgROez_UXkjhrJQe21i07lPrhab8", embed: true }
                 ]
             }
         ];
+
 
         // LinkCard component
         const LinkCard = ({ name, url }) => {
@@ -173,6 +175,29 @@
             );
         };
 
+        // EmbedSheetCard component for displaying Google Sheets
+        const EmbedSheetCard = ({ name, url }) => {
+            const [show, setShow] = React.useState(false);
+            const embedUrl = url.split('/edit')[0].replace(/\/$/, '') + '/preview';
+            return (
+                <div className="link-card p-6 rounded-lg neon-glow transition duration-300 transform">
+                    <button
+                        onClick={() => setShow(!show)}
+                        className="text-lg font-semibold text-orange-200 w-full text-left"
+                    >
+                        {name}
+                    </button>
+                    {show && (
+                        <iframe
+                            src={embedUrl}
+                            className="w-full h-96 mt-4 bg-white rounded"
+                            loading="lazy"
+                        ></iframe>
+                    )}
+                </div>
+            );
+        };
+
         // CategorySection component
         const CategorySection = ({ category, items }) => {
             return (
@@ -180,7 +205,11 @@
                     <h2 className="text-3xl font-bold mb-6 text-pink-300 category-title">{category}</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {items.map((item, index) => (
-                            <LinkCard key={index} name={item.name} url={item.url} />
+                            item.embed ? (
+                                <EmbedSheetCard key={index} name={item.name} url={item.url} />
+                            ) : (
+                                <LinkCard key={index} name={item.name} url={item.url} />
+                            )
                         ))}
                     </div>
                 </div>
