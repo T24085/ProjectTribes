@@ -2,37 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Team Builder</title>
-  <!-- Include Firebase SDK -->
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-  <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <title>Team Sign-Up</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-900 text-white flex justify-center items-center min-h-screen">
 
-  <div class="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-sm">
-    <h1 class="text-2xl font-bold text-center mb-6">🏆 Team Builder</h1>
-    
+  <div class="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-md">
+    <h1 class="text-2xl font-bold text-center mb-6">Team Sign-Up</h1>
+
     <form id="teamForm" class="space-y-4">
       <div>
-        <label for="teamName" class="block text-sm mb-1">Team Name</label>
+        <label class="block text-sm mb-1">Team Name</label>
         <input type="text" id="teamName" required
-               class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
-      
+
       <div>
-        <label for="playerName" class="block text-sm mb-1">Player Name</label>
+        <label class="block text-sm mb-1">Player Name</label>
         <input type="text" id="playerName" required
-               class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
-      
-      <button type="submit" class="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 font-semibold">
-        Add Player
-      </button>
+
+      <button type="submit"
+        class="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 font-semibold">Add Team</button>
     </form>
 
-    <div id="teamList" class="mt-6">
-      <h2 class="text-lg font-bold mb-2">Current Teams</h2>
+    <div class="mt-6">
+      <h2 class="text-lg font-bold mb-2">Teams</h2>
       <ul id="teamOutput" class="space-y-2"></ul>
     </div>
   </div>
@@ -41,12 +37,11 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ Make sure this matches your Firebase console
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
       authDomain: "team-sign-up-b5646.firebaseapp.com",
       projectId: "team-sign-up-b5646",
-      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      storageBucket: "team-sign-up-b5646.appspot.com",
       messagingSenderId: "951471144681",
       appId: "1:951471144681:web:d150b047ed0e93a2d9ba78"
     };
@@ -54,33 +49,30 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const teamForm = document.getElementById('teamForm');
-    const teamOutput = document.getElementById('teamOutput');
+    const form = document.getElementById("teamForm");
+    const output = document.getElementById("teamOutput");
 
     async function loadTeams() {
-      teamOutput.innerHTML = "";
+      output.innerHTML = "";
       const snapshot = await getDocs(collection(db, "teams"));
       snapshot.forEach(doc => {
-        const { teamName, playerName } = doc.data();
         const li = document.createElement("li");
         li.className = "bg-gray-700 p-2 rounded-md";
-        li.textContent = `${teamName} – ${playerName}`;
-        teamOutput.append(li);
+        li.textContent = `${doc.data().teamName} – ${doc.data().playerName}`;
+        output.appendChild(li);
       });
     }
 
-    teamForm.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const teamName = document.getElementById("teamName").value.trim();
       const playerName = document.getElementById("playerName").value.trim();
-      if (teamName && playerName) {
-        await addDoc(collection(db, "teams"), { teamName, playerName });
-        teamForm.reset();
-        loadTeams();
-      }
+      if (!teamName || !playerName) return;
+      await addDoc(collection(db, "teams"), { teamName, playerName });
+      form.reset();
+      loadTeams();
     });
 
-    // Initial load
     loadTeams();
   </script>
 </body>
