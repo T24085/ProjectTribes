@@ -4,10 +4,23 @@
   <meta charset="UTF-8" />
   <title>Team Sign-Up</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="oauth.js"></script>
 </head>
-<body class="bg-gray-900 text-white flex justify-center items-center min-h-screen">
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch('nav.html').then(r => r.text()).then(html => {
+      document.getElementById('nav-placeholder').innerHTML = html;
+      if (window.twitchOAuth) {
+        twitchOAuth.updateNav();
+        twitchOAuth.initLiveTeamsMenu();
+        const panel = document.getElementById('live-teams-panel');
+        if (panel) panel.style.top = '9rem';
+      }
+    });
+  </script>
 
-  <div class="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-md">
+  <div class="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-2xl mt-8">
     <h1 class="text-2xl font-bold text-center mb-6">Team Sign-Up</h1>
 
     <form id="teamForm" class="space-y-4">
@@ -16,10 +29,19 @@
         <input type="text" id="teamName" required
           class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
+      <div>
+        <label class="block text-sm mb-1">Team Tag</label>
+        <input type="text" id="teamTag" required
+          class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      <div id="playersContainer" class="space-y-2"></div>
+      <button type="button" id="addPlayerBtn"
+        class="w-full py-1 rounded-md bg-gray-700 hover:bg-gray-600">Add Player</button>
 
       <div>
-        <label class="block text-sm mb-1">Player Name</label>
-        <input type="text" id="playerName" required
+        <label class="block text-sm mb-1">Bench Players (comma separated)</label>
+        <input type="text" id="benchPlayers"
           class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
@@ -51,14 +73,35 @@
 
     const form = document.getElementById("teamForm");
     const output = document.getElementById("teamOutput");
+    const playersContainer = document.getElementById("playersContainer");
+    const addPlayerBtn = document.getElementById("addPlayerBtn");
+    let playerCount = 0;
+
+    function addPlayerRow(name = "", twitch = "") {
+      if (playerCount >= 7) return;
+      playerCount++;
+      const div = document.createElement("div");
+      div.className = "grid grid-cols-1 md:grid-cols-2 gap-2 player-row";
+      div.innerHTML = `
+        <input type="text" placeholder="Player ${playerCount} Name" class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${name}">
+        <input type="text" placeholder="Twitch URL" class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${twitch}">
+      `;
+      playersContainer.appendChild(div);
+    }
+
+    addPlayerBtn.addEventListener("click", () => addPlayerRow());
+    document.addEventListener("DOMContentLoaded", () => addPlayerRow());
 
     async function loadTeams() {
       output.innerHTML = "";
       const snapshot = await getDocs(collection(db, "teams"));
       snapshot.forEach(doc => {
+        const data = doc.data();
         const li = document.createElement("li");
         li.className = "bg-gray-700 p-2 rounded-md";
-        li.textContent = `${doc.data().teamName} – ${doc.data().playerName}`;
+        const players = (data.players || []).map(p => p.name).join(', ');
+        const bench = (data.benchPlayers || []).join(', ');
+        li.innerHTML = `<strong>${data.teamName} [${data.teamTag}]</strong><br>Players: ${players}${bench ? `<br>Bench: ${bench}` : ''}`;
         output.appendChild(li);
       });
     }
@@ -66,10 +109,21 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const teamName = document.getElementById("teamName").value.trim();
-      const playerName = document.getElementById("playerName").value.trim();
-      if (!teamName || !playerName) return;
-      await addDoc(collection(db, "teams"), { teamName, playerName });
+      const teamTag = document.getElementById("teamTag").value.trim();
+      const benchPlayers = document.getElementById("benchPlayers").value.trim().split(',').map(p => p.trim()).filter(Boolean);
+      const players = Array.from(playersContainer.querySelectorAll('.player-row')).map(row => {
+        const inputs = row.querySelectorAll('input');
+        const name = inputs[0].value.trim();
+        const twitch = inputs[1].value.trim();
+        if (!name) return null;
+        return { name, twitch };
+      }).filter(Boolean);
+      if (!teamName || !teamTag || players.length === 0) return;
+      await addDoc(collection(db, "teams"), { teamName, teamTag, players, benchPlayers });
       form.reset();
+      playersContainer.innerHTML = '';
+      playerCount = 0;
+      addPlayerRow();
       loadTeams();
     });
 
