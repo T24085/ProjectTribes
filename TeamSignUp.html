@@ -29,6 +29,7 @@
     </form>
     <section id="team-list" class="mt-8 space-y-4 max-w-2xl mx-auto"></section>
   </main>
+
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
     import {
@@ -81,6 +82,7 @@
     async function loadTeams() {
       const list = document.getElementById('team-list');
       list.innerHTML = '';
+
       const snapshot = await getDocs(collection(db, 'teams'));
       snapshot.forEach(docSnap => {
         const team = docSnap.data();
@@ -108,13 +110,16 @@
         delBtn.onclick = () => deleteTeam(docSnap.id);
         div.appendChild(delBtn);
 
+
         list.appendChild(div);
       });
     }
 
     async function deleteTeam(id) {
       if (confirm('Delete this team?')) {
+
         await deleteDoc(doc(db, 'teams', id));
+
         loadTeams();
       }
     }
