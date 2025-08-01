@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team Sign-Up</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="oauth.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch('nav.html').then(r => r.text()).then(html => {
+      document.getElementById('nav-placeholder').innerHTML = html;
+      if (window.twitchOAuth) {
+        twitchOAuth.updateNav();
+        twitchOAuth.initLiveTeamsMenu();
+      }
+    });
+  </script>
+  <main class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-center mb-4">New Team Sign-Up</h1>
+    <form id="team-form" class="space-y-4 max-w-2xl mx-auto">
+      <input id="team-name" type="text" placeholder="Team Name" class="w-full p-2 rounded bg-gray-800" required>
+      <input id="team-tag" type="text" placeholder="Team Tag" class="w-full p-2 rounded bg-gray-800" required>
+      <div id="players-section" class="space-y-2"></div>
+      <button type="button" id="add-bench" class="bg-gray-700 hover:bg-gray-800 px-3 py-1 rounded">Add Bench Player</button>
+      <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Save Team</button>
+    </form>
+    <section id="team-list" class="mt-8 space-y-4 max-w-2xl mx-auto"></section>
+  </main>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      addDoc,
+      doc,
+      setDoc,
+      deleteDoc
+    } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    function playerRow(name = '', twitch = '', isBench = false) {
+      const div = document.createElement('div');
+      div.className = 'grid grid-cols-2 gap-2';
+      div.innerHTML = `
+        <input type="text" placeholder="Player Name" value="${name}" class="p-2 rounded bg-gray-800 player-name">
+        <input type="text" placeholder="Twitch Channel" value="${twitch}" class="p-2 rounded bg-gray-800 player-twitch">
+      `;
+      div.dataset.bench = isBench;
+      return div;
+    }
+
+    function loadInitialPlayers() {
+      const section = document.getElementById('players-section');
+      section.innerHTML = '';
+      for (let i = 0; i < 7; i++) {
+        section.appendChild(playerRow());
+      }
+    }
+
+    document.getElementById('add-bench').addEventListener('click', () => {
+      document.getElementById('players-section').appendChild(playerRow('', '', true));
+    });
+
+    loadInitialPlayers();
+
+    async function loadTeams() {
+      const list = document.getElementById('team-list');
+      list.innerHTML = '';
+      const snapshot = await getDocs(collection(db, 'teams'));
+      snapshot.forEach(docSnap => {
+        const team = docSnap.data();
+        const div = document.createElement('div');
+        div.className = 'bg-gray-800 p-4 rounded';
+        div.innerHTML = `<h2 class="text-xl font-semibold mb-2">${team.name} (${team.tag})</h2>`;
+
+        const ul = document.createElement('ul');
+        team.players.forEach(p => {
+          const li = document.createElement('li');
+          const twitchLink = p.twitch ? `<a href="https://twitch.tv/${p.twitch}" class="text-purple-400" target="_blank">@${p.twitch}</a>` : '';
+          li.innerHTML = `${p.name} ${twitchLink} ${p.isBench ? '(Bench)' : ''}`;
+          ul.appendChild(li);
+        });
+        div.appendChild(ul);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.className = 'bg-green-600 hover:bg-green-700 px-2 py-1 rounded mr-2';
+        editBtn.onclick = () => editTeam(docSnap.id, team);
+        div.appendChild(editBtn);
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'Delete';
+        delBtn.className = 'bg-red-600 hover:bg-red-700 px-2 py-1 rounded';
+        delBtn.onclick = () => deleteTeam(docSnap.id);
+        div.appendChild(delBtn);
+
+        list.appendChild(div);
+      });
+    }
+
+    async function deleteTeam(id) {
+      if (confirm('Delete this team?')) {
+        await deleteDoc(doc(db, 'teams', id));
+        loadTeams();
+      }
+    }
+
+    let editingId = null;
+    function editTeam(id, team) {
+      editingId = id;
+      document.getElementById('team-name').value = team.name;
+      document.getElementById('team-tag').value = team.tag;
+      const section = document.getElementById('players-section');
+      section.innerHTML = '';
+      team.players.forEach(p => section.appendChild(playerRow(p.name, p.twitch, p.isBench)));
+    }
+
+    document.getElementById('team-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const name = document.getElementById('team-name').value.trim();
+        const tag = document.getElementById('team-tag').value.trim();
+        const players = Array.from(document.querySelectorAll('#players-section > div')).map(div => ({
+          name: div.querySelector('.player-name').value.trim(),
+          twitch: div.querySelector('.player-twitch').value.trim(),
+          isBench: div.dataset.bench === 'true'
+        })).filter(p => p.name);
+        const data = { name, tag, players };
+        if (editingId) {
+          await setDoc(doc(db, 'teams', editingId), data);
+          editingId = null;
+        } else {
+          await addDoc(collection(db, 'teams'), data);
+        }
+        e.target.reset();
+        loadInitialPlayers();
+        loadTeams();
+      } catch (err) {
+        console.error('Failed to save team:', err);
+        alert('Error saving team. Check the console for details.');
+      }
+    });
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadTeams);
+    } else {
+      loadTeams();
+    }
+  </script>
+</body>
+</html>
