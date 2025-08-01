@@ -1,85 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create a Team</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="oauth.js"></script>
+  <meta charset="UTF-8" />
+  <title>Team Builder</title>
+  <!-- Include Firebase SDK -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch('nav.html').then(r=>r.text()).then(html=>{
-      document.getElementById('nav-placeholder').innerHTML = html;
-      if (window.twitchOAuth) {
-        twitchOAuth.updateNav();
-        twitchOAuth.initLiveTeamsMenu();
-      }
-    });
-  </script>
+<body class="bg-gray-900 text-white flex justify-center items-center min-h-screen">
 
-  <main class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold mb-4 text-center">Create a Team</h1>
-    <form id="team-form" class="space-y-4 max-w-xl mx-auto">
-      <input id="team-name" type="text" placeholder="Team name" class="w-full p-2 rounded bg-gray-800" required>
-      <label class="block">Logo image
-        <input id="team-logo" type="file" accept="image/*" class="mt-1">
-      </label>
-      <label class="block">Banner image
-        <input id="team-banner" type="file" accept="image/*" class="mt-1">
-      </label>
-      <button type="submit" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">Save Team</button>
+  <div class="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-center mb-6">🏆 Team Builder</h1>
+    
+    <form id="teamForm" class="space-y-4">
+      <div>
+        <label for="teamName" class="block text-sm mb-1">Team Name</label>
+        <input type="text" id="teamName" required
+               class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      
+      <div>
+        <label for="playerName" class="block text-sm mb-1">Player Name</label>
+        <input type="text" id="playerName" required
+               class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+      
+      <button type="submit" class="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 font-semibold">
+        Add Player
+      </button>
     </form>
 
-    <section id="team-list" class="mt-8 space-y-8"></section>
-  </main>
+    <div id="teamList" class="mt-6">
+      <h2 class="text-lg font-bold mb-2">Current Teams</h2>
+      <ul id="teamOutput" class="space-y-2"></ul>
+    </div>
+  </div>
 
-  <script>
-  function dataUrlFromFile(file) {
-    return new Promise(res=>{
-      if(!file) return res('');
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result);
-      reader.readAsDataURL(file);
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ✅ Make sure this matches your Firebase console
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.appspot.com",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:d150b047ed0e93a2d9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const teamForm = document.getElementById('teamForm');
+    const teamOutput = document.getElementById('teamOutput');
+
+    async function loadTeams() {
+      teamOutput.innerHTML = "";
+      const snapshot = await getDocs(collection(db, "teams"));
+      snapshot.forEach(doc => {
+        const { teamName, playerName } = doc.data();
+        const li = document.createElement("li");
+        li.className = "bg-gray-700 p-2 rounded-md";
+        li.textContent = `${teamName} – ${playerName}`;
+        teamOutput.append(li);
+      });
+    }
+
+    teamForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const teamName = document.getElementById("teamName").value.trim();
+      const playerName = document.getElementById("playerName").value.trim();
+      if (teamName && playerName) {
+        await addDoc(collection(db, "teams"), { teamName, playerName });
+        teamForm.reset();
+        loadTeams();
+      }
     });
-  }
 
-  const STORAGE_KEY = 'tribes_custom_teams';
-
-  function loadTeams() {
-    const list = document.getElementById('team-list');
-    const teams = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    list.innerHTML = '';
-    teams.forEach(team => {
-      const div = document.createElement('div');
-      div.className = 'bg-gray-800 p-4 rounded';
-      div.innerHTML = `
-        <h2 class="text-xl font-semibold mb-2">${team.name}</h2>
-        ${team.banner ? `<img src="${team.banner}" alt="banner" class="w-full mb-2">` : ''}
-        ${team.logo ? `<img src="${team.logo}" alt="logo" class="w-24 h-24 mb-2">` : ''}
-      `;
-      list.appendChild(div);
-    });
-  }
-
-  document.getElementById('team-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('team-name').value.trim();
-    const logoFile = document.getElementById('team-logo').files[0];
-    const bannerFile = document.getElementById('team-banner').files[0];
-    const logoData = await dataUrlFromFile(logoFile);
-    const bannerData = await dataUrlFromFile(bannerFile);
-
-    const team = {name, logo: logoData, banner: bannerData};
-    const teams = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    teams.push(team);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(teams));
+    // Initial load
     loadTeams();
-    e.target.reset();
-  });
-
-  document.addEventListener('DOMContentLoaded', loadTeams);
   </script>
 </body>
 </html>
