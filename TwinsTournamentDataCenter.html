@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+    <script src="oauth.js"></script>
     <style>
         /* Custom styles with background image */
         body {
@@ -85,6 +86,16 @@
     </style>
 </head>
 <body class="text-white min-h-screen">
+    <div id="nav-placeholder"></div>
+    <script>
+        fetch('nav.html').then(r => r.text()).then(html => {
+            document.getElementById('nav-placeholder').innerHTML = html;
+            if (window.twitchOAuth) {
+                twitchOAuth.updateNav();
+                twitchOAuth.initLiveTeamsMenu();
+            }
+        });
+    </script>
     <div id="root"></div>
 
     <script type="text/babel">
