@@ -6,7 +6,9 @@
     <title>Fat Boys of Summer Draft Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="oauth.js"></script>
+
     <!-- React and Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -96,6 +98,7 @@
             }
         });
     </script>
+
     <div id="root"></div>
 
     <script type="text/babel">
@@ -148,6 +151,7 @@
                     { name: "Returns per Minute", url: "https://t24085.github.io/FatBoysofSummerDraft/returnsminute" },
                     { name: "Returns (Team Data)", url: "https://t24085.github.io/FatBoysofSummerDraft/returnsteamdata" }
                 ]
+
             },
             {
                 category: "Additional Sheets",
@@ -196,6 +200,30 @@
             );
         };
 
+
+        // EmbedSheetCard component for displaying Google Sheets
+        const EmbedSheetCard = ({ name, url }) => {
+            const [show, setShow] = React.useState(false);
+            const embedUrl = url.split('/edit')[0].replace(/\/$/, '') + '/preview';
+            return (
+                <div className="link-card p-6 rounded-lg neon-glow transition duration-300 transform">
+                    <button
+                        onClick={() => setShow(!show)}
+                        className="text-lg font-semibold text-orange-200 w-full text-left"
+                    >
+                        {name}
+                    </button>
+                    {show && (
+                        <iframe
+                            src={embedUrl}
+                            className="w-full h-96 mt-4 bg-white rounded"
+                            loading="lazy"
+                        ></iframe>
+                    )}
+                </div>
+            );
+        };
+
         // CategorySection component
         const CategorySection = ({ category, items }) => {
             return (
@@ -213,6 +241,7 @@
                 </div>
             );
         };
+
 
         // Main Dashboard component
         const Dashboard = () => {
