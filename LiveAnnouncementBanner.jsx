@@ -60,6 +60,7 @@ export default function LiveAnnouncementBanner() {
       {messages.map((msg, i) => (
         <div key={i} className="lab-banner">
           {msg}
+
         </div>
       ))}
       <style>{`
