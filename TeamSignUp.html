@@ -54,6 +54,7 @@
     <div class="mt-6">
       <h2 class="text-lg font-bold mb-2">Teams</h2>
       <ul id="teamOutput" class="space-y-2"></ul>
+      <button id="exportExcel" class="w-full mt-4 py-2 rounded-md bg-green-600 hover:bg-green-700">Export to Excel</button>
     </div>
   </div>
 
@@ -130,6 +131,28 @@
     });
 
     loadTeams();
+
+    document.getElementById('exportExcel').addEventListener('click', () => {
+      const rows = [];
+      output.querySelectorAll('li').forEach(li => {
+        const text = li.innerHTML.replace(/<br>/g, '\n');
+        const clean = text.replace(/<\/?.*?>/g, '').split('\n');
+        const teamMatch = clean[0].match(/^(.*) \[(.*)\]$/) || [];
+        const players = (clean[1] || '').replace(/^Players: /, '').split(',').map(p => p.trim()).filter(Boolean);
+        const bench = (clean[2] || '').replace(/^Bench: /, '').split(',').map(p => p.trim()).filter(Boolean);
+        rows.push({
+          teamName: teamMatch[1] || '',
+          teamTag: teamMatch[2] || '',
+          players: players.join(', '),
+          bench: bench.join(', ')
+        });
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Teams');
+      XLSX.writeFile(wb, 'teams.xlsx');
+    });
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </body>
 </html>
