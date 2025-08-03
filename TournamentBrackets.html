@@ -9,6 +9,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="oauth.js"></script>
   <style>
     body {
       background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
@@ -81,6 +82,18 @@
   </style>
 </head>
 <body class="text-white">
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch('nav.html').then(r => r.text()).then(html => {
+      document.getElementById('nav-placeholder').innerHTML = html;
+      if (window.twitchOAuth) {
+        twitchOAuth.updateNav();
+        twitchOAuth.initLiveTeamsMenu();
+        const panel = document.getElementById('live-teams-panel');
+        if (panel) panel.style.top = '9rem';
+      }
+    });
+  </script>
   <div id="root"></div>
   <script type="text/babel">
     const Match = ({ match, roundIndex, matchIndex, onSubmitScores, tournamentStyle, matchHeight, positionTop, nextMatchPosition, prevMatchPositions }) => {
@@ -1498,7 +1511,7 @@
             <h2 className="text-2xl font-bold mb-4">Related Pages</h2>
             <div className="flex gap-4">
               <a
-                href="https://t24085.github.io/DraftSignUp/"
+                href="https://t24085.github.io/ProjectTribes/DraftSignUp.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -1506,7 +1519,7 @@
                 Draft Sign-Up Sheet
               </a>
               <a
-                href="https://t24085.github.io/Tournament-Manager/"
+                href="https://t24085.github.io/ProjectTribes/TournamentManager.html"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
