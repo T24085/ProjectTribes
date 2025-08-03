@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tournament Bracket System</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .bracket-container {
+      display: flex;
+      overflow-x: auto;
+      padding: 20px;
+      position: relative;
+    }
+    .bracket-round {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      margin-right: 40px;
+      min-width: 250px;
+    }
+    .bracket-match {
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bracket-team {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 5px 0;
+    }
+    .bracket-team.winner {
+      background: rgba(0, 255, 0, 0.2);
+      border-radius: 4px;
+    }
+    .bracket-connector {
+      position: absolute;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .bracket-connector.right {
+      border-left: none;
+      height: 1px;
+      width: 20px;
+    }
+    .bracket-connector.vertical {
+      border-top: none;
+      border-bottom: none;
+      width: 1px;
+    }
+    .bracket-connector.left {
+      border-right: none;
+      height: 1px;
+      width: 20px;
+    }
+  </style>
+</head>
+<body class="text-white">
+  <div id="root"></div>
+  <script type="text/babel">
+    const Match = ({ match, roundIndex, matchIndex, onSubmitScores, tournamentStyle, matchHeight, positionTop, nextMatchPosition, prevMatchPositions }) => {
+      const scoreOptions = Array.from({ length: 11 }, (_, i) => i);
+
+      return (
+        <div
+          className="bracket-match"
+          style={{
+            height: `${matchHeight}px`,
+            top: `${positionTop}px`,
+          }}
+        >
+          <div className={`bracket-team ${match.winner === match.team1 ? 'winner' : ''}`}>
+            <span className="w-24 text-left">{match.team1 ? match.team1.name : 'TBD'}</span>
+            {match.team2 && !match.winner && (
+              <select
+                value={match.score1 !== undefined ? match.score1 : ''}
+                onChange={(e) => onSubmitScores(roundIndex, matchIndex, 'score1', e.target.value)}
+                className="w-12 p-1 mx-2 bg-gray-700 text-white rounded"
+              >
+                <option value="">-</option>
+                {scoreOptions.map(score => (
+                  <option key={score} value={score}>{score}</option>
+                ))}
+              </select>
+            )}
+            {match.score1 !== undefined && match.score1 !== '' && <span className="w-8 text-right">{match.score1}</span>}
+          </div>
+          <span className="text-gray-400 text-sm">vs</span>
+          <div className={`bracket-team ${match.winner === match.team2 ? 'winner' : ''}`}>
+            {match.score2 !== undefined && match.score2 !== '' && <span className="w-8 text-left">{match.score2}</span>}
+            {match.team2 && !match.winner && (
+              <select
+                value={match.score2 !== undefined ? match.score2 : ''}
+                onChange={(e) => onSubmitScores(roundIndex, matchIndex, 'score2', e.target.value)}
+                className="w-12 p-1 mx-2 bg-gray-700 text-white rounded"
+              >
+                <option value="">-</option>
+                {scoreOptions.map(score => (
+                  <option key={score} value={score}>{score}</option>
+                ))}
+              </select>
+            )}
+            <span className="w-24 text-right">{match.team2 ? match.team2.name : 'TBD'}</span>
+          </div>
+          {match.team1 && !match.winner && (
+            match.team2 ? (
+              <button
+                onClick={() => onSubmitScores(roundIndex, matchIndex, 'submit', null)}
+                className="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-sm"
+                disabled={match.score1 === undefined || match.score2 === undefined || match.score1 === '' || match.score2 === '' || match.score1 === match.score2}
+              >
+                Submit
+              </button>
+            ) : (
+              <button
+                onClick={() => onSubmitScores(roundIndex, matchIndex, 'advanceBye', null)}
+                className="mt-2 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 rounded text-sm"
+              >
+                Advance Bye
+              </button>
+            )
+          )}
+          {/* Connectors */}
+          {nextMatchPosition && match.winner && (
+            <>
+              {/* Right connector (to next match) */}
+              <div
+                className="bracket-connector right"
+                style={{
+                  top: `${matchHeight / 2}px`,
+                  right: '-20px',
+                }}
+              />
+              {/* Vertical connector */}
+              <div
+                className="bracket-connector vertical"
+                style={{
+                  top: `${matchHeight / 2}px`,
+                  right: '-20px',
+                  height: `${nextMatchPosition - positionTop - (matchHeight / 2)}px`,
+                }}
+              />
+            </>
+          )}
+          {prevMatchPositions && prevMatchPositions.length > 0 && (
+            <>
+              {/* Left connector (from previous matches) */}
+              <div
+                className="bracket-connector left"
+                style={{
+                  top: `${matchHeight / 2}px`,
+                  left: '-20px',
+                }}
+              />
+              {/* Vertical connectors from previous matches */}
+              {prevMatchPositions.map((prevPos, idx) => (
+                <div
+                  key={idx}
+                  className="bracket-connector vertical"
+                  style={{
+                    top: `${Math.min(prevPos + 40, positionTop + (matchHeight / 2))}px`,
+                    left: '-20px',
+                    height: `${Math.abs(prevPos + 40 - (positionTop + (matchHeight / 2)))}px`,
+                  }}
+                />
+              ))}
+            </>
+          )}
+        </div>
+      );
+    };
+
+    const RoundRobinBracket = ({ rounds, onSubmitScores, teamStandings, teamRecords }) => {
+      const scoreOptions = Array.from({ length: 11 }, (_, i) => i);
+
+      return (
+        <div className="glass-effect p-6 m-4">
+          <h2 className="text-2xl font-bold mb-4">Round Robin Tournament</h2>
+          {/* Display Team Records */}
+          <div className="mb-8">
+            <h3 className="text-lg font-bold mb-2">Team Overall Scores</h3>
+            <div className="grid grid-cols-1 gap-2">
+              {Object.entries(teamRecords)
+                .sort(([, a], [, b]) => b.totalScore - a.totalScore)
+                .map(([teamName, record], index) => (
+                  <div key={teamName} className="p-2 bg-gray-800 rounded flex justify-between">
+                    <span>{index + 1}. {teamName}</span>
+                    <span>Total Score: {record.totalScore}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+          {/* Round Robin Standings */}
+          {teamStandings && (
+            <div className="mb-8">
+              <h3 className="text-lg font-bold mb-2">Standings</h3>
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(teamStandings)
+                  .sort(([, a], [, b]) => b.wins - a.wins || b.points - a.points)
+                  .map(([teamName, stats], index) => (
+                    <div key={teamName} className="p-2 bg-gray-800 rounded flex justify-between">
+                      <span>{index + 1}. {teamName}</span>
+                      <span>Wins: {stats.wins} | Points: {stats.points}</span>
+                    </div>
+                  ))}
+              </div>
+              {rounds.every(round => round.every(match => match.winner)) && (
+                <div className="mt-4 text-center">
+                  <h3 className="text-lg font-bold text-green-400">
+                    Champion: {Object.keys(teamStandings).reduce((a, b) => 
+                      teamStandings[a].wins > teamStandings[b].wins ? a : 
+                      teamStandings[a].wins === teamStandings[b].wins && teamStandings[a].points > teamStandings[b].points ? a : b
+                    )}
+                  </h3>
+                </div>
+              )}
+            </div>
+          )}
+          {/* Match Sets */}
+          {rounds.map((round, roundIndex) => (
+            <div key={roundIndex} className="mb-8">
+              <h3 className="text-lg font-bold mb-2">Match Set {roundIndex + 1}</h3>
+              <div className="grid grid-cols-1 gap-4">
+                {round.map((match, matchIndex) => (
+                  <div key={matchIndex} className="flex items-center justify-between p-4 bg-gray-800 rounded">
+                    <div className="flex items-center">
+                      <span className="w-32">{match.team1 ? match.team1.name : 'TBD'}</span>
+                      {match.team2 && !match.winner && (
+                        <select
+                          value={match.score1 !== undefined ? match.score1 : ''}
+                          onChange={(e) => onSubmitScores(roundIndex, matchIndex, 'score1', e.target.value)}
+                          className="w-16 p-1 mx-2 bg-gray-700 text-white rounded"
+                        >
+                          <option value="">-</option>
+                          {scoreOptions.map(score => (
+                            <option key={score} value={score}>{score}</option>
+                          ))}
+                        </select>
+                      )}
+                      {match.score1 !== undefined && match.score1 !== '' && <span className="mx-2">{match.score1}</span>}
+                    </div>
+                    <span className="text-gray-400">vs</span>
+                    <div className="flex items-center">
+                      {match.score2 !== undefined && match.score2 !== '' && <span className="mx-2">{match.score2}</span>}
+                      {match.team2 && !match.winner && (
+                        <select
+                          value={match.score2 !== undefined ? match.score2 : ''}
+                          onChange={(e) => onSubmitScores(roundIndex, matchIndex, 'score2', e.target.value)}
+                          className="w-16 p-1 mx-2 bg-gray-700 text-white rounded"
+                        >
+                          <option value="">-</option>
+                          {scoreOptions.map(score => (
+                            <option key={score} value={score}>{score}</option>
+                          ))}
+                        </select>
+                      )}
+                      <span className="w-32 text-right">{match.team2 ? match.team2.name : 'TBD'}</span>
+                    </div>
+                    {match.team1 && !match.winner && (
+                      match.team2 ? (
+                        <button
+                          onClick={() => onSubmitScores(roundIndex, matchIndex, 'submit', null)}
+                          className="ml-4 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+                          disabled={match.score1 === undefined || match.score2 === undefined || match.score1 === '' || match.score2 === '' || match.score1 === match.score2}
+                        >
+                          Submit Scores
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onSubmitScores(roundIndex, matchIndex, 'advanceBye', null)}
+                          className="ml-4 bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
+                        >
+                          Advance (Bye)
+                        </button>
+                      )
+                    )}
+                    {match.winner && (
+                      <span className="ml-4 text-green-400">Winner: {match.winner.name}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
+    const EliminationBracket = ({ rounds, onSubmitScores, tournamentStyle, teamRecords }) => {
+      const matchHeight = 80;
+      const verticalSpacing = 20;
+
+      const calculatePositions = (roundsToCalculate) => {
+        const positions = [];
+        let currentY = 0;
+
+        roundsToCalculate.forEach((round, roundIndex) => {
+          const roundPositions = [];
+          const matchesInRound = round.length;
+          const totalHeight = (matchesInRound * matchHeight) + ((matchesInRound - 1) * verticalSpacing);
+          currentY = 0;
+
+          round.forEach((match, matchIndex) => {
+            const position = currentY;
+            roundPositions.push(position);
+            currentY += matchHeight + verticalSpacing;
+          });
+
+          positions.push(roundPositions);
+        });
+
+        return positions;
+      };
+
+      const getNextMatchPosition = (roundIndex, matchIndex, roundsToCalculate, positions) => {
+        if (roundIndex >= roundsToCalculate.length - 1) return null;
+        const nextRound = roundsToCalculate[roundIndex + 1];
+        const nextMatchIndex = Math.floor(matchIndex / 2);
+        if (nextMatchIndex >= nextRound.length) return null;
+        return positions[roundIndex + 1][nextMatchIndex] + (matchHeight / 2);
+      };
+
+      const getPrevMatchPositions = (roundIndex, matchIndex, roundsToCalculate, positions) => {
+        if (roundIndex === 0) return [];
+        const prevRound = roundsToCalculate[roundIndex - 1];
+        const prevMatches = [matchIndex * 2, matchIndex * 2 + 1].filter(idx => idx < prevRound.length);
+        return prevMatches.map(idx => positions[roundIndex - 1][idx]);
+      };
+
+      if (tournamentStyle === 'doubleElimination') {
+        const winnersRounds = rounds.filter(round => round[0]?.bracket !== 'losers');
+        const losersRounds = rounds.filter(round => round[0]?.bracket === 'losers');
+        const finalRound = rounds.filter(round => round[0]?.bracket === 'final');
+
+        const winnersPositions = calculatePositions(winnersRounds);
+        const losersPositions = calculatePositions(losersRounds);
+        const finalPositions = calculatePositions(finalRound);
+
+        return (
+          <div className="glass-effect p-6 m-4">
+            <h2 className="text-2xl font-bold mb-4">Double Elimination Tournament</h2>
+            <div className="mb-8">
+              <h3 className="text-lg font-bold mb-2">Team Overall Scores</h3>
+              <div className="grid grid-cols-1 gap-2">
+                {Object.entries(teamRecords)
+                  .sort(([, a], [, b]) => b.totalScore - a.totalScore)
+                  .map(([teamName, record], index) => (
+                    <div key={teamName} className="p-2 bg-gray-800 rounded flex justify-between">
+                      <span>{index + 1}. {teamName}</span>
+                      <span>Total Score: {record.totalScore}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+            <h3 className="text-xl font-bold mb-4">Winners Bracket</h3>
+            <div className="bracket-container">
+              {winnersRounds.map((round, roundIndex) => (
+                <div key={roundIndex} className="bracket-round">
+                  <h4 className="text-lg font-semibold mb-2">
+                    {roundIndex === winnersRounds.length - 1 && round.length === 1 ? 'Championship' : `Round ${roundIndex + 1}`}
+                  </h4>
+                  {round.map((match, matchIndex) => (
+                    <Match
+                      key={matchIndex}
+                      match={match}
+                      roundIndex={roundIndex}
+                      matchIndex={matchIndex}
+                      onSubmitScores={(rIdx, mIdx, field, value) => onSubmitScores(rounds.indexOf(round), mIdx, field, value)}
+                      tournamentStyle={tournamentStyle}
+                      matchHeight={matchHeight}
+                      positionTop={winnersPositions[roundIndex][matchIndex]}
+                      nextMatchPosition={getNextMatchPosition(roundIndex, matchIndex, winnersRounds, winnersPositions)}
+                      prevMatchPositions={getPrevMatchPositions(roundIndex, matchIndex, winnersRounds, winnersPositions)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+            {losersRounds.length > 0 && (
+              <>
+                <h3 className="text-xl font-bold mb-4 mt-8">Losers Bracket</h3>
+                <div className="bracket-container">
+                  {losersRounds.map((round, roundIndex) => (
+                    <div key={roundIndex} className="bracket-round">
+                      <h4 className="text-lg font-semibold mb-2">Losers Round {round[0].losersRound}</h4>
+                      {round.map((match, matchIndex) => (
+                        <Match
+                          key={matchIndex}
+                          match={match}
+                          roundIndex={winnersRounds.length + roundIndex}
+                          matchIndex={matchIndex}
+                          onSubmitScores={(rIdx, mIdx, field, value) => onSubmitScores(rIdx, mIdx, field, value)}
+                          tournamentStyle={tournamentStyle}
+                          matchHeight={matchHeight}
+                          positionTop={losersPositions[roundIndex][matchIndex]}
+                          nextMatchPosition={getNextMatchPosition(roundIndex, matchIndex, losersRounds, losersPositions)}
+                          prevMatchPositions={getPrevMatchPositions(roundIndex, matchIndex, losersRounds, losersPositions)}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {finalRound.length > 0 && (
+              <>
+                <h3 className="text-xl font-bold mb-4 mt-8">Grand Final</h3>
+                <div className="bracket-container">
+                  {finalRound.map((round, roundIndex) => (
+                    <div key={roundIndex} className="bracket-round">
+                      {round.map((match, matchIndex) => (
+                        <Match
+                          key={matchIndex}
+                          match={match}
+                          roundIndex={winnersRounds.length + losersRounds.length + roundIndex}
+                          matchIndex={matchIndex}
+                          onSubmitScores={(rIdx, mIdx, field, value) => onSubmitScores(rIdx, mIdx, field, value)}
+                          tournamentStyle={tournamentStyle}
+                          matchHeight={matchHeight}
+                          positionTop={finalPositions[roundIndex][matchIndex]}
+                          nextMatchPosition={null}
+                          prevMatchPositions={[]}
+                        />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }
+
+      return (
+        <div className="glass-effect p-6 m-4">
+          <h2 className="text-2xl font-bold mb-4">{tournamentStyle === 'singleElimination' ? 'Single Elimination Tournament' : 'Double Elimination Tournament'}</h2>
+          <div className="mb-8">
+            <h3 className="text-lg font-bold mb-2">Team Overall Scores</h3>
+            <div className="grid grid-cols-1 gap-2">
+              {Object.entries(teamRecords)
+                .sort(([, a], [, b]) => b.totalScore - a.totalScore)
+                .map(([teamName, record], index) => (
+                  <div key={teamName} className="p-2 bg-gray-800 rounded flex justify-between">
+                    <span>{index + 1}. {teamName}</span>
+                    <span>Total Score: {record.totalScore}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+          <div className="bracket-container">
+            {rounds.map((round, roundIndex) => (
+              <div key={roundIndex} className="bracket-round">
+                <h4 className="text-lg font-semibold mb-2">
+                  {tournamentStyle === 'singleElimination' && roundIndex === rounds.length - 1 && round.length === 1 ? 'Championship' :
+                   `Round ${roundIndex + 1}`}
+                </h4>
+                {round.map((match, matchIndex) => (
+                  <Match
+                    key={matchIndex}
+                    match={match}
+                    roundIndex={roundIndex}
+                    matchIndex={matchIndex}
+                    onSubmitScores={onSubmitScores}
+                    tournamentStyle={tournamentStyle}
+                    matchHeight={matchHeight}
+                    positionTop={positions[roundIndex][matchIndex]}
+                    nextMatchPosition={getNextMatchPosition(roundIndex, matchIndex, rounds, positions)}
+                    prevMatchPositions={getPrevMatchPositions(roundIndex, matchIndex, rounds, positions)}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+
+    const ManualBracketSetup = ({ teams, onGenerateBracket, tournamentStyle }) => {
+      const [pairings, setPairings] = React.useState([]);
+      const [team1, setTeam1] = React.useState('');
+      const [team2, setTeam2] = React.useState('');
+
+      const availableTeams = teams.filter(t => !pairings.some(p => p.team1?.id === t.id || p.team2?.id === t.id));
+
+      const addPairing = () => {
+        if (!team1 || !team2 || team1 === team2) {
+          alert('Please select two different teams!');
+          return;
+        }
+        const selectedTeam1 = teams.find(t => t.id === parseInt(team1));
+        const selectedTeam2 = teams.find(t => t.id === parseInt(team2));
+        const newPair = { team1: selectedTeam1, team2: selectedTeam2 };
+        if (tournamentStyle === 'doubleElimination') {
+          newPair.bracket = 'winners';
+          newPair.winnersRound = 1;
+        }
+        setPairings([...pairings, newPair]);
+        setTeam1('');
+        setTeam2('');
+      };
+
+      const removePairing = (index) => {
+        setPairings(pairings.filter((_, i) => i !== index));
+      };
+
+      const generateManualBracket = () => {
+        if (pairings.length === 0) {
+          alert('Please create at least one matchup!');
+          return;
+        }
+
+        const teamCount = teams.length;
+        const nextPowerOfTwo = Math.pow(2, Math.ceil(Math.log2(teamCount)));
+        let byeCount = nextPowerOfTwo - teamCount;
+        const remainingTeams = teams.filter(t => !pairings.some(p => p.team1?.id === t.id || p.team2?.id === t.id));
+        let remainingIndex = 0;
+        const initialRound = [];
+
+        initialRound.push(...pairings.map(pair => ({
+          team1: pair.team1,
+          team2: pair.team2,
+          score1: undefined,
+          score2: undefined,
+          winner: null,
+          ...(tournamentStyle === 'doubleElimination' ? { bracket: 'winners', winnersRound: 1 } : {})
+        })));
+
+        if (tournamentStyle !== 'roundRobin') {
+          while (remainingIndex < remainingTeams.length) {
+            if (byeCount > 0 && remainingIndex + 1 < remainingTeams.length) {
+              initialRound.push({
+                team1: remainingTeams[remainingIndex],
+                team2: null,
+                score1: undefined,
+                score2: undefined,
+                winner: null,
+                ...(tournamentStyle === 'doubleElimination' ? { bracket: 'winners', winnersRound: 1 } : {})
+              });
+              remainingIndex++;
+              byeCount--;
+            } else if (remainingIndex + 1 < remainingTeams.length) {
+              initialRound.push({
+                team1: remainingTeams[remainingIndex],
+                team2: remainingTeams[remainingIndex + 1],
+                score1: undefined,
+                score2: undefined,
+                winner: null,
+                ...(tournamentStyle === 'doubleElimination' ? { bracket: 'winners', winnersRound: 1 } : {})
+              });
+              remainingIndex += 2;
+            } else {
+              initialRound.push({
+                team1: remainingTeams[remainingIndex],
+                team2: null,
+                score1: undefined,
+                score2: undefined,
+                winner: null,
+                ...(tournamentStyle === 'doubleElimination' ? { bracket: 'winners', winnersRound: 1 } : {})
+              });
+              remainingIndex++;
+              byeCount--;
+            }
+          }
+        }
+
+        onGenerateBracket(initialRound);
+      };
+
+      return (
+        <div className="glass-effect p-6 m-4">
+          <h2 className="text-2xl font-bold mb-4">Set Up Bracket Matchups</h2>
+          <div className="mb-4">
+            <div className="flex gap-4 mb-2">
+              <select
+                value={team1}
+                onChange={(e) => setTeam1(e.target.value)}
+                className="w-full p-2 bg-gray-800 text-white rounded"
+              >
+                <option value="">Select Team 1</option>
+                {availableTeams.map(team => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+              <select
+                value={team2}
+                onChange={(e) => setTeam2(e.target.value)}
+                className="w-full p-2 bg-gray-800 text-white rounded"
+              >
+                <option value="">Select Team 2</option>
+                {availableTeams.filter(t => t.id !== parseInt(team1)).map(team => (
+                  <option key={team.id} value={team.id}>{team.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={addPairing}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                disabled={!team1 || !team2}
+              >
+                Add Matchup
+              </button>
+            </div>
+            <div className="mt-4">
+              <h3 className="text-lg font-bold mb-2">Current Matchups</h3>
+              {pairings.length === 0 ? (
+                <p>No matchups added yet.</p>
+              ) : (
+                pairings.map((pair, index) => (
+                  <div key={index} className="flex justify-between items-center p-2 bg-gray-800 rounded mb-2">
+                    <span>{pair.team1.name} vs {pair.team2.name}</span>
+                    <button
+                      onClick={() => removePairing(index)}
+                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+          <button
+            onClick={generateManualBracket}
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+          >
+            Generate Manual Bracket
+          </button>
+        </div>
+      );
+    };
+
+    const App = () => {
+      const [teams, setTeams] = React.useState([]);
+      const [rounds, setRounds] = React.useState([]);
+      const [bracketGenerated, setBracketGenerated] = React.useState(false);
+      const [bracketMode, setBracketMode] = React.useState('random');
+      const [tournamentStyle, setTournamentStyle] = React.useState('singleElimination');
+      const [teamStandings, setTeamStandings] = React.useState(null);
+      const [teamRecords, setTeamRecords] = React.useState({});
+
+      React.useEffect(() => {
+        const records = {};
+        teams.forEach(team => {
+          if (!teamRecords[team.name]) {
+            records[team.name] = { totalScore: 0 };
+          } else {
+            records[team.name] = teamRecords[team.name];
+          }
+        });
+        setTeamRecords(records);
+      }, [teams]);
+
+      React.useEffect(() => {
+        localStorage.setItem('tournamentState', JSON.stringify({ teams, rounds, tournamentStyle, teamStandings, teamRecords }));
+      }, [teams, rounds, tournamentStyle, teamStandings, teamRecords]);
+
+      const shuffleArray = (array) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+
+      const generateSingleEliminationBracket = (shuffledTeams) => {
+        const initialRound = [];
+        const teamCount = shuffledTeams.length;
+        const nextPowerOfTwo = Math.pow(2, Math.ceil(Math.log2(teamCount)));
+        let byeCount = nextPowerOfTwo - teamCount;
+
+        let teamIndex = 0;
+        while (teamIndex < shuffledTeams.length) {
+          if (byeCount > 0 && teamIndex + 1 < shuffledTeams.length) {
+            initialRound.push({
+              team1: shuffledTeams[teamIndex],
+              team2: null,
+              score1: undefined,
+              score2: undefined,
+              winner: null
+            });
+            teamIndex++;
+            byeCount--;
+          } else if (teamIndex + 1 < shuffledTeams.length) {
+            initialRound.push({
+              team1: shuffledTeams[teamIndex],
+              team2: shuffledTeams[teamIndex + 1],
+              score1: undefined,
+              score2: undefined,
+              winner: null
+            });
+            teamIndex += 2;
+          } else {
+            initialRound.push({
+              team1: shuffledTeams[teamIndex],
+              team2: null,
+              score1: undefined,
+              score2: undefined,
+              winner: null
+            });
+            teamIndex++;
+            byeCount--;
+          }
+        }
+
+        return [initialRound];
+      };
+
+      const generateRoundRobinBracket = (shuffledTeams) => {
+        const matches = [];
+        const teamCount = shuffledTeams.length;
+
+        // Generate all possible matchups
+        for (let i = 0; i < teamCount; i++) {
+          for (let j = i + 1; j < teamCount; j++) {
+            matches.push({
+              team1: shuffledTeams[i],
+              team2: shuffledTeams[j],
+              score1: undefined,
+              score2: undefined,
+              winner: null
+            });
+          }
+        }
+
+        // Shuffle matches to randomize
+        const shuffledMatches = shuffleArray([...matches]);
+        const rounds = [];
+        let remainingMatches = [...shuffledMatches];
+        let lastSetTeams = new Set();
+
+        // Step 1: Schedule the first set to include all teams (or as many as possible)
+        if (remainingMatches.length > 0) {
+          const firstRound = [];
+          const usedTeams = new Set();
+          const maxMatchesFirstRound = Math.floor(teamCount / 2);
+
+          // Pick matches for the first round
+          for (let i = 0; i < remainingMatches.length && firstRound.length < maxMatchesFirstRound; i++) {
+            const match = remainingMatches[i];
+            const team1Id = match.team1.id;
+            const team2Id = match.team2.id;
+
+            if (!usedTeams.has(team1Id) && !usedTeams.has(team2Id)) {
+              firstRound.push(match);
+              usedTeams.add(team1Id);
+              usedTeams.add(team2Id);
+            }
+          }
+
+          // Remove the matches we used from remainingMatches
+          remainingMatches = remainingMatches.filter(match => !firstRound.includes(match));
+          rounds.push(firstRound);
+
+          // Track teams that played in the first set
+          firstRound.forEach(match => {
+            lastSetTeams.add(match.team1.id);
+            lastSetTeams.add(match.team2.id);
+          });
+        }
+
+        // Step 2: Schedule remaining matches, ensuring no team plays in consecutive sets
+        while (remainingMatches.length > 0) {
+          const currentRound = [];
+          const usedTeamsThisRound = new Set();
+          const availableMatches = [];
+
+          // Find matches where neither team played in the last set
+          for (let i = 0; i < remainingMatches.length; i++) {
+            const match = remainingMatches[i];
+            const team1Id = match.team1.id;
+            const team2Id = match.team2.id;
+
+            if (!lastSetTeams.has(team1Id) && !lastSetTeams.has(team2Id) && !usedTeamsThisRound.has(team1Id) && !usedTeamsThisRound.has(team2Id)) {
+              currentRound.push(match);
+              usedTeamsThisRound.add(team1Id);
+              usedTeamsThisRound.add(team2Id);
+            } else {
+              availableMatches.push(match);
+            }
+          }
+
+          // Update remaining matches
+          remainingMatches = availableMatches;
+
+          // If we scheduled any matches, add the round
+          if (currentRound.length > 0) {
+            rounds.push(currentRound);
+            lastSetTeams.clear();
+            currentRound.forEach(match => {
+              lastSetTeams.add(match.team1.id);
+              lastSetTeams.add(match.team2.id);
+            });
+          } else if (remainingMatches.length > 0) {
+            // If we couldn't schedule any matches without breaking the consecutive rule,
+            // allow teams to play by resetting the lastSetTeams (relax the constraint)
+            lastSetTeams.clear();
+            continue;
+          }
+        }
+
+        const standings = {};
+        shuffledTeams.forEach(team => {
+          standings[team.name] = { wins: 0, points: 0 };
+        });
+        setTeamStandings(standings);
+
+        return rounds;
+      };
+
+      const generateDoubleEliminationBracket = (shuffledTeams) => {
+        const initialRound = [];
+        const teamCount = shuffledTeams.length;
+        const nextPowerOfTwo = Math.pow(2, Math.ceil(Math.log2(teamCount)));
+        let byeCount = nextPowerOfTwo - teamCount;
+
+        let teamIndex = 0;
+        while (teamIndex < shuffledTeams.length) {
+          if (byeCount > 0 && teamIndex + 1 < shuffledTeams.length) {
+            initialRound.push({
+              team1: shuffledTeams[teamIndex],
+              team2: null,
+              score1: undefined,
+              score2: undefined,
+              winner: null,
+              bracket: 'winners',
+              winnersRound: 1
+            });
+            teamIndex++;
+            byeCount--;
+          } else if (teamIndex + 1 < shuffledTeams.length) {
+            initialRound.push({
+              team1: shuffledTeams[teamIndex],
+              team2: shuffledTeams[teamIndex + 1],
+              score1: undefined,
+              score2: undefined,
+              winner: null,
+              bracket: 'winners',
+              winnersRound: 1
+            });
+            teamIndex += 2;
+          } else {
+            initialRound.push({
+              team1: shuffledTeams[teamIndex],
+              team2: null,
+              score1: undefined,
+              score2: undefined,
+              winner: null,
+              bracket: 'winners',
+              winnersRound: 1
+            });
+            teamIndex++;
+            byeCount--;
+          }
+        }
+
+        return [initialRound];
+      };
+
+      const generateRandomBracket = () => {
+        if (teams.length < 2) {
+          alert('You need at least 2 teams to generate a bracket!');
+          return;
+        }
+
+        const shuffledTeams = shuffleArray(teams);
+        let newRounds;
+
+        if (tournamentStyle === 'singleElimination') {
+          newRounds = generateSingleEliminationBracket(shuffledTeams);
+        } else if (tournamentStyle === 'roundRobin') {
+          newRounds = generateRoundRobinBracket(shuffledTeams);
+        } else if (tournamentStyle === 'doubleElimination') {
+          newRounds = generateDoubleEliminationBracket(shuffledTeams);
+        }
+
+        setRounds(newRounds);
+        setBracketGenerated(true);
+      };
+
+      const generateManualBracket = (initialRound) => {
+        let newRounds = [];
+        if (tournamentStyle === 'roundRobin') {
+          newRounds = [initialRound];
+          const standings = {};
+          teams.forEach(team => {
+            standings[team.name] = { wins: 0, points: 0 };
+          });
+          setTeamStandings(standings);
+        } else {
+          newRounds = [initialRound];
+        }
+        setRounds(newRounds);
+        setBracketGenerated(true);
+      };
+
+      const submitScores = (roundIndex, matchIndex, field, value) => {
+        const updatedRounds = JSON.parse(JSON.stringify(rounds));
+        const match = updatedRounds[roundIndex][matchIndex];
+
+        if (field === 'score1') {
+          match.score1 = value === '' ? undefined : parseInt(value, 10);
+          console.log(`Updated match.score1: ${match.score1} (Type: ${typeof match.score1})`);
+        } else if (field === 'score2') {
+          match.score2 = value === '' ? undefined : parseInt(value, 10);
+          console.log(`Updated match.score2: ${match.score2} (Type: ${typeof match.score2})`);
+        } else if (field === 'advanceBye') {
+          if (!match.team2) {
+            match.winner = match.team1;
+            match.loser = null;
+            match.score1 = 0;
+            match.score2 = 0;
+            console.log(`Bye advanced: Winner ${match.team1.name}`);
+
+            const updatedRecords = { ...teamRecords };
+            updatedRecords[match.team1.name] = {
+              totalScore: (updatedRecords[match.team1.name]?.totalScore || 0) + 0
+            };
+            setTeamRecords(updatedRecords);
+
+            if (tournamentStyle === 'singleElimination') {
+              const currentRound = updatedRounds[roundIndex];
+              if (currentRound.every(m => m.winner)) {
+                console.log(`Round ${roundIndex} completed for Single Elimination`);
+                const winners = currentRound.map(m => m.winner).filter(w => w);
+                if (winners.length === 1) {
+                  updatedRounds.push([{ team1: winners[0], team2: null, winner: winners[0], score1: 0, score2: 0 }]);
+                  console.log('Tournament finished: Champion declared');
+                } else {
+                  const nextRound = [];
+                  for (let i = 0; i < winners.length; i += 2) {
+                    const team1 = winners[i];
+                    const team2 = i + 1 < winners.length ? winners[i + 1] : null;
+                    if (team2) {
+                      nextRound.push({
+                        team1,
+                        team2,
+                        score1: undefined,
+                        score2: undefined,
+                        winner: null
+                      });
+                    } else {
+                      nextRound.push({
+                        team1,
+                        team2: null,
+                        score1: 0,
+                        score2: 0,
+                        winner: team1
+                      });
+                    }
+                  }
+                  updatedRounds.push(nextRound);
+                  console.log(`Advanced to next round: ${nextRound.length} matches`);
+                }
+              }
+            } else if (tournamentStyle === 'doubleElimination') {
+              const currentRound = updatedRounds[roundIndex];
+              if (currentRound.every(m => m.winner)) {
+                let winnersBracketMatches = currentRound.filter(m => m.bracket === 'winners');
+                let losersBracketMatches = currentRound.filter(m => m.bracket === 'losers');
+                let nextRounds = [];
+
+                if (winnersBracketMatches.length > 0) {
+                  const winners = winnersBracketMatches.map(m => m.winner).filter(w => w);
+                  const currentWinnersRound = winnersBracketMatches[0].winnersRound;
+                  if (winners.length === 1) {
+                    match.winnersBracketChampion = true;
+                    console.log(`Winners bracket champion: ${winners[0].name}`);
+                  } else {
+                    const nextWinnersRound = [];
+                    for (let i = 0; i < winners.length; i += 2) {
+                      const team1 = winners[i];
+                      const team2 = i + 1 < winners.length ? winners[i + 1] : null;
+                      if (team2) {
+                        nextWinnersRound.push({
+                          team1,
+                          team2,
+                          score1: undefined,
+                          score2: undefined,
+                          winner: null,
+                          bracket: 'winners',
+                          winnersRound: currentWinnersRound + 1
+                        });
+                      } else {
+                        nextWinnersRound.push({
+                          team1,
+                          team2: null,
+                          score1: 0,
+                          score2: 0,
+                          winner: team1,
+                          bracket: 'winners',
+                          winnersRound: currentWinnersRound + 1
+                        });
+                      }
+                    }
+                    nextRounds.push(nextWinnersRound);
+                  }
+
+                  let losers = winnersBracketMatches
+                    .filter(m => m.loser)
+                    .map(m => m.loser)
+                    .filter(l => l);
+                  if (losers.length > 0) {
+                    const currentLosersRound = currentWinnersRound * 2 - 1;
+                    const nextLosersRound = [];
+                    if (losersBracketMatches.length > 0) {
+                      const losersBracketWinners = losersBracketMatches.map(m => m.winner).filter(w => w);
+                      losers = [...losers, ...losersBracketWinners];
+                      losers = shuffleArray(losers);
+                      for (let i = 0; i < losers.length; i += 2) {
+                        const team1 = losers[i];
+                        const team2 = i + 1 < losers.length ? losers[i + 1] : null;
+                        if (team2) {
+                          nextLosersRound.push({
+                            team1,
+                            team2,
+                            score1: undefined,
+                            score2: undefined,
+                            winner: null,
+                            bracket: 'losers',
+                            losersRound: currentLosersRound
+                          });
+                        } else {
+                          nextLosersRound.push({
+                            team1,
+                            team2: null,
+                            score1: 0,
+                            score2: 0,
+                            winner: team1,
+                            bracket: 'losers',
+                            losersRound: currentLosersRound
+                          });
+                        }
+                      }
+                    } else {
+                      losers = shuffleArray(losers);
+                      for (let i = 0; i < losers.length; i += 2) {
+                        const team1 = losers[i];
+                        const team2 = i + 1 < losers.length ? losers[i + 1] : null;
+                        if (team2) {
+                          nextLosersRound.push({
+                            team1,
+                            team2,
+                            score1: undefined,
+                            score2: undefined,
+                            winner: null,
+                            bracket: 'losers',
+                            losersRound: currentLosersRound
+                          });
+                        } else {
+                          nextLosersRound.push({
+                            team1,
+                            team2: null,
+                            score1: 0,
+                            score2: 0,
+                            winner: team1,
+                            bracket: 'losers',
+                            losersRound: currentLosersRound
+                          });
+                        }
+                      }
+                    }
+                    if (nextLosersRound.length > 0) {
+                      nextRounds.push(nextLosersRound);
+                    }
+                  }
+                } else if (losersBracketMatches.length > 0) {
+                  const losers = losersBracketMatches.map(m => m.winner).filter(w => w);
+                  const currentLosersRound = losersBracketMatches[0].losersRound;
+                  if (losers.length === 1) {
+                    const winnersBracketChampionMatch = updatedRounds
+                      .flat()
+                      .find(m => m.winnersBracketChampion);
+                    if (winnersBracketChampionMatch) {
+                      const winnersBracketChampion = winnersBracketChampionMatch.winner;
+                      const losersBracketChampion = losers[0];
+                      const finalMatch = [{
+                        team1: winnersBracketChampion,
+                        team2: losersBracketChampion,
+                        score1: undefined,
+                        score2: undefined,
+                        winner: null,
+                        bracket: 'final'
+                      }];
+                      nextRounds.push(finalMatch);
+                      console.log('Advanced to Grand Final');
+                    }
+                  } else {
+                    const nextLosersRound = [];
+                    for (let i = 0; i < losers.length; i += 2) {
+                      const team1 = losers[i];
+                      const team2 = i + 1 < losers.length ? losers[i + 1] : null;
+                      if (team2) {
+                        nextLosersRound.push({
+                          team1,
+                          team2,
+                          score1: undefined,
+                          score2: undefined,
+                          winner: null,
+                          bracket: 'losers',
+                          losersRound: currentLosersRound + 1
+                        });
+                      } else {
+                        nextLosersRound.push({
+                          team1,
+                          team2: null,
+                          score1: 0,
+                          score2: 0,
+                          winner: team1,
+                          bracket: 'losers',
+                          losersRound: currentLosersRound + 1
+                        });
+                      }
+                    }
+                    nextRounds.push(nextLosersRound);
+                  }
+                }
+
+                if (nextRounds.length > 0) {
+                  updatedRounds.push(...nextRounds);
+                  console.log(`Added ${nextRounds.length} new rounds`);
+                }
+              }
+            }
+          }
+        } else if (field === 'submit') {
+          if (match.score1 === undefined || match.score2 === undefined || match.score1 === '' || match.score2 === '') {
+            alert('Please select scores for both teams!');
+            return;
+          }
+
+          const score1 = parseInt(match.score1, 10);
+          const score2 = parseInt(match.score2, 10);
+
+          if (score1 === score2) {
+            alert('Scores cannot be tied! Please adjust the scores.');
+            return;
+          }
+
+          const updatedRecords = { ...teamRecords };
+          updatedRecords[match.team1.name] = {
+            totalScore: (updatedRecords[match.team1.name]?.totalScore || 0) + score1
+          };
+          updatedRecords[match.team2.name] = {
+            totalScore: (updatedRecords[match.team2.name]?.totalScore || 0) + score2
+          };
+          setTeamRecords(updatedRecords);
+
+          let winner, loser;
+          if (score1 > score2) {
+            match.winner = match.team1;
+            match.loser = match.team2;
+            winner = match.team1;
+            loser = match.team2;
+          } else {
+            match.winner = match.team2;
+            match.loser = match.team1;
+            winner = match.team2;
+            loser = match.team1;
+          }
+          console.log(`Winner determined: ${winner.name}, Loser: ${loser.name}`);
+
+          if (tournamentStyle === 'roundRobin') {
+            const updatedStandings = { ...teamStandings };
+            updatedStandings[winner.name].wins += 1;
+            updatedStandings[winner.name].points += score1 > score2 ? score1 : score2;
+            updatedStandings[loser.name].points += score1 > score2 ? score2 : score1;
+            setTeamStandings(updatedStandings);
+
+            if (updatedRounds.every(round => round.every(m => m.winner))) {
+              console.log('All matches completed for Round Robin');
+              setRounds(updatedRounds);
+              return;
+            }
+
+            if (bracketMode === 'manual') {
+              const allTeams = teams;
+              const playedMatchups = new Set();
+              updatedRounds.forEach(round => {
+                round.forEach(m => {
+                  if (m.team1 && m.team2) {
+                    playedMatchups.add(`${m.team1.id}-${m.team2.id}`);
+                    playedMatchups.add(`${m.team2.id}-${m.team1.id}`);
+                  }
+                });
+              });
+
+              const newMatches = [];
+              for (let i = 0; i < allTeams.length; i++) {
+                for (let j = i + 1; j < allTeams.length; j++) {
+                  const matchupKey = `${allTeams[i].id}-${allTeams[j].id}`;
+                  if (!playedMatchups.has(matchupKey)) {
+                    newMatches.push({
+                      team1: allTeams[i],
+                      team2: allTeams[j],
+                      score1: undefined,
+                      score2: undefined,
+                      winner: null
+                    });
+                  }
+                }
+              }
+
+              if (newMatches.length > 0) {
+                const matchesPerRound = Math.floor(allTeams.length / 2);
+                let matchIndex = 0;
+                while (matchIndex < newMatches.length) {
+                  const roundMatches = newMatches.slice(matchIndex, matchIndex + matchesPerRound);
+                  updatedRounds.push(roundMatches);
+                  matchIndex += matchesPerRound;
+                }
+              }
+            }
+          } else if (tournamentStyle === 'singleElimination') {
+            const currentRound = updatedRounds[roundIndex];
+            if (currentRound.every(m => m.winner)) {
+              console.log(`Round ${roundIndex} completed for Single Elimination`);
+              const winners = currentRound.map(m => m.winner).filter(w => w);
+              if (winners.length === 1) {
+                updatedRounds.push([{ team1: winners[0], team2: null, winner: winners[0], score1: 0, score2: 0 }]);
+                console.log('Tournament finished: Champion declared');
+              } else {
+                const nextRound = [];
+                for (let i = 0; i < winners.length; i += 2) {
+                  const team1 = winners[i];
+                  const team2 = i + 1 < winners.length ? winners[i + 1] : null;
+                  if (team2) {
+                    nextRound.push({
+                      team1,
+                      team2,
+                      score1: undefined,
+                      score2: undefined,
+                      winner: null
+                    });
+                  } else {
+                    nextRound.push({
+                      team1,
+                      team2: null,
+                      score1: 0,
+                      score2: 0,
+                      winner: team1
+                    });
+                  }
+                }
+                updatedRounds.push(nextRound);
+                console.log(`Advanced to next round: ${nextRound.length} matches`);
+              }
+            }
+          } else if (tournamentStyle === 'doubleElimination') {
+            const currentRound = updatedRounds[roundIndex];
+            if (currentRound.every(m => m.winner)) {
+              let winnersBracketMatches = currentRound.filter(m => m.bracket === 'winners');
+              let losersBracketMatches = currentRound.filter(m => m.bracket === 'losers');
+              let nextRounds = [];
+
+              if (winnersBracketMatches.length > 0) {
+                const winners = winnersBracketMatches.map(m => m.winner).filter(w => w);
+                const currentWinnersRound = winnersBracketMatches[0].winnersRound;
+                if (winners.length === 1) {
+                  match.winnersBracketChampion = true;
+                  console.log(`Winners bracket champion: ${winners[0].name}`);
+                } else {
+                  const nextWinnersRound = [];
+                  for (let i = 0; i < winners.length; i += 2) {
+                    const team1 = winners[i];
+                    const team2 = i + 1 < winners.length ? winners[i + 1] : null;
+                    if (team2) {
+                      nextWinnersRound.push({
+                        team1,
+                        team2,
+                        score1: undefined,
+                        score2: undefined,
+                        winner: null,
+                        bracket: 'winners',
+                        winnersRound: currentWinnersRound + 1
+                      });
+                    } else {
+                      nextWinnersRound.push({
+                        team1,
+                        team2: null,
+                        score1: 0,
+                        score2: 0,
+                        winner: team1,
+                        bracket: 'winners',
+                        winnersRound: currentWinnersRound + 1
+                      });
+                    }
+                  }
+                  nextRounds.push(nextWinnersRound);
+                }
+
+                let losers = winnersBracketMatches
+                  .filter(m => m.loser)
+                  .map(m => m.loser)
+                  .filter(l => l);
+                if (losers.length > 0) {
+                  const currentLosersRound = currentWinnersRound * 2 - 1;
+                  const nextLosersRound = [];
+                  if (losersBracketMatches.length > 0) {
+                    const losersBracketWinners = losersBracketMatches.map(m => m.winner).filter(w => w);
+                    losers = [...losers, ...losersBracketWinners];
+                    losers = shuffleArray(losers);
+                    for (let i = 0; i < losers.length; i += 2) {
+                      const team1 = losers[i];
+                      const team2 = i + 1 < losers.length ? losers[i + 1] : null;
+                      if (team2) {
+                        nextLosersRound.push({
+                          team1,
+                          team2,
+                          score1: undefined,
+                          score2: undefined,
+                          winner: null,
+                          bracket: 'losers',
+                          losersRound: currentLosersRound
+                        });
+                      } else {
+                        nextLosersRound.push({
+                          team1,
+                          team2: null,
+                          score1: 0,
+                          score2: 0,
+                          winner: team1,
+                          bracket: 'losers',
+                          losersRound: currentLosersRound
+                        });
+                      }
+                    }
+                  } else {
+                    losers = shuffleArray(losers);
+                    for (let i = 0; i < losers.length; i += 2) {
+                      const team1 = losers[i];
+                      const team2 = i + 1 < losers.length ? losers[i + 1] : null;
+                      if (team2) {
+                        nextLosersRound.push({
+                          team1,
+                          team2,
+                          score1: undefined,
+                          score2: undefined,
+                          winner: null,
+                          bracket: 'losers',
+                          losersRound: currentLosersRound
+                        });
+                      } else {
+                        nextLosersRound.push({
+                          team1,
+                          team2: null,
+                          score1: 0,
+                          score2: 0,
+                          winner: team1,
+                          bracket: 'losers',
+                          losersRound: currentLosersRound
+                        });
+                      }
+                    }
+                  }
+                  if (nextLosersRound.length > 0) {
+                    nextRounds.push(nextLosersRound);
+                  }
+                }
+              } else if (losersBracketMatches.length > 0) {
+                const losers = losersBracketMatches.map(m => m.winner).filter(w => w);
+                const currentLosersRound = losersBracketMatches[0].losersRound;
+                if (losers.length === 1) {
+                  const winnersBracketChampionMatch = updatedRounds
+                    .flat()
+                    .find(m => m.winnersBracketChampion);
+                  if (winnersBracketChampionMatch) {
+                    const winnersBracketChampion = winnersBracketChampionMatch.winner;
+                    const losersBracketChampion = losers[0];
+                    const finalMatch = [{
+                      team1: winnersBracketChampion,
+                      team2: losersBracketChampion,
+                      score1: undefined,
+                      score2: undefined,
+                      winner: null,
+                      bracket: 'final'
+                    }];
+                    nextRounds.push(finalMatch);
+                    console.log('Advanced to Grand Final');
+                  }
+                } else {
+                  const nextLosersRound = [];
+                  for (let i = 0; i < losers.length; i += 2) {
+                    const team1 = losers[i];
+                    const team2 = i + 1 < losers.length ? losers[i + 1] : null;
+                    if (team2) {
+                      nextLosersRound.push({
+                        team1,
+                        team2,
+                        score1: undefined,
+                        score2: undefined,
+                        winner: null,
+                        bracket: 'losers',
+                        losersRound: currentLosersRound + 1
+                      });
+                    } else {
+                      nextLosersRound.push({
+                        team1,
+                        team2: null,
+                        score1: 0,
+                        score2: 0,
+                        winner: team1,
+                        bracket: 'losers',
+                        losersRound: currentLosersRound + 1
+                      });
+                    }
+                  }
+                  nextRounds.push(nextLosersRound);
+                }
+              }
+
+              if (nextRounds.length > 0) {
+                updatedRounds.push(...nextRounds);
+                console.log(`Added ${nextRounds.length} new rounds`);
+              }
+            }
+          }
+        }
+
+        console.log('Setting updated rounds:', JSON.stringify(updatedRounds, null, 2));
+        setRounds([...updatedRounds]);
+      };
+
+      const saveBracket = () => {
+        localStorage.setItem('tournamentState', JSON.stringify({ teams, rounds, tournamentStyle, teamStandings, teamRecords }));
+        alert('Bracket saved successfully!');
+      };
+
+      const clearBracket = () => {
+        setRounds([]);
+        setBracketGenerated(false);
+        setTeamStandings(null);
+        setTeamRecords({});
+        localStorage.setItem('tournamentState', JSON.stringify({ teams, rounds: [], tournamentStyle, teamStandings: null, teamRecords: {} }));
+        alert('Bracket cleared! You can now remake the tournament.');
+      };
+
+      const importTeams = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (
+              data &&
+              Array.isArray(data.draftTeams) &&
+              data.draftTeams.every(team => team && team.name && team.tag && Array.isArray(team.players))
+            ) {
+              setTeams(data.draftTeams);
+              setBracketGenerated(false);
+              setRounds([]);
+              setTeamStandings(null);
+              setTeamRecords({});
+              alert('Teams imported successfully from Tournament Manager!');
+            } else {
+              alert('Invalid file format. Please import a valid JSON file exported from the Tournament Manager.');
+            }
+          } catch (error) {
+            alert('Error parsing file. Please ensure it is a valid JSON file.');
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      };
+
+      return (
+        <div className="container mx-auto p-4">
+          <h1 className="text-4xl font-bold text-center mb-8">Tournament Bracket System</h1>
+
+          {/* Links to Related Pages */}
+          <div className="glass-effect p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Related Pages</h2>
+            <div className="flex gap-4">
+              <a
+                href="https://t24085.github.io/DraftSignUp/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Draft Sign-Up Sheet
+              </a>
+              <a
+                href="https://t24085.github.io/Tournament-Manager/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Tournament Manager
+              </a>
+            </div>
+          </div>
+
+          {/* Import Teams */}
+          <div className="glass-effect p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Import Teams</h2>
+            <div className="mb-4">
+              <input
+                type="file"
+                accept=".json"
+                onChange={importTeams}
+                className="w-full p-2 bg-gray-800 text-white rounded"
+                id="import-teams"
+              />
+              <p className="text-sm text-gray-400 mt-2">
+                Import a JSON file exported from the Tournament Manager containing drafted teams.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={saveBracket}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Save Bracket
+              </button>
+              <button
+                onClick={clearBracket}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Clear Bracket
+              </button>
+            </div>
+          </div>
+
+          {/* Teams Overview */}
+          {teams.length > 0 && (
+            <div className="glass-effect p-6 mb-8">
+              <h2 className="text-2xl font-bold mb-4">Teams ({teams.length})</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {teams.map(team => (
+                  <div key={team.id} className="p-4 bg-gray-800 rounded">
+                    <h3 className="text-xl font-bold mb-2">{team.name} ({team.tag})</h3>
+                    <ul>
+                      {team.players.map((player, index) => (
+                        <li key={index} className="text-sm">
+                          {player.name} - {player.position} {player.isCaptain ? '(Captain)' : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tournament Setup */}
+          {teams.length >= 2 && !bracketGenerated && (
+            <div className="glass-effect p-6 m-4 text-center">
+              <h2 className="text-xl font-bold mb-4">Tournament Setup</h2>
+              <div className="mb-4">
+                <label className="block text-lg mb-2">Select Tournament Style:</label>
+                <select
+                  value={tournamentStyle}
+                  onChange={(e) => {
+                    setTournamentStyle(e.target.value);
+                    setBracketMode('random');
+                    setRounds([]);
+                    setBracketGenerated(false);
+                  }}
+                  className="p-2 bg-gray-800 text-white rounded"
+                >
+                  <option value="singleElimination">Single Elimination</option>
+                  <option value="roundRobin">Round Robin</option>
+                  <option value="doubleElimination">Double Elimination</option>
+                </select>
+              </div>
+              <div className="flex justify-center gap-4 mb-4">
+                <button
+                  onClick={() => setBracketMode('random')}
+                  className={`py-2 px-4 rounded ${bracketMode === 'random' ? 'bg-indigo-600' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold`}
+                >
+                  Random
+                </button>
+                <button
+                  onClick={() => setBracketMode('manual')}
+                  className={`py-2 px-4 rounded ${bracketMode === 'manual' ? 'bg-indigo-600' : 'bg-gray-600 hover:bg-gray-700'} text-white font-bold`}
+                >
+                  Manual
+                </button>
+              </div>
+              {bracketMode === 'random' && (
+                <button
+                  onClick={generateRandomBracket}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Generate Random Bracket
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Manual Bracket Setup */}
+          {teams.length >= 2 && !bracketGenerated && bracketMode === 'manual' && (
+            <ManualBracketSetup teams={teams} onGenerateBracket={generateManualBracket} tournamentStyle={tournamentStyle} />
+          )}
+
+          {/* Display Bracket */}
+          {bracketGenerated && rounds.length > 0 && (
+            tournamentStyle === 'roundRobin' ? (
+              <RoundRobinBracket
+                rounds={rounds}
+                onSubmitScores={submitScores}
+                teamStandings={teamStandings}
+                teamRecords={teamRecords}
+              />
+            ) : (
+              <EliminationBracket
+                rounds={rounds}
+                onSubmitScores={submitScores}
+                tournamentStyle={tournamentStyle}
+                teamRecords={teamRecords}
+              />
+            )
+          )}
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
