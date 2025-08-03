@@ -48,6 +48,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="oauth.js"></script>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -72,6 +73,18 @@
   </style>
 </head>
 <body class="text-white">
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch('nav.html').then(r => r.text()).then(html => {
+      document.getElementById('nav-placeholder').innerHTML = html;
+      if (window.twitchOAuth) {
+        twitchOAuth.updateNav();
+        twitchOAuth.initLiveTeamsMenu();
+        const panel = document.getElementById('live-teams-panel');
+        if (panel) panel.style.top = '9rem';
+      }
+    });
+  </script>
   <div id="root"></div>
   <script type="text/babel">
     const POSITIONS = ['HoF', 'LD', 'MD', 'MO', 'HO', 'LO', 'Capper'];
