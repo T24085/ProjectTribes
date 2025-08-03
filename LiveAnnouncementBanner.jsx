@@ -1,46 +1,66 @@
 import React, { useEffect, useState } from 'react';
 
 export default function LiveAnnouncementBanner() {
-  const [activeAnnouncements, setActiveAnnouncements] = useState([]);
+  const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    let isMounted = true;
+    let active = true;
 
-    const loadAnnouncements = async () => {
-      try {
-        const res = await fetch('/announcements.json');
-        const data = await res.json();
-        const now = new Date();
-        const active = data.filter(({ startTime, endTime }) => {
-          const start = new Date(startTime);
-          const end = new Date(endTime);
-          return now >= start && now <= end;
+    const buildLoginMap = () => {
+      const roster = window.twitchOAuth?.TEAM_STREAMS || {};
+      const loginToTeam = {};
+      Object.entries(roster).forEach(([team, players]) => {
+        players.forEach(p => {
+          const m = p.url.match(/twitch\.tv\/([^/?]+)/i);
+          if (m) loginToTeam[m[1].toLowerCase()] = team;
         });
-        if (isMounted) {
-          setActiveAnnouncements(active);
+      });
+      return loginToTeam;
+    };
+
+    const checkTeams = async () => {
+      if (!window.twitchOAuth?.fetchLiveStreams) return;
+      const loginMap = buildLoginMap();
+      const logins = Object.keys(loginMap);
+      if (!logins.length) return setMessages([]);
+      try {
+        const streams = await window.twitchOAuth.fetchLiveStreams(logins);
+        const liveTeams = Array.from(
+          new Set(
+            streams
+              .map(s => loginMap[s.user_login.toLowerCase()])
+              .filter(Boolean)
+          )
+        );
+        if (!active) return;
+        if (liveTeams.length >= 2) {
+          setMessages([`${liveTeams[0]} vs ${liveTeams[1]} is live!`]);
+        } else if (liveTeams.length === 1) {
+          setMessages([`${liveTeams[0]} is live!`]);
+        } else {
+          setMessages([]);
         }
       } catch (err) {
-        console.error('Unable to load announcements', err);
+        console.error('Unable to check live teams', err);
       }
     };
 
-    loadAnnouncements();
-    const intervalId = setInterval(loadAnnouncements, 60 * 1000);
+    checkTeams();
+    const id = setInterval(checkTeams, 60 * 1000);
     return () => {
-      isMounted = false;
-      clearInterval(intervalId);
+      active = false;
+      clearInterval(id);
     };
   }, []);
 
-  if (!activeAnnouncements.length) {
-    return null;
-  }
+  if (!messages.length) return null;
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 1000 }}>
-      {activeAnnouncements.map((announcement, index) => (
-        <div key={index} className="lab-banner">
-          {announcement.message}
+      {messages.map((msg, i) => (
+        <div key={i} className="lab-banner">
+          {msg}
+
         </div>
       ))}
       <style>{`

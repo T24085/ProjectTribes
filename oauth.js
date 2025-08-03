@@ -262,6 +262,7 @@
     fetchFollowedStreams,
     fetchLiveStreams,
     fetchLiveTeamStreams,
+    TEAM_STREAMS,
     updateLiveTeamsPanel,
     initLiveTeamsMenu,
     updateNav,
