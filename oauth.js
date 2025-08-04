@@ -203,6 +203,7 @@
     const banner = document.getElementById('live-announcement-banner');
     const nav = document.querySelector('nav');
     const panel = document.getElementById('live-teams-panel');
+
     if (!banner || !nav) return;
 
     const buildLoginMap = () => {
@@ -224,6 +225,7 @@
         banner.style.display = 'none';
         if (panel) panel.style.top = nav.offsetHeight + 'px';
         banner.style.top = nav.offsetHeight + 'px';
+
         return;
       }
       try {
