@@ -222,9 +222,11 @@
       const logins = Object.keys(loginMap);
       if (!getToken() || !logins.length) {
         banner.style.display = 'none';
+
         banner.innerHTML = '';
         if (panel) panel.style.top = nav.offsetHeight + 'px';
         banner.style.top = nav.offsetHeight + 'px';
+
         return;
       }
       try {
@@ -233,6 +235,7 @@
           streams.map(s => loginMap[s.user_login.toLowerCase()]).filter(Boolean)
         ));
         if (liveTeams.length >= 2) {
+
           banner.innerHTML = `<span>${liveTeams[0]} vs ${liveTeams[1]} is live!</span>`;
           banner.style.display = 'block';
         } else if (liveTeams.length === 1) {
