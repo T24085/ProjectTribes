@@ -203,7 +203,6 @@
     const banner = document.getElementById('live-announcement-banner');
     const nav = document.querySelector('nav');
     const panel = document.getElementById('live-teams-panel');
-
     if (!banner || !nav) return;
 
     const buildLoginMap = () => {
@@ -223,6 +222,8 @@
       const logins = Object.keys(loginMap);
       if (!getToken() || !logins.length) {
         banner.style.display = 'none';
+
+        banner.innerHTML = '';
         if (panel) panel.style.top = nav.offsetHeight + 'px';
         banner.style.top = nav.offsetHeight + 'px';
 
@@ -234,13 +235,14 @@
           streams.map(s => loginMap[s.user_login.toLowerCase()]).filter(Boolean)
         ));
         if (liveTeams.length >= 2) {
-          banner.textContent = `${liveTeams[0]} vs ${liveTeams[1]} is live!`;
+
+          banner.innerHTML = `<span>${liveTeams[0]} vs ${liveTeams[1]} is live!</span>`;
           banner.style.display = 'block';
         } else if (liveTeams.length === 1) {
-          banner.textContent = `${liveTeams[0]} is live!`;
+          banner.innerHTML = `<span>${liveTeams[0]} is live!</span>`;
           banner.style.display = 'block';
         } else {
-          banner.textContent = '';
+          banner.innerHTML = '';
           banner.style.display = 'none';
         }
         const navHeight = nav.offsetHeight;

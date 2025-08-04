@@ -46,11 +46,16 @@
     background: #111;
     color: #fff;
     padding: 10px;
-    text-align: center;
+
     font-size: 1rem;
     animation: lab-glow 2s ease-in-out infinite alternate;
-
     z-index: 40;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .live-announcement-banner span {
+    display: inline-block;
+    animation: lab-scroll 15s linear infinite;
 
   }
   @keyframes lab-glow {
@@ -61,4 +66,13 @@
       text-shadow: 0 0 20px #fff, 0 0 30px #fff;
     }
   }
+  @keyframes lab-scroll {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
 </style>
