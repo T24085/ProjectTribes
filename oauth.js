@@ -235,7 +235,6 @@
           streams.map(s => loginMap[s.user_login.toLowerCase()]).filter(Boolean)
         ));
         if (liveTeams.length >= 2) {
-
           banner.innerHTML = `<span>${liveTeams[0]} vs ${liveTeams[1]} is live!</span>`;
           banner.style.display = 'block';
         } else if (liveTeams.length === 1) {
