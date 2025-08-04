@@ -199,6 +199,64 @@
     document.addEventListener('click', handleClickOutside);
   }
 
+  function initLiveAnnouncementBanner() {
+    const banner = document.getElementById('live-announcement-banner');
+    const nav = document.querySelector('nav');
+    const panel = document.getElementById('live-teams-panel');
+    if (!banner || !nav) return;
+
+    const buildLoginMap = () => {
+      const roster = TEAM_STREAMS || {};
+      const loginToTeam = {};
+      Object.entries(roster).forEach(([team, players]) => {
+        players.forEach(p => {
+          const m = p.url.match(/twitch\.tv\/([^/?]+)/i);
+          if (m) loginToTeam[m[1].toLowerCase()] = team;
+        });
+      });
+      return loginToTeam;
+    };
+
+    const checkTeams = async () => {
+      const loginMap = buildLoginMap();
+      const logins = Object.keys(loginMap);
+      if (!getToken() || !logins.length) {
+        banner.style.display = 'none';
+        if (panel) panel.style.top = nav.offsetHeight + 'px';
+        banner.style.top = nav.offsetHeight + 'px';
+        return;
+      }
+      try {
+        const streams = await fetchLiveStreams(logins);
+        const liveTeams = Array.from(new Set(
+          streams.map(s => loginMap[s.user_login.toLowerCase()]).filter(Boolean)
+        ));
+        if (liveTeams.length >= 2) {
+          banner.textContent = `${liveTeams[0]} vs ${liveTeams[1]} is live!`;
+          banner.style.display = 'block';
+        } else if (liveTeams.length === 1) {
+          banner.textContent = `${liveTeams[0]} is live!`;
+          banner.style.display = 'block';
+        } else {
+          banner.textContent = '';
+          banner.style.display = 'none';
+        }
+        const navHeight = nav.offsetHeight;
+        const bannerHeight = banner.style.display === 'none' ? 0 : banner.offsetHeight;
+        banner.style.top = navHeight + 'px';
+        if (panel) panel.style.top = (navHeight + bannerHeight) + 'px';
+      } catch (err) {
+        console.error('Unable to check live teams', err);
+      }
+    };
+
+    if (!banner.dataset.init) {
+      banner.dataset.init = '1';
+      setInterval(checkTeams, 60 * 1000);
+    }
+    checkTeams();
+  }
+
   function loginWithTwitch() {
     const scope = 'user:read:email user:read:follows';
 
@@ -252,6 +310,7 @@
       if (panel) panel.innerHTML = '';
 
     }
+    initLiveAnnouncementBanner();
   }
 
   window.twitchOAuth = {
@@ -266,11 +325,13 @@
     updateLiveTeamsPanel,
     initLiveTeamsMenu,
     updateNav,
+    initLiveAnnouncementBanner,
   };
 
 handleRedirect();
 document.addEventListener('DOMContentLoaded', () => {
   updateNav();
   initLiveTeamsMenu();
+  initLiveAnnouncementBanner();
 });
 })();

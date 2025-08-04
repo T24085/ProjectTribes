@@ -18,6 +18,7 @@
         <span id="twitch-user" class="ml-2 text-purple-300" style="display:none;"></span>
     </div>
 </nav>
+<div id="live-announcement-banner" class="live-announcement-banner" style="display:none;"></div>
 <div id="live-teams-panel" class="live-teams-panel hidden fixed left-0 top-36 bottom-0 w-64 bg-gray-800 text-white p-4 overflow-y-auto shadow-lg"></div>
 <style>
   #live-teams-panel { transition: transform 0.3s ease; }
@@ -36,5 +37,25 @@
     color: #48bb78;
     font-size: 1rem;
     line-height: 1;
+  }
+  .live-announcement-banner {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    background: #111;
+    color: #fff;
+    padding: 10px;
+    text-align: center;
+    font-size: 1rem;
+    animation: lab-glow 2s ease-in-out infinite alternate;
+    z-index: 40;
+  }
+  @keyframes lab-glow {
+    from {
+      text-shadow: 0 0 5px #fff, 0 0 10px #fff;
+    }
+    to {
+      text-shadow: 0 0 20px #fff, 0 0 30px #fff;
+    }
   }
 </style>
