@@ -222,9 +222,11 @@
       const logins = Object.keys(loginMap);
       if (!getToken() || !logins.length) {
         banner.style.display = 'none';
+
         banner.innerHTML = '';
         if (panel) panel.style.top = nav.offsetHeight + 'px';
         banner.style.top = nav.offsetHeight + 'px';
+
         return;
       }
       try {
