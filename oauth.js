@@ -202,6 +202,8 @@
   function initLiveAnnouncementBanner() {
     const banner = document.getElementById('live-announcement-banner');
     const nav = document.querySelector('nav');
+    const panel = document.getElementById('live-teams-panel');
+
     if (!banner || !nav) return;
 
     const buildLoginMap = () => {
@@ -221,7 +223,9 @@
       const logins = Object.keys(loginMap);
       if (!getToken() || !logins.length) {
         banner.style.display = 'none';
-        nav.style.top = '0';
+        if (panel) panel.style.top = nav.offsetHeight + 'px';
+        banner.style.top = nav.offsetHeight + 'px';
+
         return;
       }
       try {
@@ -232,16 +236,17 @@
         if (liveTeams.length >= 2) {
           banner.textContent = `${liveTeams[0]} vs ${liveTeams[1]} is live!`;
           banner.style.display = 'block';
-          nav.style.top = banner.offsetHeight + 'px';
         } else if (liveTeams.length === 1) {
           banner.textContent = `${liveTeams[0]} is live!`;
           banner.style.display = 'block';
-          nav.style.top = banner.offsetHeight + 'px';
         } else {
           banner.textContent = '';
           banner.style.display = 'none';
-          nav.style.top = '0';
         }
+        const navHeight = nav.offsetHeight;
+        const bannerHeight = banner.style.display === 'none' ? 0 : banner.offsetHeight;
+        banner.style.top = navHeight + 'px';
+        if (panel) panel.style.top = (navHeight + bannerHeight) + 'px';
       } catch (err) {
         console.error('Unable to check live teams', err);
       }
