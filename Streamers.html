@@ -60,10 +60,13 @@
       }
       snap.forEach(doc => {
         const data = doc.data();
+        if (!data.avatarUrl || data.avatarUrl.trim() === '') {
+          data.avatarUrl = `https://decapi.me/twitch/avatar/${data.twitchHandle}`;
+        }
         const card = document.createElement('div');
         card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg';
         card.innerHTML = `
-          <img src="${data.avatarUrl || 'https://placehold.co/300x200'}" alt="${data.displayName}" class="w-full h-48 object-cover">
+          <img src="${data.avatarUrl}" alt="${data.displayName}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='Twin.jpg';">
           <div class="p-4">
             <h2 class="text-xl font-semibold mb-2">${data.displayName}</h2>
             ${data.team ? `<p class=\"text-sm mb-2\">Team: ${data.team}</p>` : ''}
