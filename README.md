@@ -56,7 +56,7 @@ The `TeamSignUp.html` page uses [Firebase Firestore](https://firebase.google.com
 2. Enable **Cloud Firestore** in your Firebase project. Start in test mode unless you have security rules prepared.
 
 3. Replace the placeholder values in `TeamSignUp.html` under `firebaseConfig` with your project credentials. All keys, including `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, and `appId`, must match the values from Firebase.
-   The `storageBucket` entry should end with `.appspot.com` (for example `your-project.appspot.com`).
+   The `storageBucket` entry should match the domain provided by Firebase (typically ending in `.appspot.com` or `.firebasestorage.app`).
 4. Deploy the site or run a local server (e.g. `python3 -m http.server`) before opening the page. Submitting the form stores teams under a `teams` collection in Firestore.
 
 5. Returning to the page will list existing teams and let you edit or delete them.
