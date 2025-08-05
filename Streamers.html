@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Streamers</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="oauth.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch('nav.html').then(r => r.text()).then(html => {
+      document.getElementById('nav-placeholder').innerHTML = html;
+      if (window.twitchOAuth) {
+        twitchOAuth.updateNav();
+        twitchOAuth.initLiveTeamsMenu();
+        const panel = document.getElementById('live-teams-panel');
+        if (panel) panel.style.top = '9rem';
+      }
+    });
+  </script>
+
+  <div class="container mx-auto px-4 mt-8">
+    <h1 class="text-3xl font-bold text-center mb-6">Tribes Streamers</h1>
+    <div id="streamersGrid" class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.appspot.com",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:d150b047ed0e93a2d9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const grid = document.getElementById('streamersGrid');
+
+    async function loadStreamers() {
+      grid.innerHTML = '';
+      const q = query(collection(db, 'streamers'), where('approved', '==', true));
+      const snap = await getDocs(q);
+      snap.forEach(doc => {
+        const data = doc.data();
+        const card = document.createElement('div');
+        card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg';
+        card.innerHTML = `
+          <img src="${data.avatarUrl || 'https://placehold.co/300x200'}" alt="${data.displayName}" class="w-full h-48 object-cover">
+          <div class="p-4">
+            <h2 class="text-xl font-semibold mb-2">${data.displayName}</h2>
+            ${data.team ? `<p class=\"text-sm mb-2\">Team: ${data.team}</p>` : ''}
+            <a href="https://twitch.tv/${data.twitchHandle}" target="_blank" class="text-purple-400 hover:underline">twitch.tv/${data.twitchHandle}</a>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    loadStreamers();
+  </script>
+</body>
+</html>
