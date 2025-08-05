@@ -12,6 +12,9 @@ This repository contains a collection of static HTML pages for the community aro
 - **TwinsTournamentDataCenter.html** – Score-per-minute chart and documents for the tournament.
 - **UpcomingEvents.html** – Schedule of upcoming events with the Twins image.
 - **TeamSignUp.html** – Register new teams and edit their rosters using Firebase.
+- **Streamers.html** – Public directory of approved streamers loaded from Firestore.
+- **StreamersSubmit.html** – Form for anyone to submit a streamer for admin approval.
+- **StreamersAdmin.html** – Protected panel for approving or removing streamer entries.
 - **TeamBuilder.html** – Simple form for creating your own team with a logo and banner stored in your browser.
 - **MontageBay.html** – Submit montage video links and view them all in one place.
 - **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, DeadStop, Toxic Aimers, and Unhandled Exception.
@@ -28,6 +31,9 @@ You can open these pages directly:
 - [Twins Tournament Data Center](TwinsTournamentDataCenter.html)
 - [Upcoming Events](UpcomingEvents.html)
 - [Team Sign-Up](TeamSignUp.html)
+- [Streamers](Streamers.html)
+- [Submit a Streamer](StreamersSubmit.html)
+- [Streamers Admin](StreamersAdmin.html)
 
 
 ## Usage
@@ -56,7 +62,7 @@ The `TeamSignUp.html` page uses [Firebase Firestore](https://firebase.google.com
 2. Enable **Cloud Firestore** in your Firebase project. Start in test mode unless you have security rules prepared.
 
 3. Replace the placeholder values in `TeamSignUp.html` under `firebaseConfig` with your project credentials. All keys, including `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, and `appId`, must match the values from Firebase.
-   The `storageBucket` entry should end with `.appspot.com` (for example `your-project.appspot.com`).
+   The `storageBucket` entry should match the domain provided by Firebase (typically ending in `.appspot.com` or `.firebasestorage.app`).
 4. Deploy the site or run a local server (e.g. `python3 -m http.server`) before opening the page. Submitting the form stores teams under a `teams` collection in Firestore.
 
 5. Returning to the page will list existing teams and let you edit or delete them.
