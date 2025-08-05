@@ -12,6 +12,9 @@ This repository contains a collection of static HTML pages for the community aro
 - **TwinsTournamentDataCenter.html** – Score-per-minute chart and documents for the tournament.
 - **UpcomingEvents.html** – Schedule of upcoming events with the Twins image.
 - **TeamSignUp.html** – Register new teams and edit their rosters using Firebase.
+- **Streamers.html** – Public directory of approved streamers loaded from Firestore.
+- **StreamersSubmit.html** – Form for anyone to submit a streamer for admin approval.
+- **StreamersAdmin.html** – Protected panel for approving or removing streamer entries.
 - **TeamBuilder.html** – Simple form for creating your own team with a logo and banner stored in your browser.
 - **MontageBay.html** – Submit montage video links and view them all in one place.
 - **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, DeadStop, Toxic Aimers, and Unhandled Exception.
@@ -28,6 +31,9 @@ You can open these pages directly:
 - [Twins Tournament Data Center](TwinsTournamentDataCenter.html)
 - [Upcoming Events](UpcomingEvents.html)
 - [Team Sign-Up](TeamSignUp.html)
+- [Streamers](Streamers.html)
+- [Submit a Streamer](StreamersSubmit.html)
+- [Streamers Admin](StreamersAdmin.html)
 
 
 ## Usage
