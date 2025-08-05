@@ -23,6 +23,7 @@
   <div class="container mx-auto px-4 mt-8">
     <h1 class="text-3xl font-bold text-center mb-6">Tribes Streamers</h1>
     <p id="noStreamers" class="hidden text-center text-gray-400">No approved streamers yet. <a href="StreamersAdmin.html" class="underline">Add one?</a></p>
+
     <div id="streamersGrid" class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
   </div>
 
@@ -37,6 +38,7 @@
       storageBucket: "team-sign-up-b5646.firebasestorage.app",
       messagingSenderId: "951471144681",
       appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+
     };
 
     const app = initializeApp(firebaseConfig);
@@ -46,6 +48,7 @@
 
     async function loadStreamers() {
       grid.innerHTML = '';
+
       document.getElementById('noStreamers').classList.add('hidden');
       const q = query(collection(db, 'streamers'), where('approved', '==', true));
       const snap = await getDocs(q);
@@ -53,6 +56,7 @@
         document.getElementById('noStreamers').classList.remove('hidden');
         return;
       }
+
       snap.forEach(doc => {
         const data = doc.data();
         const card = document.createElement('div');
@@ -69,7 +73,9 @@
       });
     }
 
+
     loadStreamers().catch(() => document.getElementById('noStreamers').classList.remove('hidden'));
+
   </script>
 </body>
 </html>
