@@ -66,7 +66,8 @@
           <img src="${data.avatarUrl || 'https://placehold.co/300x200'}" alt="${data.displayName}" class="w-full h-48 object-cover">
           <div class="p-4">
             <h2 class="text-xl font-semibold mb-2">${data.displayName}</h2>
-            ${data.team ? `<p class=\"text-sm mb-2\">Team: ${data.team}</p>` : ''}
+            ${data.team ? `<p class=\"text-sm mb-1\">Team: ${data.team}</p>` : ''}
+            ${data.bio ? `<p class=\"text-sm text-gray-300 mb-2\">${data.bio.length > 100 ? data.bio.substring(0, 100) + '...' : data.bio}</p>` : ''}
             <a href="https://twitch.tv/${data.twitchHandle}" target="_blank" class="text-purple-400 hover:underline">twitch.tv/${data.twitchHandle}</a>
           </div>
         `;

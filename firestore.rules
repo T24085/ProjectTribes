@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /streamers/{streamerId} {
+      allow read: if resource.data.approved == true;
+      allow create: if request.resource.data.approved == false
+        && request.resource.data.displayName is string
+        && request.resource.data.twitchHandle is string
+        && (!('team' in request.resource.data) || request.resource.data.team is string)
+        && (!('bio' in request.resource.data) || request.resource.data.bio is string)
+        && (!('avatarUrl' in request.resource.data) || request.resource.data.avatarUrl is string);
+      allow update, delete: if request.auth != null;
+    }
+  }
+}
