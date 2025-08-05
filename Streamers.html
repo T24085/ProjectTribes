@@ -22,10 +22,12 @@
 
   <div class="container mx-auto px-4 mt-8">
     <h1 class="text-3xl font-bold text-center mb-6">Tribes Streamers</h1>
+
     <div class="text-right mb-4">
       <a href="StreamersSubmit.html" class="text-green-400 hover:underline">Submit a streamer</a>
     </div>
     <p id="noStreamers" class="hidden text-center text-gray-400">No approved streamers yet. <a href="StreamersSubmit.html" class="underline">Submit one?</a></p>
+
     <div id="streamersGrid" class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
   </div>
 
@@ -72,7 +74,9 @@
       });
     }
 
+
     loadStreamers().catch(() => document.getElementById('noStreamers').classList.remove('hidden'));
+
   </script>
 </body>
 </html>
