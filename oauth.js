@@ -1,6 +1,6 @@
 (function(){
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
-  const REDIRECT_URI = 'https://t24085.github.io/ProjectTribes/TribesRivalsTeamsDashboard.html';
+  const REDIRECT_URI = 'https://tribesprofesionalleague.online/TribesRivalsTeamsDashboard.html';
   const STORAGE_KEY = 'twitch_token';
 
   const TEAM_STREAMS = {
