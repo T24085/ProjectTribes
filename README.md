@@ -1,10 +1,10 @@
-# Project Tribes
+# Tribes Professional League
 
 This repository contains a collection of static HTML pages for the community around **Tribes 3: Rivals**. Each page focuses on tournament information, team rosters, or related utilities. All files are static—no backend server is required.
 
 ## Pages
 
-- **TribesRivalsTeamsDashboard.html** – Main dashboard linking to individual team pages, streaming links, and historical information.
+- **TPLTeamsDashboard.html** – Main dashboard linking to individual team pages, streaming links, and historical information.
 - **TournamentManager.html** – React-based page for managing tournaments and importing sign-up data.
 - **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters. Includes a chat box powered by Twitch embeds that appears alongside the match streams.
 - **TwitchFeedDisplays.html** – Layout for watching multiple Twitch streams at once.
@@ -23,7 +23,7 @@ This repository contains a collection of static HTML pages for the community aro
 
 You can open these pages directly:
 
-- [Tribes Rivals Dashboard](TribesRivalsTeamsDashboard.html)
+- [Tribes Professional League Dashboard](TPLTeamsDashboard.html)
 - [Scrim Watcher](TribesScrimWatcher.html)
 - [Tournament Manager](TournamentManager.html)
 - [Twitch Feeds](TwitchFeedDisplays.html)
@@ -38,7 +38,7 @@ You can open these pages directly:
 
 ## Usage
 
-Open `TribesRivalsTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs. Each team page provides roster info and may link to Twitch or YouTube streams.
+Open `TPLTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs. Each team page provides roster info and may link to Twitch or YouTube streams.
 
 All pages can be opened locally in your browser. The **Create Team** and **Montage Bay** pages save data using `localStorage`.
 ## Shared Navigation
@@ -50,7 +50,7 @@ The main navigation menu is stored in `nav.html`. Each page dynamically loads th
 Certain pages include a "Sign in with Twitch" button. Logging in stores your access token in `localStorage` so the site can personalize Twitch feeds. The login uses the [Twitch OAuth implicit flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#implicit-code-flow).
 When signed in, the main dashboard shows your Twitch username.
 
-In the navigation bar a **Live Teams** button appears after you sign in with Twitch. Clicking the button toggles a side menu that slides in from the left. On the teams dashboard the menu is positioned just below the "Tribes Rivals Dashboard" heading and above the "Select a Team" section. Clicking anywhere outside the menu closes it. Because the site queries the Twitch API using your token, being logged in is required for this list to populate.
+In the navigation bar a **Live Teams** button appears after you sign in with Twitch. Clicking the button toggles a side menu that slides in from the left. On the teams dashboard the menu is positioned just below the "Tribes Professional League Dashboard" heading and above the "Select a Team" section. Clicking anywhere outside the menu closes it. Because the site queries the Twitch API using your token, being logged in is required for this list to populate.
 
 The teams dashboard also checks each roster's streamers against Twitch and highlights teams that are currently live.
 
@@ -69,4 +69,4 @@ The `TeamSignUp.html` page uses [Firebase Firestore](https://firebase.google.com
 
 ## Credits
 
-© 2025 Tribes Rivals community. Individual team pages contain their respective credits.
+© 2025 Tribes Professional League community. Individual team pages contain their respective credits.
