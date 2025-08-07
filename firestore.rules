@@ -11,5 +11,17 @@ service cloud.firestore {
         && (!('avatarUrl' in request.resource.data) || request.resource.data.avatarUrl is string);
       allow update, delete: if request.auth != null;
     }
+
+    match /teams/{teamId} {
+      allow read: if resource.data.approved == true || request.auth != null;
+      allow create: if
+        request.resource.data.approved == false &&
+        request.resource.data.teamName is string &&
+        request.resource.data.teamTag is string &&
+        request.resource.data.season is int &&
+        request.resource.data.division is string &&
+        request.resource.data.division in ['TPL-O', 'TPL-IM', 'TPL-I'];
+      allow update, delete: if request.auth != null;
+    }
   }
 }
