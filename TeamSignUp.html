@@ -169,7 +169,9 @@
         return { name, twitch };
       }).filter(Boolean);
       if (!teamName || !teamTag || players.length === 0 || !division || isNaN(season)) return;
-      await addDoc(collection(db, "teams"), { teamName, teamTag, season, division, players, benchPlayers });
+
+      await addDoc(collection(db, "teams"), { teamName, teamTag, season, division, players, benchPlayers, approved: false });
+
       form.reset();
       playersContainer.innerHTML = '';
       playerCount = 0;
