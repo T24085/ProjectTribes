@@ -37,6 +37,16 @@
           class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
+      <div>
+        <label class="block text-sm mb-1">Season</label>
+        <select id="seasonSelect" required class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-1">Division</label>
+        <select id="divisionSelect" required class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+      </div>
+
       <div id="playersContainer" class="space-y-2"></div>
       <button type="button" id="addPlayerBtn"
         class="w-full py-1 rounded-md bg-gray-700 hover:bg-gray-600">Add Player</button>
@@ -78,7 +88,10 @@
     const output = document.getElementById("teamOutput");
     const playersContainer = document.getElementById("playersContainer");
     const addPlayerBtn = document.getElementById("addPlayerBtn");
+    const seasonSelect = document.getElementById('seasonSelect');
+    const divisionSelect = document.getElementById('divisionSelect');
     let playerCount = 0;
+    let seasonsIndex = [];
 
     function addPlayerRow(name = "", twitch = "") {
       if (playerCount >= 7) return;
@@ -95,6 +108,38 @@
     addPlayerBtn.addEventListener("click", () => addPlayerRow());
     document.addEventListener("DOMContentLoaded", () => addPlayerRow());
 
+    async function loadSeasons() {
+      const res = await fetch('seasons/index.json');
+      seasonsIndex = await res.json();
+      seasonSelect.innerHTML = '';
+      seasonsIndex.forEach(season => {
+        const opt = document.createElement('option');
+        opt.value = season.id;
+        opt.textContent = `Season ${season.id}`;
+        seasonSelect.appendChild(opt);
+      });
+      const active = seasonsIndex.filter(s => s.active).pop() || seasonsIndex[seasonsIndex.length - 1];
+      seasonSelect.value = active.id;
+      await loadDivisions(active.id);
+    }
+
+    async function loadDivisions(id) {
+      const info = seasonsIndex.find(s => s.id == id);
+      if (!info) return;
+      const res = await fetch(`seasons/${info.file}`);
+      const data = await res.json();
+      divisionSelect.innerHTML = '';
+      Object.keys(data.divisions).forEach(div => {
+        const opt = document.createElement('option');
+        opt.value = div;
+        opt.textContent = div;
+        divisionSelect.appendChild(opt);
+      });
+    }
+
+    seasonSelect.addEventListener('change', e => loadDivisions(e.target.value));
+    loadSeasons();
+
     async function loadTeams() {
       output.innerHTML = "";
       const snapshot = await getDocs(collection(db, "teams"));
@@ -104,7 +149,7 @@
         li.className = "bg-gray-700 p-2 rounded-md";
         const players = (data.players || []).map(p => p.name).join(', ');
         const bench = (data.benchPlayers || []).join(', ');
-        li.innerHTML = `<strong>${data.teamName} [${data.teamTag}]</strong><br>Players: ${players}${bench ? `<br>Bench: ${bench}` : ''}`;
+        li.innerHTML = `<strong>${data.teamName} [${data.teamTag}]</strong> - Season ${data.season} ${data.division}<br>Players: ${players}${bench ? `<br>Bench: ${bench}` : ''}`;
         output.appendChild(li);
       });
     }
@@ -113,6 +158,8 @@
       e.preventDefault();
       const teamName = document.getElementById("teamName").value.trim();
       const teamTag = document.getElementById("teamTag").value.trim();
+      const season = parseInt(seasonSelect.value, 10);
+      const division = divisionSelect.value;
       const benchPlayers = document.getElementById("benchPlayers").value.trim().split(',').map(p => p.trim()).filter(Boolean);
       const players = Array.from(playersContainer.querySelectorAll('.player-row')).map(row => {
         const inputs = row.querySelectorAll('input');
@@ -121,12 +168,13 @@
         if (!name) return null;
         return { name, twitch };
       }).filter(Boolean);
-      if (!teamName || !teamTag || players.length === 0) return;
-      await addDoc(collection(db, "teams"), { teamName, teamTag, players, benchPlayers });
+      if (!teamName || !teamTag || players.length === 0 || !division || isNaN(season)) return;
+      await addDoc(collection(db, "teams"), { teamName, teamTag, season, division, players, benchPlayers, approved: false });
       form.reset();
       playersContainer.innerHTML = '';
       playerCount = 0;
       addPlayerRow();
+      loadDivisions(seasonSelect.value);
       loadTeams();
     });
 
