@@ -16,7 +16,6 @@ service cloud.firestore {
       allow read: if resource.data.approved == true || request.auth != null;
       allow create: if
         request.resource.data.approved == false &&
-
         request.resource.data.teamName is string &&
         request.resource.data.teamTag is string &&
         request.resource.data.season is int &&

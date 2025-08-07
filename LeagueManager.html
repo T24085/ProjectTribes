@@ -43,6 +43,23 @@
   </div>
 
   <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+
     let seasonsIndex = [];
     let currentSeasonData = null;
 
@@ -75,13 +92,31 @@
         divisionSelect.appendChild(opt);
       });
       divisionSelect.value = Object.keys(currentSeasonData.divisions)[0];
-      renderDivision();
+
+      await renderDivision();
     }
 
-    function renderDivision() {
+    async function fetchTeams(season, division) {
+      const q = query(
+        collection(db, 'teams'),
+        where('season', '==', season),
+        where('division', '==', division),
+        where('approved', '==', true)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data());
+    }
+
+    async function renderDivision() {
       const divKey = document.getElementById('lmDivision').value;
       const divData = currentSeasonData.divisions[divKey];
-      renderStandings(divData.standings);
+      const teams = await fetchTeams(currentSeasonData.season, divKey);
+      if (teams.length) {
+        const standings = teams.map(t => ({ team: t.teamName, wins: 0, losses: 0 }));
+        renderStandings(standings);
+      } else {
+        renderStandings(divData.standings);
+      }
       renderSchedule(divData.schedule);
     }
 
