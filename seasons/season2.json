@@ -1,0 +1,29 @@
+{
+  "season": 2,
+  "divisions": {
+    "TPL-O": {
+      "standings": [
+        { "team": "Team Omega", "wins": 0, "losses": 0 }
+      ],
+      "schedule": [
+        { "week": 1, "matches": [ { "home": "Team Omega", "away": "Team Sigma", "date": "2026-09-01" } ] }
+      ]
+    },
+    "TPL-IM": {
+      "standings": [
+        { "team": "Team Sigma", "wins": 0, "losses": 0 }
+      ],
+      "schedule": [
+        { "week": 1, "matches": [ { "home": "Team Tau", "away": "Team Upsilon", "date": "2026-09-02" } ] }
+      ]
+    },
+    "TPL-I": {
+      "standings": [
+        { "team": "Team Tau", "wins": 0, "losses": 0 }
+      ],
+      "schedule": [
+        { "week": 1, "matches": [ { "home": "Team Phi", "away": "Team Chi", "date": "2026-09-03" } ] }
+      ]
+    }
+  }
+}
