@@ -8,16 +8,7 @@
   <script src="oauth.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch('nav.html').then(r=>r.text()).then(html=>{
-      document.getElementById('nav-placeholder').innerHTML = html;
-      if (window.twitchOAuth) {
-        twitchOAuth.updateNav();
-        twitchOAuth.initLiveTeamsMenu();
-      }
-    });
-  </script>
+    <div data-include="nav.html"></div>
 
   <main class="container mx-auto p-4">
     <h1 class="text-3xl font-bold mb-4 text-center">Montage Bay</h1>
@@ -74,5 +65,6 @@
 
   document.addEventListener('DOMContentLoaded', loadMontages);
   </script>
+    <script src="assets/include.js" defer></script>
 </body>
 </html>

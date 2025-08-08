@@ -86,16 +86,7 @@
     </style>
 </head>
 <body class="text-white min-h-screen">
-    <div id="nav-placeholder"></div>
-    <script>
-        fetch('nav.html').then(r => r.text()).then(html => {
-            document.getElementById('nav-placeholder').innerHTML = html;
-            if (window.twitchOAuth) {
-                twitchOAuth.updateNav();
-                twitchOAuth.initLiveTeamsMenu();
-            }
-        });
-    </script>
+    <div data-include="nav.html"></div>
     <div id="root"></div>
 
     <script type="text/babel">
@@ -204,6 +195,7 @@
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<Dashboard />);
     </script>
+    <script src="assets/include.js" defer></script>
 </body>
 </html>
 

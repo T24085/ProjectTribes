@@ -61,20 +61,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans">
-    <div id="nav-placeholder"></div>
-    <script>
-        fetch("nav.html")
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById("nav-placeholder").innerHTML = html;
-                if (window.twitchOAuth) {
-                    twitchOAuth.updateNav();
-                    twitchOAuth.initLiveTeamsMenu();
-                    const panel = document.getElementById('live-teams-panel');
-                    if (panel) panel.style.top = '9rem';
-                }
-            });
-    </script>
+    <div data-include="/nav.html"></div>
     <!-- Header -->
     <header class="bg-gray-800 py-6 shadow-lg">
         <div class="container mx-auto px-4 text-center">
@@ -545,6 +532,15 @@
                     });
                     section.style.display = 'block';
                 });
+            }
+        });
+    </script>
+    <script src="/assets/include.js" defer></script>
+    <script>
+        document.addEventListener('includes-loaded', () => {
+            if (window.twitchOAuth) {
+                twitchOAuth.updateNav();
+                twitchOAuth.initLiveTeamsMenu();
             }
         });
     </script>
