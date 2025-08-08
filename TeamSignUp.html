@@ -7,18 +7,7 @@
   <script src="oauth.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch('nav.html').then(r => r.text()).then(html => {
-      document.getElementById('nav-placeholder').innerHTML = html;
-      if (window.twitchOAuth) {
-        twitchOAuth.updateNav();
-        twitchOAuth.initLiveTeamsMenu();
-        const panel = document.getElementById('live-teams-panel');
-        if (panel) panel.style.top = '9rem';
-      }
-    });
-  </script>
+    <div data-include="/nav.html"></div>
 
 
   <div class="bg-gray-800 shadow-lg rounded-2xl p-8 w-full max-w-2xl mt-8">
@@ -204,5 +193,6 @@
     });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="/assets/include.js" defer></script>
 </body>
 </html>

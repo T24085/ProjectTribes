@@ -82,18 +82,7 @@
   </style>
 </head>
 <body class="text-white">
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch('nav.html').then(r => r.text()).then(html => {
-      document.getElementById('nav-placeholder').innerHTML = html;
-      if (window.twitchOAuth) {
-        twitchOAuth.updateNav();
-        twitchOAuth.initLiveTeamsMenu();
-        const panel = document.getElementById('live-teams-panel');
-        if (panel) panel.style.top = '9rem';
-      }
-    });
-  </script>
+    <div data-include="/nav.html"></div>
   <div id="root"></div>
   <script type="text/babel">
     const Match = ({ match, roundIndex, matchIndex, onSubmitScores, tournamentStyle, matchHeight, positionTop, nextMatchPosition, prevMatchPositions }) => {
@@ -1657,5 +1646,6 @@
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<App />);
   </script>
+    <script src="/assets/include.js" defer></script>
 </body>
 </html>
