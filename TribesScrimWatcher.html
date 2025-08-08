@@ -116,18 +116,7 @@
     </style>
 </head>
 <body class="font-sans">
-    <div id="nav-placeholder"></div>
-    <script>
-        fetch("nav.html")
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById("nav-placeholder").innerHTML = html;
-                if (window.twitchOAuth) {
-                    twitchOAuth.updateNav();
-                    twitchOAuth.initLiveTeamsMenu();
-                }
-            });
-    </script>
+    <div data-include="/nav.html"></div>
     <header class="text-center py-6">
         <h1 class="text-4xl font-bold text-violet-400">Tribes Professional League Scrim Watcher</h1>
     </header>
@@ -409,5 +398,6 @@ function renderTeamCard(team, container){
         }
 
     </script>
+    <script src="/assets/include.js" defer></script>
 </body>
 </html>
