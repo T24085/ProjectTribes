@@ -299,18 +299,7 @@
   </style>
 </head>
 <body>
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch("nav.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("nav-placeholder").innerHTML = html;
-          if (window.twitchOAuth) {
-            twitchOAuth.updateNav();
-            twitchOAuth.initLiveTeamsMenu();
-          }
-      });
-  </script>
+    <div data-include="nav.html"></div>
   <div class="container">
     <header>
       <div class="form-section">
@@ -680,5 +669,6 @@
     if (liveBtn) liveBtn.textContent = showOnlyLive ? 'Show All Channels' : 'Show Only Live';
     updateLiveChannels();
   </script>
+    <script src="assets/include.js" defer></script>
 </body>
 </html>
