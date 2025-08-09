@@ -20,7 +20,6 @@
     <div class="flex justify-end mb-4">
       <button id="logoutBtn" class="py-2 px-4 bg-red-600 hover:bg-red-700 rounded">Logout</button>
     </div>
-
     <h1 class="text-2xl font-bold text-center mb-4">League Manager</h1>
     <div class="flex flex-col md:flex-row gap-4 mb-6">
       <div>
@@ -58,7 +57,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
 
   const firebaseConfig = {
     apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -315,7 +313,6 @@
     await setDoc(docRef, { season, division, weeks: schedule });
     renderStandings(computeStandings(schedule));
   });
-
 
   document.getElementById('addSeason').addEventListener('click', async () => {
     const newId = seasonsIndex.length ? Math.max(...seasonsIndex.map(s => parseInt(s.id))) + 1 : 1;
