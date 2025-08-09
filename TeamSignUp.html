@@ -59,7 +59,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -98,27 +98,29 @@
     document.addEventListener("DOMContentLoaded", () => addPlayerRow());
 
     async function loadSeasons() {
-      const res = await fetch('seasons/index.json');
-      seasonsIndex = await res.json();
       seasonSelect.innerHTML = '';
+      const snap = await getDocs(collection(db, 'leagueSeasons'));
+      seasonsIndex = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => parseInt(a.id) - parseInt(b.id));
       seasonsIndex.forEach(season => {
         const opt = document.createElement('option');
         opt.value = season.id;
         opt.textContent = `Season ${season.id}`;
         seasonSelect.appendChild(opt);
       });
-      const active = seasonsIndex.filter(s => s.active).pop() || seasonsIndex[seasonsIndex.length - 1];
-      seasonSelect.value = active.id;
-      await loadDivisions(active.id);
+      const active = seasonsIndex.find(s => s.active) || seasonsIndex[seasonsIndex.length - 1];
+      if (active) {
+        seasonSelect.value = active.id;
+        await loadDivisions(active.id);
+      }
     }
 
     async function loadDivisions(id) {
-      const info = seasonsIndex.find(s => s.id == id);
-      if (!info) return;
-      const res = await fetch(`seasons/${info.file}`);
-      const data = await res.json();
+      const snap = await getDoc(doc(db, 'leagueSeasons', String(id)));
+      if (!snap.exists()) return;
+      const data = snap.data();
       divisionSelect.innerHTML = '';
-      Object.keys(data.divisions).forEach(div => {
+      Object.keys(data.divisions || {}).forEach(div => {
         const opt = document.createElement('option');
         opt.value = div;
         opt.textContent = div;

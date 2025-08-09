@@ -2,154 +2,306 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TPL Standings and Matches</title>
+  <title>TPL League Manager</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="oauth.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
-    <div data-include="/nav.html"></div>
+  <div data-include="/nav.html"></div>
 
-  <div class="w-full max-w-4xl p-4">
-    <h1 class="text-2xl font-bold text-center mb-4">TPL Standings and Matches</h1>
-    <div class="flex flex-col md:flex-row gap-4 justify-center mb-6">
+  <div class="w-full max-w-5xl p-4">
+    <h1 class="text-2xl font-bold text-center mb-4">League Manager</h1>
+    <div class="flex flex-col md:flex-row gap-4 mb-6">
       <div>
         <label class="block text-sm mb-1">Season</label>
-        <select id="lmSeason" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
+        <div class="flex gap-2">
+          <select id="lmSeason" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
+          <button id="addSeason" class="px-2 py-1 bg-blue-600 rounded">+</button>
+          <button id="deleteSeason" class="px-2 py-1 bg-red-600 rounded">&#x2212;</button>
+        </div>
       </div>
       <div>
         <label class="block text-sm mb-1">Division</label>
         <select id="lmDivision" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
       </div>
+      <div>
+        <label class="block text-sm mb-1">Weeks</label>
+        <div class="flex gap-2">
+          <input id="weekCount" type="number" min="1" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600 w-20">
+          <button id="generateWeeks" class="px-3 py-2 bg-indigo-600 rounded-md text-white">Generate</button>
+        </div>
+      </div>
     </div>
 
-    <div>
+    <div id="weeksContainer" class="space-y-6"></div>
+
+    <button id="saveSchedule" class="mt-6 px-4 py-2 bg-green-600 rounded-md">Save Schedule</button>
+
+    <div id="standingsSection" class="mt-10">
       <h2 class="text-xl font-semibold mb-2">Standings</h2>
       <table id="standingsTable" class="min-w-full text-left"></table>
     </div>
-
-    <div class="mt-6">
-      <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-      <div id="scheduleContainer"></div>
-    </div>
   </div>
 
-  <script type="module">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+    authDomain: "team-sign-up-b5646.firebaseapp.com",
+    projectId: "team-sign-up-b5646",
+    storageBucket: "team-sign-up-b5646.firebasestorage.app",
+    messagingSenderId: "951471144681",
+    appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+  };
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
-      authDomain: "team-sign-up-b5646.firebaseapp.com",
-      projectId: "team-sign-up-b5646",
-      storageBucket: "team-sign-up-b5646.firebasestorage.app",
-      messagingSenderId: "951471144681",
-      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
-    };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  let seasonsIndex = [];
+  let currentSeasonData = null;
+  let teams = [];
 
-
-    let seasonsIndex = [];
-    let currentSeasonData = null;
-
-    async function loadSeasons() {
-      const res = await fetch('seasons/index.json');
-      seasonsIndex = await res.json();
-      const seasonSelect = document.getElementById('lmSeason');
-      seasonsIndex.forEach(season => {
-        const opt = document.createElement('option');
-        opt.value = season.id;
-        opt.textContent = `Season ${season.id}`;
-        seasonSelect.appendChild(opt);
-      });
-      const active = seasonsIndex.filter(s => s.active).pop() || seasonsIndex[seasonsIndex.length - 1];
+  async function loadSeasons() {
+    const seasonSelect = document.getElementById('lmSeason');
+    seasonSelect.innerHTML = '';
+    const snap = await getDocs(collection(db, 'leagueSeasons'));
+    seasonsIndex = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    seasonsIndex.forEach(season => {
+      const opt = document.createElement('option');
+      opt.value = season.id;
+      opt.textContent = `Season ${season.id}`;
+      seasonSelect.appendChild(opt);
+    });
+    const active = seasonsIndex.find(s => s.active) || seasonsIndex[seasonsIndex.length - 1];
+    if (active) {
       seasonSelect.value = active.id;
       await loadSeasonData(active.id);
     }
+  }
 
-    async function loadSeasonData(id) {
-      const seasonInfo = seasonsIndex.find(s => s.id == id);
-      if (!seasonInfo) return;
-      const res = await fetch(`seasons/${seasonInfo.file}`);
-      currentSeasonData = await res.json();
-      const divisionSelect = document.getElementById('lmDivision');
-      divisionSelect.innerHTML = '';
-      Object.keys(currentSeasonData.divisions).forEach(div => {
-        const opt = document.createElement('option');
-        opt.value = div;
-        opt.textContent = div;
-        divisionSelect.appendChild(opt);
-      });
-      divisionSelect.value = Object.keys(currentSeasonData.divisions)[0];
-
-      await renderDivision();
+  async function loadSeasonData(id) {
+    const snap = await getDoc(doc(db, 'leagueSeasons', String(id)));
+    if (!snap.exists()) return;
+    currentSeasonData = snap.data();
+    currentSeasonData.season = parseInt(id);
+    const divisionSelect = document.getElementById('lmDivision');
+    divisionSelect.innerHTML = '';
+    Object.keys(currentSeasonData.divisions || {}).forEach(div => {
+      const opt = document.createElement('option');
+      opt.value = div;
+      opt.textContent = div;
+      divisionSelect.appendChild(opt);
+    });
+    if (divisionSelect.options.length > 0) {
+      divisionSelect.value = divisionSelect.options[0].value;
     }
+    await loadTeams();
+    await loadSchedule();
+  }
 
-    async function fetchTeams(season, division) {
-      const q = query(
-        collection(db, 'teams'),
-        where('season', '==', season),
-        where('division', '==', division),
-        where('approved', '==', true)
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map(d => d.data());
+  async function loadTeams() {
+    const season = currentSeasonData.season;
+    const division = document.getElementById('lmDivision').value;
+    const q = query(
+      collection(db, 'teams'),
+      where('season', '==', season),
+      where('division', '==', division),
+      where('approved', '==', true)
+    );
+    const snap = await getDocs(q);
+    teams = snap.docs.map(d => d.data().teamName).sort();
+  }
+
+  function createTeamSelect(selected) {
+    const sel = document.createElement('select');
+    sel.className = 'px-2 py-1 rounded bg-gray-800 border border-gray-700';
+    teams.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      opt.textContent = t;
+      if (t === selected) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    return sel;
+  }
+
+  function createMatchRow(m = {}) {
+    const row = document.createElement('div');
+    row.className = 'flex flex-wrap items-center gap-2';
+    const date = document.createElement('input');
+    date.type = 'date';
+    date.value = m.date || '';
+    date.className = 'px-2 py-1 rounded bg-gray-800 border border-gray-700';
+    const away = createTeamSelect(m.away);
+    const at = document.createTextNode('@');
+    const home = createTeamSelect(m.home);
+    const awayScore = document.createElement('input');
+    awayScore.type = 'number';
+    awayScore.value = m.awayScore ?? '';
+    awayScore.className = 'w-16 px-2 py-1 rounded bg-gray-800 border border-gray-700';
+    const dash = document.createTextNode('-');
+    const homeScore = document.createElement('input');
+    homeScore.type = 'number';
+    homeScore.value = m.homeScore ?? '';
+    homeScore.className = 'w-16 px-2 py-1 rounded bg-gray-800 border border-gray-700';
+    const remove = document.createElement('button');
+    remove.textContent = 'X';
+    remove.className = 'px-2 py-1 bg-red-600 rounded';
+    remove.addEventListener('click', () => row.remove());
+    row.append(date, away, at, home, awayScore, dash, homeScore, remove);
+    return row;
+  }
+
+  function renderWeeks(weeks = []) {
+    const container = document.getElementById('weeksContainer');
+    container.innerHTML = '';
+    weeks.forEach(w => {
+      const div = document.createElement('div');
+      div.className = 'border border-gray-700 p-3 rounded-md';
+      div.dataset.week = w.week;
+      const header = document.createElement('div');
+      header.className = 'flex justify-between items-center mb-2';
+      const title = document.createElement('h3');
+      title.className = 'font-semibold';
+      title.textContent = `Week ${w.week}`;
+      const addBtn = document.createElement('button');
+      addBtn.textContent = 'Add Match';
+      addBtn.className = 'addMatch px-2 py-1 bg-gray-700 rounded';
+      header.append(title, addBtn);
+      div.appendChild(header);
+      const matchesContainer = document.createElement('div');
+      matchesContainer.className = 'space-y-2';
+      (w.matches || []).forEach(m => matchesContainer.appendChild(createMatchRow(m)));
+      div.appendChild(matchesContainer);
+      container.appendChild(div);
+    });
+  }
+
+  function gatherSchedule() {
+    return Array.from(document.querySelectorAll('#weeksContainer > div')).map(div => ({
+      week: Number(div.dataset.week),
+      matches: Array.from(div.querySelectorAll('.flex.flex-wrap')).map(row => {
+        const [date, awaySel, homeSel, awayScore, homeScore] = row.querySelectorAll('input, select');
+        return {
+          date: date.value,
+          away: awaySel.value,
+          home: homeSel.value,
+          awayScore: awayScore.value ? Number(awayScore.value) : null,
+          homeScore: homeScore.value ? Number(homeScore.value) : null
+        };
+      })
+    }));
+  }
+
+  function addWeek(num) {
+    const existing = gatherSchedule();
+    const start = existing.length + 1;
+    for (let i = 0; i < num; i++) {
+      existing.push({ week: start + i, matches: [] });
     }
+    renderWeeks(existing);
+  }
 
-    async function renderDivision() {
-      const divKey = document.getElementById('lmDivision').value;
-      const divData = currentSeasonData.divisions[divKey];
-      const teams = await fetchTeams(currentSeasonData.season, divKey);
-      if (teams.length) {
-        const standings = teams.map(t => ({ team: t.teamName, wins: 0, losses: 0 }));
-        renderStandings(standings);
-      } else {
-        renderStandings(divData.standings);
+  function computeStandings(schedule) {
+    const table = {};
+    teams.forEach(t => (table[t] = { team: t, wins: 0, losses: 0 }));
+    schedule.forEach(w => w.matches.forEach(m => {
+      if (m.homeScore != null && m.awayScore != null) {
+        if (m.homeScore > m.awayScore) {
+          table[m.home].wins++;
+          table[m.away].losses++;
+        } else if (m.awayScore > m.homeScore) {
+          table[m.away].wins++;
+          table[m.home].losses++;
+        }
       }
-      renderSchedule(divData.schedule);
+    }));
+    return Object.values(table);
+  }
+
+  function renderStandings(rows) {
+    const tableEl = document.getElementById('standingsTable');
+    tableEl.innerHTML = '';
+    const header = document.createElement('tr');
+    header.innerHTML = '<th class="px-2">Team</th><th class="px-2">W</th><th class="px-2">L</th>';
+    tableEl.appendChild(header);
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td class="px-2">${r.team}</td><td class="px-2">${r.wins}</td><td class="px-2">${r.losses}</td>`;
+      tableEl.appendChild(tr);
+    });
+  }
+
+  async function loadSchedule() {
+    const season = currentSeasonData.season;
+    const division = document.getElementById('lmDivision').value;
+    const docRef = doc(db, 'leagueSchedules', `${season}-${division}`);
+    const snap = await getDoc(docRef);
+    let weeks = [];
+    if (snap.exists()) {
+      weeks = snap.data().weeks || [];
     }
+    renderWeeks(weeks);
+    renderStandings(computeStandings(weeks));
+  }
 
-    function renderStandings(rows) {
-      const table = document.getElementById('standingsTable');
-      table.innerHTML = '';
-      const header = document.createElement('tr');
-      header.innerHTML = '<th class="px-2">Team</th><th class="px-2">W</th><th class="px-2">L</th>';
-      table.appendChild(header);
-      rows.forEach(r => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="px-2">${r.team}</td><td class="px-2">${r.wins}</td><td class="px-2">${r.losses}</td>`;
-        table.appendChild(tr);
-      });
+  document.getElementById('generateWeeks').addEventListener('click', () => {
+    const num = parseInt(document.getElementById('weekCount').value);
+    if (num > 0) addWeek(num);
+  });
+
+  document.getElementById('weeksContainer').addEventListener('click', e => {
+    if (e.target.classList.contains('addMatch')) {
+      const container = e.target.closest('div[data-week]').querySelector('.space-y-2');
+      container.appendChild(createMatchRow());
     }
+  });
 
-    function renderSchedule(weeks) {
-      const container = document.getElementById('scheduleContainer');
-      container.innerHTML = '';
-      weeks.forEach(w => {
-        const div = document.createElement('div');
-        div.className = 'mb-4';
-        const title = document.createElement('h3');
-        title.className = 'font-semibold mb-1';
-        title.textContent = `Week ${w.week}`;
-        div.appendChild(title);
-        const ul = document.createElement('ul');
-        w.matches.forEach(m => {
-          const li = document.createElement('li');
-          li.textContent = `${m.date}: ${m.away} @ ${m.home}`;
-          ul.appendChild(li);
-        });
-        div.appendChild(ul);
-        container.appendChild(div);
-      });
+  document.getElementById('lmSeason').addEventListener('change', e => loadSeasonData(e.target.value));
+
+  document.getElementById('lmDivision').addEventListener('change', async () => {
+    await loadTeams();
+    await loadSchedule();
+  });
+
+  document.getElementById('saveSchedule').addEventListener('click', async () => {
+    const schedule = gatherSchedule();
+    const season = currentSeasonData.season;
+    const division = document.getElementById('lmDivision').value;
+    const docRef = doc(db, 'leagueSchedules', `${season}-${division}`);
+    await setDoc(docRef, { season, division, weeks: schedule });
+    renderStandings(computeStandings(schedule));
+  });
+
+  loadSeasons();
+
+  document.getElementById('addSeason').addEventListener('click', async () => {
+    const newId = seasonsIndex.length ? Math.max(...seasonsIndex.map(s => parseInt(s.id))) + 1 : 1;
+    await setDoc(doc(db, 'leagueSeasons', String(newId)), {
+      season: newId,
+      divisions: { 'TPL-O': {}, 'TPL-IM': {}, 'TPL-I': {} },
+      active: false
+    });
+    await loadSeasons();
+    document.getElementById('lmSeason').value = String(newId);
+    await loadSeasonData(newId);
+  });
+
+  document.getElementById('deleteSeason').addEventListener('click', async () => {
+    const id = document.getElementById('lmSeason').value;
+    if (!id || !confirm(`Delete Season ${id}?`)) return;
+    if (currentSeasonData && currentSeasonData.divisions) {
+      for (const div of Object.keys(currentSeasonData.divisions)) {
+        await deleteDoc(doc(db, 'leagueSchedules', `${id}-${div}`));
+      }
     }
-
-    document.getElementById('lmSeason').addEventListener('change', e => loadSeasonData(e.target.value));
-    document.getElementById('lmDivision').addEventListener('change', renderDivision);
-
-    loadSeasons();
-  </script>
-    <script src="/assets/include.js" defer></script>
+    await deleteDoc(doc(db, 'leagueSeasons', id));
+    await loadSeasons();
+  });
+</script>
+  <script src="/assets/include.js" defer></script>
 </body>
 </html>
