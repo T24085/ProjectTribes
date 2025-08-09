@@ -1,6 +1,7 @@
 (function(){
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
-  const REDIRECT_URI = 'https://t24085.github.io/TribesProfessionalLeague/TPLTeamsDashboard.html';
+  // Redirect back to the page the user is on after Twitch auth
+  const REDIRECT_URI = window.location.origin + window.location.pathname;
   const STORAGE_KEY = 'twitch_token';
 
   const TEAM_STREAMS = {
