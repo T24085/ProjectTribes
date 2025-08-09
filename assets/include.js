@@ -21,4 +21,5 @@
       console.error('Include failed for', url, e);
     }
   }
+  document.dispatchEvent(new Event('includes-loaded'));
 })();

@@ -32,18 +32,6 @@
   </style>
 </head>
 <body class="text-white">
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch("nav.html")
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("nav-placeholder").innerHTML = html;
-          if (window.twitchOAuth) {
-            twitchOAuth.updateNav();
-            twitchOAuth.initLiveTeamsMenu();
-          }
-      });
-  </script>
   <div id="root"></div>
   <script type="text/babel">
     const POSITIONS = ['HoF', 'LD', 'MD', 'MO', 'HO', 'LO', 'Capper'];

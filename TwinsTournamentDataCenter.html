@@ -86,16 +86,6 @@
     </style>
 </head>
 <body class="text-white min-h-screen">
-    <div id="nav-placeholder"></div>
-    <script>
-        fetch('nav.html').then(r => r.text()).then(html => {
-            document.getElementById('nav-placeholder').innerHTML = html;
-            if (window.twitchOAuth) {
-                twitchOAuth.updateNav();
-                twitchOAuth.initLiveTeamsMenu();
-            }
-        });
-    </script>
     <div id="root"></div>
 
     <script type="text/babel">

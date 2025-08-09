@@ -73,18 +73,6 @@
   </style>
 </head>
 <body class="text-white">
-  <div id="nav-placeholder"></div>
-  <script>
-    fetch('nav.html').then(r => r.text()).then(html => {
-      document.getElementById('nav-placeholder').innerHTML = html;
-      if (window.twitchOAuth) {
-        twitchOAuth.updateNav();
-        twitchOAuth.initLiveTeamsMenu();
-        const panel = document.getElementById('live-teams-panel');
-        if (panel) panel.style.top = '9rem';
-      }
-    });
-  </script>
   <div id="root"></div>
   <script type="text/babel">
     const POSITIONS = ['HoF', 'LD', 'MD', 'MO', 'HO', 'LO', 'Capper'];
