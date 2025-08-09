@@ -61,7 +61,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-white font-sans">
-    <div data-include="/nav.html"></div>
+    <div id="nav-placeholder"></div>
     <!-- Header -->
     <header class="bg-gray-800 py-6 shadow-lg">
         <div class="container mx-auto px-4 text-center">
@@ -535,14 +535,23 @@
             }
         });
     </script>
-    <script src="/assets/include.js" defer></script>
     <script>
-        document.addEventListener('includes-loaded', () => {
+        async function loadNav() {
+            const placeholder = document.getElementById('nav-placeholder');
+            const res = await fetch('/nav.html');
+            const html = await res.text();
+            placeholder.innerHTML = html;
+            placeholder.querySelectorAll('script').forEach(oldScript => {
+                const newScript = document.createElement('script');
+                newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript);
+            });
             if (window.twitchOAuth) {
-                twitchOAuth.updateNav();
-                twitchOAuth.initLiveTeamsMenu();
+                window.twitchOAuth.updateNav();
+                window.twitchOAuth.initLiveTeamsMenu();
             }
-        });
+        }
+        loadNav();
     </script>
 </body>
 </html>

@@ -81,7 +81,7 @@
 </nav>
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+  function initNav() {
     // Mobile toggle
     const toggle = document.getElementById('nav-toggle');
     const menu = document.getElementById('mobile-menu');
@@ -94,14 +94,20 @@
     }
 
     // Highlight active link
-    const path = location.pathname.replace(/\\/index\\.html$/, '/');
+    const path = location.pathname.replace(/\/index\.html$/, '/');
     document.querySelectorAll('a.nav-link, #mobile-menu a').forEach(a => {
       try {
         const aPath = new URL(a.href, location.origin).pathname;
         if (aPath === location.pathname || (aPath.endsWith('/index.html') && path === '/')) {
-          a.classList.add('text-white','font-semibold');
+          a.classList.add('text-white', 'font-semibold');
         }
       } catch {}
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNav);
+  } else {
+    initNav();
+  }
 </script>
