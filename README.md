@@ -12,7 +12,8 @@ This repository contains a collection of static HTML pages for the community aro
 - **TwinsTournamentDataCenter.html** – Score-per-minute chart and documents for the tournament.
 - **UpcomingEvents.html** – Schedule of upcoming events with the Twins image.
 - **TeamSignUp.html** – Register new teams and edit their rosters using Firebase.
-- **LeagueManager.html** – TPL Standings and Matches for each season and division.
+- **StandingsAndMatches.html** – Standings and schedule pulled from Firestore for each season and division.
+- **LeagueManager.html** – Admin panel for creating schedules and recording match results.
 - **Streamers.html** – Public directory of approved streamers loaded from Firestore.
 - **StreamersSubmit.html** – Form for anyone to submit a streamer for admin approval.
 - **StreamersAdmin.html** – League Admin panel for approving or removing streamer entries.
@@ -32,7 +33,8 @@ You can open these pages directly:
 - [Twins Tournament Data Center](TwinsTournamentDataCenter.html)
 - [Upcoming Events](UpcomingEvents.html)
 - [Team Sign-Up](TeamSignUp.html)
-- [TPL Standings and Matches](LeagueManager.html)
+- [TPL Standings and Matches](StandingsAndMatches.html)
+- [League Manager](LeagueManager.html)
 - [Streamers](Streamers.html)
 - [Submit a Streamer](StreamersSubmit.html)
 - [League Admin](StreamersAdmin.html)
