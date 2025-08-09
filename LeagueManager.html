@@ -14,7 +14,11 @@
     <div class="flex flex-col md:flex-row gap-4 mb-6">
       <div>
         <label class="block text-sm mb-1">Season</label>
-        <select id="lmSeason" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
+        <div class="flex gap-2">
+          <select id="lmSeason" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
+          <button id="addSeason" class="px-2 py-1 bg-blue-600 rounded">+</button>
+          <button id="deleteSeason" class="px-2 py-1 bg-red-600 rounded">&#x2212;</button>
+        </div>
       </div>
       <div>
         <label class="block text-sm mb-1">Division</label>
@@ -41,7 +45,8 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -60,34 +65,40 @@
   let teams = [];
 
   async function loadSeasons() {
-    const res = await fetch('seasons/index.json');
-    seasonsIndex = await res.json();
     const seasonSelect = document.getElementById('lmSeason');
+    seasonSelect.innerHTML = '';
+    const snap = await getDocs(collection(db, 'leagueSeasons'));
+    seasonsIndex = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => parseInt(a.id) - parseInt(b.id));
     seasonsIndex.forEach(season => {
       const opt = document.createElement('option');
       opt.value = season.id;
       opt.textContent = `Season ${season.id}`;
       seasonSelect.appendChild(opt);
     });
-    const active = seasonsIndex.filter(s => s.active).pop() || seasonsIndex[seasonsIndex.length - 1];
-    seasonSelect.value = active.id;
-    await loadSeasonData(active.id);
+    const active = seasonsIndex.find(s => s.active) || seasonsIndex[seasonsIndex.length - 1];
+    if (active) {
+      seasonSelect.value = active.id;
+      await loadSeasonData(active.id);
+    }
   }
 
   async function loadSeasonData(id) {
-    const seasonInfo = seasonsIndex.find(s => s.id == id);
-    if (!seasonInfo) return;
-    const res = await fetch(`seasons/${seasonInfo.file}`);
-    currentSeasonData = await res.json();
+    const snap = await getDoc(doc(db, 'leagueSeasons', String(id)));
+    if (!snap.exists()) return;
+    currentSeasonData = snap.data();
+    currentSeasonData.season = parseInt(id);
     const divisionSelect = document.getElementById('lmDivision');
     divisionSelect.innerHTML = '';
-    Object.keys(currentSeasonData.divisions).forEach(div => {
+    Object.keys(currentSeasonData.divisions || {}).forEach(div => {
       const opt = document.createElement('option');
       opt.value = div;
       opt.textContent = div;
       divisionSelect.appendChild(opt);
     });
-    divisionSelect.value = Object.keys(currentSeasonData.divisions)[0];
+    if (divisionSelect.options.length > 0) {
+      divisionSelect.value = divisionSelect.options[0].value;
+    }
     await loadTeams();
     await loadSchedule();
   }
@@ -267,6 +278,30 @@
   });
 
   loadSeasons();
+
+  document.getElementById('addSeason').addEventListener('click', async () => {
+    const newId = seasonsIndex.length ? Math.max(...seasonsIndex.map(s => parseInt(s.id))) + 1 : 1;
+    await setDoc(doc(db, 'leagueSeasons', String(newId)), {
+      season: newId,
+      divisions: { 'TPL-O': {}, 'TPL-IM': {}, 'TPL-I': {} },
+      active: false
+    });
+    await loadSeasons();
+    document.getElementById('lmSeason').value = String(newId);
+    await loadSeasonData(newId);
+  });
+
+  document.getElementById('deleteSeason').addEventListener('click', async () => {
+    const id = document.getElementById('lmSeason').value;
+    if (!id || !confirm(`Delete Season ${id}?`)) return;
+    if (currentSeasonData && currentSeasonData.divisions) {
+      for (const div of Object.keys(currentSeasonData.divisions)) {
+        await deleteDoc(doc(db, 'leagueSchedules', `${id}-${div}`));
+      }
+    }
+    await deleteDoc(doc(db, 'leagueSeasons', id));
+    await loadSeasons();
+  });
 </script>
   <script src="/assets/include.js" defer></script>
 </body>

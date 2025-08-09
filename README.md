@@ -13,7 +13,7 @@ This repository contains a collection of static HTML pages for the community aro
 - **UpcomingEvents.html** – Schedule of upcoming events with the Twins image.
 - **TeamSignUp.html** – Register new teams and edit their rosters using Firebase.
 - **StandingsAndMatches.html** – Standings and schedule pulled from Firestore for each season and division.
-- **LeagueManager.html** – Admin panel for creating schedules and recording match results.
+- **LeagueManager.html** – Admin panel for creating schedules, recording match results, and managing seasons.
 - **Streamers.html** – Public directory of approved streamers loaded from Firestore.
 - **StreamersSubmit.html** – Form for anyone to submit a streamer for admin approval.
 - **StreamersAdmin.html** – League Admin panel for approving or removing streamer entries.
