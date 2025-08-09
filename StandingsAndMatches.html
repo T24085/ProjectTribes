@@ -36,7 +36,9 @@
   <script type="module">
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -100,6 +102,7 @@
 
     async function renderDivision() {
       const divKey = document.getElementById('lmDivision').value;
+
       const season = currentSeasonData.season;
 
       const teamDocs = await fetchTeams(season, divKey);
@@ -132,6 +135,7 @@
         }
       }));
       return Object.values(table);
+
     }
 
     function renderStandings(rows) {
@@ -160,8 +164,10 @@
         const ul = document.createElement('ul');
         w.matches.forEach(m => {
           const li = document.createElement('li');
+
           const score = (m.homeScore != null && m.awayScore != null) ? ` ${m.awayScore} - ${m.homeScore}` : '';
           li.textContent = `${m.date}: ${m.away} @ ${m.home}${score}`;
+
           ul.appendChild(li);
         });
         div.appendChild(ul);
