@@ -90,6 +90,7 @@
         divisionSelect.value = divisionSelect.options[0].value;
       }
 
+
       await renderDivision();
     }
 
@@ -168,6 +169,7 @@
           const li = document.createElement('li');
           const score = (m.homeScore != null && m.awayScore != null) ? ` ${m.awayScore} - ${m.homeScore}` : '';
           li.textContent = `${m.date}: ${m.away} @ ${m.home}${score}`;
+
           ul.appendChild(li);
         });
         div.appendChild(ul);
