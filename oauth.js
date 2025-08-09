@@ -1,7 +1,7 @@
 (function(){
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
-  // Redirect back to the page the user is on after Twitch auth
-  const REDIRECT_URI = window.location.origin + window.location.pathname;
+  // Always return to the new TPL dashboard after Twitch auth
+  const REDIRECT_URI = `${window.location.origin}/TPLTeamsDashboard.html`;
   const STORAGE_KEY = 'twitch_token';
 
   const TEAM_STREAMS = {
