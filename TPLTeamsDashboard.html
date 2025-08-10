@@ -539,7 +539,7 @@
         async function loadNav() {
             const placeholder = document.getElementById('nav-placeholder');
             try {
-                const res = await fetch('nav.html');
+                const res = await fetch('./nav.html');
                 if (!res.ok) throw new Error(`Nav fetch failed: ${res.status}`);
                 const html = await res.text();
                 placeholder.innerHTML = html;
