@@ -17,9 +17,10 @@
     </div>
     <p id="noStreamers" class="hidden text-center text-gray-400">No approved streamers yet. <a href="StreamersSubmit.html" class="underline">Submit one?</a></p>
 
-    <div id="streamersGrid" class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
+  <div id="streamersGrid" class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
   </div>
 
+  <script src="/assets/include.js" defer></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -71,6 +72,5 @@
     loadStreamers().catch(() => document.getElementById('noStreamers').classList.remove('hidden'));
 
   </script>
-    <script src="/assets/include.js" defer></script>
 </body>
 </html>
