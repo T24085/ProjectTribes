@@ -7,7 +7,7 @@
   <script src="oauth.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
-  <div data-include="/nav.html"></div>
+  <div id="nav-placeholder" data-include="/nav.html"></div>
 
   <div id="loginDiv" class="max-w-sm mx-auto mt-10 space-y-4">
     <h1 class="text-2xl font-bold text-center">Admin Login</h1>
@@ -336,6 +336,29 @@
     await loadSeasons();
   });
 </script>
-  <script src="/assets/include.js" defer></script>
+  <script>
+    async function loadNav() {
+      const placeholder = document.getElementById('nav-placeholder');
+      try {
+        const res = await fetch('./nav.html');
+        if (!res.ok) throw new Error(`Nav fetch failed: ${res.status}`);
+        const html = await res.text();
+        placeholder.innerHTML = html;
+        placeholder.querySelectorAll('script').forEach(oldScript => {
+          const newScript = document.createElement('script');
+          [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
+          newScript.textContent = oldScript.textContent;
+          oldScript.replaceWith(newScript);
+        });
+        if (window.twitchOAuth) {
+          window.twitchOAuth.updateNav();
+          window.twitchOAuth.initLiveTeamsMenu();
+        }
+      } catch (err) {
+        console.error('Failed to load navigation', err);
+      }
+    }
+    loadNav();
+  </script>
 </body>
 </html>
