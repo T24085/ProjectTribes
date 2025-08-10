@@ -1,7 +1,7 @@
 (function(){
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
-  // Redirect back to the page the user is on after Twitch auth
-  const REDIRECT_URI = window.location.origin + window.location.pathname;
+  // Always return to the new TPL dashboard after Twitch auth
+  const REDIRECT_URI = `${window.location.origin}/TPLTeamsDashboard.html`;
   const STORAGE_KEY = 'twitch_token';
 
   const TEAM_STREAMS = {
@@ -94,6 +94,10 @@
           'Client-Id': CLIENT_ID,
         }
       });
+      if (!res.ok) {
+        if (res.status === 401) clearToken();
+        return null;
+      }
       const json = await res.json();
       return json.data && json.data.length ? json.data[0] : null;
     } catch (err) {
@@ -113,6 +117,10 @@
           'Client-Id': CLIENT_ID,
         }
       });
+      if (!res.ok) {
+        if (res.status === 401) clearToken();
+        return [];
+      }
       const json = await res.json();
       return json.data || [];
     } catch (err) {
@@ -128,10 +136,14 @@
     try {
       const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
         headers: {
-          'Client-ID': CLIENT_ID,
+          'Client-Id': CLIENT_ID,
           'Authorization': 'Bearer ' + token
         }
       });
+      if (!res.ok) {
+        if (res.status === 401) clearToken();
+        return [];
+      }
       const json = await res.json();
       return Array.isArray(json.data) ? json.data : [];
     } catch (err) {
@@ -269,7 +281,8 @@
       `?client_id=${CLIENT_ID}` +
       `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
       '&response_type=token' +
-      `&scope=${encodeURIComponent(scope)}`;
+      `&scope=${encodeURIComponent(scope)}` +
+      '&force_verify=true';
     window.location.href = url;
   }
 
