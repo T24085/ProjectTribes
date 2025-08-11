@@ -156,12 +156,30 @@
     function renderSchedule(weeks) {
       const container = document.getElementById('scheduleContainer');
       container.innerHTML = '';
+      let currentPhase = 'regular';
       weeks.forEach(w => {
+        const phase = w.phase || 'regular';
+        if (phase !== currentPhase) {
+          if (phase !== 'regular') {
+            const heading = document.createElement('h3');
+            heading.className = 'text-lg font-semibold mt-4 mb-2';
+            heading.textContent = phase === 'playoffs' ? 'Playoffs' : 'Championship';
+            container.appendChild(heading);
+          }
+          currentPhase = phase;
+        }
+
         const div = document.createElement('div');
         div.className = 'mb-4';
-        const title = document.createElement('h3');
+        const title = document.createElement('h4');
         title.className = 'font-semibold mb-1';
-        title.textContent = `Week ${w.week}`;
+        if (phase === 'regular') {
+          title.textContent = `Week ${w.week}`;
+        } else if (phase === 'playoffs') {
+          title.textContent = `Round ${w.week}`;
+        } else {
+          title.textContent = 'Finals';
+        }
         div.appendChild(title);
         const ul = document.createElement('ul');
         w.matches.forEach(m => {
