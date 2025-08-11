@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>News Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="oauth.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="/nav.html"></div>
+
+  <div id="loginDiv" class="max-w-sm mx-auto mt-10 space-y-4">
+    <h1 class="text-2xl font-bold text-center">Admin Login</h1>
+    <input id="email" type="email" placeholder="Email" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <input id="password" type="password" placeholder="Password" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <button id="loginBtn" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Login</button>
+  </div>
+
+  <div id="adminPanel" class="hidden container mx-auto px-4 mt-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Manage News</h1>
+      <button id="logoutBtn" class="py-2 px-4 bg-red-600 hover:bg-red-700 rounded">Logout</button>
+    </div>
+
+    <form id="addNewsForm" class="space-y-4 mb-8">
+      <div>
+        <label class="block text-sm mb-1">Title</label>
+        <input id="title" type="text" required class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Body</label>
+        <textarea id="body" rows="4" required class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Timestamp</label>
+        <input id="timestamp" type="datetime-local" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+      </div>
+      <button type="submit" class="w-full py-2 bg-green-600 hover:bg-green-700 rounded">Add Post</button>
+    </form>
+
+    <ul id="newsList" class="space-y-2"></ul>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    const loginDiv = document.getElementById('loginDiv');
+    const adminPanel = document.getElementById('adminPanel');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    loginBtn.addEventListener('click', () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      signInWithEmailAndPassword(auth, email, password).catch(err => alert(err.message));
+    });
+
+    logoutBtn.addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        loginDiv.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loadNews();
+      } else {
+        loginDiv.classList.remove('hidden');
+        adminPanel.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('addNewsForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const body = document.getElementById('body').value.trim();
+      const tsInput = document.getElementById('timestamp').value;
+      const timestamp = tsInput ? new Date(tsInput) : new Date();
+      await addDoc(collection(db, 'news'), { title, body, timestamp });
+      e.target.reset();
+      loadNews();
+    });
+
+    async function loadNews() {
+      const list = document.getElementById('newsList');
+      list.innerHTML = '';
+      const q = query(collection(db, 'news'), orderBy('timestamp', 'desc'));
+      const snap = await getDocs(q);
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const li = document.createElement('li');
+        li.className = 'bg-gray-800 p-3 rounded';
+        const time = data.timestamp ? data.timestamp.toDate().toLocaleString() : '';
+        li.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <strong>${data.title}</strong><br>
+              <small>${time}</small>
+              <p class="mt-2 whitespace-pre-line">${data.body}</p>
+            </div>
+            <span class="ml-4 flex-shrink-0">
+              <button data-id="${docSnap.id}" class="edit bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded mr-2">Edit</button>
+              <button data-id="${docSnap.id}" class="delete bg-red-600 hover:bg-red-700 px-2 py-1 rounded">Delete</button>
+            </span>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+
+      list.querySelectorAll('.delete').forEach(btn => btn.addEventListener('click', async e => {
+        const id = e.target.dataset.id;
+        await deleteDoc(doc(db, 'news', id));
+        loadNews();
+      }));
+
+      list.querySelectorAll('.edit').forEach(btn => btn.addEventListener('click', async e => {
+        const id = e.target.dataset.id;
+        const docRef = doc(db, 'news', id);
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const newTitle = prompt('Title', data.title) || data.title;
+        const newBody = prompt('Body', data.body) || data.body;
+        const currentTs = data.timestamp ? data.timestamp.toDate().toISOString().slice(0,16) : '';
+        const newTsStr = prompt('Timestamp (YYYY-MM-DDTHH:MM)', currentTs) || currentTs;
+        const newTimestamp = newTsStr ? new Date(newTsStr) : data.timestamp.toDate();
+        await updateDoc(docRef, { title: newTitle, body: newBody, timestamp: newTimestamp });
+        loadNews();
+      }));
+    }
+  </script>
+  <script src="/assets/include.js" defer></script>
+</body>
+</html>
