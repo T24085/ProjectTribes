@@ -116,7 +116,7 @@
     </style>
 </head>
 <body class="font-sans">
-    <div data-include="/nav.html"></div>
+    <div id="nav-placeholder" data-include="/nav.html"></div>
     <header class="text-center py-6">
         <h1 class="text-4xl font-bold text-violet-400">Tribes Professional League Scrim Watcher</h1>
     </header>
@@ -398,6 +398,29 @@ function renderTeamCard(team, container){
         }
 
     </script>
-    <script src="/assets/include.js" defer></script>
+    <script>
+        async function loadNav() {
+            const placeholder = document.getElementById('nav-placeholder');
+            try {
+                const res = await fetch('./nav.html');
+                if (!res.ok) throw new Error(`Nav fetch failed: ${res.status}`);
+                const html = await res.text();
+                placeholder.innerHTML = html;
+                placeholder.querySelectorAll('script').forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.textContent = oldScript.textContent;
+                    oldScript.replaceWith(newScript);
+                });
+                if (window.twitchOAuth) {
+                    window.twitchOAuth.updateNav();
+                    window.twitchOAuth.initLiveTeamsMenu();
+                }
+            } catch (err) {
+                console.error('Failed to load navigation', err);
+            }
+        }
+        loadNav();
+    </script>
 </body>
 </html>
