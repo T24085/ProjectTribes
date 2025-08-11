@@ -126,17 +126,20 @@
     function computeStandings(weeks, teams) {
       const table = {};
       teams.forEach(t => (table[t] = { team: t, wins: 0, losses: 0 }));
-      weeks.forEach(w => w.matches.forEach(m => {
-        if (m.homeScore != null && m.awayScore != null) {
-          if (m.homeScore > m.awayScore) {
-            table[m.home].wins++;
-            table[m.away].losses++;
-          } else if (m.awayScore > m.homeScore) {
-            table[m.away].wins++;
-            table[m.home].losses++;
+      weeks.forEach(w => {
+        if (w.phase && w.phase !== 'regular') return;
+        w.matches.forEach(m => {
+          if (m.homeScore != null && m.awayScore != null) {
+            if (m.homeScore > m.awayScore) {
+              table[m.home].wins++;
+              table[m.away].losses++;
+            } else if (m.awayScore > m.homeScore) {
+              table[m.away].wins++;
+              table[m.home].losses++;
+            }
           }
-        }
-      }));
+        });
+      });
       return Object.values(table);
     }
 
