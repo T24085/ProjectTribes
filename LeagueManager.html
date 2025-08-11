@@ -56,6 +56,48 @@
     <ul id="teamList" class="space-y-2 mt-4"></ul>
   </div>
 
+  <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-gray-800 p-4 rounded w-full max-w-xl">
+      <h2 class="text-xl mb-4">Edit Team</h2>
+      <form id="editForm" class="space-y-4">
+        <div>
+          <label class="block text-sm mb-1">Team Name</label>
+          <input id="editTeamName" class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600">
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Team Tag</label>
+          <input id="editTeamTag" class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600">
+        </div>
+        <div class="flex gap-2">
+          <div class="flex-1">
+            <label class="block text-sm mb-1">Season</label>
+            <select id="editSeason" class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"></select>
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm mb-1">Division</label>
+            <select id="editDivision" class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600"></select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Roster</label>
+          <table class="w-full text-left" id="rosterTable">
+            <thead><tr><th class="px-2">Name</th><th class="px-2">Twitch</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <button type="button" id="addPlayer" class="mt-2 px-2 py-1 bg-blue-600 rounded">Add Player</button>
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Bench</label>
+          <input id="editBench" class="w-full px-2 py-1 rounded bg-gray-700 border border-gray-600" placeholder="Comma separated">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" id="cancelEdit" class="px-3 py-1 bg-gray-600 rounded">Cancel</button>
+          <button type="submit" class="px-3 py-1 bg-green-600 rounded">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -82,6 +124,89 @@
   const adminPanel = document.getElementById('adminPanel');
   const loginBtn = document.getElementById('loginBtn');
   const logoutBtn = document.getElementById('logoutBtn');
+
+  const editModal = document.getElementById('editModal');
+  const editForm = document.getElementById('editForm');
+  const cancelEdit = document.getElementById('cancelEdit');
+  const rosterTableBody = document.querySelector('#rosterTable tbody');
+  const addPlayerBtn = document.getElementById('addPlayer');
+  let currentEditId = null;
+
+  function addPlayerRow(name = '', twitch = '') {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="px-2 py-1"><input class="player-name w-full px-2 py-1 rounded bg-gray-700 border border-gray-600" value="${name}"></td>
+      <td class="px-2 py-1"><input class="player-twitch w-full px-2 py-1 rounded bg-gray-700 border border-gray-600" value="${twitch}"></td>
+      <td class="px-2 py-1 text-right"><button type="button" class="remove-player px-2 py-1 bg-red-600 rounded">X</button></td>
+    `;
+    tr.querySelector('.remove-player').addEventListener('click', () => tr.remove());
+    rosterTableBody.appendChild(tr);
+  }
+
+  function fillDivisionOptions(seasonId, selected) {
+    const season = seasonsIndex.find(s => s.id == seasonId);
+    const divSel = document.getElementById('editDivision');
+    divSel.innerHTML = '';
+    if (season && season.divisions) {
+      Object.keys(season.divisions).forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        if (d === selected) opt.selected = true;
+        divSel.appendChild(opt);
+      });
+    }
+  }
+
+  function openEditModal(data) {
+    document.getElementById('editTeamName').value = data.teamName || '';
+    document.getElementById('editTeamTag').value = data.teamTag || '';
+    const seasonSel = document.getElementById('editSeason');
+    seasonSel.innerHTML = '';
+    seasonsIndex.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = `Season ${s.id}`;
+      seasonSel.appendChild(opt);
+    });
+    seasonSel.value = data.season;
+    fillDivisionOptions(data.season, data.division);
+    rosterTableBody.innerHTML = '';
+    if (data.players && data.players.length) {
+      data.players.forEach(p => addPlayerRow(p.name, p.twitch || ''));
+    } else {
+      addPlayerRow();
+    }
+    document.getElementById('editBench').value = (data.benchPlayers || []).join(', ');
+    editModal.classList.remove('hidden');
+  }
+
+  function closeEditModal() {
+    editModal.classList.add('hidden');
+    currentEditId = null;
+    rosterTableBody.innerHTML = '';
+  }
+
+  addPlayerBtn.addEventListener('click', () => addPlayerRow());
+  cancelEdit.addEventListener('click', closeEditModal);
+  document.getElementById('editSeason').addEventListener('change', e => fillDivisionOptions(e.target.value));
+  editForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!currentEditId) return;
+    const teamName = document.getElementById('editTeamName').value.trim();
+    const teamTag = document.getElementById('editTeamTag').value.trim();
+    const season = parseInt(document.getElementById('editSeason').value, 10);
+    const division = document.getElementById('editDivision').value;
+    const players = Array.from(rosterTableBody.querySelectorAll('tr')).map(tr => {
+      const name = tr.querySelector('.player-name').value.trim();
+      const twitch = tr.querySelector('.player-twitch').value.trim();
+      return name ? { name, twitch } : null;
+    }).filter(Boolean);
+    const benchPlayers = document.getElementById('editBench').value.split(',').map(p => p.trim()).filter(Boolean);
+    await updateDoc(doc(db, 'teams', currentEditId), { teamName, teamTag, season, division, players, benchPlayers });
+    closeEditModal();
+    loadTeams();
+  });
 
   loginBtn.addEventListener('click', () => {
     const email = document.getElementById('email').value;
@@ -196,20 +321,8 @@
       const docRef = doc(db, 'teams', id);
       const snap = await getDoc(docRef);
       if (!snap.exists()) return;
-      const data = snap.data();
-      const teamName = prompt('Team Name', data.teamName) || data.teamName;
-      const teamTag = prompt('Team Tag', data.teamTag) || data.teamTag;
-      const season = parseInt(prompt('Season', data.season), 10) || data.season;
-      const division = prompt('Division', data.division) || data.division;
-      const playersText = prompt('Players (Name|Twitch per line)', (data.players || []).map(p => `${p.name}|${p.twitch}`).join('\n')) || '';
-      const players = playersText.split('\n').map(l => {
-        const [name, twitch = ''] = l.split('|').map(s => s.trim());
-        return name ? { name, twitch } : null;
-      }).filter(Boolean);
-      const benchText = prompt('Bench Players (comma separated)', (data.benchPlayers || []).join(', ')) || '';
-      const benchPlayers = benchText.split(',').map(p => p.trim()).filter(Boolean);
-      await updateDoc(docRef, { teamName, teamTag, season, division, players, benchPlayers });
-      loadTeams();
+      currentEditId = id;
+      openEditModal(snap.data());
     }));
   }
 
