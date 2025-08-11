@@ -1,7 +1,13 @@
 (function(){
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
-  // Always return to the new TPL dashboard after Twitch auth
-  const REDIRECT_URI = `${window.location.origin}/TPLTeamsDashboard.html`;
+  // Always return to the new TPL dashboard after Twitch auth.
+  // Build the redirect path relative to the current directory so GitHub Pages
+  // deployments (which include the repo name in the URL) are handled
+  // correctly.
+  const basePath =
+    window.location.origin +
+    window.location.pathname.replace(/\/[^/]*$/, '/');
+  const REDIRECT_URI = `${basePath}TPLTeamsDashboard.html`;
   const STORAGE_KEY = 'twitch_token';
 
   const TEAM_STREAMS = {
