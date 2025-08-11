@@ -44,13 +44,11 @@
 
     <ul id="streamerList" class="space-y-2"></ul>
 
-    <h1 class="text-3xl font-bold mt-12">Manage Teams</h1>
-    <ul id="teamList" class="space-y-2 mt-4"></ul>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -84,7 +82,6 @@
         loginDiv.classList.add('hidden');
         adminPanel.classList.remove('hidden');
         loadStreamers();
-        loadTeams();
       } else {
         loginDiv.classList.remove('hidden');
         adminPanel.classList.add('hidden');
@@ -136,63 +133,6 @@
       }));
     }
 
-    async function loadTeams() {
-      const list = document.getElementById('teamList');
-      list.innerHTML = '';
-      const snap = await getDocs(collection(db, 'teams'));
-      snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const li = document.createElement('li');
-        li.className = 'bg-gray-800 p-3 rounded flex justify-between items-center';
-        const players = (data.players || []).map(p => p.name).join(', ');
-        const bench = (data.benchPlayers || []).join(', ');
-        li.innerHTML = `
-          <div>
-            <strong>${data.teamName} [${data.teamTag}]</strong> - Season ${data.season} ${data.division}<br>
-            Players: ${players}${bench ? `<br>Bench: ${bench}` : ''}
-          </div>
-          <span>
-            <button data-id="${docSnap.id}" data-approved="${data.approved}" class="team-approve bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded mr-2">${data.approved ? 'Unapprove' : 'Approve'}</button>
-            <button data-id="${docSnap.id}" class="team-edit bg-yellow-600 hover:bg-yellow-700 px-2 py-1 rounded mr-2">Edit</button>
-            <button data-id="${docSnap.id}" class="team-delete bg-red-600 hover:bg-red-700 px-2 py-1 rounded">Delete</button>
-          </span>`;
-        list.appendChild(li);
-      });
-
-      list.querySelectorAll('.team-delete').forEach(btn => btn.addEventListener('click', async e => {
-        const id = e.target.dataset.id;
-        await deleteDoc(doc(db, 'teams', id));
-        loadTeams();
-      }));
-
-      list.querySelectorAll('.team-approve').forEach(btn => btn.addEventListener('click', async e => {
-        const id = e.target.dataset.id;
-        const approved = e.target.dataset.approved === 'true';
-        await updateDoc(doc(db, 'teams', id), { approved: !approved });
-        loadTeams();
-      }));
-
-      list.querySelectorAll('.team-edit').forEach(btn => btn.addEventListener('click', async e => {
-        const id = e.target.dataset.id;
-        const docRef = doc(db, 'teams', id);
-        const snap = await getDoc(docRef);
-        if (!snap.exists()) return;
-        const data = snap.data();
-        const teamName = prompt('Team Name', data.teamName) || data.teamName;
-        const teamTag = prompt('Team Tag', data.teamTag) || data.teamTag;
-        const season = parseInt(prompt('Season', data.season), 10) || data.season;
-        const division = prompt('Division', data.division) || data.division;
-        const playersText = prompt('Players (Name|Twitch per line)', (data.players || []).map(p => `${p.name}|${p.twitch}`).join('\n')) || '';
-        const players = playersText.split('\n').map(l => {
-          const [name, twitch = ''] = l.split('|').map(s => s.trim());
-          return name ? { name, twitch } : null;
-        }).filter(Boolean);
-        const benchText = prompt('Bench Players (comma separated)', (data.benchPlayers || []).join(', ')) || '';
-        const benchPlayers = benchText.split(',').map(p => p.trim()).filter(Boolean);
-        await updateDoc(docRef, { teamName, teamTag, season, division, players, benchPlayers });
-        loadTeams();
-      }));
-    }
   </script>
     <script src="/assets/include.js" defer></script>
 </body>
