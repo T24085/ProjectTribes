@@ -386,6 +386,7 @@
     Array.from(homeSel.options).forEach(opt => {
       const val = opt.value;
       opt.disabled = (val === awayVal) || usedTeams.has(val) || (awayVal && usedPairs.has(pairKey(awayVal, val)));
+
     });
   }
 
@@ -491,6 +492,7 @@
         used.add(awaySel.value);
         used.add(homeSel.value);
         matches.push({
+
           date: date.value,
           away: awaySel.value,
           home: homeSel.value,
@@ -504,6 +506,7 @@
         matches
       };
     });
+
   }
 
   function addWeek(num) {
