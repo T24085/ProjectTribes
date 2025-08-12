@@ -552,6 +552,26 @@
     });
   }
 
+  function determinePlayoffTeams(schedule, numTeams) {
+    return computeStandings(schedule)
+      .slice(0, numTeams)
+      .map(r => r.team);
+  }
+
+  function generatePlayoffWeeks(playoffTeams, startWeek) {
+    const matches = [];
+    for (let i = 0; i < Math.floor(playoffTeams.length / 2); i++) {
+      matches.push({
+        date: '',
+        away: playoffTeams[playoffTeams.length - 1 - i],
+        home: playoffTeams[i],
+        awayScore: null,
+        homeScore: null
+      });
+    }
+    return [{ week: startWeek, phase: 'playoffs', matches }];
+  }
+
   function renderStandings(rows) {
     const tableEl = document.getElementById('standingsTable');
     tableEl.innerHTML = '';
@@ -609,11 +629,15 @@
   });
 
   document.getElementById('saveSchedule').addEventListener('click', async () => {
-    const schedule = gatherSchedule();
+    let schedule = gatherSchedule().filter(w => (w.phase || 'regular') === 'regular');
+    const playoffTeams = determinePlayoffTeams(schedule, 4);
+    const playoffWeeks = generatePlayoffWeeks(playoffTeams, schedule.length + 1);
+    schedule = [...schedule, ...playoffWeeks];
     const season = currentSeasonData.season;
     const division = document.getElementById('lmDivision').value;
     const docRef = doc(db, 'leagueSchedules', `${season}-${division}`);
     await setDoc(docRef, { season, division, weeks: schedule });
+    renderWeeks(schedule);
     renderStandings(computeStandings(schedule));
   });
 
