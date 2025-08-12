@@ -339,7 +339,64 @@
     return sel;
   }
 
-  function createMatchRow(m = {}) {
+  function pairKey(a, b) {
+    return [a, b].sort().join('|');
+  }
+
+  function getUsedPairs(currentWeek, excludeRow) {
+    const used = new Set();
+    document.querySelectorAll('#weeksContainer > div').forEach(div => {
+      const w = Number(div.dataset.week);
+      const phase = div.dataset.phase || 'regular';
+      if (phase !== 'regular') return;
+      div.querySelectorAll('.flex.flex-wrap').forEach(row => {
+        if (w > currentWeek || (w === currentWeek && row === excludeRow)) return;
+        const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
+        if (awaySel.value && homeSel.value) {
+          used.add(pairKey(awaySel.value, homeSel.value));
+        }
+      });
+    });
+    return used;
+  }
+
+  function getUsedTeams(currentWeek, excludeRow) {
+    const used = new Set();
+    const weekDiv = document.querySelector(`#weeksContainer > div[data-week="${currentWeek}"]`);
+    if (!weekDiv) return used;
+    weekDiv.querySelectorAll('.flex.flex-wrap').forEach(row => {
+      if (row === excludeRow) return;
+      const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
+      if (awaySel.value) used.add(awaySel.value);
+      if (homeSel.value) used.add(homeSel.value);
+    });
+    return used;
+  }
+
+  function updatePairingGuards(row, week) {
+    const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
+    const usedPairs = getUsedPairs(week, row);
+    const usedTeams = getUsedTeams(week, row);
+    const awayVal = awaySel.value;
+    const homeVal = homeSel.value;
+    Array.from(awaySel.options).forEach(opt => {
+      const val = opt.value;
+      opt.disabled = (val === homeVal) || usedTeams.has(val) || (homeVal && usedPairs.has(pairKey(val, homeVal)));
+    });
+    Array.from(homeSel.options).forEach(opt => {
+      const val = opt.value;
+      opt.disabled = (val === awayVal) || usedTeams.has(val) || (awayVal && usedPairs.has(pairKey(awayVal, val)));
+    });
+  }
+
+  function updateAllPairingGuards() {
+    document.querySelectorAll('#weeksContainer > div').forEach(div => {
+      const week = Number(div.dataset.week);
+      div.querySelectorAll('.flex.flex-wrap').forEach(row => updatePairingGuards(row, week));
+    });
+  }
+
+  function createMatchRow(m = {}, week) {
     const row = document.createElement('div');
     row.className = 'flex flex-wrap items-center gap-2';
     const date = document.createElement('input');
@@ -361,8 +418,14 @@
     const remove = document.createElement('button');
     remove.textContent = 'X';
     remove.className = 'px-2 py-1 bg-red-600 rounded';
-    remove.addEventListener('click', () => row.remove());
+    remove.addEventListener('click', () => {
+      row.remove();
+      updateAllPairingGuards();
+    });
+    away.addEventListener('change', updateAllPairingGuards);
+    home.addEventListener('change', updateAllPairingGuards);
     row.append(date, away, at, home, awayScore, dash, homeScore, remove);
+    updatePairingGuards(row, week);
     return row;
   }
 
@@ -410,27 +473,37 @@
 
       const matchesContainer = document.createElement('div');
       matchesContainer.className = 'space-y-2';
-      (w.matches || []).forEach(m => matchesContainer.appendChild(createMatchRow(m)));
+      (w.matches || []).forEach(m => matchesContainer.appendChild(createMatchRow(m, w.week)));
       div.appendChild(matchesContainer);
       container.appendChild(div);
     });
+    updateAllPairingGuards();
   }
 
   function gatherSchedule() {
-    return Array.from(document.querySelectorAll('#weeksContainer > div')).map(div => ({
-      week: Number(div.dataset.week),
-      phase: div.dataset.phase || 'regular',
-      matches: Array.from(div.querySelectorAll('.flex.flex-wrap')).map(row => {
+    return Array.from(document.querySelectorAll('#weeksContainer > div')).map(div => {
+      const used = new Set();
+      const matches = [];
+      div.querySelectorAll('.flex.flex-wrap').forEach(row => {
         const [date, awaySel, homeSel, awayScore, homeScore] = row.querySelectorAll('input, select');
-        return {
+        if (!awaySel.value || !homeSel.value || awaySel.value === homeSel.value) return;
+        if (used.has(awaySel.value) || used.has(homeSel.value)) return;
+        used.add(awaySel.value);
+        used.add(homeSel.value);
+        matches.push({
           date: date.value,
           away: awaySel.value,
           home: homeSel.value,
           awayScore: awayScore.value ? Number(awayScore.value) : null,
           homeScore: homeScore.value ? Number(homeScore.value) : null
-        };
-      })
-    }));
+        });
+      });
+      return {
+        week: Number(div.dataset.week),
+        phase: div.dataset.phase || 'regular',
+        matches
+      };
+    });
   }
 
   function addWeek(num) {
@@ -440,15 +513,20 @@
       existing.push({ week: start + i, phase: 'regular', matches: [] });
     }
     renderWeeks(existing);
+    renderStandings(computeStandings(existing));
   }
 
   function computeStandings(schedule) {
     const table = {};
-    teams.forEach(t => (table[t] = { team: t, wins: 0, losses: 0 }));
+    teams.forEach(t => (table[t] = { team: t, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }));
     schedule.forEach(w => {
       if (w.phase && w.phase !== 'regular') return;
       w.matches.forEach(m => {
         if (m.homeScore != null && m.awayScore != null) {
+          table[m.home].pointsFor += m.homeScore;
+          table[m.home].pointsAgainst += m.awayScore;
+          table[m.away].pointsFor += m.awayScore;
+          table[m.away].pointsAgainst += m.homeScore;
           if (m.homeScore > m.awayScore) {
             table[m.home].wins++;
             table[m.away].losses++;
@@ -459,18 +537,27 @@
         }
       });
     });
-    return Object.values(table);
+    return Object.values(table).map(r => {
+      const games = r.wins + r.losses;
+      const winPct = games ? r.wins / games : 0;
+      const pointDiff = r.pointsFor - r.pointsAgainst;
+      return { ...r, winPct, pointDiff };
+    }).sort((a, b) => {
+      if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+      if (b.pointDiff !== a.pointDiff) return b.pointDiff - a.pointDiff;
+      return a.team.localeCompare(b.team);
+    });
   }
 
   function renderStandings(rows) {
     const tableEl = document.getElementById('standingsTable');
     tableEl.innerHTML = '';
     const header = document.createElement('tr');
-    header.innerHTML = '<th class="px-2">Team</th><th class="px-2">W</th><th class="px-2">L</th>';
+    header.innerHTML = '<th class="px-2">Team</th><th class="px-2">W</th><th class="px-2">L</th><th class="px-2">Win%</th><th class="px-2">+/-</th>';
     tableEl.appendChild(header);
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td class="px-2">${r.team}</td><td class="px-2">${r.wins}</td><td class="px-2">${r.losses}</td>`;
+      tr.innerHTML = `<td class="px-2">${r.team}</td><td class="px-2">${r.wins}</td><td class="px-2">${r.losses}</td><td class="px-2">${r.winPct.toFixed(3)}</td><td class="px-2">${r.pointDiff}</td>`;
       tableEl.appendChild(tr);
     });
   }
@@ -495,8 +582,19 @@
 
   document.getElementById('weeksContainer').addEventListener('click', e => {
     if (e.target.classList.contains('addMatch')) {
+      const week = Number(e.target.closest('div[data-week]').dataset.week);
       const container = e.target.closest('div[data-week]').querySelector('.space-y-2');
-      container.appendChild(createMatchRow());
+      container.appendChild(createMatchRow({}, week));
+      updateAllPairingGuards();
+    }
+  });
+
+  document.getElementById('weeksContainer').addEventListener('change', e => {
+    if (e.target.tagName === 'SELECT') {
+      updateAllPairingGuards();
+    }
+    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') {
+      renderStandings(computeStandings(gatherSchedule()));
     }
   });
 
