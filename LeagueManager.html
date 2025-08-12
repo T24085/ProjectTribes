@@ -360,18 +360,33 @@
     return used;
   }
 
+  function getUsedTeams(currentWeek, excludeRow) {
+    const used = new Set();
+    const weekDiv = document.querySelector(`#weeksContainer > div[data-week="${currentWeek}"]`);
+    if (!weekDiv) return used;
+    weekDiv.querySelectorAll('.flex.flex-wrap').forEach(row => {
+      if (row === excludeRow) return;
+      const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
+      if (awaySel.value) used.add(awaySel.value);
+      if (homeSel.value) used.add(homeSel.value);
+    });
+    return used;
+  }
+
   function updatePairingGuards(row, week) {
     const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
-    const used = getUsedPairs(week, row);
+    const usedPairs = getUsedPairs(week, row);
+    const usedTeams = getUsedTeams(week, row);
     const awayVal = awaySel.value;
     const homeVal = homeSel.value;
     Array.from(awaySel.options).forEach(opt => {
       const val = opt.value;
-      opt.disabled = (val === homeVal) || (homeVal && used.has(pairKey(val, homeVal)));
+      opt.disabled = (val === homeVal) || usedTeams.has(val) || (homeVal && usedPairs.has(pairKey(val, homeVal)));
     });
     Array.from(homeSel.options).forEach(opt => {
       const val = opt.value;
-      opt.disabled = (val === awayVal) || (awayVal && used.has(pairKey(awayVal, val)));
+      opt.disabled = (val === awayVal) || usedTeams.has(val) || (awayVal && usedPairs.has(pairKey(awayVal, val)));
+
     });
   }
 
@@ -467,21 +482,31 @@
   }
 
   function gatherSchedule() {
-    return Array.from(document.querySelectorAll('#weeksContainer > div')).map(div => ({
-      week: Number(div.dataset.week),
-      phase: div.dataset.phase || 'regular',
-      matches: Array.from(div.querySelectorAll('.flex.flex-wrap')).map(row => {
+    return Array.from(document.querySelectorAll('#weeksContainer > div')).map(div => {
+      const used = new Set();
+      const matches = [];
+      div.querySelectorAll('.flex.flex-wrap').forEach(row => {
         const [date, awaySel, homeSel, awayScore, homeScore] = row.querySelectorAll('input, select');
-        if (!awaySel.value || !homeSel.value || awaySel.value === homeSel.value) return null;
-        return {
+        if (!awaySel.value || !homeSel.value || awaySel.value === homeSel.value) return;
+        if (used.has(awaySel.value) || used.has(homeSel.value)) return;
+        used.add(awaySel.value);
+        used.add(homeSel.value);
+        matches.push({
+
           date: date.value,
           away: awaySel.value,
           home: homeSel.value,
           awayScore: awayScore.value ? Number(awayScore.value) : null,
           homeScore: homeScore.value ? Number(homeScore.value) : null
-        };
-      }).filter(Boolean)
-    }));
+        });
+      });
+      return {
+        week: Number(div.dataset.week),
+        phase: div.dataset.phase || 'regular',
+        matches
+      };
+    });
+
   }
 
   function addWeek(num) {
