@@ -166,7 +166,7 @@
                 <div class="p-4 text-center">
                     <h3 class="text-xl font-bold">Hegemony of Euros [HoE]<span id="live-HoE" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @[ɧơɛ] Katar Xwokark</p>
-                    <button onclick="showRoster('HoE')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showRoster('Hegemony of Euros')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('HoE')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
                 </div>
             </div>
@@ -512,7 +512,20 @@
                 const data = doc.data();
                 const players = (data.players || []).map(p => p.name).join(', ');
                 const bench = (data.benchPlayers || []).join(', ');
-                map[data.teamName] = `Players: ${players}${bench ? `\nBench: ${bench}` : ''}`;
+                const roster = `Players: ${players}${bench ? `\nBench: ${bench}` : ''}`;
+                const name = data.teamName || '';
+                const tag = data.teamTag || '';
+                if (name) {
+                    map[name] = roster;
+                    const cleanName = name.replace(/[^A-Za-z0-9 ]/g, '').trim();
+                    if (cleanName && cleanName !== name) map[cleanName] = roster;
+                }
+                if (tag) {
+                    map[tag] = roster;
+                    const cleanTag = tag.replace(/[^A-Za-z0-9 ]/g, '').trim();
+                    if (cleanTag && cleanTag !== tag) map[cleanTag] = roster;
+                }
+
             });
             window.rosters = map;
         });
