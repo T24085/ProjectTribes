@@ -166,7 +166,7 @@
                 <div class="p-4 text-center">
                     <h3 class="text-xl font-bold">Hegemony of Euros [HoE]<span id="live-HoE" class="live-indicator ml-2 text-green-400 font-bold">LIVE</span></h3>
                     <p class="text-gray-400">Captain: @[ɧơɛ] Katar Xwokark</p>
-                    <button onclick="showRoster('HoE')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
+                    <button onclick="showRoster('Hegemony of Euros')" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded">View Roster</button>
                     <button onclick="showStreams('HoE')" class="mt-2 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded">Streams</button>
                 </div>
             </div>
@@ -315,21 +315,7 @@
     </footer>
 
     <script>
-        const rosters = {
-            'Avalanche': 'Captain: @Trinium Jones\nCore: BakaToma, Franchez, Dean, Ggglygy, Wriggles, Def_Monk\nAce: Proj',
-            'ePidemic': 'Captain: @[ePi] Convik\nCore: Goshawk, Emma, Nanox, Blu, TartarosK\nBench: apo',
-            'DPRK': 'Leader: Glem (MO)\nCo-Leader: CheezeCaeke (HOF)\nCaptain: ColonelFatso (Capper)\nCore: Nemesis (Capper), Rhino (LD), Halogen (LD), Panda (HO)',
-            'Zen': 'Captain: @ℨ Gigz\nCore: Beamz, Hydroxide, Gnome, Slyce, Mikesters, Twin\nBench: Flocks\nNote: DM Cats/Glem to update the roster',
-            'TXM': 'Captain: @OpCats (LO/LD)\nCore: Prizzo, Cryof, Amyou, Thatguy, Visis, Jive, Freefood, Howsya\nBench: Txredneck',
-            'FPS': 'Captain: @S...\nCore: Brit, Icedwinds, Dugong, Beldark, Realhumanbeing, Simmons, Nightstar\nBench: Kilfaxi, Morokor',
-            'Flying Tractors': 'Captain: @p...\nCore: Bizow, Zao, Dreadtitan, nato, LightningMcMeme, Orvid, Bazz-B',
-            'HoE': 'Captain: @[ɧơɛ] Katar Xwokark\nCore: Gotlub, Mansku, Lord Buschguy, björnbär, Waffleking, TribalChief\nBench: cym3, Gwej, tumi, ThermoFlux, unam',
-            'KTL': 'Captain: @n0xide\nCore: =ACE=, Navy, ctrl, kwago, Paragon, SecondSight, Torment, Alphakrab',
-            'Magic': 'Captain: @[wiz] Lange\nCore: Rebeltrooper, XRY, Dust, Cinnamon, Songsteal, Sek, SplitSecond\nBench: Snakke, Lester',
-            'null': 'Captain: @_...\nCore: Blaspheme, Annaberries, xQ, muuki, exhumaxer, corbeling, mikeax2\nBench: ryan',
-            'Toxic Aimers': 'Captain: @R...\nCore: Song, Sek, Hatuey, DareDevilMoon, Nerve, Radishblue, Trey\nBench: Sin, Stork',
-            'UE': 'DeadManWalking, Pablo, TTVfoenixx, Loot, Nykie4life, Stimzees, The Quacken .'
-        };
+        var rosters = {};
 
         const streams = {
             'Avalanche': [
@@ -501,6 +487,46 @@
                     section.style.display = 'block';
                 });
             }
+        });
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+            authDomain: "team-sign-up-b5646.firebaseapp.com",
+            projectId: "team-sign-up-b5646",
+            storageBucket: "team-sign-up-b5646.firebasestorage.app",
+            messagingSenderId: "951471144681",
+            appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        onSnapshot(collection(db, 'teams'), (snapshot) => {
+            const map = {};
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const players = (data.players || []).map(p => p.name).join(', ');
+                const bench = (data.benchPlayers || []).join(', ');
+                const roster = `Players: ${players}${bench ? `\nBench: ${bench}` : ''}`;
+                const name = data.teamName || '';
+                const tag = data.teamTag || '';
+                if (name) {
+                    map[name] = roster;
+                    const cleanName = name.replace(/[^A-Za-z0-9 ]/g, '').trim();
+                    if (cleanName && cleanName !== name) map[cleanName] = roster;
+                }
+                if (tag) {
+                    map[tag] = roster;
+                    const cleanTag = tag.replace(/[^A-Za-z0-9 ]/g, '').trim();
+                    if (cleanTag && cleanTag !== tag) map[cleanTag] = roster;
+                }
+            });
+            window.rosters = map;
         });
     </script>
 
