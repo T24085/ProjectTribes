@@ -58,6 +58,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth();
+    const ADMIN_UIDS = [
+      'uid1',
+      'uid2'
+    ];
 
     const loginDiv = document.getElementById('loginDiv');
     const adminPanel = document.getElementById('adminPanel');
@@ -73,13 +77,17 @@
     logoutBtn.addEventListener('click', () => signOut(auth));
 
     onAuthStateChanged(auth, user => {
-      if (user) {
+      if (user && ADMIN_UIDS.includes(user.uid)) {
         loginDiv.classList.add('hidden');
         adminPanel.classList.remove('hidden');
         loadNews();
       } else {
         loginDiv.classList.remove('hidden');
         adminPanel.classList.add('hidden');
+        if (user) {
+          alert('Access denied.');
+          signOut(auth);
+        }
       }
     });
 

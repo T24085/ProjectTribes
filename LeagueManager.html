@@ -115,6 +115,10 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const auth = getAuth();
+  const ADMIN_UIDS = [
+    'uid1',
+    'uid2'
+  ];
 
   let seasonsIndex = [];
   let currentSeasonData = null;
@@ -217,7 +221,7 @@
   logoutBtn.addEventListener('click', () => signOut(auth));
 
   onAuthStateChanged(auth, user => {
-    if (user) {
+    if (user && ADMIN_UIDS.includes(user.uid)) {
       loginDiv.classList.add('hidden');
       adminPanel.classList.remove('hidden');
       loadSeasons();
@@ -225,6 +229,10 @@
     } else {
       adminPanel.classList.add('hidden');
       loginDiv.classList.remove('hidden');
+      if (user) {
+        alert('Access denied.');
+        signOut(auth);
+      }
     }
   });
 
