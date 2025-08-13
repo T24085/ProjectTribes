@@ -9,7 +9,7 @@ service cloud.firestore {
         && (!('team' in request.resource.data) || request.resource.data.team is string)
         && (!('bio' in request.resource.data) || request.resource.data.bio is string)
         && (!('avatarUrl' in request.resource.data) || request.resource.data.avatarUrl is string);
-      allow update, delete: if request.auth != null;
+      allow update, delete: if request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'Cx5w8y1ySNaKFAbHmm2uw1ZPoDr1'];
     }
 
     match /teams/{teamId} {
@@ -21,7 +21,7 @@ service cloud.firestore {
         request.resource.data.season is int &&
         request.resource.data.division is string &&
         request.resource.data.division in ['TPL-O', 'TPL-IM', 'TPL-I'];
-      allow update, delete: if request.auth != null;
+      allow update, delete: if request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'Cx5w8y1ySNaKFAbHmm2uw1ZPoDr1'];
     }
   }
 }
