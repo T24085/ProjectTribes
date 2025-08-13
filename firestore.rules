@@ -1,19 +1,24 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null &&
+        request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'Cx5w8y1ySNaKFAbHmm2uw1ZPoDr1'];
+    }
+
     match /streamers/{streamerId} {
-      allow read: if resource.data.approved == true;
+      allow read: if resource.data.approved == true || isAdmin();
       allow create: if request.resource.data.approved == false
         && request.resource.data.displayName is string
         && request.resource.data.twitchHandle is string
         && (!('team' in request.resource.data) || request.resource.data.team is string)
         && (!('bio' in request.resource.data) || request.resource.data.bio is string)
         && (!('avatarUrl' in request.resource.data) || request.resource.data.avatarUrl is string);
-      allow update, delete: if request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'Cx5w8y1ySNaKFAbHmm2uw1ZPoDr1'];
+      allow update, delete: if isAdmin();
     }
 
     match /teams/{teamId} {
-      allow read: if resource.data.approved == true || request.auth != null;
+      allow read: if resource.data.approved == true || isAdmin();
       allow create: if
         request.resource.data.approved == false &&
         request.resource.data.teamName is string &&
@@ -21,7 +26,12 @@ service cloud.firestore {
         request.resource.data.season is int &&
         request.resource.data.division is string &&
         request.resource.data.division in ['TPL-O', 'TPL-IM', 'TPL-I'];
-      allow update, delete: if request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'Cx5w8y1ySNaKFAbHmm2uw1ZPoDr1'];
+      allow update, delete: if isAdmin();
+    }
+
+    match /news/{newsId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
     }
   }
 }
