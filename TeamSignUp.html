@@ -46,7 +46,7 @@
           class="w-full px-3 py-2 rounded-md bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
-      <button type="submit"
+      <button type="submit" id="submitTeamBtn"
         class="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 font-semibold">Add Team</button>
       <p id="formStatus" class="text-center text-sm mt-2"></p>
     </form>
@@ -81,6 +81,7 @@
     const seasonSelect = document.getElementById('seasonSelect');
     const divisionSelect = document.getElementById('divisionSelect');
     const status = document.getElementById('formStatus');
+    const submitTeamBtn = document.getElementById('submitTeamBtn');
     let playerCount = 0;
     let seasonsIndex = [];
 
@@ -148,7 +149,7 @@
       });
     }
 
-    form.addEventListener("submit", async (e) => {
+    async function submitTeam(e) {
       e.preventDefault();
       status.textContent = '';
       const teamName = document.getElementById("teamName").value.trim();
@@ -181,7 +182,10 @@
         console.error('Failed to add team', err);
         status.textContent = 'Failed to submit team.';
       }
-    });
+    }
+
+    form.addEventListener("submit", submitTeam);
+    submitTeamBtn.addEventListener("click", submitTeam);
 
     loadTeams();
 
