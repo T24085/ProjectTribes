@@ -48,6 +48,7 @@
 
       <button type="submit"
         class="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 font-semibold">Add Team</button>
+      <p id="formStatus" class="text-center text-sm mt-2"></p>
     </form>
 
     <div class="mt-6">
@@ -79,6 +80,7 @@
     const addPlayerBtn = document.getElementById("addPlayerBtn");
     const seasonSelect = document.getElementById('seasonSelect');
     const divisionSelect = document.getElementById('divisionSelect');
+    const status = document.getElementById('formStatus');
     let playerCount = 0;
     let seasonsIndex = [];
 
@@ -94,8 +96,9 @@
       playersContainer.appendChild(div);
     }
 
+    // Ensure at least one player row exists on initial load
     addPlayerBtn.addEventListener("click", () => addPlayerRow());
-    document.addEventListener("DOMContentLoaded", () => addPlayerRow());
+    addPlayerRow();
 
     async function loadSeasons() {
       seasonSelect.innerHTML = '';
@@ -147,6 +150,7 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      status.textContent = '';
       const teamName = document.getElementById("teamName").value.trim();
       const teamTag = document.getElementById("teamTag").value.trim();
       const season = parseInt(seasonSelect.value, 10);
@@ -159,16 +163,24 @@
         if (!name) return null;
         return { name, twitch };
       }).filter(Boolean);
-      if (!teamName || !teamTag || players.length === 0 || !division || isNaN(season)) return;
+      if (!teamName || !teamTag || players.length === 0 || !division || isNaN(season)) {
+        status.textContent = 'Please fill out team info and at least one player.';
+        return;
+      }
 
-      await addDoc(collection(db, "teams"), { teamName, teamTag, season, division, players, benchPlayers, approved: false });
-
-      form.reset();
-      playersContainer.innerHTML = '';
-      playerCount = 0;
-      addPlayerRow();
-      loadDivisions(seasonSelect.value);
-      loadTeams();
+      try {
+        await addDoc(collection(db, "teams"), { teamName, teamTag, season, division, players, benchPlayers, approved: false });
+        status.textContent = 'Team submitted for approval.';
+        form.reset();
+        playersContainer.innerHTML = '';
+        playerCount = 0;
+        addPlayerRow();
+        loadDivisions(seasonSelect.value);
+        loadTeams();
+      } catch (err) {
+        console.error('Failed to add team', err);
+        status.textContent = 'Failed to submit team.';
+      }
     });
 
     loadTeams();
