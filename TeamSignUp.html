@@ -180,7 +180,7 @@
         loadTeams();
       } catch (err) {
         console.error('Failed to add team', err);
-        status.textContent = 'Failed to submit team.';
+        status.textContent = `Failed to submit team: ${err.message}`;
       }
     }
 
