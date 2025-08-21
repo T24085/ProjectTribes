@@ -84,6 +84,12 @@
     const submitTeamBtn = document.getElementById('submitTeamBtn');
     let playerCount = 0;
     let seasonsIndex = [];
+    const divisionLabels = {
+      'TPL-O': 'Open',
+      'TPL-IM': 'Intermediate',
+      'TPL-I': 'Invite'
+    };
+    const allowedDivisions = Object.keys(divisionLabels);
 
     function addPlayerRow(name = "", twitch = "") {
       if (playerCount >= 7) return;
@@ -125,9 +131,10 @@
       const data = snap.data();
       divisionSelect.innerHTML = '';
       Object.keys(data.divisions || {}).forEach(div => {
+        if (!divisionLabels[div]) return;
         const opt = document.createElement('option');
         opt.value = div;
-        opt.textContent = div;
+        opt.textContent = divisionLabels[div];
         divisionSelect.appendChild(opt);
       });
     }
@@ -166,6 +173,10 @@
       }).filter(Boolean);
       if (!teamName || !teamTag || players.length === 0 || !division || isNaN(season)) {
         status.textContent = 'Please fill out team info and at least one player.';
+        return;
+      }
+      if (!allowedDivisions.includes(division)) {
+        status.textContent = 'Invalid division selected.';
         return;
       }
 
