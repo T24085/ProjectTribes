@@ -347,61 +347,21 @@
     return sel;
   }
 
-  function pairKey(a, b) {
-    return [a, b].sort().join('|');
-  }
-
-  function getUsedPairs(currentWeek, excludeRow) {
-    const used = new Set();
-    document.querySelectorAll('#weeksContainer > div').forEach(div => {
-      const w = Number(div.dataset.week);
-      const phase = div.dataset.phase || 'regular';
-      if (phase !== 'regular') return;
-      div.querySelectorAll('.flex.flex-wrap').forEach(row => {
-        if (w > currentWeek || (w === currentWeek && row === excludeRow)) return;
-        const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
-        if (awaySel.value && homeSel.value) {
-          used.add(pairKey(awaySel.value, homeSel.value));
-        }
-      });
-    });
-    return used;
-  }
-
-  function getUsedTeams(currentWeek, excludeRow) {
-    const used = new Set();
-    const weekDiv = document.querySelector(`#weeksContainer > div[data-week="${currentWeek}"]`);
-    if (!weekDiv) return used;
-    weekDiv.querySelectorAll('.flex.flex-wrap').forEach(row => {
-      if (row === excludeRow) return;
-      const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
-      if (awaySel.value) used.add(awaySel.value);
-      if (homeSel.value) used.add(homeSel.value);
-    });
-    return used;
-  }
-
-  function updatePairingGuards(row, week) {
+  function updatePairingGuards(row) {
     const [date, awaySel, homeSel] = row.querySelectorAll('input, select');
-    const usedPairs = getUsedPairs(week, row);
-    const usedTeams = getUsedTeams(week, row);
     const awayVal = awaySel.value;
     const homeVal = homeSel.value;
     Array.from(awaySel.options).forEach(opt => {
-      const val = opt.value;
-      opt.disabled = (val === homeVal) || usedTeams.has(val) || (homeVal && usedPairs.has(pairKey(val, homeVal)));
+      opt.disabled = (opt.value === homeVal);
     });
     Array.from(homeSel.options).forEach(opt => {
-      const val = opt.value;
-      opt.disabled = (val === awayVal) || usedTeams.has(val) || (awayVal && usedPairs.has(pairKey(awayVal, val)));
-
+      opt.disabled = (opt.value === awayVal);
     });
   }
 
   function updateAllPairingGuards() {
     document.querySelectorAll('#weeksContainer > div').forEach(div => {
-      const week = Number(div.dataset.week);
-      div.querySelectorAll('.flex.flex-wrap').forEach(row => updatePairingGuards(row, week));
+      div.querySelectorAll('.flex.flex-wrap').forEach(row => updatePairingGuards(row));
     });
   }
 
@@ -434,7 +394,7 @@
     away.addEventListener('change', updateAllPairingGuards);
     home.addEventListener('change', updateAllPairingGuards);
     row.append(date, away, at, home, awayScore, dash, homeScore, remove);
-    updatePairingGuards(row, week);
+    updatePairingGuards(row);
     return row;
   }
 
