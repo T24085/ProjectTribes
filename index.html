@@ -471,7 +471,11 @@
             }
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.twitchOAuth) {
+                // Validate any existing token before making stream requests
+                await twitchOAuth.fetchUser();
+            }
             updateTeamLiveStatus();
             updateHubcasterStatus();
             if (window.twitchOAuth && twitchOAuth.getToken()) {
