@@ -1,4 +1,5 @@
 (function(){
+  // Twitch application client ID
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
   // Always return to the new TPL dashboard after Twitch auth.
   // Build the redirect path relative to the current directory so GitHub Pages
@@ -97,7 +98,7 @@
       const res = await fetch('https://api.twitch.tv/helix/users', {
         headers: {
           'Authorization': 'Bearer ' + token,
-          'Client-Id': CLIENT_ID,
+          'Client-ID': CLIENT_ID,
         }
       });
       if (!res.ok) {
@@ -120,7 +121,7 @@
       const res = await fetch(`https://api.twitch.tv/helix/streams/followed?user_id=${user.id}`, {
         headers: {
           'Authorization': 'Bearer ' + token,
-          'Client-Id': CLIENT_ID,
+          'Client-ID': CLIENT_ID,
         }
       });
       if (!res.ok) {
@@ -142,7 +143,7 @@
     try {
       const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
         headers: {
-          'Client-Id': CLIENT_ID,
+          'Client-ID': CLIENT_ID,
           'Authorization': 'Bearer ' + token
         }
       });
