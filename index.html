@@ -316,6 +316,7 @@
 
     <script>
         var rosters = {};
+        const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
 
         const streams = {
             'Avalanche': [
@@ -426,7 +427,7 @@
 
             const query = allLogins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
             fetch('https://api.twitch.tv/helix/streams?' + query, {
-                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
+                headers: { 'Client-Id': CLIENT_ID }
             })
                 .then(res => res.json())
                 .then(data => {
@@ -447,7 +448,7 @@
         function updateHubcasterStatus() {
             const query = hubCasters.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
             fetch('https://api.twitch.tv/helix/streams?' + query, {
-                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
+                headers: { 'Client-Id': CLIENT_ID }
             })
                 .then(res => res.json())
                 .then(data => {

@@ -1,4 +1,5 @@
 (function(){
+  // Twitch application client ID
   const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
   // Always return to the new TPL dashboard after Twitch auth.
   // Build the redirect path relative to the current directory so GitHub Pages
