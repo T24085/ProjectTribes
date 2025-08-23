@@ -422,15 +422,11 @@
                     .filter(Boolean);
             }
             const allLogins = [...new Set(Object.values(teamLogins).flat())];
-            if (allLogins.length === 0) return;
+            if (allLogins.length === 0 || !window.twitchOAuth) return;
 
-            const query = allLogins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
-            fetch('https://api.twitch.tv/helix/streams?' + query, {
-                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    const liveSet = new Set((data.data || []).map(s => s.user_login.toLowerCase()));
+            window.twitchOAuth.fetchLiveStreams(allLogins)
+                .then(streams => {
+                    const liveSet = new Set((streams || []).map(s => s.user_login.toLowerCase()));
                     for (const [team, logins] of Object.entries(teamLogins)) {
                         const id = 'live-' + team.replace(/\s+/g, '-');
                         const el = document.getElementById(id);
@@ -445,13 +441,10 @@
         const hubCasters = ['tootzgaming', 'oo0oo_live', 'hawxter_'];
 
         function updateHubcasterStatus() {
-            const query = hubCasters.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
-            fetch('https://api.twitch.tv/helix/streams?' + query, {
-                headers: { 'Client-Id': 'meabi1n42pccff5rz9ujpno7ky9vlt' }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    const liveSet = new Set((data.data || []).map(s => s.user_login.toLowerCase()));
+            if (!window.twitchOAuth) return;
+            window.twitchOAuth.fetchLiveStreams(hubCasters)
+                .then(streams => {
+                    const liveSet = new Set((streams || []).map(s => s.user_login.toLowerCase()));
                     hubCasters.forEach(login => {
                         const el = document.getElementById('hub-live-' + login);
                         if (el && liveSet.has(login)) {
