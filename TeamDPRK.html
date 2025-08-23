@@ -1,423 +1,605 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[DPRK] TPL Team</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #ed1c24;
-            color: #fff;
-            background-image: url('https://github.com/T24085/TeamDPRK/blob/main/DPRKPuppy.png?raw=true');
-            background-repeat: repeat-y;
-            background-size: contain;
-            background-position: center top;
-            background-attachment: scroll;
-            overflow-x: hidden;
-            position: relative;
-            z-index: 0;
-            min-height: 100vh;
-        }
-        header {
-            position: relative;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 80px;
-            background-color: #003087;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-        }
-        header img {
-            height: 60px;
-            margin-right: 20px;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 24px;
-            color: #fff;
-            text-transform: uppercase;
-        }
-        nav {
-            position: fixed;
-            top: 80px;
-            width: 100%;
-            background-color: #003087;
-            padding: 1em;
-            text-align: center;
-            z-index: 1002;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-        nav.visible {
-            opacity: 1;
-        }
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            margin: 0 1em;
-            font-weight: bold;
-        }
-        nav a:hover {
-            color: #ed1c24;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 0 1em;
-            margin-top: 100px;
-            position: relative;
-            z-index: 1;
-            background: transparent;
-            min-height: calc(100vh - 80px);
-        }
-        .team-intro, .team-info, .stats-section, .tournament-wins, .featured-videos {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 2em;
-            border-radius: 8px;
-            margin-bottom: 2em;
-            text-align: center;
-            color: #003087;
-        }
-        .team-intro h2, .team-info h2, .stats-section h2, .tournament-wins h2, .featured-videos h2 {
-            color: #ed1c24;
-        }
-        .team-members {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1em;
-            margin-top: 2em;
-        }
-        .member {
-            background-color: #003087;
-            color: white;
-            padding: 1em;
-            border-radius: 8px;
-            text-align: center;
-            height: 400px;
-            overflow: hidden;
-            border: 2px solid #fff;
-            transition: transform 0.5s ease, box-shadow 0.5s ease;
-        }
-        .member h3 {
-            margin: 0;
-            font-size: 1.2em;
-            color: #ed1c24;
-        }
-        .member p {
-            margin: 0.5em 0 0;
-            font-size: 0.9em;
-            color: #fff;
-        }
-        .member iframe {
-            width: 100%;
-            height: 300px;
-            border: none;
-            margin-top: 0.5em;
-        }
-        .member a {
-            color: #fff;
-            text-decoration: none;
-            display: block;
-            margin-top: 0.5em;
-        }
-        .member a:hover {
-            color: #ed1c24;
-        }
-        .member:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        .stats-table, .wins-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1em;
-        }
-        .stats-table th, .stats-table td, .wins-table th, .wins-table td {
-            border: 1px solid #fff;
-            padding: 8px;
-            text-align: left;
-        }
-        .stats-table th, .wins-table th {
-            background-color: #ed1c24;
-            color: #fff;
-        }
-        .stats-table td, .wins-table td {
-            color: #003087;
-        }
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1em;
-            margin-top: 2em;
-        }
-        .video-item iframe {
-            width: 100%;
-            height: 200px;
-            border: none;
-            border-radius: 8px;
-        }
-        footer {
-            background-color: #003087;
-            color: #fff;
-            text-align: center;
-            padding: 1em;
-            width: 100%;
-            margin-top: 2em;
-        }
-        footer img {
-            max-width: 150px;
-            margin-top: 10px;
-        }
-        @media (max-width: 600px) {
-            .team-members, .video-grid {
-                grid-template-columns: 1fr;
-            }
-            .member iframe, .video-item iframe {
-                height: 200px;
-            }
-            .stats-table, .wins-table {
-                font-size: 0.9em;
-            }
-        }
-    </style>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const domain = window.location.hostname;
-            console.log('Domain detected:', domain);
-            const twitchIframes = document.querySelectorAll('iframe[src*="twitch.tv"]');
-            twitchIframes.forEach(function(iframe) {
-                const src = iframe.src;
-                const channelMatch = src.match(/channel=([^&]+)/);
-                if (channelMatch) {
-                    const channel = channelMatch[1];
-                    iframe.src = `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${domain}&muted=true`;
-                    console.log(`Updated iframe for channel: ${channel} with parent: ${domain}`);
-                } else {
-                    console.error('No channel found in iframe src:', src);
-                }
-            });
-        });
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>[DPRK] TPL — Team Site (Redesigned)</title>
+  <meta name="description" content="[DPRK] TPL — Tribes Professional League team. Roster, highlights, stats, and tournament results." />
+  <meta property="og:title" content="[DPRK] TPL — Team" />
+  <meta property="og:description" content="Roster, highlights, stats & results." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://raw.githubusercontent.com/T24085/TeamDPRK/main/DPRKLOGO.png" />
+  <meta name="theme-color" content="#ed1c24" />
+  <link rel="preconnect" href="https://i.ytimg.com" crossorigin>
+  <link rel="preconnect" href="https://www.youtube-nocookie.com" crossorigin>
+  <link rel="preconnect" href="https://player.twitch.tv" crossorigin>
+  <style>
+    /* ===============================
+       Design Tokens / CSS Variables
+       =============================== */
+    :root {
+      --bg: #0b1220;               /* page background */
+      --surface: rgba(255,255,255,0.06);
+      --text: #e8eef5;             /* primary text */
+      --muted: #b6c3d6;
+      --primary: #ed1c24;          /* team red */
+      --primary-600: #c4171c;
+      --accent: #003087;           /* team blue */
+      --card: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.14);
+      --elev: 0 12px 30px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --maxw: 1200px;
+    }
 
-        window.addEventListener('scroll', function() {
-            const nav = document.querySelector('nav');
-            const body = document.body;
-            if (window.scrollY > 100) {
-                nav.classList.add('visible');
-                body.classList.add('scrolled');
-            } else {
-                nav.classList.remove('visible');
-                body.classList.remove('scrolled');
-            }
-        });
+    /* Light theme (optional): toggle with [data-theme="light"] on <html> */
+    html[data-theme="light"] {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --text: #0c1222;
+      --muted: #344560;
+      --card: #ffffff;
+      --border: #dde3ee;
+    }
 
-        window.addEventListener('load', function() {
-            const container = document.querySelector('.container');
-            if (window.innerHeight >= document.documentElement.scrollHeight) {
-                container.style.marginTop = '100px';
-            }
-        });
-    </script>
+    /* Base */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Hero background with subtle overlay + image */
+    .hero-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(1200px 400px at 50% -10%, rgba(237,28,36,0.25), transparent 60%),
+        radial-gradient(1400px 500px at 40% 110%, rgba(0,48,135,0.22), transparent 60%),
+        url('https://raw.githubusercontent.com/T24085/TeamDPRK/main/DPRKPuppy.png') center -60px / 900px auto no-repeat;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    /* Header */
+    .skip-link { position: absolute; left: -999px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+    .skip-link:focus { left: 16px; top: 12px; width: auto; height: auto; background: var(--primary); color: #fff; padding: 8px 12px; border-radius: 8px; z-index: 10000; }
+
+    header.site-header {
+      position: sticky; top: 0; z-index: 1000;
+      backdrop-filter: blur(10px);
+      background: linear-gradient( to bottom, rgba(10,15,28,0.75), rgba(10,15,28,0.25) );
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner { max-width: var(--maxw); margin: 0 auto; display: flex; align-items: center; gap: 14px; padding: 14px 20px; }
+    .brand { display:flex; align-items:center; gap: 12px; text-decoration: none; color: var(--text); }
+    .brand img { width: 48px; height: 48px; object-fit: contain; border-radius: 12px; }
+    .brand-title { font-weight: 800; letter-spacing: 0.3px; }
+
+    /* Nav */
+    nav.primary-nav { margin-left: auto; }
+    .nav-toggle { display:none; }
+    .nav-list { display:flex; gap: 16px; list-style:none; padding:0; margin:0; align-items:center; }
+    .nav-link { text-decoration:none; color: var(--muted); font-weight: 700; font-size: 0.95rem; padding: 8px 10px; border-radius: 10px; }
+    .nav-link:hover, .nav-link[aria-current="true"] { color: #fff; background: rgba(237,28,36,0.14); }
+
+    /* Mobile nav */
+    @media (max-width: 860px) {
+      .nav-toggle { display: inline-flex; margin-left: auto; align-items:center; gap:10px; background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 12px; cursor: pointer; }
+      nav.primary-nav { position: fixed; inset: 64px 12px auto 12px; background: rgba(15,20,36,0.96); border: 1px solid var(--border); border-radius: 16px; padding: 10px; display:none; box-shadow: var(--elev); }
+      nav.primary-nav.open { display:block; }
+      .nav-list { flex-direction: column; align-items: stretch; }
+      .nav-link { padding: 12px 14px; }
+    }
+
+    /* Layout helpers */
+    .container { max-width: var(--maxw); margin: 0 auto; padding: clamp(16px, 3vw, 32px); }
+    .section { margin: clamp(28px, 4vw, 56px) auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--elev); overflow: clip; }
+    .section > .section-inner { padding: clamp(18px, 3vw, 36px); }
+    .section h2 { margin: 0 0 12px; font-size: clamp(1.25rem, 2.2vw, 1.75rem); letter-spacing: 0.4px; }
+    .section p.lead { color: var(--muted); margin-top: 0; }
+    .tag { display:inline-flex; align-items:center; gap:8px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color:#fff; background: linear-gradient(90deg, var(--primary), var(--accent)); padding: 6px 10px; border-radius: 999px; }
+
+    /* Hero */
+    .hero { text-align: center; padding: clamp(40px, 8vw, 88px) 0 clamp(8px, 4vw, 16px); position: relative; }
+    .hero .logo { width: 96px; height: 96px; border-radius: 20px; box-shadow: var(--elev); }
+    .hero h1 { margin: 16px 0 8px; font-size: clamp(1.6rem, 4vw, 2.4rem); letter-spacing: .3px; }
+    .hero .sub { color: var(--muted); max-width: 800px; margin: 0 auto; }
+
+    /* Cards grid */
+    .grid { display: grid; gap: clamp(14px, 2.4vw, 22px); }
+    .grid.auto { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; transition: transform .25s ease, box-shadow .25s ease, background .25s ease; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(0,0,0,0.25); }
+
+    /* Video & Twitch embeds */
+    .embed { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #000; }
+    .embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+    /* Roster */
+    .member h3 { margin: 4px 0 6px; font-size: 1.1rem; }
+    .role { color: var(--muted); font-size: .95rem; margin-bottom: 10px; }
+    .member .links { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .btn { --btn-bg: rgba(255,255,255,0.06); display:inline-flex; align-items:center; gap:8px; color: var(--text); text-decoration:none; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; font-weight: 700; }
+    .btn:hover { background: var(--btn-bg); }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    caption { text-align: left; padding: 12px 12px 0; color: var(--muted); font-weight: 700; }
+    thead th { position: sticky; top: 0; background: linear-gradient(0deg, rgba(237,28,36,0.15), rgba(237,28,36,0.35)); color: #fff; text-align: left; font-size: .9rem; letter-spacing: .02em; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: rgba(255,255,255,0.04); }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable::after { content: "\25B4\25BE"; opacity: .45; margin-left: 6px; font-size: .8em; }
+
+    /* Utilities */
+    .center { text-align:center; }
+    .spaced { margin-top: 10px; }
+
+    /* Footer */
+    footer { margin-top: 40px; border-top: 1px solid var(--border); background: rgba(0,0,0,0.35); }
+    footer .inner { max-width: var(--maxw); margin: 0 auto; padding: 22px; text-align:center; }
+    footer img { width: 128px; opacity: .95; }
+
+    /* Back to top */
+    .to-top { position: fixed; right: 16px; bottom: 16px; z-index: 999; display:none; }
+    .to-top.visible { display: inline-flex; }
+
+    /* Animations (respect reduced motion) */
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal { opacity: 0; transform: translateY(10px); transition: opacity .5s ease, transform .5s ease; }
+      .reveal.in { opacity: 1; transform: none; }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <img src="https://github.com/T24085/TeamDPRK/blob/main/TeamDPRKLogo3.png?raw=true" alt="DPRK Logo">
-        <h1>[DPRK] TPL</h1>
-    </header>
-    <nav>
-        <a href="#team-intro">Team Intro</a>
-        <a href="#featured-videos">Featured Videos</a>
-        <a href="#team">Team</a>
-        <a href="#stats">Stats</a>
-        <a href="#tournament-wins">Tournament Wins</a>
-        <a href="#contact">Contact</a>
-    </nav>
-    <div class="container">
-        <div class="team-intro" id="team-intro">
-            <h2>Team Introduction</h2>
-            <p>Welcome to [DPRK] TPL, a formidable force in the competitive Tribes Professional League community, built on a foundation of skill, strategy, and unwavering dedication. Established with a vision to dominate the battlefield, our team is led by a dynamic leadership trio that drives our success. Glem, our esteemed Leader, brings versatility to the team with a flex role, most often excelling as a Medium Offense player, adapting to any situation with precision and tactical brilliance. CheezeCaeke, our Co-Leader, oversees operations with a steady hand, specializing as a HOF Heavy On Flag player, while ColonelFatso, our Captain, commands the frontline as a Capper, ensuring our strategies are executed flawlessly.</p>
-            <p>Our core principles revolve around teamwork, discipline, and continuous improvement. We foster an environment where every player’s contribution is valued, from the strategic minds to the agile defenders. Our roster is a blend of seasoned veterans and rising stars, each bringing unique strengths to the table. Meet our key players: Nemesis, a skilled Capper who dominates flag captures; Rhino, a stalwart Light Defense specialist; Halogen, another Light Defense powerhouse; and Panda, our Heavy Offense enforcer. Together, we uphold a commitment to excellence, pushing the boundaries of competitive play while building a legacy of victory in the Tribes Professional League arena.</p>
-        </div>
-        <div class="featured-videos" id="featured-videos">
-            <h2>Featured Videos</h2>
-            <p>Check out some of our best moments!</p>
-            <div class="video-grid">
-                <div class="video-item">
-                    <iframe src="https://www.youtube.com/embed/NjAn60913lI" frameborder="0" allowfullscreen></iframe>
-                </div>
-                <div class="video-item">
-                    <iframe src="https://www.youtube.com/embed/WuB7DHNsIvs" frameborder="0" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
-        <div class="team-info" id="team">
-            <h2>Team</h2>
-            <p>Meet our roster below and join us in the fight!</p>
-            <div class="team-members">
-                <div class="member">
-                    <h3>Glem</h3>
-                    <p>Leader (Flex, Medium Offense)</p>
-                    <iframe width="100%" height="300" src="https://www.youtube.com/embed?listType=user_uploads&list=glem7761WithGuns" frameborder="0" allowfullscreen></iframe>
-                    <a href="https://www.youtube.com/@Tribes3RIvalsHighlights49GirlsWithGuns" target="_blank">YouTube Channel</a>
-                </div>
-                <div class="member">
-                    <h3>CheezeCaeke</h3>
-                    <p>Co-Leader (HOF Heavy On Flag)</p>
-                    <iframe src="https://player.twitch.tv/?channel=cheezecaek&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
-                    <a href="https://www.youtube.com/@glem7761" target="_blank">YouTube Channel</a>
-                </div>
-                <div class="member">
-                    <h3>ColonelFatso</h3>
-                    <p>Captain (Capper)</p>
-                    <iframe src="https://player.twitch.tv/?channel=colonelfatso&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
-                </div>
-                <div class="member">
-                    <h3>Nemesis</h3>
-                    <p>Capper</p>
-                    <iframe src="https://player.twitch.tv/?channel=seansguitarworldbang&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
-                </div>
-                <div class="member">
-                    <h3>Rhino</h3>
-                    <p>Light Defense</p>
-                </div>
-                <div class="member">
-                    <h3>Halogen</h3>
-                    <p>Light Defense</p>
-                </div>
-                <div class="member">
-                    <h3>Panda</h3>
-                    <p>Heavy Offense</p>
-                    <iframe src="https://player.twitch.tv/?channel=pandoracast&parent=yourdomain.com" frameborder="0" allowfullscreen scrolling="no"></iframe>
-                </div>
-            </div>
-        </div>
-        <div class="stats-section" id="stats">
-            <h2>Player Stats</h2>
-            <table class="stats-table">
-                <tr>
-                    <th>Player</th>
-                    <th>Role</th>
-                    <th>Score</th>
-                    <th>Kills</th>
-                    <th>Assists</th>
-                    <th>Score per Minute</th>
-                    <th>Kills per Minute</th>
-                    <th>Captures per Minute</th>
-                    <th>Returns per Minute</th>
-                </tr>
-                <tr>
-                    <td>Glem</td>
-                    <td>Leader</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>CheezeCaeke</td>
-                    <td>Co-Leader</td>
-                    <td>35595</td>
-                    <td>181</td>
-                    <td>110</td>
-                    <td>338.742</td>
-                    <td>1.722</td>
-                    <td>0.010</td>
-                    <td>0.114</td>
-                </tr>
-                <tr>
-                    <td>ColonelFatso</td>
-                    <td>Captain</td>
-                    <td>36930</td>
-                    <td>108</td>
-                    <td>170</td>
-                    <td>216.980</td>
-                    <td>0.635</td>
-                    <td>0.035</td>
-                    <td>0.170</td>
-                </tr>
-                <tr>
-                    <td>Nemesis</td>
-                    <td>Capper</td>
-                    <td>16075</td>
-                    <td>42</td>
-                    <td>47</td>
-                    <td>113.821</td>
-                    <td>0.297</td>
-                    <td>0.028</td>
-                    <td>0.021</td>
-                </tr>
-                <tr>
-                    <td>Rhino</td>
-                    <td>Light Defense</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Halogen</td>
-                    <td>Light Defense</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>Panda</td>
-                    <td>Heavy Offense</td>
-                    <td>56555</td>
-                    <td>275</td>
-                    <td>187</td>
-                    <td>332.286</td>
-                    <td>1.616</td>
-                    <td>0.000</td>
-                    <td>0.165</td>
-                </tr>
-            </table>
-        </div>
-        <div class="tournament-wins" id="tournament-wins">
-            <h2>Tournament Wins</h2>
-            <table class="wins-table">
-                <tr>
-                    <th>Tournament</th>
-                    <th>Year</th>
-                    <th>Result</th>
-                </tr>
-                <tr>
-                    <td>Tribes Professional League FatBoys of Summer Draft</td>
-                    <td>2025</td>
-                    <td>2nd Place</td>
-                </tr>
-                <tr>
-                    <td>Tribes Professional League March Draft</td>
-                    <td>2025</td>
-                    <td>2nd Place</td>
-                </tr>
-                <tr>
-                    <td>Draft Tournament</td>
-                    <td>2025</td>
-                    <td>1st Place, 3rd Place</td>
-                </tr>
-            </table>
-        </div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="hero-bg" aria-hidden="true"></div>
+
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a class="brand" href="#top">
+        <img src="https://raw.githubusercontent.com/T24085/TeamDPRK/main/TeamDPRKLogo3.png" alt="[DPRK] crest" width="64" height="64" />
+        <div class="brand-title">[DPRK] TPL</div>
+      </a>
+
+      <button class="nav-toggle" aria-controls="site-nav" aria-expanded="false">☰ Menu</button>
+      <nav id="site-nav" class="primary-nav" role="navigation" aria-label="Primary">
+        <ul class="nav-list">
+          <li><a class="nav-link" href="#intro">Intro</a></li>
+          <li><a class="nav-link" href="#videos">Highlights</a></li>
+          <li><a class="nav-link" href="#team">Team</a></li>
+          <li><a class="nav-link" href="#stats">Stats</a></li>
+          <li><a class="nav-link" href="#wins">Results</a></li>
+          <li><a class="nav-link" href="#contact">Contact</a></li>
+        </ul>
+      </nav>
     </div>
-    <footer>
-        <p>© 2025 [DPRK] Tribes Professional League. All rights reserved.</p>
-        <img src="https://github.com/T24085/TeamDPRK/blob/main/DPRKLOGO.png?raw=true" alt="DPRK Logo">
-    </footer>
+  </header>
+
+  <main id="main" class="container" role="main">
+    <!-- HERO -->
+    <section class="hero section reveal" id="top">
+      <div class="section-inner">
+        <span class="tag">Tribes Professional League</span>
+        <h1>[DPRK] TPL Team</h1>
+        <p class="sub">A fast, disciplined roster built to cap, crash, and control. Explore our highlights, meet the squad, and dive into the numbers.</p>
+      </div>
+    </section>
+
+    <!-- INTRO -->
+    <section class="section reveal" id="intro">
+      <div class="section-inner">
+        <h2>Team Introduction</h2>
+        <p class="lead">Founded to dominate with pace and precision. Led by <strong>Glem</strong> (Leader, Flex / Medium Offense), <strong>CheezeCaeke</strong> (Co‑Leader, Heavy‑on‑Flag), and <strong>ColonelFatso</strong> (Captain, Capper). Core principles: teamwork, discipline, and relentless improvement. Key players include <strong>Nemesis</strong> (Capper), <strong>Rhino</strong> (Light Defense), <strong>Halogen</strong> (Light Defense), and <strong>Panda</strong> (Heavy Offense).</p>
+      </div>
+    </section>
+
+    <!-- HIGHLIGHTS -->
+    <section class="section reveal" id="videos">
+      <div class="section-inner">
+        <h2>Featured Highlights</h2>
+        <p class="lead">A couple of moments we love. Got more clips? Send them and we’ll add them.</p>
+        <div class="grid auto">
+          <article class="card">
+            <div class="embed">
+              <iframe
+                loading="lazy"
+                src="https://www.youtube-nocookie.com/embed/NjAn60913lI"
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
+            </div>
+          </article>
+          <article class="card">
+            <div class="embed">
+              <iframe
+                loading="lazy"
+                src="https://www.youtube-nocookie.com/embed/WuB7DHNsIvs"
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAM -->
+    <section class="section reveal" id="team">
+      <div class="section-inner">
+        <h2>Team</h2>
+        <p class="lead">Meet the squad. Twitch embeds auto‑configure their <code>parent</code> for your domain.</p>
+        <div class="grid auto spaced">
+          <!-- Glem -->
+          <article class="card member">
+            <h3>Glem</h3>
+            <div class="role">Leader — Flex / Medium Offense</div>
+            <div class="embed">
+              <iframe
+                loading="lazy"
+                src="https://www.youtube-nocookie.com/embed?listType=user_uploads&list=glem7761WithGuns"
+                title="Glem — YouTube uploads"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen></iframe>
+            </div>
+            <div class="links">
+              <a class="btn" href="https://www.youtube.com/@Tribes3RIvalsHighlights49GirlsWithGuns" target="_blank" rel="noopener noreferrer">YouTube</a>
+            </div>
+          </article>
+
+          <!-- CheezeCaeke -->
+          <article class="card member">
+            <h3>CheezeCaeke</h3>
+            <div class="role">Co‑Leader — Heavy On Flag</div>
+            <div class="embed">
+              <iframe loading="lazy" data-twitch-channel="cheezecaek" title="CheezeCaeke — Twitch player" allowfullscreen></iframe>
+            </div>
+            <div class="links">
+              <a class="btn" href="https://www.twitch.tv/cheezecaek" target="_blank" rel="noopener noreferrer">Twitch</a>
+              <a class="btn" href="https://www.youtube.com/@glem7761" target="_blank" rel="noopener noreferrer">YouTube</a>
+            </div>
+          </article>
+
+          <!-- ColonelFatso -->
+          <article class="card member">
+            <h3>ColonelFatso</h3>
+            <div class="role">Captain — Capper</div>
+            <div class="embed">
+              <iframe loading="lazy" data-twitch-channel="colonelfatso" title="ColonelFatso — Twitch player" allowfullscreen></iframe>
+            </div>
+            <div class="links">
+              <a class="btn" href="https://www.twitch.tv/colonelfatso" target="_blank" rel="noopener noreferrer">Twitch</a>
+            </div>
+          </article>
+
+          <!-- Nemesis -->
+          <article class="card member">
+            <h3>Nemesis</h3>
+            <div class="role">Capper</div>
+            <div class="embed">
+              <iframe loading="lazy" data-twitch-channel="seansguitarworldbang" title="Nemesis — Twitch player" allowfullscreen></iframe>
+            </div>
+            <div class="links">
+              <a class="btn" href="https://www.twitch.tv/seansguitarworldbang" target="_blank" rel="noopener noreferrer">Twitch</a>
+            </div>
+          </article>
+
+          <!-- Rhino -->
+          <article class="card member">
+            <h3>Rhino</h3>
+            <div class="role">Light Defense</div>
+            <p class="muted">Highlights coming soon.</p>
+          </article>
+
+          <!-- Halogen -->
+          <article class="card member">
+            <h3>Halogen</h3>
+            <div class="role">Light Defense</div>
+            <p class="muted">Highlights coming soon.</p>
+          </article>
+
+          <!-- Panda -->
+          <article class="card member">
+            <h3>Panda</h3>
+            <div class="role">Heavy Offense</div>
+            <div class="embed">
+              <iframe loading="lazy" data-twitch-channel="pandoracast" title="Panda — Twitch player" allowfullscreen></iframe>
+            </div>
+            <div class="links">
+              <a class="btn" href="https://www.twitch.tv/pandoracast" target="_blank" rel="noopener noreferrer">Twitch</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="section reveal" id="stats">
+      <div class="section-inner">
+        <h2>Player Stats</h2>
+        <p class="lead">Sortable by any column. Mobile‑friendly with horizontal scroll.</p>
+        <div class="table-wrap" role="region" aria-label="Player statistics" tabindex="0">
+          <table id="statsTable">
+            <caption>Aggregated match stats</caption>
+            <thead>
+              <tr>
+                <th class="sortable" scope="col">Player</th>
+                <th class="sortable" scope="col">Role</th>
+                <th class="sortable" scope="col">Score</th>
+                <th class="sortable" scope="col">Kills</th>
+                <th class="sortable" scope="col">Assists</th>
+                <th class="sortable" scope="col">Score / min</th>
+                <th class="sortable" scope="col">Kills / min</th>
+                <th class="sortable" scope="col">Caps / min</th>
+                <th class="sortable" scope="col">Returns / min</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Glem</td>
+                <td>Leader</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>CheezeCaeke</td>
+                <td>Co‑Leader</td>
+                <td>35595</td>
+                <td>181</td>
+                <td>110</td>
+                <td>338.742</td>
+                <td>1.722</td>
+                <td>0.010</td>
+                <td>0.114</td>
+              </tr>
+              <tr>
+                <td>ColonelFatso</td>
+                <td>Captain</td>
+                <td>36930</td>
+                <td>108</td>
+                <td>170</td>
+                <td>216.980</td>
+                <td>0.635</td>
+                <td>0.035</td>
+                <td>0.170</td>
+              </tr>
+              <tr>
+                <td>Nemesis</td>
+                <td>Capper</td>
+                <td>16075</td>
+                <td>42</td>
+                <td>47</td>
+                <td>113.821</td>
+                <td>0.297</td>
+                <td>0.028</td>
+                <td>0.021</td>
+              </tr>
+              <tr>
+                <td>Rhino</td>
+                <td>Light Defense</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Halogen</td>
+                <td>Light Defense</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Panda</td>
+                <td>Heavy Offense</td>
+                <td>56555</td>
+                <td>275</td>
+                <td>187</td>
+                <td>332.286</td>
+                <td>1.616</td>
+                <td>0.000</td>
+                <td>0.165</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="section reveal" id="wins">
+      <div class="section-inner">
+        <h2>Results</h2>
+        <div class="table-wrap" role="region" aria-label="Tournament results" tabindex="0">
+          <table id="winsTable">
+            <caption>Tournament finishes</caption>
+            <thead>
+              <tr>
+                <th class="sortable" scope="col">Tournament</th>
+                <th class="sortable" scope="col">Year</th>
+                <th class="sortable" scope="col">Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Tribes Professional League FatBoys of Summer Draft</td>
+                <td>2025</td>
+                <td>2nd Place</td>
+              </tr>
+              <tr>
+                <td>Tribes Professional League March Draft</td>
+                <td>2025</td>
+                <td>2nd Place</td>
+              </tr>
+              <tr>
+                <td>Draft Tournament</td>
+                <td>2025</td>
+                <td>1st Place; 3rd Place</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTACT -->
+    <section class="section reveal" id="contact">
+      <div class="section-inner">
+        <h2>Contact</h2>
+        <p class="lead">Want to scrim or join? Reach out.</p>
+        <div class="grid auto">
+          <article class="card center">
+            <p><strong>Discord:</strong> <a class="btn" href="#" aria-label="Open Discord link">Join server</a></p>
+            <p><strong>Email:</strong> <a class="btn" href="mailto:contact@example.com">contact@example.com</a></p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Back to top -->
+  <a class="btn to-top" href="#top" aria-label="Back to top">↑ Top</a>
+
+  <footer role="contentinfo">
+    <div class="inner">
+      <p>© 2025 [DPRK] Tribes Professional League. All rights reserved.</p>
+      <img src="https://raw.githubusercontent.com/T24085/TeamDPRK/main/DPRKLOGO.png" alt="[DPRK] logo" width="128" height="128" />
+    </div>
+  </footer>
+
+  <script>
+    // ===== Mobile nav toggle =====
+    (function() {
+      const toggle = document.querySelector('.nav-toggle');
+      const nav = document.getElementById('site-nav');
+      if (!toggle || !nav) return;
+      toggle.addEventListener('click', () => {
+        const open = nav.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      // Close on link click (mobile)
+      nav.addEventListener('click', (e) => {
+        if (e.target.matches('.nav-link')) {
+          nav.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    })();
+
+    // ===== Smooth scroll + Scrollspy =====
+    (function() {
+      const links = document.querySelectorAll('.nav-link');
+      links.forEach(a => {
+        a.addEventListener('click', (e) => {
+          const href = a.getAttribute('href');
+          if (href && href.startsWith('#')) {
+            e.preventDefault();
+            const el = document.querySelector(href);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const id = entry.target.getAttribute('id');
+          if (!id) return;
+          const link = document.querySelector(`.nav-link[href="#${id}"]`);
+          if (link) link.setAttribute('aria-current', entry.isIntersecting ? 'true' : 'false');
+        });
+      }, { rootMargin: '-40% 0px -55% 0px', threshold: 0.05 });
+
+      document.querySelectorAll('main section[id]').forEach(sec => observer.observe(sec));
+    })();
+
+    // ===== Reveal on scroll (reduced motion aware) =====
+    (function(){
+      const enabled = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!enabled) return;
+      const els = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.1 });
+      els.forEach(el => io.observe(el));
+    })();
+
+    // ===== Back to top visibility =====
+    (function() {
+      const btn = document.querySelector('.to-top');
+      const onScroll = () => {
+        if (window.scrollY > 600) btn.classList.add('visible'); else btn.classList.remove('visible');
+      };
+      document.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    })();
+
+    // ===== Twitch embeds: auto-set parent & channel safely =====
+    (function() {
+      const domain = location.hostname || 'localhost';
+      const twitchIframes = document.querySelectorAll('iframe[data-twitch-channel]');
+      twitchIframes.forEach((iframe) => {
+        const channel = iframe.getAttribute('data-twitch-channel');
+        if (!channel) return;
+        const params = new URLSearchParams({ channel, parent: domain, muted: 'true' });
+        iframe.src = `https://player.twitch.tv/?${params.toString()}`;
+      });
+    })();
+
+    // ===== Sortable tables =====
+    (function() {
+      const makeSortable = (table) => {
+        const getCellValue = (tr, idx) => tr.children[idx]?.textContent.trim() || '';
+        const asNumber = (v) => v === '' ? NaN : Number(v.replace(/[, ]+/g, ''));
+        const compare = (idx, asc) => (a, b) => {
+          const va = getCellValue(a, idx), vb = getCellValue(b, idx);
+          const na = asNumber(va), nb = asNumber(vb);
+          const bothNumeric = !Number.isNaN(na) && !Number.isNaN(nb);
+          const res = bothNumeric ? (na - nb) : va.localeCompare(vb);
+          return asc ? res : -res;
+        };
+
+        table.querySelectorAll('th').forEach((th, idx) => {
+          if (!th.classList.contains('sortable')) return;
+          th.addEventListener('click', () => {
+            const tbody = table.tBodies[0];
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const asc = !(th.dataset.asc === 'true');
+            rows.sort(compare(idx, asc));
+            rows.forEach(r => tbody.appendChild(r));
+            table.querySelectorAll('th[aria-sort]')?.forEach(x => x.removeAttribute('aria-sort'));
+            th.dataset.asc = String(asc);
+            th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+          });
+        });
+      };
+
+      document.querySelectorAll('table').forEach(makeSortable);
+    })();
+  </script>
 </body>
 </html>
