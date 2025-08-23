@@ -98,7 +98,7 @@
       const res = await fetch('https://api.twitch.tv/helix/users', {
         headers: {
           'Authorization': 'Bearer ' + token,
-          'Client-Id': CLIENT_ID,
+          'Client-ID': CLIENT_ID,
         }
       });
       if (!res.ok) {
@@ -121,7 +121,7 @@
       const res = await fetch(`https://api.twitch.tv/helix/streams/followed?user_id=${user.id}`, {
         headers: {
           'Authorization': 'Bearer ' + token,
-          'Client-Id': CLIENT_ID,
+          'Client-ID': CLIENT_ID,
         }
       });
       if (!res.ok) {
@@ -143,7 +143,7 @@
     try {
       const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
         headers: {
-          'Client-Id': CLIENT_ID,
+          'Client-ID': CLIENT_ID,
           'Authorization': 'Bearer ' + token
         }
       });
