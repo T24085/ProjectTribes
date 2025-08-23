@@ -423,8 +423,12 @@
                     .filter(Boolean);
             }
             const allLogins = [...new Set(Object.values(teamLogins).flat())];
-            if (allLogins.length === 0 || !window.twitchOAuth) return;
 
+            if (
+                allLogins.length === 0 ||
+                !window.twitchOAuth ||
+                !twitchOAuth.getToken()
+            ) return;
 
             window.twitchOAuth.fetchLiveStreams(allLogins)
                 .then(streams => {
@@ -444,7 +448,8 @@
         const hubCasters = ['tootzgaming', 'oo0oo_live', 'hawxter_'];
 
         function updateHubcasterStatus() {
-            if (!window.twitchOAuth) return;
+
+            if (!window.twitchOAuth || !twitchOAuth.getToken()) return;
             window.twitchOAuth.fetchLiveStreams(hubCasters)
                 .then(streams => {
                     const liveSet = new Set((streams || []).map(s => s.user_login.toLowerCase()));
