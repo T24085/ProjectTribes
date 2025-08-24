@@ -1,4 +1,14 @@
-<!doctype html><meta charset="utf-8">
-<meta http-equiv="refresh" content="0; url=/" />
-<link rel="canonical" href="/" />
-<script>location.replace('/');</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <script src="oauth.js"></script>
+</head>
+<body>
+  <script>
+    // After processing the OAuth token, return to the site's root
+    const home = window.location.origin + window.location.pathname.replace(/TPLTeamsDashboard\.html$/, '');
+    window.location.replace(home);
+  </script>
+</body>
+</html>
