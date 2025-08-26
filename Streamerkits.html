@@ -38,7 +38,9 @@
           grid.className = 'grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
           files.filter(f => f.type === 'file' && /\.(png|jpe?g|gif|svg)$/i.test(f.name)).forEach(f => {
             const img = document.createElement('img');
+
             img.src = f.download_url;
+
             img.alt = `${team} ${f.name}`;
             img.className = 'w-full object-contain bg-gray-800 rounded';
             grid.appendChild(img);
