@@ -18,9 +18,9 @@
     const teams = ['AV!', 'DPRK', 'EPI', 'FPS', 'FT', 'HOE', 'KTL', 'Null', 'TA', 'TXM', 'UE', 'WIZ', 'ZEN'];
 
     async function loadKits() {
-      const owner = window.location.hostname.split('.')[0];
-      const pathParts = window.location.pathname.split('/');
-      const repo = pathParts.length > 1 && pathParts[1] ? pathParts[1] : 'ProjectTribes';
+      const owner = 't24085';
+      const repo = 'ProjectTribes';
+
       const branch = 'main';
       const baseApi = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent("TribesLeagueLogo's")}/TeamStreamerKits`;
 
