@@ -1,479 +1,162 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Streamer Kits - Tribes Professional League</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="oauth.js"></script>
-    <style>
-        body {
-            background-image: url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-        }
-        .kit-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-        .team-kit-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            background: rgba(31, 41, 55, 0.95);
-            backdrop-filter: blur(10px);
-        }
-        .team-kit-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.4);
-        }
-        .kit-item {
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-        }
-        .kit-item:hover {
-            border-color: #3b82f6;
-            transform: scale(1.02);
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: #1f2937;
-            color: #e2e8f0;
-            padding: 2rem;
-            border-radius: 0.5rem;
-            max-width: 90%;
-            max-height: 90%;
-            overflow-y: auto;
-            position: relative;
-        }
-        .close-btn {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: #ef4444;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 2rem;
-            height: 2rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .download-btn {
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            transition: all 0.3s ease;
-        }
-        .download-btn:hover {
-            background: linear-gradient(135deg, #2563eb, #1e40af);
-            transform: translateY(-2px);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>Streamer Kits</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-white font-sans">
-    <div id="nav-placeholder" data-include="/nav.html"></div>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="/nav.html"></div>
 
-    <!-- Header -->
-    <header class="bg-gray-800/90 backdrop-blur py-8 shadow-lg">
-        <div class="container mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold text-blue-400 mb-4">Streamer Kits</h1>
-            <p class="text-lg text-gray-300 max-w-3xl mx-auto">
-                Official streamer kits for all Tribes Professional League teams. 
-                Download high-quality assets for your streams including banners, borders, and overlays.
-            </p>
-        </div>
-    </header>
+  <div class="container mx-auto px-4 mt-8">
+    <h1 class="text-3xl font-bold text-center mb-6">Streamer Kits</h1>
+    <!-- AV! -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">AV!</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/AV%21/Av%21Banner.png" alt="AV! Av!Banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/AV%21/Av%21Border.png" alt="AV! Av!Border.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-    <!-- Team Kits Section -->
-    <section class="container mx-auto px-4 py-12">
-        <div class="kit-grid">
-            <!-- Avalanche [aV!] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/aV!.png" alt="Avalanche Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Avalanche [aV!]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/AV!/streamerBorder.png" alt="AV! Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('AV!/streamerBorder.png', 'AV_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/AV!/banner.png" alt="AV! Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('AV!/banner.png', 'AV_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- DPRK -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">DPRK</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/Border2.png" alt="DPRK Border2.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/DPRKBanner.png" alt="DPRK DPRKBanner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/DPRKMysticalBorder.png" alt="DPRK DPRKMysticalBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/FlowerBorder.png" alt="DPRK FlowerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/MysticalBorder.png" alt="DPRK MysticalBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/NeonBorder.png" alt="DPRK NeonBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/SolidBorder.png" alt="DPRK SolidBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/banner1.png" alt="DPRK banner1.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/border1.png" alt="DPRK border1.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/border3.png" alt="DPRK border3.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/fireborder.png" alt="DPRK fireborder.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- ePidemic [ePi] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/ePi.png" alt="ePidemic Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">ePidemic [ePi]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/EPI/streamerBorder.png" alt="ePi Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('EPI/streamerBorder.png', 'ePi_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/EPI/banner.png" alt="ePi Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('EPI/banner.png', 'ePi_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- EPI -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">EPI</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/EPI/EpiBanner.png" alt="EPI EpiBanner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/EPI/EpiBorder.png" alt="EPI EpiBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Zen [ℨ] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/Zenlogo.png" alt="Zen Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Zen [ℨ]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/ZEN/streamerBorder.png" alt="Zen Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('ZEN/streamerBorder.png', 'Zen_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/ZEN/banner.png" alt="Zen Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('ZEN/banner.png', 'Zen_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Circle Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/ZEN/CircleBorder.png" alt="Zen Circle Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('ZEN/CircleBorder.png', 'Zen_CircleBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Zen Border 2</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/ZEN/ZenBorder2.png" alt="Zen Border 2" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('ZEN/ZenBorder2.png', 'Zen_Border2.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Zen Banner 2</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/ZEN/ZenBanner2.png" alt="Zen Banner 2" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('ZEN/ZenBanner2.png', 'Zen_Banner2.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- FPS -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">FPS</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FPS/StreamBorder.png" alt="FPS StreamBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FPS/banner.png" alt="FPS banner.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Texas Militia [TXM] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/TXM.png" alt="TXM Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Texas Militia [TXM]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/TXM/streamerBorder.png" alt="TXM Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('TXM/streamerBorder.png', 'TXM_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/TXM/banner.png" alt="TXM Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('TXM/banner.png', 'TXM_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- FT -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">FT</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/Demo.bmp" alt="FT Demo.bmp" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/FTBanner.png" alt="FT FTBanner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/StreamerBorder.png" alt="FT StreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- DPRK -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/TeamDPRKLogo3.png" alt="DPRK Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">[DPRK] Team</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/DPRK/streamerBorder.png" alt="DPRK Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('DPRK/streamerBorder.png', 'DPRK_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/DPRK/banner.png" alt="DPRK Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('DPRK/banner.png', 'DPRK_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- HOE -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">HOE</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/HOE/Banner.png" alt="HOE Banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/HOE/StreamerBorder.png" alt="HOE StreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Hegemony of Euros [HoE] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/HoE.png" alt="HoE Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Hegemony of Euros [HoE]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/HOE/streamerBorder.png" alt="HoE Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('HOE/streamerBorder.png', 'HoE_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/HOE/banner.png" alt="HoE Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('HOE/banner.png', 'HoE_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- KTL -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">KTL</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/KTL%20Banner.png" alt="KTL KTL Banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/KTLBanner2.png" alt="KTL KTLBanner2.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/New%20Bitmap%20image.bmp" alt="KTL New Bitmap image.bmp" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/Stream%20Border.png" alt="KTL Stream Border.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Flag Pole Smokers [FPS] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/FPSlogo.png" alt="FPS Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Flag Pole Smokers [FPS]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/FPS/streamerBorder.png" alt="FPS Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('FPS/streamerBorder.png', 'FPS_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/FPS/banner.png" alt="FPS Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('FPS/banner.png', 'FPS_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- Null -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">Null</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/Demo.bmp" alt="Null Demo.bmp" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/NullBanner.png" alt="Null NullBanner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/NullStreamerBorder.png" alt="Null NullStreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Flying Tractors [^T^] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/FTlogo.png" alt="FT Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Flying Tractors [^T^]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/FT/streamerBorder.png" alt="FT Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('FT/streamerBorder.png', 'FT_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/FT/banner.png" alt="FT Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('FT/banner.png', 'FT_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- TA -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">TA</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/Banner.png" alt="TA Banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/New%20Bitmap%20image.bmp" alt="TA New Bitmap image.bmp" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TASmokeBorder.png" alt="TA TASmokeBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAStreamBorder.png" alt="TA TAStreamBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAbanner2.png" alt="TA TAbanner2.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAvs.png" alt="TA TAvs.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Magic [Wiz] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/Magic.png" alt="Magic Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Magic [Wiz]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/WIZ/streamerBorder.png" alt="Wiz Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('WIZ/streamerBorder.png', 'Wiz_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/WIZ/banner.png" alt="Wiz Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('WIZ/banner.png', 'Wiz_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- TXM -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">TXM</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/Banner.png" alt="TXM Banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/FlagBorder.png" alt="TXM FlagBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/RememberBanner.png" alt="TXM RememberBanner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/alamoBorder.png" alt="TXM alamoBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/banner2wavy.png" alt="TXM banner2wavy.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/banner3.png" alt="TXM banner3.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/border.png" alt="TXM border.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/firebanner.png" alt="TXM firebanner.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- KTL [KTL] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/KTLlogo.png" alt="KTL Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">KTL [KTL]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/KTL/streamerBorder.png" alt="KTL Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('KTL/streamerBorder.png', 'KTL_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/KTL/banner.png" alt="KTL Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('KTL/banner.png', 'KTL_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- UE -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">UE</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/New%20Bitmap%20image.bmp" alt="UE New Bitmap image.bmp" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/UEBanner.png" alt="UE UEBanner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/banner.png" alt="UE banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/streamerBox.png" alt="UE streamerBox.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- null [null] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/NullLogo.png" alt="Null Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">null [null]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/Null/streamerBorder.png" alt="Null Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('Null/streamerBorder.png', 'Null_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/Null/banner.png" alt="Null Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('Null/banner.png', 'Null_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- WIZ -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">WIZ</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/Demo.bmp" alt="WIZ Demo.bmp" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/StreamerBorder.png" alt="WIZ StreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/Wiz%20Banner.png" alt="WIZ Wiz Banner.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
 
-            <!-- Toxic Aimers -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/ToxicAimersLogo.png" alt="Toxic Aimers Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Toxic Aimers</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/TA/streamerBorder.png" alt="TA Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('TA/streamerBorder.png', 'TA_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/TA/banner.png" alt="TA Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('TA/banner.png', 'TA_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<!-- ZEN -->
+<section class="mb-10">
+  <h2 class="text-2xl font-semibold mb-4">ZEN</h2>
+  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/CircleBorder.png" alt="ZEN CircleBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/ZenBanner2.png" alt="ZEN ZenBanner2.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/ZenBorder2.png" alt="ZEN ZenBorder2.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/banner.png" alt="ZEN banner.png" class="w-full object-contain bg-gray-800 rounded" />
+    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/streamerBorder.png" alt="ZEN streamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
+  </div>
+</section>
+  </div>
 
-            <!-- Unhandled Exception [UE] -->
-            <div class="team-kit-card rounded-lg overflow-hidden shadow-lg">
-                <div class="p-6">
-                    <div class="flex items-center mb-4">
-                        <img src="team assets/TribesLeagueLogo's/UE.png" alt="UE Logo" class="w-12 h-12 mr-3">
-                        <h3 class="text-xl font-bold">Unhandled Exception [UE]</h3>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Streamer Border</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/UE/streamerBorder.png" alt="UE Streamer Border" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('UE/streamerBorder.png', 'UE_StreamerBorder.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                        <div class="kit-item bg-gray-700 rounded-lg p-3">
-                            <h4 class="font-semibold text-blue-300 mb-2">Banner</h4>
-                            <img src="team assets/TribesLeagueLogo's/TeamStreamerKits/UE/banner.png" alt="UE Banner" class="w-full h-20 object-cover rounded mb-2">
-                            <button onclick="downloadKit('UE/banner.png', 'UE_Banner.png')" class="download-btn text-white py-2 px-4 rounded w-full">Download</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Modal for full-size image preview -->
-    <div id="imageModal" class="modal">
-        <div class="modal-content">
-            <button class="close-btn" onclick="closeModal()">&times;</button>
-            <img id="modalImage" src="" alt="Full size preview" class="max-w-full max-h-full object-contain">
-        </div>
-    </div>
-
-    <script>
-        // Load navigation
-        document.addEventListener('DOMContentLoaded', function() {
-            const navPlaceholder = document.getElementById('nav-placeholder');
-            if (navPlaceholder) {
-                fetch(navPlaceholder.getAttribute('data-include'))
-                    .then(response => response.text())
-                    .then(data => {
-                        navPlaceholder.innerHTML = data;
-                        // Re-initialize any nav scripts if needed
-                        if (typeof initializeNav === 'function') {
-                            initializeNav();
-                        }
-                    })
-                    .catch(error => console.error('Error loading navigation:', error));
-            }
-        });
-
-        // Download function
-        function downloadKit(relativePath, filename) {
-            const fullPath = `team assets/TribesLeagueLogo's/TeamStreamerKits/${relativePath}`;
-            
-            // Create a temporary link element
-            const link = document.createElement('a');
-            link.href = fullPath;
-            link.download = filename;
-            
-            // Append to body, click, and remove
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Modal functions
-        function openModal(imageSrc) {
-            const modal = document.getElementById('imageModal');
-            const modalImage = document.getElementById('modalImage');
-            modalImage.src = imageSrc;
-            modal.style.display = 'flex';
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('imageModal');
-            modal.style.display = 'none';
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('imageModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        // Add click handlers to images for preview
-        document.addEventListener('DOMContentLoaded', function() {
-            const images = document.querySelectorAll('.kit-item img');
-            images.forEach(img => {
-                img.style.cursor = 'pointer';
-                img.addEventListener('click', function() {
-                    openModal(this.src);
-                });
-            });
-        });
-    </script>
+  <script src="/assets/include.js" defer></script>
 </body>
 </html>
