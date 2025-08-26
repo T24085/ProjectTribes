@@ -1,161 +1,291 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Streamer Kits</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
+<body class="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen">
+  <!-- Nav include -->
   <div id="nav-placeholder" data-include="/nav.html"></div>
 
-  <div class="container mx-auto px-4 mt-8">
-    <h1 class="text-3xl font-bold text-center mb-6">Streamer Kits</h1>
+  <!-- Header -->
+  <header class="text-center py-10">
+    <h1 class="text-4xl md:text-5xl font-extrabold tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+      Streamer Kits
+    </h1>
+    <p class="text-gray-400 mt-2">Custom overlays and banners for every team</p>
+  </header>
+
+  <main class="container mx-auto px-4">
+
+    <!-- Helper classes applied everywhere: card wrapper + image -->
+    <!-- Card: bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300 -->
+    <!-- Img: w-full h-56 object-contain bg-gray-900 -->
+
     <!-- AV! -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">AV!</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/AV%21/Av%21Banner.png" alt="AV! Av!Banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/AV%21/Av%21Border.png" alt="AV! Av!Border.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">AV!</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/AV%21/Av%21Banner.png" alt="AV! Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/AV%21/Av%21Border.png" alt="AV! Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- DPRK -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">DPRK</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/Border2.png" alt="DPRK Border2.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/DPRKBanner.png" alt="DPRK DPRKBanner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/DPRKMysticalBorder.png" alt="DPRK DPRKMysticalBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/FlowerBorder.png" alt="DPRK FlowerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/MysticalBorder.png" alt="DPRK MysticalBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/NeonBorder.png" alt="DPRK NeonBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/SolidBorder.png" alt="DPRK SolidBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/banner1.png" alt="DPRK banner1.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/border1.png" alt="DPRK border1.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/border3.png" alt="DPRK border3.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/fireborder.png" alt="DPRK fireborder.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- DPRK -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">DPRK</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/Border2.png" alt="DPRK Border2" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/DPRKBanner.png" alt="DPRK Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/DPRKMysticalBorder.png" alt="DPRK Mystical Border (alt)" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/FlowerBorder.png" alt="DPRK Flower Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/MysticalBorder.png" alt="DPRK Mystical Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/NeonBorder.png" alt="DPRK Neon Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/SolidBorder.png" alt="DPRK Solid Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/banner1.png" alt="DPRK Banner 1" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/border1.png" alt="DPRK Border 1" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/border3.png" alt="DPRK Border 3" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/DPRK/fireborder.png" alt="DPRK Fire Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- EPI -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">EPI</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/EPI/EpiBanner.png" alt="EPI EpiBanner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/EPI/EpiBorder.png" alt="EPI EpiBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- EPI -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">EPI</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/EPI/EpiBanner.png" alt="EPI Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/EPI/EpiBorder.png" alt="EPI Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- FPS -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">FPS</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FPS/StreamBorder.png" alt="FPS StreamBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FPS/banner.png" alt="FPS banner.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- FPS -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">FPS</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/FPS/StreamBorder.png" alt="FPS Stream Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/FPS/banner.png" alt="FPS Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- FT -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">FT</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/Demo.bmp" alt="FT Demo.bmp" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/FTBanner.png" alt="FT FTBanner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/StreamerBorder.png" alt="FT StreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- FT -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">FT</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/Demo.bmp" alt="FT Demo" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/FTBanner.png" alt="FT Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/FT/StreamerBorder.png" alt="FT Streamer Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- HOE -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">HOE</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/HOE/Banner.png" alt="HOE Banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/HOE/StreamerBorder.png" alt="HOE StreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- HOE -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">HOE</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/HOE/Banner.png" alt="HOE Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/HOE/StreamerBorder.png" alt="HOE Streamer Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- KTL -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">KTL</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/KTL%20Banner.png" alt="KTL KTL Banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/KTLBanner2.png" alt="KTL KTLBanner2.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/New%20Bitmap%20image.bmp" alt="KTL New Bitmap image.bmp" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/Stream%20Border.png" alt="KTL Stream Border.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- KTL -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">KTL</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/KTL%20Banner.png" alt="KTL Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/KTLBanner2.png" alt="KTL Banner 2" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/New%20Bitmap%20image.bmp" alt="KTL Demo Bitmap" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/KTL/Stream%20Border.png" alt="KTL Stream Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- Null -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">Null</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/Demo.bmp" alt="Null Demo.bmp" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/NullBanner.png" alt="Null NullBanner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/NullStreamerBorder.png" alt="Null NullStreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- Null -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">Null</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/Demo.bmp" alt="Null Demo" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/NullBanner.png" alt="Null Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/Null/NullStreamerBorder.png" alt="Null Streamer Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- TA -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">TA</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/Banner.png" alt="TA Banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/New%20Bitmap%20image.bmp" alt="TA New Bitmap image.bmp" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TASmokeBorder.png" alt="TA TASmokeBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAStreamBorder.png" alt="TA TAStreamBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAbanner2.png" alt="TA TAbanner2.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAvs.png" alt="TA TAvs.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- TA -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">TA</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/Banner.png" alt="TA Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/New%20Bitmap%20image.bmp" alt="TA Demo Bitmap" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TASmokeBorder.png" alt="TA Smoke Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAStreamBorder.png" alt="TA Stream Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAbanner2.png" alt="TA Banner 2" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TA/TAvs.png" alt="TA VS" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- TXM -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">TXM</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/Banner.png" alt="TXM Banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/FlagBorder.png" alt="TXM FlagBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/RememberBanner.png" alt="TXM RememberBanner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/alamoBorder.png" alt="TXM alamoBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/banner2wavy.png" alt="TXM banner2wavy.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/banner3.png" alt="TXM banner3.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/border.png" alt="TXM border.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/firebanner.png" alt="TXM firebanner.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- TXM -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">TXM</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/Banner.png" alt="TXM Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/FlagBorder.png" alt="TXM Flag Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/RememberBanner.png" alt="TXM Remember Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/alamoBorder.png" alt="TXM Alamo Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/banner2wavy.png" alt="TXM Banner 2 Wavy" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/banner3.png" alt="TXM Banner 3" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/border.png" alt="TXM Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/TXM/firebanner.png" alt="TXM Fire Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- UE -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">UE</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/New%20Bitmap%20image.bmp" alt="UE New Bitmap image.bmp" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/UEBanner.png" alt="UE UEBanner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/banner.png" alt="UE banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/streamerBox.png" alt="UE streamerBox.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- UE -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">UE</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/New%20Bitmap%20image.bmp" alt="UE Demo Bitmap" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/UEBanner.png" alt="UE Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/banner.png" alt="UE Banner (alt)" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/UE/streamerBox.png" alt="UE Streamer Box" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- WIZ -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">WIZ</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/Demo.bmp" alt="WIZ Demo.bmp" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/StreamerBorder.png" alt="WIZ StreamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/Wiz%20Banner.png" alt="WIZ Wiz Banner.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
+    <!-- WIZ -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">WIZ</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/Demo.bmp" alt="WIZ Demo" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/StreamerBorder.png" alt="WIZ Streamer Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/WIZ/Wiz%20Banner.png" alt="WIZ Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
 
-<!-- ZEN -->
-<section class="mb-10">
-  <h2 class="text-2xl font-semibold mb-4">ZEN</h2>
-  <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/CircleBorder.png" alt="ZEN CircleBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/ZenBanner2.png" alt="ZEN ZenBanner2.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/ZenBorder2.png" alt="ZEN ZenBorder2.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/banner.png" alt="ZEN banner.png" class="w-full object-contain bg-gray-800 rounded" />
-    <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/streamerBorder.png" alt="ZEN streamerBorder.png" class="w-full object-contain bg-gray-800 rounded" />
-  </div>
-</section>
-  </div>
+    <!-- ZEN -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-semibold mb-6 border-b border-gray-700 pb-2">ZEN</h2>
+      <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/CircleBorder.png" alt="ZEN Circle Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/ZenBanner2.png" alt="ZEN Banner 2" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/ZenBorder2.png" alt="ZEN Border 2" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/banner.png" alt="ZEN Banner" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:scale-105 transform transition duration-300">
+          <img src="TribesLeagueLogo%27s/TeamStreamerKits/ZEN/streamerBorder.png" alt="ZEN Streamer Border" class="w-full h-56 object-contain bg-gray-900" />
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 text-gray-500 border-t border-gray-700 mt-10">
+    <p>© 2025 Tribes League | Streamer Kits Showcase</p>
+  </footer>
 
   <script src="/assets/include.js" defer></script>
 </body>
