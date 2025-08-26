@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Streamer Kits</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="/nav.html"></div>
+
+  <div class="container mx-auto px-4 mt-8">
+    <h1 class="text-3xl font-bold text-center mb-6">Streamer Kits</h1>
+    <div id="kits"></div>
+  </div>
+
+  <script src="/assets/include.js" defer></script>
+  <script>
+    const teams = ['AV!', 'DPRK', 'EPI', 'FPS', 'FT', 'HOE', 'KTL', 'Null', 'TA', 'TXM', 'UE', 'WIZ', 'ZEN'];
+
+    async function loadKits() {
+      const owner = window.location.hostname.split('.')[0];
+      const pathParts = window.location.pathname.split('/');
+      const repo = pathParts.length > 1 && pathParts[1] ? pathParts[1] : 'ProjectTribes';
+      const branch = 'main';
+      const baseApi = `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent("TribesLeagueLogo's")}/TeamStreamerKits`;
+
+      for (const team of teams) {
+        const encodedTeam = encodeURIComponent(team);
+        try {
+          const res = await fetch(`${baseApi}/${encodedTeam}`);
+          if (!res.ok) continue;
+          const files = await res.json();
+          const section = document.createElement('div');
+          section.className = 'mb-10';
+          const title = document.createElement('h2');
+          title.className = 'text-2xl font-semibold mb-4';
+          title.textContent = team;
+          section.appendChild(title);
+          const grid = document.createElement('div');
+          grid.className = 'grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4';
+          files.filter(f => f.type === 'file' && /\.(png|jpe?g|gif|svg)$/i.test(f.name)).forEach(f => {
+            const img = document.createElement('img');
+            img.src = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encodeURIComponent("TribesLeagueLogo's")}/TeamStreamerKits/${encodedTeam}/${encodeURIComponent(f.name)}`;
+            img.alt = `${team} ${f.name}`;
+            img.className = 'w-full object-contain bg-gray-800 rounded';
+            grid.appendChild(img);
+          });
+          section.appendChild(grid);
+          document.getElementById('kits').appendChild(section);
+        } catch (err) {
+          console.error('Failed to load', team, err);
+        }
+      }
+    }
+    loadKits();
+  </script>
+</body>
+</html>
