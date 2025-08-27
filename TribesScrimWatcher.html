@@ -129,11 +129,13 @@
             <select id="chat-channel-select" onchange="updateChat()">
                 <option value="">Select Channel Chat</option>
             </select>
-            <iframe id="chat-iframe" src="https://www.twitch.tv/embed/twitch/chat?parent=t24085.github.io"></iframe>
+            <iframe id="chat-iframe" src="about:blank"></iframe>
         </div>
         <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
       </section>
     <script>
+        const parentDomain = window.location.hostname;
+        document.getElementById('chat-iframe').src = `https://www.twitch.tv/embed/twitch/chat?parent=${parentDomain}`;
         const teams = {
             "Avalanche": {
                 logo: "https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true",
@@ -346,7 +348,7 @@ function renderTeamCard(team, container){
     card.className = 'team-card';
 
     const streams = data.streams.map(s =>
-        `<iframe class="w-full h-56" src="https://player.twitch.tv/?channel=${encodeURIComponent(s.url.split('/').pop())}&parent=t24085.github.io" allowfullscreen></iframe>`
+        `<iframe class="w-full h-56" src="https://player.twitch.tv/?channel=${encodeURIComponent(s.url.split('/').pop())}&parent=${parentDomain}" allowfullscreen></iframe>`
     ).join('');
 
     const links = data.streams.map(s =>
@@ -386,7 +388,7 @@ function renderTeamCard(team, container){
             const iframe = document.getElementById('chat-iframe');
             if(channel){
                 currentChatChannel = channel;
-                iframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?parent=t24085.github.io`;
+                iframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?parent=${parentDomain}`;
             } else {
                 iframe.src = 'about:blank';
             }
