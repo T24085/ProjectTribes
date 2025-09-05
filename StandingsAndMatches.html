@@ -69,15 +69,19 @@
       'HEGEMONYOFEUROS': 'images/HoE.png',
       // KTL
       'KTL': 'images/KTLlogo.png',
+
       'KICKTOLOBBY': 'images/KTLlogo.png',
       'KICK TO LOBBY': 'images/KTLlogo.png',
       'KICKEDTOLOBBY': 'images/KTLlogo.png',
       'KICKED TO LOBBY': 'images/KTLlogo.png',
+
       // Magic
       'MAGIC': 'images/Magic.png',
       // TXM
       'TXM': 'images/TXM.png',
+
       'TEXASMILITIA': 'images/TXM.png',
+
       // Unhandled Exception
       'UE': 'images/UE.png',
       'UNHANDLEDEXCEPTION': 'images/UE.png',
@@ -99,6 +103,7 @@
       return name.replace(/\W/g, '').toUpperCase();
     }
 
+
     function getLogo(name) {
       const bracket = name.match(/\[(.+?)\]/);
       if (bracket) {
@@ -107,6 +112,7 @@
       }
       return teamLogos[normalizeName(name)];
     }
+
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
