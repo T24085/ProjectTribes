@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
         script.appendChild(document.createTextNode(oldScript.innerHTML));
         oldScript.parentNode.replaceChild(script, oldScript);
       });
+      // Update Twitch OAuth navigation state and live teams menu if available
+      if (window.twitchOAuth) {
+        window.twitchOAuth.updateNav();
+        window.twitchOAuth.initLiveTeamsMenu();
+      }
     } catch (err) {
       console.error(err);
     }
