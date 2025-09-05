@@ -54,25 +54,48 @@
 
     const staticLogos = {
 
+      // Avalanche
       'AV': 'images/aV!.png',
+      'AVALANCHE': 'images/aV!.png',
+      // DPRK
       'DPRK': 'images/TeamDPRKLogo3.png',
+      // Flag Pole Smokers
       'FPS': 'images/FPSlogo.png',
+      'FLAGPOLESMOKERS': 'images/FPSlogo.png',
+      // Flying Tractors
       'FT': 'images/FTlogo.png',
+      'FLYINGTRACTORS': 'images/FTlogo.png',
+      // Hegemony of Euros
       'HOE': 'images/HoE.png',
+      'HEGEMONYOFEUROS': 'images/HoE.png',
+      // KTL
       'KTL': 'images/KTLlogo.png',
+      // Magic
       'MAGIC': 'images/Magic.png',
+      // TXM
       'TXM': 'images/TXM.png',
+      // Unhandled Exception
       'UE': 'images/UE.png',
+      'UNHANDLEDEXCEPTION': 'images/UE.png',
+      // Zen
       'ZEN': 'images/Zenlogo.png',
+      // ePidemic
       'EPI': 'images/ePi.png',
+      'EPIDEMIC': 'images/ePi.png',
+      // null
       'NULL': 'images/NullLogo.png',
+      // Toxic Aimers
       'TOXICAIMERS': 'images/ToxicAimersLogo.png',
-      'DS': 'DeadStopLogo.png'
+      // DeadStop
+      'DS': 'DeadStopLogo.png',
+      'DEADSTOP': 'DeadStopLogo.png'
+
     };
 
     function normalizeName(name) {
       return name.replace(/\W/g, '').toUpperCase();
     }
+
 
     function getLogo(name) {
       const bracket = name.match(/\[(.+?)\]/);
@@ -156,7 +179,6 @@
           }
         }
       });
-
 
       const scheduleRef = doc(db, 'leagueSchedules', `${season}-${divKey}`);
       const snap = await getDoc(scheduleRef);
@@ -290,7 +312,6 @@
           const li = document.createElement('li');
           const score = (m.homeScore != null && m.awayScore != null) ? ` ${m.awayScore} - ${m.homeScore}` : '';
           const timeStr = m.time ? ` ${m.time}` : '';
-
           const awayLogo = getLogo(m.away);
           const homeLogo = getLogo(m.home);
 
