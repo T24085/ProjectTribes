@@ -99,10 +99,10 @@
       'DEADSTOP': 'DeadStopLogo.png'
     };
 
+
     function normalizeName(name) {
       return name.replace(/\W/g, '').toUpperCase();
     }
-
 
     function getLogo(name) {
       const bracket = name.match(/\[(.+?)\]/);
@@ -112,7 +112,6 @@
       }
       return teamLogos[normalizeName(name)];
     }
-
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
@@ -287,7 +286,7 @@
       }
 
       let currentPhase = 'regular';
-      weeks.forEach(w => {
+      weeks.forEach((w, idx) => {
         const phase = w.phase || 'regular';
         if (phase !== currentPhase) {
           if (phase !== 'regular') {
@@ -299,32 +298,38 @@
           currentPhase = phase;
         }
 
-        const div = document.createElement('div');
-        div.className = 'mb-4';
-        const title = document.createElement('h4');
-        title.className = 'font-semibold mb-1';
+        const details = document.createElement('details');
+        details.className = 'mb-2 border border-gray-700 rounded';
+        if (idx === 0) details.open = true;
+
+        const summary = document.createElement('summary');
+        summary.className = 'font-semibold cursor-pointer select-none px-2 py-1';
         if (phase === 'regular') {
-          title.textContent = `Week ${w.week}`;
+          summary.textContent = `Week ${w.week}`;
         } else if (phase === 'playoffs') {
-          title.textContent = `Round ${w.week}`;
+          summary.textContent = `Round ${w.week}`;
         } else {
-          title.textContent = 'Finals';
+          summary.textContent = 'Finals';
         }
-        div.appendChild(title);
+        details.appendChild(summary);
+
         const ul = document.createElement('ul');
+        ul.className = 'px-2 py-2 space-y-1';
         w.matches.forEach(m => {
           const li = document.createElement('li');
-          const score = (m.homeScore != null && m.awayScore != null) ? ` ${m.awayScore} - ${m.homeScore}` : '';
+          li.className = 'flex items-center gap-2';
+          const score = (m.homeScore != null && m.awayScore != null) ? `${m.awayScore} - ${m.homeScore}` : '';
           const timeStr = m.time ? ` ${m.time}` : '';
           const awayLogo = getLogo(m.away);
           const homeLogo = getLogo(m.home);
-          const away = awayLogo ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 inline mr-1">${m.away}` : m.away;
-          const home = homeLogo ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 inline mr-1">${m.home}` : m.home;
-          li.innerHTML = `<span class="text-gray-400">${m.date}${timeStr}</span>: ${away} @ ${home}${score}`;
+          const away = awayLogo ? `<span class="flex items-center gap-1"><img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5">${m.away}</span>` : `<span>${m.away}</span>`;
+          const home = homeLogo ? `<span class="flex items-center gap-1"><img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5">${m.home}</span>` : `<span>${m.home}</span>`;
+          li.innerHTML = `<span class="w-28 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center gap-2 flex-1 justify-center">${away}<span>@</span>${home}</span><span class="w-12 text-right">${score}</span>`;
+
           ul.appendChild(li);
         });
-        div.appendChild(ul);
-        container.appendChild(div);
+        details.appendChild(ul);
+        container.appendChild(details);
       });
     }
 
