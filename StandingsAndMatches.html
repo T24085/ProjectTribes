@@ -72,6 +72,8 @@
 
       'KICKTOLOBBY': 'images/KTLlogo.png',
       'KICK TO LOBBY': 'images/KTLlogo.png',
+      'KICKEDTOLOBBY': 'images/KTLlogo.png',
+      'KICKED TO LOBBY': 'images/KTLlogo.png',
 
       // Magic
       'MAGIC': 'images/Magic.png',
@@ -95,7 +97,6 @@
       // DeadStop
       'DS': 'DeadStopLogo.png',
       'DEADSTOP': 'DeadStopLogo.png'
-
     };
 
     function normalizeName(name) {
@@ -111,6 +112,7 @@
       }
       return teamLogos[normalizeName(name)];
     }
+
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
