@@ -22,14 +22,16 @@
       </div>
     </div>
 
-    <div>
-      <h2 class="text-xl font-semibold mb-2">Standings</h2>
-      <table id="standingsTable" class="min-w-full text-left"></table>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <section class="bg-gray-800 rounded-lg shadow-lg p-4">
+        <h2 class="text-xl font-semibold mb-2">Standings</h2>
+        <table id="standingsTable" class="w-full text-left text-sm"></table>
+      </section>
 
-    <div class="mt-6">
-      <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-      <div id="scheduleContainer"></div>
+      <section class="bg-gray-800 rounded-lg shadow-lg p-4">
+        <h2 class="text-xl font-semibold mb-2">Schedule</h2>
+        <div id="scheduleContainer"></div>
+      </section>
     </div>
   </div>
 
@@ -50,7 +52,60 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    const staticLogos = {
+      // Avalanche
+      'AV': 'images/aV!.png',
+      'AVALANCHE': 'images/aV!.png',
+      // DPRK
+      'DPRK': 'images/TeamDPRKLogo3.png',
+      // Flag Pole Smokers
+      'FPS': 'images/FPSlogo.png',
+      'FLAGPOLESMOKERS': 'images/FPSlogo.png',
+      // Flying Tractors
+      'FT': 'images/FTlogo.png',
+      'FLYINGTRACTORS': 'images/FTlogo.png',
+      // Hegemony of Euros
+      'HOE': 'images/HoE.png',
+      'HEGEMONYOFEUROS': 'images/HoE.png',
+      // KTL
+      'KTL': 'images/KTLlogo.png',
+      'KICKTOLOBBY': 'images/KTLlogo.png',
+      // Magic
+      'MAGIC': 'images/Magic.png',
+      // TXM
+      'TXM': 'images/TXM.png',
+      'TEXASMILITIA': 'images/TXM.png',
+      // Unhandled Exception
+      'UE': 'images/UE.png',
+      'UNHANDLEDEXCEPTION': 'images/UE.png',
+      // Zen
+      'ZEN': 'images/Zenlogo.png',
+      // ePidemic
+      'EPI': 'images/ePi.png',
+      'EPIDEMIC': 'images/ePi.png',
+      // null
+      'NULL': 'images/NullLogo.png',
+      // Toxic Aimers
+      'TOXICAIMERS': 'images/ToxicAimersLogo.png',
+      // DeadStop
+      'DS': 'DeadStopLogo.png',
+      'DEADSTOP': 'DeadStopLogo.png'
+    };
 
+    function normalizeName(name) {
+      return name.replace(/\W/g, '').toUpperCase();
+    }
+
+    function getLogo(name) {
+      const bracket = name.match(/\[(.+?)\]/);
+      if (bracket) {
+        const key = normalizeName(bracket[1]);
+        if (teamLogos[key]) return teamLogos[key];
+      }
+      return teamLogos[normalizeName(name)];
+    }
+
+    let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
     let currentSeasonData = null;
 
@@ -110,6 +165,17 @@
 
       const teamDocs = await fetchTeams(season, divKey);
       const teamNames = teamDocs.map(t => t.teamName);
+      teamLogos = { ...staticLogos };
+      teamDocs.forEach(t => {
+        if (t.logoUrl) {
+          const fullKey = normalizeName(t.teamName);
+          teamLogos[fullKey] = t.logoUrl;
+          const bracket = t.teamName.match(/\[(.+?)\]/);
+          if (bracket) {
+            teamLogos[normalizeName(bracket[1])] = t.logoUrl;
+          }
+        }
+      });
 
       const scheduleRef = doc(db, 'leagueSchedules', `${season}-${divKey}`);
       const snap = await getDoc(scheduleRef);
@@ -167,15 +233,25 @@
     function renderStandings(rows, playoffTeams = []) {
       const table = document.getElementById('standingsTable');
       table.innerHTML = '';
-      const header = document.createElement('tr');
-      header.innerHTML = '<th class="px-2">Team</th><th class="px-2">W</th><th class="px-2">L</th><th class="px-2">Win%</th><th class="px-2">+/-</th>';
-      table.appendChild(header);
-      rows.forEach(r => {
+
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr class="bg-gray-700 sticky top-0"><th class="px-2 py-1">Team</th><th class="px-2 py-1">W</th><th class="px-2 py-1">L</th><th class="px-2 py-1">Win%</th><th class="px-2 py-1">+/-</th></tr>';
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      rows.forEach((r, idx) => {
         const tr = document.createElement('tr');
-        if (playoffTeams.includes(r.team)) tr.classList.add('bg-green-800');
-        tr.innerHTML = `<td class="px-2">${r.team}</td><td class="px-2">${r.wins}</td><td class="px-2">${r.losses}</td><td class="px-2">${r.winPct.toFixed(3)}</td><td class="px-2">${r.pointDiff}</td>`;
-        table.appendChild(tr);
+        if (playoffTeams.includes(r.team)) {
+          tr.className = 'bg-green-800';
+        } else {
+          tr.className = idx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700';
+        }
+        const logo = getLogo(r.team);
+        const teamCell = logo ? `<img src="${logo}" alt="${r.team} logo" class="w-6 h-6 inline mr-2">${r.team}` : r.team;
+        tr.innerHTML = `<td class="px-2 py-1">${teamCell}</td><td class="px-2 py-1">${r.wins}</td><td class="px-2 py-1">${r.losses}</td><td class="px-2 py-1">${r.winPct.toFixed(3)}</td><td class="px-2 py-1">${r.pointDiff}</td>`;
+        tbody.appendChild(tr);
       });
+      table.appendChild(tbody);
     }
 
     function renderSchedule(weeks) {
@@ -230,7 +306,12 @@
         w.matches.forEach(m => {
           const li = document.createElement('li');
           const score = (m.homeScore != null && m.awayScore != null) ? ` ${m.awayScore} - ${m.homeScore}` : '';
-          li.textContent = `${m.date}: ${m.away} @ ${m.home}${score}`;
+          const timeStr = m.time ? ` ${m.time}` : '';
+          const awayLogo = getLogo(m.away);
+          const homeLogo = getLogo(m.home);
+          const away = awayLogo ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 inline mr-1">${m.away}` : m.away;
+          const home = homeLogo ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 inline mr-1">${m.home}` : m.home;
+          li.innerHTML = `<span class="text-gray-400">${m.date}${timeStr}</span>: ${away} @ ${home}${score}`;
           ul.appendChild(li);
         });
         div.appendChild(ul);
