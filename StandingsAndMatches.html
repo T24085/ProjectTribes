@@ -53,6 +53,7 @@
     const db = getFirestore(app);
 
     const staticLogos = {
+
       'AV': 'images/aV!.png',
       'DPRK': 'images/TeamDPRKLogo3.png',
       'FPS': 'images/FPSlogo.png',
@@ -81,6 +82,7 @@
       }
       return teamLogos[normalizeName(name)];
     }
+
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
@@ -143,6 +145,7 @@
       const teamDocs = await fetchTeams(season, divKey);
       const teamNames = teamDocs.map(t => t.teamName);
       teamLogos = { ...staticLogos };
+
       teamDocs.forEach(t => {
         if (t.logoUrl) {
           const fullKey = normalizeName(t.teamName);
@@ -153,6 +156,7 @@
           }
         }
       });
+
 
       const scheduleRef = doc(db, 'leagueSchedules', `${season}-${divKey}`);
       const snap = await getDoc(scheduleRef);
@@ -223,7 +227,9 @@
         } else {
           tr.className = idx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700';
         }
+
         const logo = getLogo(r.team);
+
         const teamCell = logo ? `<img src="${logo}" alt="${r.team} logo" class="w-6 h-6 inline mr-2">${r.team}` : r.team;
         tr.innerHTML = `<td class="px-2 py-1">${teamCell}</td><td class="px-2 py-1">${r.wins}</td><td class="px-2 py-1">${r.losses}</td><td class="px-2 py-1">${r.winPct.toFixed(3)}</td><td class="px-2 py-1">${r.pointDiff}</td>`;
         tbody.appendChild(tr);
@@ -284,8 +290,10 @@
           const li = document.createElement('li');
           const score = (m.homeScore != null && m.awayScore != null) ? ` ${m.awayScore} - ${m.homeScore}` : '';
           const timeStr = m.time ? ` ${m.time}` : '';
+
           const awayLogo = getLogo(m.away);
           const homeLogo = getLogo(m.home);
+
           const away = awayLogo ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 inline mr-1">${m.away}` : m.away;
           const home = homeLogo ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 inline mr-1">${m.home}` : m.home;
           li.innerHTML = `<span class="text-gray-400">${m.date}${timeStr}</span>: ${away} @ ${home}${score}`;
