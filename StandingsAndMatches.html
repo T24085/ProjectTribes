@@ -77,7 +77,6 @@
       'MAGIC': 'images/Magic.png',
       // TXM
       'TXM': 'images/TXM.png',
-
       'TEXASMILITIA': 'images/TXM.png',
 
       // Unhandled Exception
@@ -96,7 +95,6 @@
       'DS': 'DeadStopLogo.png',
       'DEADSTOP': 'DeadStopLogo.png'
     };
-
 
     function normalizeName(name) {
       return name.replace(/\W/g, '').toUpperCase();
@@ -321,9 +319,13 @@
           const timeStr = m.time ? ` ${m.time}` : '';
           const awayLogo = getLogo(m.away);
           const homeLogo = getLogo(m.home);
-          const away = awayLogo ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 mr-1">${m.away}` : m.away;
-          const home = homeLogo ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 mr-1">${m.home}` : m.home;
-          li.innerHTML = `<span class="w-28 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center flex-1"><span class="w-40 flex items-center justify-end gap-1 text-right">${away}</span><span class="px-1">@</span><span class="w-40 flex items-center gap-1">${home}</span></span><span class="w-12 text-right">${score}</span>`;
+          const awayLogoHtml = awayLogo
+            ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 flex-shrink-0">`
+            : '<span class="w-5 h-5"></span>';
+          const homeLogoHtml = homeLogo
+            ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 flex-shrink-0">`
+            : '<span class="w-5 h-5"></span>';
+          li.innerHTML = `<span class="w-28 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center w-40 justify-end gap-1"><span class="truncate">${m.away}</span>${awayLogoHtml}</span><span class="px-1">@</span><span class="flex items-center w-40 gap-1">${homeLogoHtml}<span class="truncate">${m.home}</span></span><span class="w-12 text-right">${score}</span>`;
 
           ul.appendChild(li);
         });
