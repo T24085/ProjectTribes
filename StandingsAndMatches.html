@@ -78,6 +78,7 @@
       // TXM
       'TXM': 'images/TXM.png',
       'TEXASMILITIA': 'images/TXM.png',
+
       // Unhandled Exception
       'UE': 'images/UE.png',
       'UNHANDLEDEXCEPTION': 'images/UE.png',
@@ -107,6 +108,7 @@
       }
       return teamLogos[normalizeName(name)];
     }
+
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
@@ -324,6 +326,7 @@
             ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 flex-shrink-0">`
             : '<span class="w-5 h-5"></span>';
           li.innerHTML = `<span class="w-28 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center w-40 justify-end gap-1"><span class="truncate">${m.away}</span>${awayLogoHtml}</span><span class="px-1">@</span><span class="flex items-center w-40 gap-1">${homeLogoHtml}<span class="truncate">${m.home}</span></span><span class="w-12 text-right">${score}</span>`;
+
           ul.appendChild(li);
         });
         details.appendChild(ul);
