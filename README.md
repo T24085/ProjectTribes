@@ -1,75 +1,78 @@
 # Tribes Professional League
 
-This repository contains a collection of static HTML pages for the community around **Tribes 3: Rivals**. Each page focuses on tournament information, team rosters, or related utilities. All files are static—no backend server is required.
+This repository hosts the static website for the **Tribes 3: Rivals** community.  Every page is plain HTML/JS and can be opened directly in a browser—no backend server is required.
+
+## Features
+
+- **Live dashboard** – `index.html`/`TPLTeamsDashboard.html` lists every team, highlights who is live on Twitch and exposes additional links after Twitch sign‑in.
+- **Tournament utilities** – includes a draft sign‑up loader, a full tournament manager, and an interactive bracket system.
+- **Match tracking** – standings, schedules, upcoming events and a scrim watcher to preview matchups.
+- **Streaming tools** – multi‑stream Twitch layouts, a mobile stream viewer, streamer directory and downloadable streamer kits.
+- **News & announcements** – Firestore‑powered news feed with an admin interface for league staff.
+- **Admin panels** – pages for managing leagues, teams, streamers and news entries.
+- **Team pages** – dedicated pages for each squad with logos, rosters and contact links.
 
 ## Pages
 
-- **TPLTeamsDashboard.html** – Main dashboard linking to individual team pages, streaming links, and historical information.
-- **TournamentManager.html** – React-based page for managing tournaments and importing sign-up data.
-- **TribesScrimWatcher.html** – Utility for previewing scrimmage matchups and team rosters. Includes a chat box powered by Twitch embeds that appears alongside the match streams.
-- **TwitchFeedDisplays.html** – Layout for watching multiple Twitch streams at once.
-- **TwitchFeedMobile.html** – Mobile-friendly version of the Twitch feeds display.
-- **TwinsTournamentDataCenter.html** – Score-per-minute chart and documents for the tournament.
-- **UpcomingEvents.html** – Schedule of upcoming events with the Twins image.
-- **TeamSignUp.html** – Register new teams and edit their rosters using Firebase.
-- **StandingsAndMatches.html** – Standings and schedule pulled from Firestore for each season and division.
-- **LeagueManager.html** – Admin panel for creating schedules, recording match results, and managing seasons.
-- **Streamers.html** – Public directory of approved streamers loaded from Firestore.
-- **StreamersSubmit.html** – Form for anyone to submit a streamer for admin approval.
-- **StreamersAdmin.html** – League Admin panel for approving or removing streamer entries.
-- **TeamBuilder.html** – Simple form for creating your own team with a logo and banner stored in your browser.
-- **MontageBay.html** – Submit montage video links and view them all in one place.
-- **Team*.html** – Individual team pages with logos, rosters, streams, and contact links. Teams include Avalanche, ePidemic, DPRK, Zen, TXM, Flag Pole Smokers, Flying Tractors, Hegemony of Euros, KTL, Magic, null, DeadStop, Toxic Aimers, and Unhandled Exception.
-
-## Quick Links
-
-You can open these pages directly:
-
-- [Tribes Professional League Dashboard](TPLTeamsDashboard.html)
-- [Scrim Watcher](TribesScrimWatcher.html)
+### General tools
+- [Dashboard](index.html)
 - [Tournament Manager](TournamentManager.html)
-- [Twitch Feeds](TwitchFeedDisplays.html)
-- [Mobile Twitch Feeds](TwitchFeedMobile.html)
+- [Tournament Brackets](TournamentBrackets.html)
+- [Draft Sign-Up](DraftSignUp.html)
+- [Tribes Scrim Watcher](TribesScrimWatcher.html)
+- [Standings and Matches](StandingsAndMatches.html)
+- [League Manager](LeagueManager.html)
+- [Team Sign-Up](TeamSignUp.html)
 - [Twins Tournament Data Center](TwinsTournamentDataCenter.html)
 - [Upcoming Events](UpcomingEvents.html)
-- [Team Sign-Up](TeamSignUp.html)
-- [TPL Standings and Matches](StandingsAndMatches.html)
-- [League Manager](LeagueManager.html)
-- [Streamers](Streamers.html)
+- [News](News.html)
+- [News Admin](NewsAdmin.html)
+- [Streamer Kits](StreamerKits.html)
+- [Twitch Feed Displays](TwitchFeedDisplays.html)
+- [Twitch Feed Mobile](TwitchFeedMobile.html)
+- [Streamers Directory](Streamers.html)
 - [Submit a Streamer](StreamersSubmit.html)
-- [League Admin](StreamersAdmin.html)
+- [Streamers Admin](StreamersAdmin.html)
 
+### Team pages
+- [Avalanche](TeamAV.html)
+- [DPRK](TeamDPRK.html)
+- [DeadStop](TeamDS.html)
+- [ePidemic](TeamEPI.html)
+- [Flag Pole Smokers](TeamFPS.html)
+- [Flying Tractors](TeamFT.html)
+- [Hegemony of Euros](TeamHoE.html)
+- [KTL](TeamKTL.html)
+- [Magic](TeamMagic.html)
+- [null](TeamNull.html)
+- [TXM](TeamTXM.html)
+- [Toxic Aimers](TeamToxicAimers.html)
+- [Unhandled Exception](TeamUE.html)
+- [Zen](TeamZen.html)
 
 ## Usage
 
-Open `TPLTeamsDashboard.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs. Each team page provides roster info and may link to Twitch or YouTube streams.
+Open `index.html` in your browser to access the main dashboard. External team or stream links on each page open in new tabs. Team pages provide roster info and may link to Twitch or YouTube streams.
 
-All pages can be opened locally in your browser. The **Create Team** and **Montage Bay** pages save data using `localStorage`.
+All pages can be opened locally. Some utilities store data in `localStorage`, while others read and write to Firebase.
+
 ## Shared Navigation
 
-The main navigation menu is stored in `nav.html`. Each page dynamically loads this file using JavaScript so the links stay consistent across the site.
+The navigation menu is defined in `nav.html` and dynamically injected into every page via JavaScript so links remain consistent across the site.
 
 ## Twitch Authentication
 
-Certain pages include a "Sign in with Twitch" button. Logging in stores your access token in `localStorage` so the site can personalize Twitch feeds. The login uses the [Twitch OAuth implicit flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#implicit-code-flow).
-When signed in, the main dashboard shows your Twitch username.
-
-In the navigation bar a **Live Teams** button appears after you sign in with Twitch. Clicking the button toggles a side menu that slides in from the left. On the teams dashboard the menu is positioned just below the "Tribes Professional League Dashboard" heading and above the "Select a Team" section. Clicking anywhere outside the menu closes it. Because the site queries the Twitch API using your token, being logged in is required for this list to populate.
-
-The teams dashboard also checks each roster's streamers against Twitch and highlights teams that are currently live.
+Certain pages include a "Sign in with Twitch" button. Logging in stores your access token in `localStorage` so the site can personalize Twitch feeds. The login uses the [Twitch OAuth implicit flow](https://dev.twitch.tv/docs/authentication/getting-tokens-oauth#implicit-code-flow). When signed in, the dashboard shows your Twitch username and reveals a **Live Teams** toggle that lists currently live rosters.
 
 ## Firebase Setup for Team Sign-Up
 
-The `TeamSignUp.html` page uses [Firebase Firestore](https://firebase.google.com/docs/firestore) to store team data. To use it:
+The `TeamSignUp.html` page uses [Firebase Firestore](https://firebase.google.com/docs/firestore) to store team data.
 
 1. Create a project at <https://console.firebase.google.com> and add a **Web App**. Copy the configuration snippet it provides.
-2. Enable **Cloud Firestore** in your Firebase project. Start in test mode unless you have security rules prepared.
-
-3. Replace the placeholder values in `TeamSignUp.html` under `firebaseConfig` with your project credentials. All keys, including `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, and `appId`, must match the values from Firebase.
-   The `storageBucket` entry should match the domain provided by Firebase (typically ending in `.appspot.com` or `.firebasestorage.app`).
+2. Enable **Cloud Firestore** in your Firebase project.
+3. Replace the placeholder values in `TeamSignUp.html` under `firebaseConfig` with your project credentials (`apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`).
 4. Deploy the site or run a local server (e.g. `python3 -m http.server`) before opening the page. Submitting the form stores teams under a `teams` collection in Firestore.
-
-5. Returning to the page will list existing teams and let you edit or delete them.
+5. Returning to the page lists existing teams and lets you edit or delete them.
 
 ## Credits
 
