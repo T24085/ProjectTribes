@@ -69,12 +69,16 @@
       'HEGEMONYOFEUROS': 'images/HoE.png',
       // KTL
       'KTL': 'images/KTLlogo.png',
+
       'KICKTOLOBBY': 'images/KTLlogo.png',
+
       // Magic
       'MAGIC': 'images/Magic.png',
       // TXM
       'TXM': 'images/TXM.png',
+
       'TEXASMILITIA': 'images/TXM.png',
+
       // Unhandled Exception
       'UE': 'images/UE.png',
       'UNHANDLEDEXCEPTION': 'images/UE.png',
@@ -90,11 +94,13 @@
       // DeadStop
       'DS': 'DeadStopLogo.png',
       'DEADSTOP': 'DeadStopLogo.png'
+
     };
 
     function normalizeName(name) {
       return name.replace(/\W/g, '').toUpperCase();
     }
+
 
     function getLogo(name) {
       const bracket = name.match(/\[(.+?)\]/);
@@ -104,6 +110,7 @@
       }
       return teamLogos[normalizeName(name)];
     }
+
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
@@ -166,6 +173,7 @@
       const teamDocs = await fetchTeams(season, divKey);
       const teamNames = teamDocs.map(t => t.teamName);
       teamLogos = { ...staticLogos };
+
       teamDocs.forEach(t => {
         if (t.logoUrl) {
           const fullKey = normalizeName(t.teamName);
@@ -247,6 +255,7 @@
           tr.className = idx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700';
         }
         const logo = getLogo(r.team);
+
         const teamCell = logo ? `<img src="${logo}" alt="${r.team} logo" class="w-6 h-6 inline mr-2">${r.team}` : r.team;
         tr.innerHTML = `<td class="px-2 py-1">${teamCell}</td><td class="px-2 py-1">${r.wins}</td><td class="px-2 py-1">${r.losses}</td><td class="px-2 py-1">${r.winPct.toFixed(3)}</td><td class="px-2 py-1">${r.pointDiff}</td>`;
         tbody.appendChild(tr);
