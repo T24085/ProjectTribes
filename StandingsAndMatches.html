@@ -9,7 +9,7 @@
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
     <div id="nav-placeholder" data-include="/nav.html"></div>
 
-  <div class="w-full max-w-4xl p-4">
+  <div class="w-full max-w-6xl p-4">
     <h1 class="text-2xl font-bold text-center mb-4">TPL Standings and Matches</h1>
     <div class="flex flex-col md:flex-row gap-4 justify-center mb-6">
       <div>
@@ -78,7 +78,6 @@
       // TXM
       'TXM': 'images/TXM.png',
       'TEXASMILITIA': 'images/TXM.png',
-
       // Unhandled Exception
       'UE': 'images/UE.png',
       'UNHANDLEDEXCEPTION': 'images/UE.png',
@@ -95,6 +94,7 @@
       'DS': 'DeadStopLogo.png',
       'DEADSTOP': 'DeadStopLogo.png'
     };
+
 
     function normalizeName(name) {
       return name.replace(/\W/g, '').toUpperCase();
@@ -325,7 +325,8 @@
           const homeLogoHtml = homeLogo
             ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 flex-shrink-0">`
             : '<span class="w-5 h-5"></span>';
-          li.innerHTML = `<span class="w-28 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center w-40 justify-end gap-1"><span class="truncate">${m.away}</span>${awayLogoHtml}</span><span class="px-1">@</span><span class="flex items-center w-40 gap-1">${homeLogoHtml}<span class="truncate">${m.home}</span></span><span class="w-12 text-right">${score}</span>`;
+
+          li.innerHTML = `<span class="w-32 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center w-40 gap-1">${awayLogoHtml}<span class="truncate">${m.away}</span></span><span class="w-4 text-center">@</span><span class="flex items-center w-40 gap-1">${homeLogoHtml}<span class="truncate">${m.home}</span></span><span class="w-16 text-center">${score}</span>`;
 
           ul.appendChild(li);
         });
