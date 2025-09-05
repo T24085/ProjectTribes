@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
       return request.auth != null &&
-        request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'Cx5w8y1ySNaKFAbHmm2uw1ZPoDr1'];
+        request.auth.uid in ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'A2ZV8vziNsXqZkyqHzAB266B9pP2'];
     }
 
     match /streamers/{streamerId} {
