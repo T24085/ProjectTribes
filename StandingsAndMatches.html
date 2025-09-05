@@ -77,7 +77,9 @@
       'MAGIC': 'images/Magic.png',
       // TXM
       'TXM': 'images/TXM.png',
+
       'TEXASMILITIA': 'images/TXM.png',
+
       // Unhandled Exception
       'UE': 'images/UE.png',
       'UNHANDLEDEXCEPTION': 'images/UE.png',
@@ -95,6 +97,7 @@
       'DEADSTOP': 'DeadStopLogo.png'
     };
 
+
     function normalizeName(name) {
       return name.replace(/\W/g, '').toUpperCase();
     }
@@ -107,6 +110,7 @@
       }
       return teamLogos[normalizeName(name)];
     }
+
 
     let teamLogos = { ...staticLogos };
     let seasonsIndex = [];
@@ -320,6 +324,7 @@
           const away = awayLogo ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 mr-1">${m.away}` : m.away;
           const home = homeLogo ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 mr-1">${m.home}` : m.home;
           li.innerHTML = `<span class="w-28 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center flex-1"><span class="w-40 flex items-center justify-end gap-1 text-right">${away}</span><span class="px-1">@</span><span class="w-40 flex items-center gap-1">${home}</span></span><span class="w-12 text-right">${score}</span>`;
+
           ul.appendChild(li);
         });
         details.appendChild(ul);
