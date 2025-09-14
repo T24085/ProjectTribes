@@ -50,11 +50,16 @@
       </div>
       <div id="output" class="mt-8"></div>
     </div>
+
+    <div id="matchesList" class="mt-12"></div>
+
   </div>
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getFirestore, collection, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
     const firebaseConfig = {
@@ -79,6 +84,9 @@
     const loginBtn = document.getElementById('loginBtn');
     const logoutBtn = document.getElementById('logoutBtn');
 
+    let editingMatchId = null, currentMatchCreated = null;
+
+
     loginBtn.addEventListener('click', () => {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -91,7 +99,9 @@
       if (user && ADMIN_UIDS.includes(user.uid)) {
         loginDiv.classList.add('hidden');
         adminPanel.classList.remove('hidden');
-        loadTeams();
+
+        loadTeams().then(loadMatches);
+
       } else {
         loginDiv.classList.remove('hidden');
         adminPanel.classList.add('hidden');
@@ -132,6 +142,87 @@
       });
     }
 
+
+    async function loadMatches() {
+      const snap = await getDocs(collection(db, 'matches'));
+      const listDiv = document.getElementById('matchesList');
+      listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2>';
+      if (snap.empty) {
+        listDiv.innerHTML += '<p>No matches saved.</p>';
+        return;
+      }
+      const table = document.createElement('table');
+      table.className = 'min-w-full text-left border border-gray-700';
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th class="px-2">Date</th>
+            <th class="px-2">Map</th>
+            <th class="px-2">Teams</th>
+            <th class="px-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        let dateStr = '';
+        try { dateStr = data.created.toDate().toLocaleString(); } catch(e) { dateStr = ''; }
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-2">${dateStr}</td>
+          <td class="px-2">${data.map}</td>
+          <td class="px-2">${data.team1} vs ${data.team2}</td>
+          <td class="px-2 space-x-2">
+            <button class="edit-btn bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded" data-id="${docSnap.id}">Edit</button>
+            <button class="delete-btn bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-id="${docSnap.id}">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        tr.querySelector('.edit-btn').addEventListener('click', () => loadMatchForEdit(docSnap.id, data));
+        tr.querySelector('.delete-btn').addEventListener('click', () => deleteMatch(docSnap.id));
+      });
+      listDiv.appendChild(table);
+    }
+
+    async function deleteMatch(id) {
+      if (!confirm('Delete this match?')) return;
+      await deleteDoc(doc(db, 'matches', id));
+      if (editingMatchId === id) {
+        editingMatchId = null;
+        currentMatchCreated = null;
+        document.getElementById('statsSection').classList.add('hidden');
+        document.getElementById('saveMatch').textContent = 'Save Match';
+      }
+      loadMatches();
+    }
+
+    function loadMatchForEdit(id, data) {
+      editingMatchId = id;
+      currentMatchCreated = data.created;
+      document.getElementById('saveMatch').textContent = 'Update Match';
+      const team1 = teamsData.find(t => t.name === data.team1);
+      const team2 = teamsData.find(t => t.name === data.team2);
+      document.getElementById('team1').value = team1 ? team1.id : '';
+      document.getElementById('team2').value = team2 ? team2.id : '';
+      document.getElementById('map').value = data.map;
+      createStatsTable('team1Stats', team1);
+      createStatsTable('team2Stats', team2);
+      document.getElementById('statsSection').classList.remove('hidden');
+      const inputs = document.querySelectorAll('.stat-input');
+      inputs.forEach(inp => {
+        const player = inp.dataset.player;
+        const team = inp.dataset.team;
+        const stat = inp.dataset.stat;
+        const teamData = data.stats[team];
+        if (teamData && teamData.players[player]) {
+          inp.value = teamData.players[player][stat] || 0;
+        }
+      });
+    }
+
+
     document.getElementById('createMatch').addEventListener('click', () => {
       const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
       const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
@@ -139,6 +230,11 @@
         alert('Please select two different teams.');
         return;
       }
+
+      editingMatchId = null;
+      currentMatchCreated = null;
+      document.getElementById('saveMatch').textContent = 'Save Match';
+
       createStatsTable('team1Stats', t1);
       createStatsTable('team2Stats', t2);
       document.getElementById('statsSection').classList.remove('hidden');
@@ -223,7 +319,9 @@
         <tbody></tbody>
       `;
       const tbody = exportTable.querySelector('tbody');
-      const saveData = { map, team1: t1.name, team2: t2.name, created: new Date(), stats: {} };
+
+      const saveData = { map, team1: t1.name, team2: t2.name, created: currentMatchCreated || new Date(), stats: {} };
+
 
       [t1.name, t2.name].forEach(teamName => {
         const teamStats = stats[teamName];
@@ -288,8 +386,19 @@
       });
       output.appendChild(exportTable);
       document.getElementById('exportBtn').disabled = false;
-      await addDoc(collection(db, 'matches'), saveData);
-      alert('Match saved!');
+
+      if (editingMatchId) {
+        await updateDoc(doc(db, 'matches', editingMatchId), saveData);
+        alert('Match updated!');
+      } else {
+        await addDoc(collection(db, 'matches'), saveData);
+        alert('Match saved!');
+      }
+      editingMatchId = null;
+      currentMatchCreated = null;
+      document.getElementById('saveMatch').textContent = 'Save Match';
+      loadMatches();
+
     });
 
     document.getElementById('exportBtn').addEventListener('click', () => {
