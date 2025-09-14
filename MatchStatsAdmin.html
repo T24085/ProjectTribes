@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Match Stats Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="oauth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="/nav.html"></div>
+
+  <div id="loginDiv" class="max-w-sm mx-auto mt-10 space-y-4">
+    <h1 class="text-2xl font-bold text-center">Admin Login</h1>
+    <input id="email" type="email" placeholder="Email" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <input id="password" type="password" placeholder="Password" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <button id="loginBtn" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Login</button>
+  </div>
+
+  <div id="adminPanel" class="hidden container mx-auto px-4 mt-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Match Stats Admin</h1>
+      <button id="logoutBtn" class="py-2 px-4 bg-red-600 hover:bg-red-700 rounded">Logout</button>
+    </div>
+
+    <form id="matchForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div>
+        <label class="block text-sm mb-1">Team 1</label>
+        <select id="team1" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700"></select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Team 2</label>
+        <select id="team2" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700"></select>
+      </div>
+      <div>
+        <label class="block text-sm mb-1">Map</label>
+        <select id="map" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700"></select>
+      </div>
+      <div class="flex items-end">
+        <button type="button" id="createMatch" class="w-full py-2 bg-green-600 hover:bg-green-700 rounded">Create Match</button>
+      </div>
+    </form>
+
+    <div id="statsSection" class="hidden">
+      <div id="team1Stats"></div>
+      <div id="team2Stats" class="mt-8"></div>
+      <div class="mt-6 flex gap-4">
+        <button id="saveMatch" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">Save Match</button>
+        <button id="exportBtn" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export to Excel</button>
+      </div>
+      <div id="output" class="mt-8"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+    const ADMIN_UIDS = [
+      'DkBHsCzLK5a9KiX50g0pHJrEqGq2',
+      'A2ZV8vziNsXqZkyqHzAB266B9pP2'
+    ];
+
+    const loginDiv = document.getElementById('loginDiv');
+    const adminPanel = document.getElementById('adminPanel');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    loginBtn.addEventListener('click', () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      signInWithEmailAndPassword(auth, email, password).catch(err => alert(err.message));
+    });
+
+    logoutBtn.addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, user => {
+      if (user && ADMIN_UIDS.includes(user.uid)) {
+        loginDiv.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loadTeams();
+      } else {
+        loginDiv.classList.remove('hidden');
+        adminPanel.classList.add('hidden');
+        if (user) {
+          alert('Access denied.');
+          signOut(auth);
+        }
+      }
+    });
+
+    const mapList = ['Dry Dock','Rain','Dance','Hollow','Dangerous Crossing','Torment','Katabatic','Wave Mist','Moonrise'];
+    const mapSelect = document.getElementById('map');
+    mapList.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m;
+      opt.textContent = m;
+      mapSelect.appendChild(opt);
+    });
+
+    let teamsData = [];
+
+    async function loadTeams() {
+      const snap = await getDocs(collection(db, 'teams'));
+      teamsData = snap.docs.map(d => ({ id: d.id, name: d.data().teamName, players: (d.data().players || []).map(p => p.name) }));
+      const team1Sel = document.getElementById('team1');
+      const team2Sel = document.getElementById('team2');
+      team1Sel.innerHTML = '<option value="">Select Team</option>';
+      team2Sel.innerHTML = '<option value="">Select Team</option>';
+      teamsData.forEach(t => {
+        const opt1 = document.createElement('option');
+        opt1.value = t.id;
+        opt1.textContent = t.name;
+        team1Sel.appendChild(opt1);
+        const opt2 = document.createElement('option');
+        opt2.value = t.id;
+        opt2.textContent = t.name;
+        team2Sel.appendChild(opt2);
+      });
+    }
+
+    document.getElementById('createMatch').addEventListener('click', () => {
+      const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
+      const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
+      if (!t1 || !t2 || t1.id === t2.id) {
+        alert('Please select two different teams.');
+        return;
+      }
+      createStatsTable('team1Stats', t1);
+      createStatsTable('team2Stats', t2);
+      document.getElementById('statsSection').classList.remove('hidden');
+    });
+
+    function createStatsTable(containerId, team) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      const table = document.createElement('table');
+      table.className = 'min-w-full text-left border border-gray-700';
+      table.innerHTML = `
+        <caption class="text-xl font-semibold mb-2">${team.name}</caption>
+        <thead>
+          <tr>
+            <th class="px-2">Player</th>
+            <th class="px-2">Kills</th>
+            <th class="px-2">Assists</th>
+            <th class="px-2">Score</th>
+            <th class="px-2">Captures</th>
+            <th class="px-2">Returns</th>
+            <th class="px-2">Time (min)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = table.querySelector('tbody');
+      team.players.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-2">${p}</td>
+          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="kills" value="0"></td>
+          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="assists" value="0"></td>
+          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="score" value="0"></td>
+          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="captures" value="0"></td>
+          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="returns" value="0"></td>
+          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="time" value="0"></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      container.appendChild(table);
+    }
+
+    document.getElementById('saveMatch').addEventListener('click', async () => {
+      const map = document.getElementById('map').value;
+      const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
+      const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
+      const inputs = Array.from(document.querySelectorAll('.stat-input'));
+      const stats = {};
+      inputs.forEach(inp => {
+        const player = inp.dataset.player;
+        const team = inp.dataset.team;
+        const stat = inp.dataset.stat;
+        const val = parseFloat(inp.value) || 0;
+        if (!stats[team]) stats[team] = {};
+        if (!stats[team][player]) stats[team][player] = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
+        stats[team][player][stat] = val;
+      });
+
+      const output = document.getElementById('output');
+      output.innerHTML = '';
+      const exportTable = document.createElement('table');
+      exportTable.id = 'exportTable';
+      exportTable.className = 'min-w-full text-left border border-gray-700';
+      exportTable.innerHTML = `
+        <thead>
+          <tr>
+            <th class="px-2">Team</th>
+            <th class="px-2">Player</th>
+            <th class="px-2">Kills</th>
+            <th class="px-2">Assists</th>
+            <th class="px-2">Score</th>
+            <th class="px-2">Captures</th>
+            <th class="px-2">Returns</th>
+            <th class="px-2">Time</th>
+            <th class="px-2">KPM</th>
+            <th class="px-2">APM</th>
+            <th class="px-2">SPM</th>
+            <th class="px-2">CPM</th>
+            <th class="px-2">RPM</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const tbody = exportTable.querySelector('tbody');
+      const saveData = { map, team1: t1.name, team2: t2.name, created: new Date(), stats: {} };
+
+      [t1.name, t2.name].forEach(teamName => {
+        const teamStats = stats[teamName];
+        let totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
+        saveData.stats[teamName] = { players: {}, totals:{} };
+        Object.keys(teamStats).forEach(player => {
+          const s = teamStats[player];
+          totals.kills += s.kills;
+          totals.assists += s.assists;
+          totals.score += s.score;
+          totals.captures += s.captures;
+          totals.returns += s.returns;
+          totals.time += s.time;
+          const kpm = s.time ? (s.kills / s.time).toFixed(2) : '0';
+          const apm = s.time ? (s.assists / s.time).toFixed(2) : '0';
+          const spm = s.time ? (s.score / s.time).toFixed(2) : '0';
+          const cpm = s.time ? (s.captures / s.time).toFixed(2) : '0';
+          const rpm = s.time ? (s.returns / s.time).toFixed(2) : '0';
+          saveData.stats[teamName].players[player] = { ...s, kpm, apm, spm, cpm, rpm };
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="px-2">${teamName}</td>
+            <td class="px-2">${player}</td>
+            <td class="px-2">${s.kills}</td>
+            <td class="px-2">${s.assists}</td>
+            <td class="px-2">${s.score}</td>
+            <td class="px-2">${s.captures}</td>
+            <td class="px-2">${s.returns}</td>
+            <td class="px-2">${s.time}</td>
+            <td class="px-2">${kpm}</td>
+            <td class="px-2">${apm}</td>
+            <td class="px-2">${spm}</td>
+            <td class="px-2">${cpm}</td>
+            <td class="px-2">${rpm}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+        const teamKpm = totals.time ? (totals.kills / totals.time).toFixed(2) : '0';
+        const teamApm = totals.time ? (totals.assists / totals.time).toFixed(2) : '0';
+        const teamSpm = totals.time ? (totals.score / totals.time).toFixed(2) : '0';
+        const teamCpm = totals.time ? (totals.captures / totals.time).toFixed(2) : '0';
+        const teamRpm = totals.time ? (totals.returns / totals.time).toFixed(2) : '0';
+        saveData.stats[teamName].totals = { ...totals, kpm: teamKpm, apm: teamApm, spm: teamSpm, cpm: teamCpm, rpm: teamRpm };
+        const trTot = document.createElement('tr');
+        trTot.className = 'font-semibold';
+        trTot.innerHTML = `
+          <td class="px-2">${teamName}</td>
+          <td class="px-2">Totals</td>
+          <td class="px-2">${totals.kills}</td>
+          <td class="px-2">${totals.assists}</td>
+          <td class="px-2">${totals.score}</td>
+          <td class="px-2">${totals.captures}</td>
+          <td class="px-2">${totals.returns}</td>
+          <td class="px-2">${totals.time}</td>
+          <td class="px-2">${teamKpm}</td>
+          <td class="px-2">${teamApm}</td>
+          <td class="px-2">${teamSpm}</td>
+          <td class="px-2">${teamCpm}</td>
+          <td class="px-2">${teamRpm}</td>
+        `;
+        tbody.appendChild(trTot);
+      });
+      output.appendChild(exportTable);
+      document.getElementById('exportBtn').disabled = false;
+      await addDoc(collection(db, 'matches'), saveData);
+      alert('Match saved!');
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const table = document.getElementById('exportTable');
+      const wb = XLSX.utils.table_to_book(table, { sheet: 'Stats' });
+      XLSX.writeFile(wb, 'match-stats.xlsx');
+    });
+  </script>
+  <script src="/assets/include.js" defer></script>
+</body>
+</html>
