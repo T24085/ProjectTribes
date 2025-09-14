@@ -142,7 +142,6 @@
       });
     }
 
-
     async function loadMatches() {
       const snap = await getDocs(collection(db, 'matches'));
       const listDiv = document.getElementById('matchesList');
@@ -222,7 +221,6 @@
       });
     }
 
-
     document.getElementById('createMatch').addEventListener('click', () => {
       const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
       const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
@@ -230,7 +228,6 @@
         alert('Please select two different teams.');
         return;
       }
-
       editingMatchId = null;
       currentMatchCreated = null;
       document.getElementById('saveMatch').textContent = 'Save Match';
@@ -322,7 +319,6 @@
 
       const saveData = { map, team1: t1.name, team2: t2.name, created: currentMatchCreated || new Date(), stats: {} };
 
-
       [t1.name, t2.name].forEach(teamName => {
         const teamStats = stats[teamName];
         let totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
@@ -386,7 +382,6 @@
       });
       output.appendChild(exportTable);
       document.getElementById('exportBtn').disabled = false;
-
       if (editingMatchId) {
         await updateDoc(doc(db, 'matches', editingMatchId), saveData);
         alert('Match updated!');
@@ -398,7 +393,6 @@
       currentMatchCreated = null;
       document.getElementById('saveMatch').textContent = 'Save Match';
       loadMatches();
-
     });
 
     document.getElementById('exportBtn').addEventListener('click', () => {
