@@ -8,14 +8,14 @@
   <script src="oauth.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
-  <div id="nav-placeholder" data-include="/nav.html"></div>
+  <div id="nav-placeholder" data-include="nav.html"></div>
 
   <main class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">News</h1>
     <ul id="newsList" class="space-y-6"></ul>
   </main>
 
-  <script src="/assets/include.js" defer></script>
+  <script src="./assets/include.js" defer></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
