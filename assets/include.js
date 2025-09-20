@@ -6,8 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
   includeElements.forEach(async el => {
     const file = el.getAttribute('data-include');
     if (!file) return;
+    const trimmed = file.trim();
+    const isAbsoluteHttp = /^https?:\/\//i.test(trimmed);
+    const normalizedPath = (!isAbsoluteHttp && trimmed.startsWith('/') && !trimmed.startsWith('//'))
+      ? `.${trimmed}`
+      : trimmed;
     try {
-      const res = await fetch(file);
+      const res = await fetch(normalizedPath);
       if (!res.ok) throw new Error(`Failed to fetch ${file}`);
       const html = await res.text();
       el.innerHTML = html;

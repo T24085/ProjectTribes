@@ -7,7 +7,7 @@
   <script src="oauth.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
-    <div id="nav-placeholder" data-include="/nav.html"></div>
+    <div id="nav-placeholder" data-include="nav.html"></div>
 
   <div class="container mx-auto px-4 mt-8">
     <h1 class="text-3xl font-bold text-center mb-6">Tribes Streamers</h1>
@@ -20,7 +20,7 @@
   <div id="streamersGrid" class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
   </div>
 
-  <script src="/assets/include.js" defer></script>
+  <script src="./assets/include.js" defer></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
