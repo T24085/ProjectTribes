@@ -398,6 +398,162 @@
       container.appendChild(wrapper);
     }
 
+
+    async function rebuildPublicStats(existingSnapshot = null) {
+      const snap = existingSnapshot || await getDocs(collection(db, 'matches'));
+      const playerTotals = new Map();
+      const playerMapStats = new Map();
+      const teamTotals = new Map();
+      let totalMatches = 0;
+
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const stats = data.stats || {};
+        const teams = Object.keys(stats);
+        if (!teams.length) return;
+        totalMatches += 1;
+        const mapName = data.map || 'Unknown';
+
+        teams.forEach(teamName => {
+          const teamStats = stats[teamName];
+          if (!teamStats) return;
+
+          const totals = teamStats.totals || {};
+          const teamEntry = teamTotals.get(teamName) || {
+            name: teamName,
+            matches: 0,
+            time: 0,
+            kills: 0,
+            assists: 0,
+            score: 0,
+            captures: 0,
+            returns: 0
+          };
+          teamEntry.matches += 1;
+          teamEntry.time += toNumber(totals.time);
+          teamEntry.kills += toNumber(totals.kills);
+          teamEntry.assists += toNumber(totals.assists);
+          teamEntry.score += toNumber(totals.score);
+          teamEntry.captures += toNumber(totals.captures);
+          teamEntry.returns += toNumber(totals.returns);
+          teamTotals.set(teamName, teamEntry);
+
+          const players = teamStats.players || {};
+          Object.entries(players).forEach(([playerName, rawStats]) => {
+            const kills = toNumber(rawStats.kills);
+            const assists = toNumber(rawStats.assists);
+            const score = toNumber(rawStats.score);
+            const captures = toNumber(rawStats.captures);
+            const returns = toNumber(rawStats.returns);
+            const time = toNumber(rawStats.time);
+
+            const totalEntry = playerTotals.get(playerName) || {
+              name: playerName,
+              teams: new Set(),
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            totalEntry.teams.add(teamName);
+            totalEntry.matches += 1;
+            totalEntry.time += time;
+            totalEntry.kills += kills;
+            totalEntry.assists += assists;
+            totalEntry.score += score;
+            totalEntry.captures += captures;
+            totalEntry.returns += returns;
+            playerTotals.set(playerName, totalEntry);
+
+            const mapKey = `${playerName}__${mapName}`;
+            const mapEntry = playerMapStats.get(mapKey) || {
+              player: playerName,
+              teams: new Set(),
+              map: mapName,
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            mapEntry.teams.add(teamName);
+            mapEntry.matches += 1;
+            mapEntry.time += time;
+            mapEntry.kills += kills;
+            mapEntry.assists += assists;
+            mapEntry.score += score;
+            mapEntry.captures += captures;
+            mapEntry.returns += returns;
+            playerMapStats.set(mapKey, mapEntry);
+          });
+        });
+      });
+
+      const serializePlayerTotals = Array.from(playerTotals.values()).map(entry => ({
+        name: entry.name,
+        teams: Array.from(entry.teams),
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const serializePlayerMapStats = Array.from(playerMapStats.values()).map(entry => ({
+        player: entry.player,
+        teams: Array.from(entry.teams),
+        map: entry.map,
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const serializeTeamTotals = Array.from(teamTotals.values()).map(entry => ({
+        name: entry.name,
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const payload = {
+        generatedAt: serverTimestamp(),
+        totalMatches,
+        playerTotals: serializePlayerTotals,
+        playerMapStats: serializePlayerMapStats,
+        teamTotals: serializeTeamTotals
+      };
+
+      await setDoc(doc(db, 'publicStats', 'aggregates'), payload);
+    }
+
+    async function ensurePublicStatsSnapshot(existingSnapshot) {
+      try {
+        const statsDoc = await getDoc(doc(db, 'publicStats', 'aggregates'));
+        if (!statsDoc.exists()) {
+          await rebuildPublicStats(existingSnapshot);
+        }
+      } catch (err) {
+        console.error('Failed to ensure public stats snapshot', err);
+      }
+    }
+
+
+
     function resetOutput() {
       document.getElementById('output').innerHTML = '';
       document.getElementById('exportBtn').disabled = true;
@@ -543,9 +699,9 @@
           tr.innerHTML = `
             <td class="px-2">${teamName}</td>
             <td class="px-2">${player}</td>
+            <td class="px-2">${score}</td>
             <td class="px-2">${kills}</td>
             <td class="px-2">${assists}</td>
-            <td class="px-2">${score}</td>
 
             <td class="px-2">${captures}</td>
             <td class="px-2">${returns}</td>
@@ -578,9 +734,9 @@
           <td class="px-2">${teamName}</td>
           <td class="px-2">Totals</td>
 
+          <td class="px-2">${totalScore}</td>
           <td class="px-2">${totalKills}</td>
           <td class="px-2">${totalAssists}</td>
-          <td class="px-2">${totalScore}</td>
 
           <td class="px-2">${totalCaptures}</td>
           <td class="px-2">${totalReturns}</td>
@@ -602,8 +758,25 @@
       const map = document.getElementById('map').value;
       const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
       const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
-      if (!t1 || !t2) {
-        alert('Please select two teams before saving.');
+
+      if (!t1 || !t2 || t1.id === t2.id) {
+        alert('Please select two different teams before saving.');
+        return;
+      }
+
+      const saveData = buildSaveData(map, t1, t2);
+      renderRunningTotals(saveData.stats, formatMatchMeta(saveData));
+
+      try {
+        if (editingMatchId) {
+          await updateDoc(doc(db, 'matches', editingMatchId), saveData);
+        } else {
+          await addDoc(collection(db, 'matches'), saveData);
+        }
+      } catch (err) {
+        console.error('Failed to save match', err);
+        alert('Failed to save match. Please try again.');
+
         return;
       }
 
@@ -625,7 +798,6 @@
       } catch (err) {
         rebuildError = err;
         console.error('Failed to rebuild public stats', err);
-
       }
 
       editingMatchId = null;
