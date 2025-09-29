@@ -106,7 +106,8 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -333,113 +334,73 @@
       }
     };
 
+    const hydratePlayers = (entries = []) => {
+      const map = new Map();
+      entries.forEach(entry => {
+        const teams = Array.isArray(entry.teams) ? new Set(entry.teams) : new Set();
+        map.set(entry.name, { ...entry, teams });
+      });
+      return map;
+    };
+
+    const hydratePlayerMaps = (entries = []) => {
+      const map = new Map();
+      entries.forEach(entry => {
+        const teams = Array.isArray(entry.teams) ? new Set(entry.teams) : new Set();
+        map.set(`${entry.player}__${entry.map}`, { ...entry, teams });
+      });
+      return map;
+    };
+
+    const hydrateTeams = (entries = []) => {
+      const map = new Map();
+      entries.forEach(entry => {
+        map.set(entry.name, { ...entry });
+      });
+      return map;
+    };
+
+    const formatTimestamp = (value) => {
+      if (!value) return null;
+      if (typeof value.toDate === 'function') return value.toDate();
+      if (typeof value === 'object' && typeof value.seconds === 'number') {
+        return new Date(value.seconds * 1000);
+      }
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    };
+
     try {
-      const snap = await getDocs(collection(db, 'matches'));
-      if (snap.empty) {
-        statusEl.textContent = 'No match data found. Save a match in the admin panel to populate this dashboard.';
+      const docSnap = await getDoc(doc(db, 'publicStats', 'aggregates'));
+      if (!docSnap.exists()) {
+        statusEl.textContent = 'No public stats available yet. Save or update a match in the admin panel to publish them.';
         return;
       }
 
-      const playerTotals = new Map();
-      const playerMapStats = new Map();
-      const teamTotals = new Map();
-      let totalMatches = 0;
+      const data = docSnap.data() || {};
+      const playerTotals = hydratePlayers(data.playerTotals);
+      const playerMapStats = hydratePlayerMaps(data.playerMapStats);
+      const teamTotals = hydrateTeams(data.teamTotals);
+      const totalMatches = data.totalMatches || 0;
+      const generatedAt = formatTimestamp(data.generatedAt);
 
-      snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const map = data.map || 'Unknown';
-        const stats = data.stats || {};
-        const teams = Object.keys(stats);
-        if (!teams.length) return;
-        totalMatches += 1;
+      if (playerTotals.size === 0) {
+        statusEl.textContent = 'Published stats are empty. Save a match in the admin panel to populate this dashboard.';
+        return;
+      }
 
-        teams.forEach(teamName => {
-          const teamStats = stats[teamName];
-          if (!teamStats) return;
+      const updateHelper = generatedAt
+        ? `Last updated ${generatedAt.toLocaleString()}.`
+        : 'Last updated time unavailable.';
+      statusEl.textContent = `Loaded ${totalMatches} match${totalMatches === 1 ? '' : 'es'} worth of statistics. ${updateHelper}`;
 
-          const totals = teamStats.totals || {};
-          const teamEntry = teamTotals.get(teamName) || {
-            name: teamName,
-            matches: 0,
-            time: 0,
-            kills: 0,
-            assists: 0,
-            score: 0,
-            captures: 0,
-            returns: 0
-          };
-          teamEntry.matches += 1;
-          teamEntry.time += toNumber(totals.time);
-          teamEntry.kills += toNumber(totals.kills);
-          teamEntry.assists += toNumber(totals.assists);
-          teamEntry.score += toNumber(totals.score);
-          teamEntry.captures += toNumber(totals.captures);
-          teamEntry.returns += toNumber(totals.returns);
-          teamTotals.set(teamName, teamEntry);
-
-          const players = teamStats.players || {};
-          Object.entries(players).forEach(([playerName, rawStats]) => {
-            const kills = toNumber(rawStats.kills);
-            const assists = toNumber(rawStats.assists);
-            const score = toNumber(rawStats.score);
-            const captures = toNumber(rawStats.captures);
-            const returns = toNumber(rawStats.returns);
-            const time = toNumber(rawStats.time);
-
-            const totalEntry = playerTotals.get(playerName) || {
-              name: playerName,
-              teams: new Set(),
-              matches: 0,
-              time: 0,
-              kills: 0,
-              assists: 0,
-              score: 0,
-              captures: 0,
-              returns: 0
-            };
-            totalEntry.teams.add(teamName);
-            totalEntry.matches += 1;
-            totalEntry.time += time;
-            totalEntry.kills += kills;
-            totalEntry.assists += assists;
-            totalEntry.score += score;
-            totalEntry.captures += captures;
-            totalEntry.returns += returns;
-            playerTotals.set(playerName, totalEntry);
-
-            const mapKey = `${playerName}__${map}`;
-            const mapEntry = playerMapStats.get(mapKey) || {
-              player: playerName,
-              teams: new Set(),
-              map,
-              matches: 0,
-              time: 0,
-              kills: 0,
-              assists: 0,
-              score: 0,
-              captures: 0,
-              returns: 0
-            };
-            mapEntry.teams.add(teamName);
-            mapEntry.matches += 1;
-            mapEntry.time += time;
-            mapEntry.kills += kills;
-            mapEntry.assists += assists;
-            mapEntry.score += score;
-            mapEntry.captures += captures;
-            mapEntry.returns += returns;
-            playerMapStats.set(mapKey, mapEntry);
-          });
-        });
-      });
-
-      statusEl.textContent = `Loaded ${totalMatches} match${totalMatches === 1 ? '' : 'es'} worth of statistics.`;
-
+      addSummaryCard('Matches Processed', totalMatches, 'Matches included in this report.');
       addSummaryCard('Total Players', playerTotals.size, 'Unique players with recorded stats.');
       addSummaryCard('Total Teams', teamTotals.size, 'Teams represented across all matches.');
-      const totalMinutes = Array.from(playerTotals.values()).reduce((sum, p) => sum + p.time, 0);
+      const totalMinutes = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.time), 0);
       addSummaryCard('Minutes Tracked', formatNumber(totalMinutes, 2), 'Combined playtime from every player.');
-      const totalKills = Array.from(playerTotals.values()).reduce((sum, p) => sum + p.kills, 0);
+      const totalKills = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.kills), 0);
+
       addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
 
       renderTables(playerTotals, playerMapStats);
