@@ -131,6 +131,77 @@
       return Number.isFinite(num) ? num : 0;
     };
 
+    const normalizePlayerEntries = (teamName, teamStats) => {
+      if (!teamStats) return [];
+
+      const buildEntry = (playerName, rawStats) => {
+        if (!playerName) return null;
+        const stats = rawStats?.stats && typeof rawStats.stats === 'object' ? rawStats.stats : rawStats;
+        if (!stats || typeof stats !== 'object') return null;
+        return {
+          player: playerName,
+          stats
+        };
+      };
+
+      if (teamStats.players) {
+        const players = teamStats.players;
+        if (Array.isArray(players)) {
+          return players
+            .map((entry, index) => {
+              if (!entry) return null;
+              const playerName = entry.player || entry.name || `${teamName} Player ${index + 1}`;
+              return buildEntry(playerName, entry);
+            })
+            .filter(Boolean);
+        }
+        return Object.entries(players)
+          .map(([playerName, stats]) => buildEntry(playerName, stats))
+          .filter(Boolean);
+      }
+
+      if (Array.isArray(teamStats)) {
+        return teamStats
+          .map((entry, index) => {
+            if (!entry) return null;
+            const playerName = entry.player || entry.name || `${teamName} Player ${index + 1}`;
+            return buildEntry(playerName, entry);
+          })
+          .filter(Boolean);
+      }
+
+      if (typeof teamStats === 'object') {
+        return Object.entries(teamStats)
+          .map(([playerName, stats]) => buildEntry(playerName, stats))
+          .filter(Boolean);
+      }
+
+      return [];
+    };
+
+    const normalizeTotals = (teamStats, fallback) => {
+      const rawTotals = teamStats?.totals;
+      const totals = {
+        kills: fallback.kills,
+        assists: fallback.assists,
+        score: fallback.score,
+        captures: fallback.captures,
+        returns: fallback.returns,
+        time: fallback.time
+      };
+
+      if (rawTotals && typeof rawTotals === 'object') {
+        totals.kills = toNumber(rawTotals.kills ?? totals.kills);
+        totals.assists = toNumber(rawTotals.assists ?? totals.assists);
+        totals.score = toNumber(rawTotals.score ?? totals.score);
+        totals.captures = toNumber(rawTotals.captures ?? totals.captures);
+        totals.returns = toNumber(rawTotals.returns ?? totals.returns);
+        totals.time = toNumber(rawTotals.time ?? totals.time);
+      }
+
+      return totals;
+    };
+
     const addSummaryCard = (label, value, helper) => {
       const tpl = document.getElementById('summaryCardTemplate');
       const node = tpl.content.firstElementChild.cloneNode(true);
@@ -357,7 +428,28 @@
           const teamStats = stats[teamName];
           if (!teamStats) return;
 
-          const totals = teamStats.totals || {};
+          const playerEntries = normalizePlayerEntries(teamName, teamStats);
+
+          const derivedTotals = playerEntries.reduce((acc, entry) => {
+            const kills = toNumber(entry.stats.kills);
+            const assists = toNumber(entry.stats.assists);
+            const score = toNumber(entry.stats.score);
+            const captures = toNumber(entry.stats.captures);
+            const returns = toNumber(entry.stats.returns);
+            const time = toNumber(entry.stats.time);
+
+            acc.kills += kills;
+            acc.assists += assists;
+            acc.score += score;
+            acc.captures += captures;
+            acc.returns += returns;
+            acc.time += time;
+            return acc;
+          }, { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 });
+
+          const totals = normalizeTotals(teamStats, derivedTotals);
+          const hasData = playerEntries.length || Object.values(totals).some(value => value > 0);
+          if (!hasData) return;
           const teamEntry = teamTotals.get(teamName) || {
             name: teamName,
             matches: 0,
@@ -377,8 +469,7 @@
           teamEntry.returns += toNumber(totals.returns);
           teamTotals.set(teamName, teamEntry);
 
-          const players = teamStats.players || {};
-          Object.entries(players).forEach(([playerName, rawStats]) => {
+          playerEntries.forEach(({ player: playerName, stats: rawStats }) => {
             const kills = toNumber(rawStats.kills);
             const assists = toNumber(rawStats.assists);
             const score = toNumber(rawStats.score);
