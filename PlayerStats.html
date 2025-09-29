@@ -306,6 +306,17 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              animation: false,
+              interaction: { mode: 'nearest', intersect: true },
+              animations: {
+                radius: { duration: 0 },
+                resize: { duration: 0 }
+              },
+              transitions: {
+                active: {
+                  animation: { duration: 0 }
+                }
+              },
               scales: {
                 x: {
                   title: { display: true, text: 'Total Time Played (minutes)' },
@@ -364,6 +375,17 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              animation: false,
+              interaction: { mode: 'nearest', intersect: true },
+              animations: {
+                radius: { duration: 0 },
+                resize: { duration: 0 }
+              },
+              transitions: {
+                active: {
+                  animation: { duration: 0 }
+                }
+              },
               scales: {
                 x: {
                   title: { display: true, text: 'Score per Minute' },
