@@ -58,7 +58,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 
-    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
@@ -148,6 +148,7 @@
       listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2>';
       if (snap.empty) {
         listDiv.innerHTML += '<p>No matches saved.</p>';
+        await ensurePublicStatsSnapshot(snap);
         return;
       }
       const table = document.createElement('table');
@@ -183,6 +184,7 @@
         tr.querySelector('.delete-btn').addEventListener('click', () => deleteMatch(docSnap.id));
       });
       listDiv.appendChild(table);
+      await ensurePublicStatsSnapshot(snap);
     }
 
     async function deleteMatch(id) {
@@ -193,6 +195,12 @@
         currentMatchCreated = null;
         document.getElementById('statsSection').classList.add('hidden');
         document.getElementById('saveMatch').textContent = 'Save Match';
+      }
+      try {
+        await rebuildPublicStats();
+      } catch (err) {
+        console.error('Failed to rebuild public stats after deletion', err);
+        alert('Match deleted, but the public stats snapshot failed to rebuild. Please try saving another match.');
       }
       loadMatches();
     }
@@ -206,8 +214,12 @@
       document.getElementById('team1').value = team1 ? team1.id : '';
       document.getElementById('team2').value = team2 ? team2.id : '';
       document.getElementById('map').value = data.map;
-      createStatsTable('team1Stats', team1);
-      createStatsTable('team2Stats', team2);
+      const team1Stats = data.stats?.[data.team1] || null;
+      const team2Stats = data.stats?.[data.team2] || null;
+      const team1ForTable = team1 || { name: data.team1, players: Object.keys(team1Stats?.players || {}) };
+      const team2ForTable = team2 || { name: data.team2, players: Object.keys(team2Stats?.players || {}) };
+      createStatsTable('team1Stats', team1ForTable, team1Stats);
+      createStatsTable('team2Stats', team2ForTable, team2Stats);
       document.getElementById('statsSection').classList.remove('hidden');
       const inputs = document.querySelectorAll('.stat-input');
       inputs.forEach(inp => {
@@ -237,9 +249,13 @@
       document.getElementById('statsSection').classList.remove('hidden');
     });
 
-    function createStatsTable(containerId, team) {
+    function createStatsTable(containerId, team, existingStats = null) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'space-y-2';
+
       const table = document.createElement('table');
       table.className = 'min-w-full text-left border border-gray-700';
       table.innerHTML = `
@@ -253,25 +269,240 @@
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time (min)</th>
+            <th class="px-2">Remove</th>
           </tr>
         </thead>
         <tbody></tbody>
       `;
       const tbody = table.querySelector('tbody');
-      team.players.forEach(p => {
+
+      const rosterPlayers = team.players || [];
+      const existingPlayers = existingStats?.players ? Object.keys(existingStats.players) : [];
+      const playerSet = new Set([...rosterPlayers, ...existingPlayers]);
+
+      const addPlayerRow = (playerName, statValues = {}, isRosterPlayer = false) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-2">${p}</td>
-          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="kills" value="0"></td>
-          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="assists" value="0"></td>
-          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="score" value="0"></td>
-          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="captures" value="0"></td>
-          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="returns" value="0"></td>
-          <td><input type="number" class="stat-input w-20 px-1 bg-gray-800 border border-gray-700" data-player="${p}" data-team="${team.name}" data-stat="time" value="0"></td>
-        `;
+        tr.dataset.playerName = playerName;
+
+        const nameTd = document.createElement('td');
+        nameTd.className = 'px-2';
+        nameTd.textContent = playerName;
+        tr.appendChild(nameTd);
+
+        ['kills', 'assists', 'score', 'captures', 'returns', 'time'].forEach(stat => {
+          const td = document.createElement('td');
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'stat-input w-20 px-1 bg-gray-800 border border-gray-700';
+          input.dataset.player = playerName;
+          input.dataset.team = team.name;
+          input.dataset.stat = stat;
+          input.value = statValues[stat] ?? 0;
+          td.appendChild(input);
+          tr.appendChild(td);
+        });
+
+        const removeTd = document.createElement('td');
+        removeTd.className = 'px-2';
+        if (!isRosterPlayer) {
+          const removeBtn = document.createElement('button');
+          removeBtn.type = 'button';
+          removeBtn.className = 'px-2 py-1 bg-red-600 hover:bg-red-700 rounded';
+          removeBtn.textContent = 'Remove';
+          removeBtn.addEventListener('click', () => {
+            tbody.removeChild(tr);
+            playerSet.delete(playerName);
+          });
+          removeTd.appendChild(removeBtn);
+        }
+        tr.appendChild(removeTd);
+
         tbody.appendChild(tr);
+      };
+
+      playerSet.forEach(p => {
+        addPlayerRow(p, existingStats?.players?.[p] || {}, rosterPlayers.includes(p));
       });
-      container.appendChild(table);
+
+      wrapper.appendChild(table);
+
+      const addSubBtn = document.createElement('button');
+      addSubBtn.type = 'button';
+      addSubBtn.className = 'mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded';
+      addSubBtn.textContent = 'Add Sub Player';
+      addSubBtn.addEventListener('click', () => {
+        const name = prompt('Enter sub player name:');
+        if (!name) return;
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        if (playerSet.has(trimmed)) {
+          alert('Player already exists in this team list.');
+          return;
+        }
+        playerSet.add(trimmed);
+        addPlayerRow(trimmed, {}, false);
+      });
+
+      wrapper.appendChild(addSubBtn);
+      container.appendChild(wrapper);
+    }
+
+    const toNumber = (value) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    async function rebuildPublicStats(existingSnapshot = null) {
+      const snap = existingSnapshot || await getDocs(collection(db, 'matches'));
+      const playerTotals = new Map();
+      const playerMapStats = new Map();
+      const teamTotals = new Map();
+      let totalMatches = 0;
+
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const stats = data.stats || {};
+        const teams = Object.keys(stats);
+        if (!teams.length) return;
+        totalMatches += 1;
+        const mapName = data.map || 'Unknown';
+
+        teams.forEach(teamName => {
+          const teamStats = stats[teamName];
+          if (!teamStats) return;
+
+          const totals = teamStats.totals || {};
+          const teamEntry = teamTotals.get(teamName) || {
+            name: teamName,
+            matches: 0,
+            time: 0,
+            kills: 0,
+            assists: 0,
+            score: 0,
+            captures: 0,
+            returns: 0
+          };
+          teamEntry.matches += 1;
+          teamEntry.time += toNumber(totals.time);
+          teamEntry.kills += toNumber(totals.kills);
+          teamEntry.assists += toNumber(totals.assists);
+          teamEntry.score += toNumber(totals.score);
+          teamEntry.captures += toNumber(totals.captures);
+          teamEntry.returns += toNumber(totals.returns);
+          teamTotals.set(teamName, teamEntry);
+
+          const players = teamStats.players || {};
+          Object.entries(players).forEach(([playerName, rawStats]) => {
+            const kills = toNumber(rawStats.kills);
+            const assists = toNumber(rawStats.assists);
+            const score = toNumber(rawStats.score);
+            const captures = toNumber(rawStats.captures);
+            const returns = toNumber(rawStats.returns);
+            const time = toNumber(rawStats.time);
+
+            const totalEntry = playerTotals.get(playerName) || {
+              name: playerName,
+              teams: new Set(),
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            totalEntry.teams.add(teamName);
+            totalEntry.matches += 1;
+            totalEntry.time += time;
+            totalEntry.kills += kills;
+            totalEntry.assists += assists;
+            totalEntry.score += score;
+            totalEntry.captures += captures;
+            totalEntry.returns += returns;
+            playerTotals.set(playerName, totalEntry);
+
+            const mapKey = `${playerName}__${mapName}`;
+            const mapEntry = playerMapStats.get(mapKey) || {
+              player: playerName,
+              teams: new Set(),
+              map: mapName,
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            mapEntry.teams.add(teamName);
+            mapEntry.matches += 1;
+            mapEntry.time += time;
+            mapEntry.kills += kills;
+            mapEntry.assists += assists;
+            mapEntry.score += score;
+            mapEntry.captures += captures;
+            mapEntry.returns += returns;
+            playerMapStats.set(mapKey, mapEntry);
+          });
+        });
+      });
+
+      const serializePlayerTotals = Array.from(playerTotals.values()).map(entry => ({
+        name: entry.name,
+        teams: Array.from(entry.teams),
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const serializePlayerMapStats = Array.from(playerMapStats.values()).map(entry => ({
+        player: entry.player,
+        teams: Array.from(entry.teams),
+        map: entry.map,
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const serializeTeamTotals = Array.from(teamTotals.values()).map(entry => ({
+        name: entry.name,
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const payload = {
+        generatedAt: serverTimestamp(),
+        totalMatches,
+        playerTotals: serializePlayerTotals,
+        playerMapStats: serializePlayerMapStats,
+        teamTotals: serializeTeamTotals
+      };
+
+      await setDoc(doc(db, 'publicStats', 'aggregates'), payload);
+    }
+
+    async function ensurePublicStatsSnapshot(existingSnapshot) {
+      try {
+        const statsDoc = await getDoc(doc(db, 'publicStats', 'aggregates'));
+        if (!statsDoc.exists()) {
+          await rebuildPublicStats(existingSnapshot);
+        }
+      } catch (err) {
+        console.error('Failed to ensure public stats snapshot', err);
+      }
     }
 
     document.getElementById('saveMatch').addEventListener('click', async () => {
@@ -320,7 +551,7 @@
       const saveData = { map, team1: t1.name, team2: t2.name, created: currentMatchCreated || new Date(), stats: {} };
 
       [t1.name, t2.name].forEach(teamName => {
-        const teamStats = stats[teamName];
+        const teamStats = stats[teamName] || {};
         let totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
         saveData.stats[teamName] = { players: {}, totals:{} };
         Object.keys(teamStats).forEach(player => {
@@ -382,17 +613,36 @@
       });
       output.appendChild(exportTable);
       document.getElementById('exportBtn').disabled = false;
-      if (editingMatchId) {
-        await updateDoc(doc(db, 'matches', editingMatchId), saveData);
-        alert('Match updated!');
-      } else {
-        await addDoc(collection(db, 'matches'), saveData);
-        alert('Match saved!');
+      try {
+        if (editingMatchId) {
+          await updateDoc(doc(db, 'matches', editingMatchId), saveData);
+        } else {
+          await addDoc(collection(db, 'matches'), saveData);
+        }
+      } catch (err) {
+        console.error('Failed to save match', err);
+        alert('Failed to save match. Please try again.');
+        return;
       }
+
+      let rebuildError = null;
+      try {
+        await rebuildPublicStats();
+      } catch (err) {
+        rebuildError = err;
+        console.error('Failed to rebuild public stats', err);
+      }
+
       editingMatchId = null;
       currentMatchCreated = null;
       document.getElementById('saveMatch').textContent = 'Save Match';
       loadMatches();
+
+      if (rebuildError) {
+        alert('Match saved, but updating the public stats snapshot failed. Please try saving again to refresh the stats.');
+      } else {
+        alert('Match saved! Public stats have been refreshed.');
+      }
     });
 
     document.getElementById('exportBtn').addEventListener('click', () => {
