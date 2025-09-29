@@ -308,9 +308,9 @@
         <thead>
           <tr>
             <th class="px-2">Player</th>
+            <th class="px-2">Score</th>
             <th class="px-2">Kills</th>
             <th class="px-2">Assists</th>
-            <th class="px-2">Score</th>
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time (min)</th>
@@ -334,7 +334,7 @@
         nameTd.textContent = playerName;
         tr.appendChild(nameTd);
 
-        ['kills', 'assists', 'score', 'captures', 'returns', 'time'].forEach(stat => {
+        ['score', 'kills', 'assists', 'captures', 'returns', 'time'].forEach(stat => {
           const td = document.createElement('td');
           const input = document.createElement('input');
           input.type = 'number';
@@ -648,9 +648,9 @@
           <tr>
             <th class="px-2">Team</th>
             <th class="px-2">Player</th>
+            <th class="px-2">Score</th>
             <th class="px-2">Kills</th>
             <th class="px-2">Assists</th>
-            <th class="px-2">Score</th>
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time</th>
@@ -714,9 +714,9 @@
           tr.innerHTML = `
             <td class="px-2">${teamName}</td>
             <td class="px-2">${player}</td>
+            <td class="px-2">${score}</td>
             <td class="px-2">${kills}</td>
             <td class="px-2">${assists}</td>
-            <td class="px-2">${score}</td>
             <td class="px-2">${captures}</td>
             <td class="px-2">${returns}</td>
             <td class="px-2">${time}</td>
@@ -747,9 +747,9 @@
         trTot.innerHTML = `
           <td class="px-2">${teamName}</td>
           <td class="px-2">Totals</td>
+          <td class="px-2">${totalScore}</td>
           <td class="px-2">${totalKills}</td>
           <td class="px-2">${totalAssists}</td>
-          <td class="px-2">${totalScore}</td>
           <td class="px-2">${totalCaptures}</td>
           <td class="px-2">${totalReturns}</td>
           <td class="px-2">${totalTime}</td>
