@@ -67,7 +67,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 
-    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
@@ -117,7 +117,6 @@
         createdText
       };
     }
-
     const toNumber = (value) => {
       const num = parseFloat(value);
       return Number.isFinite(num) ? num : 0;
@@ -188,6 +187,7 @@
         if (!editingMatchId) {
           resetOutput();
         }
+
         return;
       }
       const table = document.createElement('table');
@@ -237,6 +237,7 @@
         const matchMeta = formatMatchMeta(latest.data);
         renderRunningTotals(latest.data.stats || {}, matchMeta);
       }
+
     }
 
     async function deleteMatch(id) {
@@ -313,9 +314,9 @@
         <thead>
           <tr>
             <th class="px-2">Player</th>
+            <th class="px-2">Score</th>
             <th class="px-2">Kills</th>
             <th class="px-2">Assists</th>
-            <th class="px-2">Score</th>
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time (min)</th>
@@ -339,7 +340,7 @@
         nameTd.textContent = playerName;
         tr.appendChild(nameTd);
 
-        ['kills', 'assists', 'score', 'captures', 'returns', 'time'].forEach(stat => {
+        ['score', 'kills', 'assists', 'captures', 'returns', 'time'].forEach(stat => {
           const td = document.createElement('td');
           const input = document.createElement('input');
           input.type = 'number';
@@ -454,6 +455,7 @@
     }
 
     function renderRunningTotals(statsByTeam = {}, matchMeta = null) {
+
       const output = document.getElementById('output');
       const exportBtn = document.getElementById('exportBtn');
       const totalsSection = document.getElementById('runningTotalsSection');
@@ -493,9 +495,9 @@
           <tr>
             <th class="px-2">Team</th>
             <th class="px-2">Player</th>
+            <th class="px-2">Score</th>
             <th class="px-2">Kills</th>
             <th class="px-2">Assists</th>
-            <th class="px-2">Score</th>
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time</th>
@@ -536,6 +538,7 @@
           const cpm = time ? (captures / time).toFixed(2) : (statEntry.cpm ?? '0');
           const rpm = time ? (returns / time).toFixed(2) : (statEntry.rpm ?? '0');
 
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td class="px-2">${teamName}</td>
@@ -543,6 +546,7 @@
             <td class="px-2">${kills}</td>
             <td class="px-2">${assists}</td>
             <td class="px-2">${score}</td>
+
             <td class="px-2">${captures}</td>
             <td class="px-2">${returns}</td>
             <td class="px-2">${time}</td>
@@ -573,9 +577,11 @@
         trTot.innerHTML = `
           <td class="px-2">${teamName}</td>
           <td class="px-2">Totals</td>
+
           <td class="px-2">${totalKills}</td>
           <td class="px-2">${totalAssists}</td>
           <td class="px-2">${totalScore}</td>
+
           <td class="px-2">${totalCaptures}</td>
           <td class="px-2">${totalReturns}</td>
           <td class="px-2">${totalTime}</td>
@@ -610,11 +616,28 @@
       } else {
         await addDoc(collection(db, 'matches'), saveData);
         alert('Match saved!');
+
       }
+
+      let rebuildError = null;
+      try {
+        await rebuildPublicStats();
+      } catch (err) {
+        rebuildError = err;
+        console.error('Failed to rebuild public stats', err);
+
+      }
+
       editingMatchId = null;
       currentMatchCreated = null;
       document.getElementById('saveMatch').textContent = 'Save Match';
       loadMatches();
+
+      if (rebuildError) {
+        alert('Match saved, but updating the public stats snapshot failed. Please try saving again to refresh the stats.');
+      } else {
+        alert('Match saved! Public stats have been refreshed.');
+      }
     });
 
     document.getElementById('exportBtn').addEventListener('click', () => {
