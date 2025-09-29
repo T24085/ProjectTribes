@@ -184,7 +184,9 @@
       listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2>';
       if (snap.empty) {
         listDiv.innerHTML += '<p>No matches saved.</p>';
-        await ensurePublicStatsSnapshot(snap);
+        if (!editingMatchId) {
+          resetOutput();
+        }
 
         return;
       }
@@ -223,7 +225,18 @@
         tr.querySelector('.delete-btn').addEventListener('click', () => deleteMatch(docSnap.id));
       });
       listDiv.appendChild(table);
-      await ensurePublicStatsSnapshot(snap);
+
+      if (!editingMatchId && matches.length) {
+        const latest = matches.reduce((latestMatch, current) => {
+          const latestCreated = latestMatch?.data?.created;
+          const currentCreated = current.data?.created;
+          const latestTime = latestCreated?.toDate ? latestCreated.toDate().getTime() : (latestCreated instanceof Date ? latestCreated.getTime() : new Date(latestCreated || 0).getTime());
+          const currentTime = currentCreated?.toDate ? currentCreated.toDate().getTime() : (currentCreated instanceof Date ? currentCreated.getTime() : new Date(currentCreated || 0).getTime());
+          return currentTime > latestTime ? current : latestMatch;
+        }, null) || matches[0];
+        const matchMeta = formatMatchMeta(latest.data);
+        renderRunningTotals(latest.data.stats || {}, matchMeta);
+      }
 
     }
 
@@ -237,12 +250,6 @@
         statsSection.classList.add('hidden');
         document.getElementById('saveMatch').textContent = 'Save Match';
         resetOutput();
-      }
-      try {
-        await rebuildPublicStats();
-      } catch (err) {
-        console.error('Failed to rebuild public stats after deletion', err);
-        alert('Match deleted, but the public stats snapshot failed to rebuild. Please try saving another match.');
       }
       loadMatches();
     }
@@ -274,7 +281,6 @@
         }
       });
       renderRunningTotals(data.stats || {}, formatMatchMeta(data));
-
     }
 
     document.getElementById('createMatch').addEventListener('click', () => {
@@ -391,6 +397,7 @@
       wrapper.appendChild(addSubBtn);
       container.appendChild(wrapper);
     }
+
 
     async function rebuildPublicStats(existingSnapshot = null) {
       const snap = existingSnapshot || await getDocs(collection(db, 'matches'));
@@ -545,13 +552,14 @@
       }
     }
 
+
+
     function resetOutput() {
       document.getElementById('output').innerHTML = '';
       document.getElementById('exportBtn').disabled = true;
       document.getElementById('runningTotalsTitle').textContent = 'Running Totals';
       document.getElementById('runningTotalsMeta').textContent = '';
       document.getElementById('runningTotalsSection').classList.add('hidden');
-
     }
 
     function buildSaveData(map, t1, t2) {
@@ -686,6 +694,7 @@
           const cpm = time ? (captures / time).toFixed(2) : (statEntry.cpm ?? '0');
           const rpm = time ? (returns / time).toFixed(2) : (statEntry.rpm ?? '0');
 
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td class="px-2">${teamName}</td>
@@ -693,6 +702,7 @@
             <td class="px-2">${score}</td>
             <td class="px-2">${kills}</td>
             <td class="px-2">${assists}</td>
+
             <td class="px-2">${captures}</td>
             <td class="px-2">${returns}</td>
             <td class="px-2">${time}</td>
@@ -723,9 +733,11 @@
         trTot.innerHTML = `
           <td class="px-2">${teamName}</td>
           <td class="px-2">Totals</td>
+
           <td class="px-2">${totalScore}</td>
           <td class="px-2">${totalKills}</td>
           <td class="px-2">${totalAssists}</td>
+
           <td class="px-2">${totalCaptures}</td>
           <td class="px-2">${totalReturns}</td>
           <td class="px-2">${totalTime}</td>
@@ -746,6 +758,7 @@
       const map = document.getElementById('map').value;
       const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
       const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
+
       if (!t1 || !t2 || t1.id === t2.id) {
         alert('Please select two different teams before saving.');
         return;
@@ -763,7 +776,20 @@
       } catch (err) {
         console.error('Failed to save match', err);
         alert('Failed to save match. Please try again.');
+
         return;
+      }
+
+      const saveData = buildSaveData(map, t1, t2);
+      renderRunningTotals(saveData.stats, formatMatchMeta(saveData));
+
+      if (editingMatchId) {
+        await updateDoc(doc(db, 'matches', editingMatchId), saveData);
+        alert('Match updated!');
+      } else {
+        await addDoc(collection(db, 'matches'), saveData);
+        alert('Match saved!');
+
       }
 
       let rebuildError = null;
