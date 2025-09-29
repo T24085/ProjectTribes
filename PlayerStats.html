@@ -127,6 +127,7 @@
     const playerMapBody = document.getElementById('playerMapBody');
     let playerChartInstance = null;
     let teamChartInstance = null;
+    let pendingChartBuild = null;
     const destroyCharts = () => {
       if (playerChartInstance) {
         playerChartInstance.destroy();
@@ -135,6 +136,10 @@
       if (teamChartInstance) {
         teamChartInstance.destroy();
         teamChartInstance = null;
+      }
+      if (pendingChartBuild !== null) {
+        cancelAnimationFrame(pendingChartBuild);
+        pendingChartBuild = null;
       }
     };
 
@@ -273,120 +278,127 @@
         }))
         .filter(team => team.time > 0);
 
-      const shouldShowCharts = playerPoints.length > 0 || teamData.length > 0;
-      if (!shouldShowCharts) {
+      if (!playerPoints.length && !teamData.length) {
         chartsSection.style.display = 'none';
         return;
       }
 
       chartsSection.style.display = 'grid';
 
-      if (playerPoints.length) {
-        const ctx = document.getElementById('playerScatter').getContext('2d');
-        playerChartInstance = new Chart(ctx, {
-          type: 'bubble',
-          data: {
-            datasets: [{
-              label: 'Players',
-              data: playerPoints.map(point => ({ x: point.x, y: point.y, r: point.r, player: point.player })),
-              backgroundColor: 'rgba(129, 140, 248, 0.6)',
-              borderColor: 'rgba(129, 140, 248, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                title: { display: true, text: 'Total Time Played (minutes)' },
-                ticks: { color: '#d1d5db' },
-                grid: { color: 'rgba(55, 65, 81, 0.5)' }
-              },
-              y: {
-                title: { display: true, text: 'Kills per Minute' },
-                ticks: { color: '#d1d5db' },
-                grid: { color: 'rgba(55, 65, 81, 0.5)' }
-              }
-            },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: (context) => {
-                    const player = context.raw.player;
-                    const kpm = player.time ? player.kills / player.time : 0;
-                    return [
-                      `${player.name} (${Array.from(player.teams).join(', ') || 'Free Agent'})`,
-                      `Time: ${formatNumber(player.time, 2)} min`,
-                      `Kills: ${formatNumber(player.kills, 0)}`,
-                      `KPM: ${formatNumber(kpm)}`
-                    ];
-                  }
-                }
-              },
-              legend: {
-                labels: { color: '#e5e7eb' }
-              }
-            }
-          }
-        });
-      }
+      const buildCharts = () => {
+        pendingChartBuild = null;
 
-      if (teamData.length) {
-        const ctx = document.getElementById('teamScatter').getContext('2d');
-        teamChartInstance = new Chart(ctx, {
-          type: 'bubble',
-          data: {
-            datasets: [{
-              label: 'Teams',
-              data: teamData.map(team => ({
-                x: Number((team.score / team.time).toFixed(3)),
-                y: Number((team.kills / team.time).toFixed(3)),
-                r: Math.max(6, Math.min(20, Math.max(1, team.time) / 10)),
-                team
-              })),
-              backgroundColor: 'rgba(16, 185, 129, 0.6)',
-              borderColor: 'rgba(16, 185, 129, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                title: { display: true, text: 'Score per Minute' },
-                ticks: { color: '#d1d5db' },
-                grid: { color: 'rgba(55, 65, 81, 0.5)' }
-              },
-              y: {
-                title: { display: true, text: 'Kills per Minute' },
-                ticks: { color: '#d1d5db' },
-                grid: { color: 'rgba(55, 65, 81, 0.5)' }
-              }
+        if (playerPoints.length) {
+          const ctx = document.getElementById('playerScatter').getContext('2d');
+          playerChartInstance = new Chart(ctx, {
+            type: 'bubble',
+            data: {
+              datasets: [{
+                label: 'Players',
+                data: playerPoints.map(point => ({ x: point.x, y: point.y, r: point.r, player: point.player })),
+                backgroundColor: 'rgba(129, 140, 248, 0.6)',
+                borderColor: 'rgba(129, 140, 248, 1)',
+                borderWidth: 1
+              }]
             },
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  label: (context) => {
-                    const team = context.raw.team;
-                    const spm = team.time ? team.score / team.time : 0;
-                    const kpm = team.time ? team.kills / team.time : 0;
-                    return [
-                      `${team.name}`,
-                      `Matches: ${team.matches}`,
-                      `Time: ${formatNumber(team.time, 2)} min`,
-                      `Score: ${formatNumber(team.score, 0)} (SPM ${formatNumber(spm)})`,
-                      `Kills: ${formatNumber(team.kills, 0)} (KPM ${formatNumber(kpm)})`
-                    ];
-                  }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  title: { display: true, text: 'Total Time Played (minutes)' },
+                  ticks: { color: '#d1d5db' },
+                  grid: { color: 'rgba(55, 65, 81, 0.5)' }
+                },
+                y: {
+                  title: { display: true, text: 'Kills per Minute' },
+                  ticks: { color: '#d1d5db' },
+                  grid: { color: 'rgba(55, 65, 81, 0.5)' }
                 }
               },
-              legend: {
-                labels: { color: '#e5e7eb' }
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const player = context.raw.player;
+                      const kpm = player.time ? player.kills / player.time : 0;
+                      return [
+                        `${player.name} (${Array.from(player.teams).join(', ') || 'Free Agent'})`,
+                        `Time: ${formatNumber(player.time, 2)} min`,
+                        `Kills: ${formatNumber(player.kills, 0)}`,
+                        `KPM: ${formatNumber(kpm)}`
+                      ];
+                    }
+                  }
+                },
+                legend: {
+                  labels: { color: '#e5e7eb' }
+                }
               }
             }
-          }
-        });
-      }
+          });
+        }
+
+        if (teamData.length) {
+          const ctx = document.getElementById('teamScatter').getContext('2d');
+          teamChartInstance = new Chart(ctx, {
+            type: 'bubble',
+            data: {
+              datasets: [{
+                label: 'Teams',
+                data: teamData.map(team => ({
+                  x: Number((team.score / team.time).toFixed(3)),
+                  y: Number((team.kills / team.time).toFixed(3)),
+                  r: Math.max(6, Math.min(20, Math.max(1, team.time) / 10)),
+                  team
+                })),
+                backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                borderColor: 'rgba(16, 185, 129, 1)',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  title: { display: true, text: 'Score per Minute' },
+                  ticks: { color: '#d1d5db' },
+                  grid: { color: 'rgba(55, 65, 81, 0.5)' }
+                },
+                y: {
+                  title: { display: true, text: 'Kills per Minute' },
+                  ticks: { color: '#d1d5db' },
+                  grid: { color: 'rgba(55, 65, 81, 0.5)' }
+                }
+              },
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const team = context.raw.team;
+                      const spm = team.time ? team.score / team.time : 0;
+                      const kpm = team.time ? team.kills / team.time : 0;
+                      return [
+                        `${team.name}`,
+                        `Matches: ${team.matches}`,
+                        `Time: ${formatNumber(team.time, 2)} min`,
+                        `Score: ${formatNumber(team.score, 0)} (SPM ${formatNumber(spm)})`,
+                        `Kills: ${formatNumber(team.kills, 0)} (KPM ${formatNumber(kpm)})`
+                      ];
+                    }
+                  }
+                },
+                legend: {
+                  labels: { color: '#e5e7eb' }
+                }
+              }
+            }
+          });
+        }
+      };
+
+      pendingChartBuild = requestAnimationFrame(buildCharts);
     };
     const hydratePlayers = (entries = []) => {
       const map = new Map();
