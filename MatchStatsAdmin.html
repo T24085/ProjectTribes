@@ -767,29 +767,18 @@
       const saveData = buildSaveData(map, t1, t2);
       renderRunningTotals(saveData.stats, formatMatchMeta(saveData));
 
+      let actionMessage = 'Match saved!';
       try {
         if (editingMatchId) {
           await updateDoc(doc(db, 'matches', editingMatchId), saveData);
+          actionMessage = 'Match updated!';
         } else {
           await addDoc(collection(db, 'matches'), saveData);
         }
       } catch (err) {
         console.error('Failed to save match', err);
         alert('Failed to save match. Please try again.');
-
         return;
-      }
-
-      const saveData = buildSaveData(map, t1, t2);
-      renderRunningTotals(saveData.stats, formatMatchMeta(saveData));
-
-      if (editingMatchId) {
-        await updateDoc(doc(db, 'matches', editingMatchId), saveData);
-        alert('Match updated!');
-      } else {
-        await addDoc(collection(db, 'matches'), saveData);
-        alert('Match saved!');
-
       }
 
       let rebuildError = null;
@@ -806,9 +795,9 @@
       loadMatches();
 
       if (rebuildError) {
-        alert('Match saved, but updating the public stats snapshot failed. Please try saving again to refresh the stats.');
+        alert(`${actionMessage} However, updating the public stats snapshot failed. Please try saving again to refresh the stats.`);
       } else {
-        alert('Match saved! Public stats have been refreshed.');
+        alert(`${actionMessage} Public stats have been refreshed.`);
       }
     });
 
