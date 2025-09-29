@@ -246,7 +246,6 @@
 
     const renderCharts = (playerTotals, teamTotals) => {
       destroyCharts();
-      chartsSection.style.display = 'none';
 
       const playerData = Array.from(playerTotals.values())
         .map(player => ({
@@ -264,9 +263,25 @@
         player
       }));
 
-      let hasChart = false;
+      const teamData = Array.from(teamTotals.values())
+        .map(team => ({
+          ...team,
+          time: toNumber(team.time),
+          score: toNumber(team.score),
+          kills: toNumber(team.kills),
+          matches: toNumber(team.matches)
+        }))
+        .filter(team => team.time > 0);
+
+      const shouldShowCharts = playerPoints.length > 0 || teamData.length > 0;
+      if (!shouldShowCharts) {
+        chartsSection.style.display = 'none';
+        return;
+      }
+
+      chartsSection.style.display = 'grid';
+
       if (playerPoints.length) {
-        hasChart = true;
         const ctx = document.getElementById('playerScatter').getContext('2d');
         playerChartInstance = new Chart(ctx, {
           type: 'bubble',
@@ -316,18 +331,7 @@
         });
       }
 
-      const teamData = Array.from(teamTotals.values())
-        .map(team => ({
-          ...team,
-          time: toNumber(team.time),
-          score: toNumber(team.score),
-          kills: toNumber(team.kills),
-          matches: toNumber(team.matches)
-        }))
-        .filter(team => team.time > 0);
-
       if (teamData.length) {
-        hasChart = true;
         const ctx = document.getElementById('teamScatter').getContext('2d');
         teamChartInstance = new Chart(ctx, {
           type: 'bubble',
@@ -382,10 +386,6 @@
             }
           }
         });
-      }
-
-      if (hasChart) {
-        chartsSection.style.display = 'grid';
       }
     };
     const hydratePlayers = (entries = []) => {
