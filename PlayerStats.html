@@ -108,6 +108,7 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
     import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
+
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
       authDomain: "team-sign-up-b5646.firebaseapp.com",
@@ -399,6 +400,7 @@
       const totalMinutes = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.time), 0);
       addSummaryCard('Minutes Tracked', formatNumber(totalMinutes, 2), 'Combined playtime from every player.');
       const totalKills = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.kills), 0);
+
       addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
 
       renderTables(playerTotals, playerMapStats);
