@@ -308,9 +308,9 @@
         <thead>
           <tr>
             <th class="px-2">Player</th>
+            <th class="px-2">Score</th>
             <th class="px-2">Kills</th>
             <th class="px-2">Assists</th>
-            <th class="px-2">Score</th>
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time (min)</th>
@@ -334,7 +334,7 @@
         nameTd.textContent = playerName;
         tr.appendChild(nameTd);
 
-        ['kills', 'assists', 'score', 'captures', 'returns', 'time'].forEach(stat => {
+        ['score', 'kills', 'assists', 'captures', 'returns', 'time'].forEach(stat => {
           const td = document.createElement('td');
           const input = document.createElement('input');
           input.type = 'number';
@@ -391,11 +391,6 @@
       wrapper.appendChild(addSubBtn);
       container.appendChild(wrapper);
     }
-
-    const toNumber = (value) => {
-      const num = parseFloat(value);
-      return Number.isFinite(num) ? num : 0;
-    };
 
     async function rebuildPublicStats(existingSnapshot = null) {
       const snap = existingSnapshot || await getDocs(collection(db, 'matches'));
@@ -648,9 +643,9 @@
           <tr>
             <th class="px-2">Team</th>
             <th class="px-2">Player</th>
+            <th class="px-2">Score</th>
             <th class="px-2">Kills</th>
             <th class="px-2">Assists</th>
-            <th class="px-2">Score</th>
             <th class="px-2">Captures</th>
             <th class="px-2">Returns</th>
             <th class="px-2">Time</th>
@@ -691,32 +686,13 @@
           const cpm = time ? (captures / time).toFixed(2) : (statEntry.cpm ?? '0');
           const rpm = time ? (returns / time).toFixed(2) : (statEntry.rpm ?? '0');
 
-
-      [t1.name, t2.name].forEach(teamName => {
-        const teamStats = stats[teamName] || {};
-        let totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
-        saveData.stats[teamName] = { players: {}, totals:{} };
-        Object.keys(teamStats).forEach(player => {
-          const s = teamStats[player];
-          totals.kills += s.kills;
-          totals.assists += s.assists;
-          totals.score += s.score;
-          totals.captures += s.captures;
-          totals.returns += s.returns;
-          totals.time += s.time;
-          const kpm = s.time ? (s.kills / s.time).toFixed(2) : '0';
-          const apm = s.time ? (s.assists / s.time).toFixed(2) : '0';
-          const spm = s.time ? (s.score / s.time).toFixed(2) : '0';
-          const cpm = s.time ? (s.captures / s.time).toFixed(2) : '0';
-          const rpm = s.time ? (s.returns / s.time).toFixed(2) : '0';
-          saveData.stats[teamName].players[player] = { ...s, kpm, apm, spm, cpm, rpm };
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td class="px-2">${teamName}</td>
             <td class="px-2">${player}</td>
+            <td class="px-2">${score}</td>
             <td class="px-2">${kills}</td>
             <td class="px-2">${assists}</td>
-            <td class="px-2">${score}</td>
             <td class="px-2">${captures}</td>
             <td class="px-2">${returns}</td>
             <td class="px-2">${time}</td>
@@ -747,9 +723,9 @@
         trTot.innerHTML = `
           <td class="px-2">${teamName}</td>
           <td class="px-2">Totals</td>
+          <td class="px-2">${totalScore}</td>
           <td class="px-2">${totalKills}</td>
           <td class="px-2">${totalAssists}</td>
-          <td class="px-2">${totalScore}</td>
           <td class="px-2">${totalCaptures}</td>
           <td class="px-2">${totalReturns}</td>
           <td class="px-2">${totalTime}</td>
@@ -764,6 +740,20 @@
 
       output.appendChild(exportTable);
       document.getElementById('exportBtn').disabled = false;
+    }
+
+    document.getElementById('saveMatch').addEventListener('click', async () => {
+      const map = document.getElementById('map').value;
+      const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
+      const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
+      if (!t1 || !t2 || t1.id === t2.id) {
+        alert('Please select two different teams before saving.');
+        return;
+      }
+
+      const saveData = buildSaveData(map, t1, t2);
+      renderRunningTotals(saveData.stats, formatMatchMeta(saveData));
+
       try {
         if (editingMatchId) {
           await updateDoc(doc(db, 'matches', editingMatchId), saveData);
@@ -782,7 +772,6 @@
       } catch (err) {
         rebuildError = err;
         console.error('Failed to rebuild public stats', err);
-
       }
 
       editingMatchId = null;
