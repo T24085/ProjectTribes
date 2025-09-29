@@ -44,14 +44,23 @@
     <div id="statsSection" class="hidden">
       <div id="team1Stats"></div>
       <div id="team2Stats" class="mt-8"></div>
-      <div class="mt-6 flex gap-4">
+      <div class="mt-6">
         <button id="saveMatch" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">Save Match</button>
-        <button id="exportBtn" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export to Excel</button>
       </div>
-      <div id="output" class="mt-8"></div>
     </div>
 
     <div id="matchesList" class="mt-12"></div>
+
+    <div id="runningTotalsSection" class="hidden mt-12">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div>
+          <h2 id="runningTotalsTitle" class="text-2xl font-bold">Running Totals</h2>
+          <p id="runningTotalsMeta" class="text-sm text-gray-300"></p>
+        </div>
+        <button id="exportBtn" class="self-start md:self-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export to Excel</button>
+      </div>
+      <div id="output" class="mt-6"></div>
+    </div>
 
   </div>
 
@@ -85,6 +94,33 @@
     const logoutBtn = document.getElementById('logoutBtn');
 
     let editingMatchId = null, currentMatchCreated = null;
+
+    function formatMatchMeta(data) {
+      const created = data?.created;
+      let createdDate = '';
+      if (created?.toDate) {
+        createdDate = created.toDate();
+      } else if (created instanceof Date) {
+        createdDate = created;
+      } else if (typeof created === 'string' || typeof created === 'number') {
+        const parsed = new Date(created);
+        if (!Number.isNaN(parsed.getTime())) {
+          createdDate = parsed;
+        }
+      }
+
+      const createdText = createdDate ? createdDate.toLocaleString() : '';
+      return {
+        team1: data?.team1 ?? '',
+        team2: data?.team2 ?? '',
+        map: data?.map ?? '',
+        createdText
+      };
+    }
+    const toNumber = (value) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : 0;
+    };
 
 
     loginBtn.addEventListener('click', () => {
@@ -149,6 +185,7 @@
       if (snap.empty) {
         listDiv.innerHTML += '<p>No matches saved.</p>';
         await ensurePublicStatsSnapshot(snap);
+
         return;
       }
       const table = document.createElement('table');
@@ -165,8 +202,10 @@
         <tbody></tbody>
       `;
       const tbody = table.querySelector('tbody');
+      const matches = [];
       snap.forEach(docSnap => {
         const data = docSnap.data();
+        matches.push({ id: docSnap.id, data });
         let dateStr = '';
         try { dateStr = data.created.toDate().toLocaleString(); } catch(e) { dateStr = ''; }
         const tr = document.createElement('tr');
@@ -185,6 +224,7 @@
       });
       listDiv.appendChild(table);
       await ensurePublicStatsSnapshot(snap);
+
     }
 
     async function deleteMatch(id) {
@@ -193,8 +233,10 @@
       if (editingMatchId === id) {
         editingMatchId = null;
         currentMatchCreated = null;
-        document.getElementById('statsSection').classList.add('hidden');
+        const statsSection = document.getElementById('statsSection');
+        statsSection.classList.add('hidden');
         document.getElementById('saveMatch').textContent = 'Save Match';
+        resetOutput();
       }
       try {
         await rebuildPublicStats();
@@ -226,11 +268,13 @@
         const player = inp.dataset.player;
         const team = inp.dataset.team;
         const stat = inp.dataset.stat;
-        const teamData = data.stats[team];
+        const teamData = data.stats?.[team];
         if (teamData && teamData.players[player]) {
           inp.value = teamData.players[player][stat] || 0;
         }
       });
+      renderRunningTotals(data.stats || {}, formatMatchMeta(data));
+
     }
 
     document.getElementById('createMatch').addEventListener('click', () => {
@@ -247,6 +291,7 @@
       createStatsTable('team1Stats', t1);
       createStatsTable('team2Stats', t2);
       document.getElementById('statsSection').classList.remove('hidden');
+      resetOutput();
     });
 
     function createStatsTable(containerId, team, existingStats = null) {
@@ -505,24 +550,96 @@
       }
     }
 
-    document.getElementById('saveMatch').addEventListener('click', async () => {
-      const map = document.getElementById('map').value;
-      const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
-      const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
+    function resetOutput() {
+      document.getElementById('output').innerHTML = '';
+      document.getElementById('exportBtn').disabled = true;
+      document.getElementById('runningTotalsTitle').textContent = 'Running Totals';
+      document.getElementById('runningTotalsMeta').textContent = '';
+      document.getElementById('runningTotalsSection').classList.add('hidden');
+
+    }
+
+    function buildSaveData(map, t1, t2) {
       const inputs = Array.from(document.querySelectorAll('.stat-input'));
       const stats = {};
       inputs.forEach(inp => {
         const player = inp.dataset.player;
         const team = inp.dataset.team;
         const stat = inp.dataset.stat;
-        const val = parseFloat(inp.value) || 0;
+        const val = toNumber(inp.value);
         if (!stats[team]) stats[team] = {};
         if (!stats[team][player]) stats[team][player] = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
         stats[team][player][stat] = val;
       });
 
+      const payload = { map, team1: t1.name, team2: t2.name, created: currentMatchCreated || new Date(), stats: {} };
+
+      [t1.name, t2.name].forEach(teamName => {
+        const teamStats = stats[teamName] || {};
+        const totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
+        const playersPayload = {};
+        Object.keys(teamStats).forEach(player => {
+          const s = teamStats[player];
+          totals.kills += s.kills;
+          totals.assists += s.assists;
+          totals.score += s.score;
+          totals.captures += s.captures;
+          totals.returns += s.returns;
+          totals.time += s.time;
+          const kpm = s.time ? (s.kills / s.time).toFixed(2) : '0';
+          const apm = s.time ? (s.assists / s.time).toFixed(2) : '0';
+          const spm = s.time ? (s.score / s.time).toFixed(2) : '0';
+          const cpm = s.time ? (s.captures / s.time).toFixed(2) : '0';
+          const rpm = s.time ? (s.returns / s.time).toFixed(2) : '0';
+          playersPayload[player] = { ...s, kpm, apm, spm, cpm, rpm };
+        });
+        const teamKpm = totals.time ? (totals.kills / totals.time).toFixed(2) : '0';
+        const teamApm = totals.time ? (totals.assists / totals.time).toFixed(2) : '0';
+        const teamSpm = totals.time ? (totals.score / totals.time).toFixed(2) : '0';
+        const teamCpm = totals.time ? (totals.captures / totals.time).toFixed(2) : '0';
+        const teamRpm = totals.time ? (totals.returns / totals.time).toFixed(2) : '0';
+        payload.stats[teamName] = {
+          players: playersPayload,
+          totals: { ...totals, kpm: teamKpm, apm: teamApm, spm: teamSpm, cpm: teamCpm, rpm: teamRpm }
+        };
+      });
+
+      return payload;
+    }
+
+    function renderRunningTotals(statsByTeam = {}, matchMeta = null) {
+
       const output = document.getElementById('output');
+      const exportBtn = document.getElementById('exportBtn');
+      const totalsSection = document.getElementById('runningTotalsSection');
+      const title = document.getElementById('runningTotalsTitle');
+      const meta = document.getElementById('runningTotalsMeta');
+
       output.innerHTML = '';
+      const teamNames = Object.keys(statsByTeam);
+      if (!teamNames.length) {
+        exportBtn.disabled = true;
+        totalsSection.classList.add('hidden');
+        title.textContent = 'Running Totals';
+        meta.textContent = '';
+        return;
+      }
+
+      if (matchMeta) {
+        const { team1, team2, map, createdText } = matchMeta;
+        title.textContent = `${team1 || 'Team 1'} vs ${team2 || 'Team 2'}`;
+        const parts = [];
+        if (map) parts.push(`Map: ${map}`);
+        if (createdText) parts.push(`Created: ${createdText}`);
+        meta.textContent = parts.join(' • ');
+      } else {
+        title.textContent = 'Running Totals';
+        meta.textContent = '';
+      }
+
+      totalsSection.classList.remove('hidden');
+      exportBtn.disabled = false;
+
       const exportTable = document.createElement('table');
       exportTable.id = 'exportTable';
       exportTable.className = 'min-w-full text-left border border-gray-700';
@@ -548,7 +665,32 @@
       `;
       const tbody = exportTable.querySelector('tbody');
 
-      const saveData = { map, team1: t1.name, team2: t2.name, created: currentMatchCreated || new Date(), stats: {} };
+      teamNames.forEach(teamName => {
+        const teamStats = statsByTeam[teamName] || {};
+        const players = teamStats.players || {};
+        const totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
+
+        Object.keys(players).forEach(player => {
+          const statEntry = players[player] || {};
+          const kills = toNumber(statEntry.kills);
+          const assists = toNumber(statEntry.assists);
+          const score = toNumber(statEntry.score);
+          const captures = toNumber(statEntry.captures);
+          const returns = toNumber(statEntry.returns);
+          const time = toNumber(statEntry.time);
+          totals.kills += kills;
+          totals.assists += assists;
+          totals.score += score;
+          totals.captures += captures;
+          totals.returns += returns;
+          totals.time += time;
+
+          const kpm = time ? (kills / time).toFixed(2) : (statEntry.kpm ?? '0');
+          const apm = time ? (assists / time).toFixed(2) : (statEntry.apm ?? '0');
+          const spm = time ? (score / time).toFixed(2) : (statEntry.spm ?? '0');
+          const cpm = time ? (captures / time).toFixed(2) : (statEntry.cpm ?? '0');
+          const rpm = time ? (returns / time).toFixed(2) : (statEntry.rpm ?? '0');
+
 
       [t1.name, t2.name].forEach(teamName => {
         const teamStats = stats[teamName] || {};
@@ -572,12 +714,12 @@
           tr.innerHTML = `
             <td class="px-2">${teamName}</td>
             <td class="px-2">${player}</td>
-            <td class="px-2">${s.kills}</td>
-            <td class="px-2">${s.assists}</td>
-            <td class="px-2">${s.score}</td>
-            <td class="px-2">${s.captures}</td>
-            <td class="px-2">${s.returns}</td>
-            <td class="px-2">${s.time}</td>
+            <td class="px-2">${kills}</td>
+            <td class="px-2">${assists}</td>
+            <td class="px-2">${score}</td>
+            <td class="px-2">${captures}</td>
+            <td class="px-2">${returns}</td>
+            <td class="px-2">${time}</td>
             <td class="px-2">${kpm}</td>
             <td class="px-2">${apm}</td>
             <td class="px-2">${spm}</td>
@@ -586,23 +728,31 @@
           `;
           tbody.appendChild(tr);
         });
-        const teamKpm = totals.time ? (totals.kills / totals.time).toFixed(2) : '0';
-        const teamApm = totals.time ? (totals.assists / totals.time).toFixed(2) : '0';
-        const teamSpm = totals.time ? (totals.score / totals.time).toFixed(2) : '0';
-        const teamCpm = totals.time ? (totals.captures / totals.time).toFixed(2) : '0';
-        const teamRpm = totals.time ? (totals.returns / totals.time).toFixed(2) : '0';
-        saveData.stats[teamName].totals = { ...totals, kpm: teamKpm, apm: teamApm, spm: teamSpm, cpm: teamCpm, rpm: teamRpm };
+
+        const totalsData = teamStats.totals || {};
+        const totalKills = totalsData.kills ?? totals.kills;
+        const totalAssists = totalsData.assists ?? totals.assists;
+        const totalScore = totalsData.score ?? totals.score;
+        const totalCaptures = totalsData.captures ?? totals.captures;
+        const totalReturns = totalsData.returns ?? totals.returns;
+        const totalTime = totalsData.time ?? totals.time;
+        const teamKpm = totalTime ? (totalKills / totalTime).toFixed(2) : (totalsData.kpm ?? '0');
+        const teamApm = totalTime ? (totalAssists / totalTime).toFixed(2) : (totalsData.apm ?? '0');
+        const teamSpm = totalTime ? (totalScore / totalTime).toFixed(2) : (totalsData.spm ?? '0');
+        const teamCpm = totalTime ? (totalCaptures / totalTime).toFixed(2) : (totalsData.cpm ?? '0');
+        const teamRpm = totalTime ? (totalReturns / totalTime).toFixed(2) : (totalsData.rpm ?? '0');
+
         const trTot = document.createElement('tr');
         trTot.className = 'font-semibold';
         trTot.innerHTML = `
           <td class="px-2">${teamName}</td>
           <td class="px-2">Totals</td>
-          <td class="px-2">${totals.kills}</td>
-          <td class="px-2">${totals.assists}</td>
-          <td class="px-2">${totals.score}</td>
-          <td class="px-2">${totals.captures}</td>
-          <td class="px-2">${totals.returns}</td>
-          <td class="px-2">${totals.time}</td>
+          <td class="px-2">${totalKills}</td>
+          <td class="px-2">${totalAssists}</td>
+          <td class="px-2">${totalScore}</td>
+          <td class="px-2">${totalCaptures}</td>
+          <td class="px-2">${totalReturns}</td>
+          <td class="px-2">${totalTime}</td>
           <td class="px-2">${teamKpm}</td>
           <td class="px-2">${teamApm}</td>
           <td class="px-2">${teamSpm}</td>
@@ -611,6 +761,7 @@
         `;
         tbody.appendChild(trTot);
       });
+
       output.appendChild(exportTable);
       document.getElementById('exportBtn').disabled = false;
       try {
@@ -631,6 +782,7 @@
       } catch (err) {
         rebuildError = err;
         console.error('Failed to rebuild public stats', err);
+
       }
 
       editingMatchId = null;
