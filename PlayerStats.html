@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Player & Team Stats</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+  <script src="oauth.js" defer></script>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+  <div id="nav-placeholder" data-include="nav.html"></div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+    <section class="space-y-4">
+      <div>
+        <h1 class="text-3xl font-bold text-white">League Player & Team Statistics</h1>
+        <p class="text-gray-300">Aggregated from saved match stats. Use this page to explore how players and teams perform across every recorded match and map.</p>
+      </div>
+      <div id="statusMessage" class="text-sm text-gray-400">Loading match statistics…</div>
+      <div id="summaryCards" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+    </section>
+
+    <section class="grid gap-8 lg:grid-cols-2" id="chartsSection" style="display:none;">
+      <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold text-white mb-2">Player Kills per Minute vs. Time Played</h2>
+        <p class="text-sm text-gray-400 mb-4">Each point represents a player&apos;s total time played and their kills per minute across all recorded maps.</p>
+        <canvas id="playerScatter" style="height:360px;"></canvas>
+      </div>
+      <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow">
+        <h2 class="text-xl font-semibold text-white mb-2">Team Score per Minute vs. Kills per Minute</h2>
+        <p class="text-sm text-gray-400 mb-4">Compare overall team production rates. Bubble size reflects total match time recorded for the team.</p>
+        <canvas id="teamScatter" style="height:360px;"></canvas>
+      </div>
+    </section>
+
+    <section class="bg-gray-800/60 border border-gray-700 rounded-xl shadow">
+      <header class="px-6 py-4 border-b border-gray-700">
+        <h2 class="text-2xl font-semibold text-white">Player Totals</h2>
+        <p class="text-sm text-gray-400">Season-long totals aggregated from every saved match.</p>
+      </header>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700 text-sm">
+          <thead class="bg-gray-800/80 text-gray-300 uppercase tracking-wide text-xs">
+            <tr>
+              <th class="px-4 py-3 text-left">Player</th>
+              <th class="px-4 py-3 text-left">Teams</th>
+              <th class="px-4 py-3 text-right">Matches</th>
+              <th class="px-4 py-3 text-right">Total Time (min)</th>
+              <th class="px-4 py-3 text-right">Kills</th>
+              <th class="px-4 py-3 text-right">Assists</th>
+              <th class="px-4 py-3 text-right">Score</th>
+              <th class="px-4 py-3 text-right">Captures</th>
+              <th class="px-4 py-3 text-right">Returns</th>
+              <th class="px-4 py-3 text-right">KPM</th>
+              <th class="px-4 py-3 text-right">APM</th>
+              <th class="px-4 py-3 text-right">SPM</th>
+              <th class="px-4 py-3 text-right">CPM</th>
+              <th class="px-4 py-3 text-right">RPM</th>
+            </tr>
+          </thead>
+          <tbody id="playerTotalsBody" class="divide-y divide-gray-800"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="bg-gray-800/60 border border-gray-700 rounded-xl shadow">
+      <header class="px-6 py-4 border-b border-gray-700">
+        <h2 class="text-2xl font-semibold text-white">Player Map Breakdown</h2>
+        <p class="text-sm text-gray-400">Track how each player performs on every map they&apos;ve played.</p>
+      </header>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-700 text-sm">
+          <thead class="bg-gray-800/80 text-gray-300 uppercase tracking-wide text-xs">
+            <tr>
+              <th class="px-4 py-3 text-left">Player</th>
+              <th class="px-4 py-3 text-left">Teams</th>
+              <th class="px-4 py-3 text-left">Map</th>
+              <th class="px-4 py-3 text-right">Matches</th>
+              <th class="px-4 py-3 text-right">Time (min)</th>
+              <th class="px-4 py-3 text-right">Kills</th>
+              <th class="px-4 py-3 text-right">Assists</th>
+              <th class="px-4 py-3 text-right">Score</th>
+              <th class="px-4 py-3 text-right">Captures</th>
+              <th class="px-4 py-3 text-right">Returns</th>
+              <th class="px-4 py-3 text-right">KPM</th>
+              <th class="px-4 py-3 text-right">APM</th>
+              <th class="px-4 py-3 text-right">SPM</th>
+              <th class="px-4 py-3 text-right">CPM</th>
+              <th class="px-4 py-3 text-right">RPM</th>
+            </tr>
+          </thead>
+          <tbody id="playerMapBody" class="divide-y divide-gray-800"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <template id="summaryCardTemplate">
+    <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-4 shadow">
+      <p class="text-xs uppercase tracking-wide text-indigo-300" data-label></p>
+      <p class="mt-2 text-2xl font-semibold text-white" data-value></p>
+      <p class="mt-1 text-sm text-gray-400" data-helper></p>
+    </div>
+  </template>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const statusEl = document.getElementById('statusMessage');
+    const chartsSection = document.getElementById('chartsSection');
+    const summaryContainer = document.getElementById('summaryCards');
+    const playerTotalsBody = document.getElementById('playerTotalsBody');
+    const playerMapBody = document.getElementById('playerMapBody');
+
+    const toNumber = (value) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    const addSummaryCard = (label, value, helper) => {
+      const tpl = document.getElementById('summaryCardTemplate');
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      node.querySelector('[data-label]').textContent = label;
+      node.querySelector('[data-value]').textContent = value;
+      node.querySelector('[data-helper]').textContent = helper;
+      summaryContainer.appendChild(node);
+    };
+
+    const formatNumber = (value, fractionDigits = 2) => {
+      if (!Number.isFinite(value)) return '0';
+      return value.toLocaleString(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits });
+    };
+
+    const renderTables = (playerTotals, playerMapStats) => {
+      const totalsSorted = Array.from(playerTotals.values()).sort((a, b) => b.kills - a.kills);
+      playerTotalsBody.innerHTML = '';
+      totalsSorted.forEach(player => {
+        const row = document.createElement('tr');
+        const totalTime = player.time;
+        const kpm = totalTime > 0 ? player.kills / totalTime : 0;
+        const apm = totalTime > 0 ? player.assists / totalTime : 0;
+        const spm = totalTime > 0 ? player.score / totalTime : 0;
+        const cpm = totalTime > 0 ? player.captures / totalTime : 0;
+        const rpm = totalTime > 0 ? player.returns / totalTime : 0;
+        row.innerHTML = `
+          <td class="px-4 py-3 text-left text-white">${player.name}</td>
+          <td class="px-4 py-3 text-left text-gray-300">${Array.from(player.teams).join(', ') || '—'}</td>
+          <td class="px-4 py-3 text-right">${player.matches}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(totalTime, 2)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(player.kills, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(player.assists, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(player.score, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(player.captures, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(player.returns, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(kpm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(apm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(spm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(cpm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(rpm)}</td>
+        `;
+        playerTotalsBody.appendChild(row);
+      });
+
+      const mapRows = Array.from(playerMapStats.values()).sort((a, b) => {
+        if (a.player === b.player) return b.kills - a.kills;
+        return a.player.localeCompare(b.player);
+      });
+      playerMapBody.innerHTML = '';
+      mapRows.forEach(entry => {
+        const totalTime = entry.time;
+        const kpm = totalTime > 0 ? entry.kills / totalTime : 0;
+        const apm = totalTime > 0 ? entry.assists / totalTime : 0;
+        const spm = totalTime > 0 ? entry.score / totalTime : 0;
+        const cpm = totalTime > 0 ? entry.captures / totalTime : 0;
+        const rpm = totalTime > 0 ? entry.returns / totalTime : 0;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-4 py-3 text-left text-white">${entry.player}</td>
+          <td class="px-4 py-3 text-left text-gray-300">${Array.from(entry.teams).join(', ') || '—'}</td>
+          <td class="px-4 py-3 text-left text-gray-200">${entry.map}</td>
+          <td class="px-4 py-3 text-right">${entry.matches}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(totalTime, 2)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(entry.kills, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(entry.assists, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(entry.score, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(entry.captures, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(entry.returns, 0)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(kpm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(apm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(spm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(cpm)}</td>
+          <td class="px-4 py-3 text-right">${formatNumber(rpm)}</td>
+        `;
+        playerMapBody.appendChild(row);
+      });
+    };
+
+    const renderCharts = (playerTotals, teamTotals) => {
+      const playerData = Array.from(playerTotals.values()).filter(p => p.time > 0);
+      const playerPoints = playerData.map(player => ({
+        x: Number(player.time.toFixed(2)),
+        y: Number((player.kills / player.time).toFixed(3)),
+        r: Math.max(4, Math.min(14, player.matches * 2)),
+        player
+      }));
+      let hasChart = false;
+      if (playerPoints.length) {
+        hasChart = true;
+        const ctx = document.getElementById('playerScatter').getContext('2d');
+        new Chart(ctx, {
+          type: 'bubble',
+          data: {
+            datasets: [{
+              label: 'Players',
+              data: playerPoints.map(point => ({ x: point.x, y: point.y, r: point.r, player: point.player })),
+              backgroundColor: 'rgba(129, 140, 248, 0.6)',
+              borderColor: 'rgba(129, 140, 248, 1)',
+              borderWidth: 1
+            })
+          },
+          options: {
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: { display: true, text: 'Total Time Played (minutes)' },
+                ticks: { color: '#d1d5db' },
+                grid: { color: 'rgba(55, 65, 81, 0.5)' }
+              },
+              y: {
+                title: { display: true, text: 'Kills per Minute' },
+                ticks: { color: '#d1d5db' },
+                grid: { color: 'rgba(55, 65, 81, 0.5)' }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const player = context.raw.player;
+                    const kpm = player.time ? player.kills / player.time : 0;
+                    return [
+                      `${player.name} (${Array.from(player.teams).join(', ') || 'Free Agent'})`,
+                      `Time: ${formatNumber(player.time, 2)} min`,
+                      `Kills: ${formatNumber(player.kills, 0)}`,
+                      `KPM: ${formatNumber(kpm)}`
+                    ];
+                  }
+                }
+              },
+              legend: {
+                labels: { color: '#e5e7eb' }
+              }
+            }
+          }
+        });
+      }
+
+      const teamData = Array.from(teamTotals.values()).filter(team => team.time > 0);
+      if (teamData.length) {
+        hasChart = true;
+        const ctx = document.getElementById('teamScatter').getContext('2d');
+        new Chart(ctx, {
+          type: 'bubble',
+          data: {
+            datasets: [{
+              label: 'Teams',
+              data: teamData.map(team => ({
+                x: Number((team.score / team.time).toFixed(3)),
+                y: Number((team.kills / team.time).toFixed(3)),
+                r: Math.max(6, Math.min(20, team.time / 10)),
+                team
+              })),
+              backgroundColor: 'rgba(16, 185, 129, 0.6)',
+              borderColor: 'rgba(16, 185, 129, 1)',
+              borderWidth: 1
+            })
+          },
+          options: {
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                title: { display: true, text: 'Score per Minute' },
+                ticks: { color: '#d1d5db' },
+                grid: { color: 'rgba(55, 65, 81, 0.5)' }
+              },
+              y: {
+                title: { display: true, text: 'Kills per Minute' },
+                ticks: { color: '#d1d5db' },
+                grid: { color: 'rgba(55, 65, 81, 0.5)' }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: (context) => {
+                    const team = context.raw.team;
+                    const spm = team.time ? team.score / team.time : 0;
+                    const kpm = team.time ? team.kills / team.time : 0;
+                    return [
+                      `${team.name}`,
+                      `Matches: ${team.matches}`,
+                      `Time: ${formatNumber(team.time, 2)} min`,
+                      `Score: ${formatNumber(team.score, 0)} (SPM ${formatNumber(spm)})`,
+                      `Kills: ${formatNumber(team.kills, 0)} (KPM ${formatNumber(kpm)})`
+                    ];
+                  }
+                }
+              },
+              legend: {
+                labels: { color: '#e5e7eb' }
+              }
+            }
+          }
+        });
+      }
+
+      if (hasChart) {
+        chartsSection.style.display = 'grid';
+      }
+    };
+
+    try {
+      const snap = await getDocs(collection(db, 'matches'));
+      if (snap.empty) {
+        statusEl.textContent = 'No match data found. Save a match in the admin panel to populate this dashboard.';
+        return;
+      }
+
+      const playerTotals = new Map();
+      const playerMapStats = new Map();
+      const teamTotals = new Map();
+      let totalMatches = 0;
+
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const map = data.map || 'Unknown';
+        const stats = data.stats || {};
+        const teams = Object.keys(stats);
+        if (!teams.length) return;
+        totalMatches += 1;
+
+        teams.forEach(teamName => {
+          const teamStats = stats[teamName];
+          if (!teamStats) return;
+
+          const totals = teamStats.totals || {};
+          const teamEntry = teamTotals.get(teamName) || {
+            name: teamName,
+            matches: 0,
+            time: 0,
+            kills: 0,
+            assists: 0,
+            score: 0,
+            captures: 0,
+            returns: 0
+          };
+          teamEntry.matches += 1;
+          teamEntry.time += toNumber(totals.time);
+          teamEntry.kills += toNumber(totals.kills);
+          teamEntry.assists += toNumber(totals.assists);
+          teamEntry.score += toNumber(totals.score);
+          teamEntry.captures += toNumber(totals.captures);
+          teamEntry.returns += toNumber(totals.returns);
+          teamTotals.set(teamName, teamEntry);
+
+          const players = teamStats.players || {};
+          Object.entries(players).forEach(([playerName, rawStats]) => {
+            const kills = toNumber(rawStats.kills);
+            const assists = toNumber(rawStats.assists);
+            const score = toNumber(rawStats.score);
+            const captures = toNumber(rawStats.captures);
+            const returns = toNumber(rawStats.returns);
+            const time = toNumber(rawStats.time);
+
+            const totalEntry = playerTotals.get(playerName) || {
+              name: playerName,
+              teams: new Set(),
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            totalEntry.teams.add(teamName);
+            totalEntry.matches += 1;
+            totalEntry.time += time;
+            totalEntry.kills += kills;
+            totalEntry.assists += assists;
+            totalEntry.score += score;
+            totalEntry.captures += captures;
+            totalEntry.returns += returns;
+            playerTotals.set(playerName, totalEntry);
+
+            const mapKey = `${playerName}__${map}`;
+            const mapEntry = playerMapStats.get(mapKey) || {
+              player: playerName,
+              teams: new Set(),
+              map,
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            mapEntry.teams.add(teamName);
+            mapEntry.matches += 1;
+            mapEntry.time += time;
+            mapEntry.kills += kills;
+            mapEntry.assists += assists;
+            mapEntry.score += score;
+            mapEntry.captures += captures;
+            mapEntry.returns += returns;
+            playerMapStats.set(mapKey, mapEntry);
+          });
+        });
+      });
+
+      statusEl.textContent = `Loaded ${totalMatches} match${totalMatches === 1 ? '' : 'es'} worth of statistics.`;
+
+      addSummaryCard('Total Players', playerTotals.size, 'Unique players with recorded stats.');
+      addSummaryCard('Total Teams', teamTotals.size, 'Teams represented across all matches.');
+      const totalMinutes = Array.from(playerTotals.values()).reduce((sum, p) => sum + p.time, 0);
+      addSummaryCard('Minutes Tracked', formatNumber(totalMinutes, 2), 'Combined playtime from every player.');
+      const totalKills = Array.from(playerTotals.values()).reduce((sum, p) => sum + p.kills, 0);
+      addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
+
+      renderTables(playerTotals, playerMapStats);
+      renderCharts(playerTotals, teamTotals);
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Unable to load stats. Please refresh to try again.';
+    }
+  </script>
+  <script src="./assets/include.js" defer></script>
+</body>
+</html>
