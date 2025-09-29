@@ -125,6 +125,20 @@
     const summaryContainer = document.getElementById('summaryCards');
     const playerTotalsBody = document.getElementById('playerTotalsBody');
     const playerMapBody = document.getElementById('playerMapBody');
+    let playerChartInstance = null;
+    let teamChartInstance = null;
+    const destroyCharts = () => {
+      if (playerChartInstance) {
+        playerChartInstance.destroy();
+        playerChartInstance = null;
+      }
+      if (teamChartInstance) {
+        teamChartInstance.destroy();
+        teamChartInstance = null;
+      }
+    };
+
+
 
     const toNumber = (value) => {
       const num = parseFloat(value);
@@ -231,18 +245,30 @@
     };
 
     const renderCharts = (playerTotals, teamTotals) => {
-      const playerData = Array.from(playerTotals.values()).filter(p => p.time > 0);
+      destroyCharts();
+      chartsSection.style.display = 'none';
+
+      const playerData = Array.from(playerTotals.values())
+        .map(player => ({
+          ...player,
+          time: toNumber(player.time),
+          kills: toNumber(player.kills),
+          matches: toNumber(player.matches)
+        }))
+        .filter(player => player.time > 0);
+
       const playerPoints = playerData.map(player => ({
         x: Number(player.time.toFixed(2)),
         y: Number((player.kills / player.time).toFixed(3)),
-        r: Math.max(4, Math.min(14, player.matches * 2)),
+        r: Math.max(4, Math.min(14, Math.max(1, player.matches) * 2)),
         player
       }));
+
       let hasChart = false;
       if (playerPoints.length) {
         hasChart = true;
         const ctx = document.getElementById('playerScatter').getContext('2d');
-        new Chart(ctx, {
+        playerChartInstance = new Chart(ctx, {
           type: 'bubble',
           data: {
             datasets: [{
@@ -251,9 +277,7 @@
               backgroundColor: 'rgba(129, 140, 248, 0.6)',
               borderColor: 'rgba(129, 140, 248, 1)',
               borderWidth: 1
-
             }]
-
           },
           options: {
             maintainAspectRatio: false,
@@ -292,11 +316,20 @@
         });
       }
 
-      const teamData = Array.from(teamTotals.values()).filter(team => team.time > 0);
+      const teamData = Array.from(teamTotals.values())
+        .map(team => ({
+          ...team,
+          time: toNumber(team.time),
+          score: toNumber(team.score),
+          kills: toNumber(team.kills),
+          matches: toNumber(team.matches)
+        }))
+        .filter(team => team.time > 0);
+
       if (teamData.length) {
         hasChart = true;
         const ctx = document.getElementById('teamScatter').getContext('2d');
-        new Chart(ctx, {
+        teamChartInstance = new Chart(ctx, {
           type: 'bubble',
           data: {
             datasets: [{
@@ -304,14 +337,13 @@
               data: teamData.map(team => ({
                 x: Number((team.score / team.time).toFixed(3)),
                 y: Number((team.kills / team.time).toFixed(3)),
-                r: Math.max(6, Math.min(20, team.time / 10)),
+                r: Math.max(6, Math.min(20, Math.max(1, team.time) / 10)),
                 team
               })),
               backgroundColor: 'rgba(16, 185, 129, 0.6)',
               borderColor: 'rgba(16, 185, 129, 1)',
               borderWidth: 1
             }]
-
           },
           options: {
             maintainAspectRatio: false,
@@ -356,7 +388,6 @@
         chartsSection.style.display = 'grid';
       }
     };
-
     const hydratePlayers = (entries = []) => {
       const map = new Map();
       entries.forEach(entry => {
@@ -391,6 +422,7 @@
 
         if (!docSnap.exists()) {
           statusEl.textContent = 'No published stats found. Save a match in the admin panel to generate them.';
+          destroyCharts();
           chartsSection.style.display = 'none';
           summaryContainer.innerHTML = '';
           playerTotalsBody.innerHTML = '';
@@ -406,6 +438,7 @@
         const generatedAt = formatTimestamp(data.generatedAt);
 
         if (playerTotals.size === 0) {
+          destroyCharts();
           statusEl.textContent = 'Published stats are empty. Save a match in the admin panel to populate this dashboard.';
           chartsSection.style.display = 'none';
           summaryContainer.innerHTML = '';
@@ -432,6 +465,7 @@
         renderCharts(playerTotals, teamTotals);
       } catch (err) {
         console.error(err);
+        destroyCharts();
         statusEl.textContent = 'Unable to load stats. Please refresh to try again.';
         chartsSection.style.display = 'none';
       }
@@ -442,3 +476,4 @@
   <script src="./assets/include.js" defer></script>
 </body>
 </html>
+
