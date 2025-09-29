@@ -44,14 +44,23 @@
     <div id="statsSection" class="hidden">
       <div id="team1Stats"></div>
       <div id="team2Stats" class="mt-8"></div>
-      <div class="mt-6 flex gap-4">
+      <div class="mt-6">
         <button id="saveMatch" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">Save Match</button>
-        <button id="exportBtn" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export to Excel</button>
       </div>
-      <div id="output" class="mt-8"></div>
     </div>
 
     <div id="matchesList" class="mt-12"></div>
+
+    <div id="runningTotalsSection" class="hidden mt-12">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <div>
+          <h2 id="runningTotalsTitle" class="text-2xl font-bold">Running Totals</h2>
+          <p id="runningTotalsMeta" class="text-sm text-gray-300"></p>
+        </div>
+        <button id="exportBtn" class="self-start md:self-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export to Excel</button>
+      </div>
+      <div id="output" class="mt-6"></div>
+    </div>
 
   </div>
 
@@ -86,6 +95,28 @@
 
     let editingMatchId = null, currentMatchCreated = null;
 
+    function formatMatchMeta(data) {
+      const created = data?.created;
+      let createdDate = '';
+      if (created?.toDate) {
+        createdDate = created.toDate();
+      } else if (created instanceof Date) {
+        createdDate = created;
+      } else if (typeof created === 'string' || typeof created === 'number') {
+        const parsed = new Date(created);
+        if (!Number.isNaN(parsed.getTime())) {
+          createdDate = parsed;
+        }
+      }
+
+      const createdText = createdDate ? createdDate.toLocaleString() : '';
+      return {
+        team1: data?.team1 ?? '',
+        team2: data?.team2 ?? '',
+        map: data?.map ?? '',
+        createdText
+      };
+    }
     const toNumber = (value) => {
       const num = parseFloat(value);
       return Number.isFinite(num) ? num : 0;
@@ -153,7 +184,10 @@
       listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2>';
       if (snap.empty) {
         listDiv.innerHTML += '<p>No matches saved.</p>';
-        await ensurePublicStatsSnapshot(snap);
+        if (!editingMatchId) {
+          resetOutput();
+        }
+
         return;
       }
       const table = document.createElement('table');
@@ -170,8 +204,10 @@
         <tbody></tbody>
       `;
       const tbody = table.querySelector('tbody');
+      const matches = [];
       snap.forEach(docSnap => {
         const data = docSnap.data();
+        matches.push({ id: docSnap.id, data });
         let dateStr = '';
         try { dateStr = data.created.toDate().toLocaleString(); } catch(e) { dateStr = ''; }
         const tr = document.createElement('tr');
@@ -189,7 +225,20 @@
         tr.querySelector('.delete-btn').addEventListener('click', () => deleteMatch(docSnap.id));
       });
       listDiv.appendChild(table);
-      await ensurePublicStatsSnapshot(snap);
+
+
+      if (!editingMatchId && matches.length) {
+        const latest = matches.reduce((latestMatch, current) => {
+          const latestCreated = latestMatch?.data?.created;
+          const currentCreated = current.data?.created;
+          const latestTime = latestCreated?.toDate ? latestCreated.toDate().getTime() : (latestCreated instanceof Date ? latestCreated.getTime() : new Date(latestCreated || 0).getTime());
+          const currentTime = currentCreated?.toDate ? currentCreated.toDate().getTime() : (currentCreated instanceof Date ? currentCreated.getTime() : new Date(currentCreated || 0).getTime());
+          return currentTime > latestTime ? current : latestMatch;
+        }, null) || matches[0];
+        const matchMeta = formatMatchMeta(latest.data);
+        renderRunningTotals(latest.data.stats || {}, matchMeta);
+      }
+
     }
 
     async function deleteMatch(id) {
@@ -202,12 +251,6 @@
         statsSection.classList.add('hidden');
         document.getElementById('saveMatch').textContent = 'Save Match';
         resetOutput();
-      }
-      try {
-        await rebuildPublicStats();
-      } catch (err) {
-        console.error('Failed to rebuild public stats after deletion', err);
-        alert('Match deleted, but the public stats snapshot failed to rebuild. Please try saving another match.');
       }
       loadMatches();
     }
@@ -238,7 +281,8 @@
           inp.value = teamData.players[player][stat] || 0;
         }
       });
-      renderRunningTotals(data.stats || {});
+      renderRunningTotals(data.stats || {}, formatMatchMeta(data));
+
     }
 
     document.getElementById('createMatch').addEventListener('click', () => {
@@ -357,168 +401,13 @@
 
     }
 
-    const toNumber = (value) => {
-      const num = parseFloat(value);
-      return Number.isFinite(num) ? num : 0;
-    };
-
-    async function rebuildPublicStats(existingSnapshot = null) {
-      const snap = existingSnapshot || await getDocs(collection(db, 'matches'));
-      const playerTotals = new Map();
-      const playerMapStats = new Map();
-      const teamTotals = new Map();
-      let totalMatches = 0;
-
-      snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const stats = data.stats || {};
-        const teams = Object.keys(stats);
-        if (!teams.length) return;
-        totalMatches += 1;
-        const mapName = data.map || 'Unknown';
-
-        teams.forEach(teamName => {
-          const teamStats = stats[teamName];
-          if (!teamStats) return;
-
-          const totals = teamStats.totals || {};
-          const teamEntry = teamTotals.get(teamName) || {
-            name: teamName,
-            matches: 0,
-            time: 0,
-            kills: 0,
-            assists: 0,
-            score: 0,
-            captures: 0,
-            returns: 0
-          };
-          teamEntry.matches += 1;
-          teamEntry.time += toNumber(totals.time);
-          teamEntry.kills += toNumber(totals.kills);
-          teamEntry.assists += toNumber(totals.assists);
-          teamEntry.score += toNumber(totals.score);
-          teamEntry.captures += toNumber(totals.captures);
-          teamEntry.returns += toNumber(totals.returns);
-          teamTotals.set(teamName, teamEntry);
-
-          const players = teamStats.players || {};
-          Object.entries(players).forEach(([playerName, rawStats]) => {
-            const kills = toNumber(rawStats.kills);
-            const assists = toNumber(rawStats.assists);
-            const score = toNumber(rawStats.score);
-            const captures = toNumber(rawStats.captures);
-            const returns = toNumber(rawStats.returns);
-            const time = toNumber(rawStats.time);
-
-            const totalEntry = playerTotals.get(playerName) || {
-              name: playerName,
-              teams: new Set(),
-              matches: 0,
-              time: 0,
-              kills: 0,
-              assists: 0,
-              score: 0,
-              captures: 0,
-              returns: 0
-            };
-            totalEntry.teams.add(teamName);
-            totalEntry.matches += 1;
-            totalEntry.time += time;
-            totalEntry.kills += kills;
-            totalEntry.assists += assists;
-            totalEntry.score += score;
-            totalEntry.captures += captures;
-            totalEntry.returns += returns;
-            playerTotals.set(playerName, totalEntry);
-
-            const mapKey = `${playerName}__${mapName}`;
-            const mapEntry = playerMapStats.get(mapKey) || {
-              player: playerName,
-              teams: new Set(),
-              map: mapName,
-              matches: 0,
-              time: 0,
-              kills: 0,
-              assists: 0,
-              score: 0,
-              captures: 0,
-              returns: 0
-            };
-            mapEntry.teams.add(teamName);
-            mapEntry.matches += 1;
-            mapEntry.time += time;
-            mapEntry.kills += kills;
-            mapEntry.assists += assists;
-            mapEntry.score += score;
-            mapEntry.captures += captures;
-            mapEntry.returns += returns;
-            playerMapStats.set(mapKey, mapEntry);
-          });
-        });
-      });
-
-      const serializePlayerTotals = Array.from(playerTotals.values()).map(entry => ({
-        name: entry.name,
-        teams: Array.from(entry.teams),
-        matches: entry.matches,
-        time: Number(entry.time.toFixed(4)),
-        kills: entry.kills,
-        assists: entry.assists,
-        score: entry.score,
-        captures: entry.captures,
-        returns: entry.returns
-      }));
-
-      const serializePlayerMapStats = Array.from(playerMapStats.values()).map(entry => ({
-        player: entry.player,
-        teams: Array.from(entry.teams),
-        map: entry.map,
-        matches: entry.matches,
-        time: Number(entry.time.toFixed(4)),
-        kills: entry.kills,
-        assists: entry.assists,
-        score: entry.score,
-        captures: entry.captures,
-        returns: entry.returns
-      }));
-
-      const serializeTeamTotals = Array.from(teamTotals.values()).map(entry => ({
-        name: entry.name,
-        matches: entry.matches,
-        time: Number(entry.time.toFixed(4)),
-        kills: entry.kills,
-        assists: entry.assists,
-        score: entry.score,
-        captures: entry.captures,
-        returns: entry.returns
-      }));
-
-      const payload = {
-        generatedAt: serverTimestamp(),
-        totalMatches,
-        playerTotals: serializePlayerTotals,
-        playerMapStats: serializePlayerMapStats,
-        teamTotals: serializeTeamTotals
-      };
-
-      await setDoc(doc(db, 'publicStats', 'aggregates'), payload);
-    }
-
-    async function ensurePublicStatsSnapshot(existingSnapshot) {
-      try {
-        const statsDoc = await getDoc(doc(db, 'publicStats', 'aggregates'));
-        if (!statsDoc.exists()) {
-          await rebuildPublicStats(existingSnapshot);
-        }
-      } catch (err) {
-        console.error('Failed to ensure public stats snapshot', err);
-      }
-
-    }
-
     function resetOutput() {
       document.getElementById('output').innerHTML = '';
       document.getElementById('exportBtn').disabled = true;
+      document.getElementById('runningTotalsTitle').textContent = 'Running Totals';
+      document.getElementById('runningTotalsMeta').textContent = '';
+      document.getElementById('runningTotalsSection').classList.add('hidden');
+
     }
 
     function buildSaveData(map, t1, t2) {
@@ -569,14 +458,38 @@
       return payload;
     }
 
-    function renderRunningTotals(statsByTeam = {}) {
+    function renderRunningTotals(statsByTeam = {}, matchMeta = null) {
+
       const output = document.getElementById('output');
+      const exportBtn = document.getElementById('exportBtn');
+      const totalsSection = document.getElementById('runningTotalsSection');
+      const title = document.getElementById('runningTotalsTitle');
+      const meta = document.getElementById('runningTotalsMeta');
+
       output.innerHTML = '';
       const teamNames = Object.keys(statsByTeam);
       if (!teamNames.length) {
-        document.getElementById('exportBtn').disabled = true;
+        exportBtn.disabled = true;
+        totalsSection.classList.add('hidden');
+        title.textContent = 'Running Totals';
+        meta.textContent = '';
         return;
       }
+
+      if (matchMeta) {
+        const { team1, team2, map, createdText } = matchMeta;
+        title.textContent = `${team1 || 'Team 1'} vs ${team2 || 'Team 2'}`;
+        const parts = [];
+        if (map) parts.push(`Map: ${map}`);
+        if (createdText) parts.push(`Created: ${createdText}`);
+        meta.textContent = parts.join(' • ');
+      } else {
+        title.textContent = 'Running Totals';
+        meta.textContent = '';
+      }
+
+      totalsSection.classList.remove('hidden');
+      exportBtn.disabled = false;
 
       const exportTable = document.createElement('table');
       exportTable.id = 'exportTable';
@@ -628,26 +541,6 @@
           const spm = time ? (score / time).toFixed(2) : (statEntry.spm ?? '0');
           const cpm = time ? (captures / time).toFixed(2) : (statEntry.cpm ?? '0');
           const rpm = time ? (returns / time).toFixed(2) : (statEntry.rpm ?? '0');
-
-
-      [t1.name, t2.name].forEach(teamName => {
-        const teamStats = stats[teamName] || {};
-        let totals = { kills:0, assists:0, score:0, captures:0, returns:0, time:0 };
-        saveData.stats[teamName] = { players: {}, totals:{} };
-        Object.keys(teamStats).forEach(player => {
-          const s = teamStats[player];
-          totals.kills += s.kills;
-          totals.assists += s.assists;
-          totals.score += s.score;
-          totals.captures += s.captures;
-          totals.returns += s.returns;
-          totals.time += s.time;
-          const kpm = s.time ? (s.kills / s.time).toFixed(2) : '0';
-          const apm = s.time ? (s.assists / s.time).toFixed(2) : '0';
-          const spm = s.time ? (s.score / s.time).toFixed(2) : '0';
-          const cpm = s.time ? (s.captures / s.time).toFixed(2) : '0';
-          const rpm = s.time ? (s.returns / s.time).toFixed(2) : '0';
-          saveData.stats[teamName].players[player] = { ...s, kpm, apm, spm, cpm, rpm };
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
@@ -703,26 +596,26 @@
 
       output.appendChild(exportTable);
       document.getElementById('exportBtn').disabled = false;
+    }
 
-      try {
-        if (editingMatchId) {
-          await updateDoc(doc(db, 'matches', editingMatchId), saveData);
-        } else {
-          await addDoc(collection(db, 'matches'), saveData);
-        }
-      } catch (err) {
-        console.error('Failed to save match', err);
-        alert('Failed to save match. Please try again.');
+    document.getElementById('saveMatch').addEventListener('click', async () => {
+      const map = document.getElementById('map').value;
+      const t1 = teamsData.find(t => t.id === document.getElementById('team1').value);
+      const t2 = teamsData.find(t => t.id === document.getElementById('team2').value);
+      if (!t1 || !t2) {
+        alert('Please select two teams before saving.');
         return;
       }
 
-      let rebuildError = null;
-      try {
-        await rebuildPublicStats();
-      } catch (err) {
-        rebuildError = err;
-        console.error('Failed to rebuild public stats', err);
+      const saveData = buildSaveData(map, t1, t2);
+      renderRunningTotals(saveData.stats, formatMatchMeta(saveData));
 
+      if (editingMatchId) {
+        await updateDoc(doc(db, 'matches', editingMatchId), saveData);
+        alert('Match updated!');
+      } else {
+        await addDoc(collection(db, 'matches'), saveData);
+        alert('Match saved!');
       }
 
       editingMatchId = null;
