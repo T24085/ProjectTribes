@@ -225,24 +225,6 @@
         .filter(player => player.time > 0);
     };
 
-    const buildTeamMetrics = (teamTotals) => {
-      return Array.from(teamTotals.values())
-        .map(team => {
-          const time = toNumber(team.time);
-          const kills = toNumber(team.kills);
-          const score = toNumber(team.score);
-          return {
-            ...team,
-            time,
-            kills,
-            score,
-            matches: toNumber(team.matches),
-            scorePerMinute: safeDivide(score, time),
-            killsPerMinute: safeDivide(kills, time)
-          };
-        })
-        .filter(team => team.time > 0);
-    };
 
     const renderTables = (playerTotals, playerMapStats) => {
       const totalsSorted = Array.from(playerTotals.values()).sort((a, b) => b.kills - a.kills);
@@ -326,12 +308,18 @@
 
         const card = document.createElement('div');
         card.className = 'bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow space-y-4';
-        card.innerHTML = `<div><h3 class="text-lg font-semibold text-white">${def.label}</h3><p class="text-sm text-gray-400">${def.helper}</p></div>`;
-        const canvas = document.createElement('canvas');
-        canvas.style.height = '320px';
-        card.appendChild(canvas);
-        perMinuteChartsContainer.appendChild(card);
+        card.innerHTML = "<div><h3 class=\"text-lg font-semibold text-white\">" + def.label + "</h3><p class=\"text-sm text-gray-400\">" + def.helper + "</p></div>";
 
+        const canvasWrapper = document.createElement('div');
+        canvasWrapper.className = 'overflow-x-auto';
+        const canvas = document.createElement('canvas');
+        const desiredWidth = Math.max(480, ranked.length * 32);
+        canvas.width = desiredWidth;
+        canvas.style.width = desiredWidth + 'px';
+        canvas.style.height = '320px';
+        canvasWrapper.appendChild(canvas);
+        card.appendChild(canvasWrapper);
+        perMinuteChartsContainer.appendChild(card);
         const ctx = canvas.getContext('2d');
         const chart = new Chart(ctx, {
           type: 'bar',
@@ -347,7 +335,7 @@
             responsive: true,
             maintainAspectRatio: false,
             animation: false,
-            indexAxis: 'y',
+            indexAxis: 'x',
             interaction: { mode: 'nearest', intersect: true },
             scales: {
               x: { beginAtZero: true, ticks: { color: '#d1d5db' }, grid: { color: 'rgba(55, 65, 81, 0.5)' } },
@@ -483,7 +471,7 @@
       return cardCount;
     };
 
-    const renderCharts = (playerMetrics, teamMetrics) => {
+    const renderCharts = (playerMetrics) => {
       destroyCharts();
       const perMinuteCount = renderPerMinuteCharts(playerMetrics);
       if (perMinuteSection) perMinuteSection.style.display = perMinuteCount ? 'block' : 'none';
@@ -542,7 +530,6 @@
         const playerMapStats = hydratePlayerMaps(data.playerMapStats || []);
         const teamTotals = hydrateTeams(data.teamTotals || []);
         const playerMetrics = buildPlayerMetrics(playerTotals);
-        const teamMetrics = buildTeamMetrics(teamTotals);
         const totalMatches = toNumber(data.totalMatches);
         const generatedAt = formatTimestamp(data.generatedAt);
 
@@ -571,7 +558,7 @@
         addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
 
         renderTables(playerTotals, playerMapStats);
-        renderCharts(playerMetrics, teamMetrics);
+        renderCharts(playerMetrics);
       } catch (err) {
         console.error(err);
         destroyCharts();
