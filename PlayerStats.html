@@ -131,75 +131,25 @@
       return Number.isFinite(num) ? num : 0;
     };
 
-    const normalizePlayerEntries = (teamName, teamStats) => {
-      if (!teamStats) return [];
 
-      const buildEntry = (playerName, rawStats) => {
-        if (!playerName) return null;
-        const stats = rawStats?.stats && typeof rawStats.stats === 'object' ? rawStats.stats : rawStats;
-        if (!stats || typeof stats !== 'object') return null;
-        return {
-          player: playerName,
-          stats
-        };
-      };
+    const formatTimestamp = (value) => {
+      if (!value) return null;
 
-      if (teamStats.players) {
-        const players = teamStats.players;
-        if (Array.isArray(players)) {
-          return players
-            .map((entry, index) => {
-              if (!entry) return null;
-              const playerName = entry.player || entry.name || `${teamName} Player ${index + 1}`;
-              return buildEntry(playerName, entry);
-            })
-            .filter(Boolean);
+      if (typeof value.toDate === 'function') {
+        try {
+          return value.toDate();
+        } catch (err) {
+          console.warn('Failed to convert timestamp with toDate()', err);
         }
-        return Object.entries(players)
-          .map(([playerName, stats]) => buildEntry(playerName, stats))
-          .filter(Boolean);
       }
 
-      if (Array.isArray(teamStats)) {
-        return teamStats
-          .map((entry, index) => {
-            if (!entry) return null;
-            const playerName = entry.player || entry.name || `${teamName} Player ${index + 1}`;
-            return buildEntry(playerName, entry);
-          })
-          .filter(Boolean);
+      if (typeof value.seconds === 'number') {
+        const millis = value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1_000_000);
+        return new Date(millis);
       }
 
-      if (typeof teamStats === 'object') {
-        return Object.entries(teamStats)
-          .map(([playerName, stats]) => buildEntry(playerName, stats))
-          .filter(Boolean);
-      }
-
-      return [];
-    };
-
-    const normalizeTotals = (teamStats, fallback) => {
-      const rawTotals = teamStats?.totals;
-      const totals = {
-        kills: fallback.kills,
-        assists: fallback.assists,
-        score: fallback.score,
-        captures: fallback.captures,
-        returns: fallback.returns,
-        time: fallback.time
-      };
-
-      if (rawTotals && typeof rawTotals === 'object') {
-        totals.kills = toNumber(rawTotals.kills ?? totals.kills);
-        totals.assists = toNumber(rawTotals.assists ?? totals.assists);
-        totals.score = toNumber(rawTotals.score ?? totals.score);
-        totals.captures = toNumber(rawTotals.captures ?? totals.captures);
-        totals.returns = toNumber(rawTotals.returns ?? totals.returns);
-        totals.time = toNumber(rawTotals.time ?? totals.time);
-      }
-
-      return totals;
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
     };
 
     const addSummaryCard = (label, value, helper) => {
@@ -434,88 +384,61 @@
     };
 
 
-          const playerEntries = normalizePlayerEntries(teamName, teamStats);
+    const loadPublishedStats = async () => {
+      try {
+        const docRef = doc(db, 'publicStats', 'aggregates');
+        const docSnap = await getDoc(docRef);
 
-          const derivedTotals = playerEntries.reduce((acc, entry) => {
-            const kills = toNumber(entry.stats.kills);
-            const assists = toNumber(entry.stats.assists);
-            const score = toNumber(entry.stats.score);
-            const captures = toNumber(entry.stats.captures);
-            const returns = toNumber(entry.stats.returns);
-            const time = toNumber(entry.stats.time);
+        if (!docSnap.exists()) {
+          statusEl.textContent = 'No published stats found. Save a match in the admin panel to generate them.';
+          chartsSection.style.display = 'none';
+          summaryContainer.innerHTML = '';
+          playerTotalsBody.innerHTML = '';
+          playerMapBody.innerHTML = '';
+          return;
+        }
 
-            acc.kills += kills;
-            acc.assists += assists;
-            acc.score += score;
-            acc.captures += captures;
-            acc.returns += returns;
-            acc.time += time;
-            return acc;
-          }, { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 });
+        const data = docSnap.data() || {};
+        const playerTotals = hydratePlayers(data.playerTotals);
+        const playerMapStats = hydratePlayerMaps(data.playerMapStats);
+        const teamTotals = hydrateTeams(data.teamTotals);
+        const totalMatches = toNumber(data.totalMatches);
+        const generatedAt = formatTimestamp(data.generatedAt);
 
-          const totals = normalizeTotals(teamStats, derivedTotals);
-          const hasData = playerEntries.length || Object.values(totals).some(value => value > 0);
-          if (!hasData) return;
-          const teamEntry = teamTotals.get(teamName) || {
-            name: teamName,
-            matches: 0,
-            time: 0,
-            kills: 0,
-            assists: 0,
-            score: 0,
-            captures: 0,
-            returns: 0
-          };
-          teamEntry.matches += 1;
-          teamEntry.time += toNumber(totals.time);
-          teamEntry.kills += toNumber(totals.kills);
-          teamEntry.assists += toNumber(totals.assists);
-          teamEntry.score += toNumber(totals.score);
-          teamEntry.captures += toNumber(totals.captures);
-          teamEntry.returns += toNumber(totals.returns);
-          teamTotals.set(teamName, teamEntry);
+        if (playerTotals.size === 0) {
+          statusEl.textContent = 'Published stats are empty. Save a match in the admin panel to populate this dashboard.';
+          chartsSection.style.display = 'none';
+          summaryContainer.innerHTML = '';
+          playerTotalsBody.innerHTML = '';
+          playerMapBody.innerHTML = '';
+          return;
+        }
 
-          playerEntries.forEach(({ player: playerName, stats: rawStats }) => {
-            const kills = toNumber(rawStats.kills);
-            const assists = toNumber(rawStats.assists);
-            const score = toNumber(rawStats.score);
-            const captures = toNumber(rawStats.captures);
-            const returns = toNumber(rawStats.returns);
-            const time = toNumber(rawStats.time);
+        summaryContainer.innerHTML = '';
+        const updateHelper = generatedAt
+          ? `Last updated ${generatedAt.toLocaleString()}.`
+          : 'Last updated time unavailable.';
+        statusEl.textContent = `Loaded ${totalMatches} match${totalMatches === 1 ? '' : 'es'} worth of statistics. ${updateHelper}`;
 
+        addSummaryCard('Matches Processed', totalMatches, 'Matches included in this report.');
+        addSummaryCard('Total Players', playerTotals.size, 'Unique players with recorded stats.');
+        addSummaryCard('Total Teams', teamTotals.size, 'Teams represented across all matches.');
+        const totalMinutes = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.time), 0);
+        addSummaryCard('Minutes Tracked', formatNumber(totalMinutes, 2), 'Combined playtime from every player.');
+        const totalKills = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.kills), 0);
+        addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
 
-      const data = docSnap.data() || {};
-      const playerTotals = hydratePlayers(data.playerTotals);
-      const playerMapStats = hydratePlayerMaps(data.playerMapStats);
-      const teamTotals = hydrateTeams(data.teamTotals);
-      const totalMatches = data.totalMatches || 0;
-      const generatedAt = formatTimestamp(data.generatedAt);
-
-      if (playerTotals.size === 0) {
-        statusEl.textContent = 'Published stats are empty. Save a match in the admin panel to populate this dashboard.';
-        return;
+        renderTables(playerTotals, playerMapStats);
+        renderCharts(playerTotals, teamTotals);
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Unable to load stats. Please refresh to try again.';
+        chartsSection.style.display = 'none';
       }
+    };
 
-      const updateHelper = generatedAt
-        ? `Last updated ${generatedAt.toLocaleString()}.`
-        : 'Last updated time unavailable.';
-      statusEl.textContent = `Loaded ${totalMatches} match${totalMatches === 1 ? '' : 'es'} worth of statistics. ${updateHelper}`;
-
-      addSummaryCard('Matches Processed', totalMatches, 'Matches included in this report.');
-      addSummaryCard('Total Players', playerTotals.size, 'Unique players with recorded stats.');
-      addSummaryCard('Total Teams', teamTotals.size, 'Teams represented across all matches.');
-      const totalMinutes = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.time), 0);
-      addSummaryCard('Minutes Tracked', formatNumber(totalMinutes, 2), 'Combined playtime from every player.');
-      const totalKills = Array.from(playerTotals.values()).reduce((sum, p) => sum + toNumber(p.kills), 0);
-      addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
-
-      renderTables(playerTotals, playerMapStats);
-      renderCharts(playerTotals, teamTotals);
-    } catch (err) {
-      console.error(err);
-      statusEl.textContent = 'Unable to load stats. Please refresh to try again.';
-    }
-  </script>
+    loadPublishedStats();
+    </script>
   <script src="./assets/include.js" defer></script>
 </body>
 </html>
