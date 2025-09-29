@@ -23,15 +23,26 @@
 
     <section class="space-y-8" id="chartsSection" style="display:none;">
       <div id="perMinuteSection" class="space-y-4">
-        <h2 class="text-xl font-semibold text-white">Player Production Rates</h2>
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-xl font-semibold text-white">Player Production Rates</h2>
+          <div id="perMinuteTabs" class="flex flex-wrap gap-2"></div>
+        </div>
         <p class="text-sm text-gray-400">Per-minute outputs across all recorded matches.</p>
-        <div id="perMinuteCharts" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"></div>
+        <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow">
+          <div class="overflow-x-auto">
+            <canvas id="perMinuteChart" style="height:320px;"></canvas>
+          </div>
+        </div>
       </div>
 
       <div id="killShareSection" class="space-y-4">
-        <h2 class="text-xl font-semibold text-white">Kill Share by Team</h2>
-        <p class="text-sm text-gray-400">Distribution of kills among players on each roster.</p>
-        <div id="killShareContainer" class="grid gap-6 md:grid-cols-2 xl:grid-cols-3"></div>
+        <div class="flex flex-wrap items-center gap-3">
+          <h2 class="text-xl font-semibold text-white">Kill Share by Team</h2>
+          <select id="killShareSelect" class="bg-gray-900 border border-gray-700 text-gray-100 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        </div>
+        <div class="bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow">
+          <canvas id="killShareChart" style="height:300px;"></canvas>
+        </div>
       </div>
 
       <div id="leaderboardSection" class="space-y-4">
@@ -130,9 +141,11 @@
     const statusEl = document.getElementById('statusMessage');
     const chartsSection = document.getElementById('chartsSection');
     const perMinuteSection = document.getElementById('perMinuteSection');
-    const perMinuteChartsContainer = document.getElementById('perMinuteCharts');
+    const perMinuteTabs = document.getElementById('perMinuteTabs');
+    const perMinuteChartCanvas = document.getElementById('perMinuteChart');
     const killShareSection = document.getElementById('killShareSection');
-    const killShareContainer = document.getElementById('killShareContainer');
+    const killShareSelect = document.getElementById('killShareSelect');
+    const killShareChartCanvas = document.getElementById('killShareChart');
     const leaderboardSection = document.getElementById('leaderboardSection');
     const leaderboardCardsContainer = document.getElementById('leaderboardCards');
     const summaryContainer = document.getElementById('summaryCards');
@@ -204,10 +217,12 @@
           const captures = toNumber(player.captures);
           const returns = toNumber(player.returns);
           const matches = toNumber(player.matches);
-          const originalTeams = player.teams instanceof Set ? player.teams : new Set(Array.isArray(player.teams) ? player.teams : []);
+          const teams = player.teams instanceof Set
+            ? new Set(player.teams)
+            : new Set(Array.isArray(player.teams) ? player.teams : (player.team ? [player.team] : []));
           return {
             ...player,
-            teams: new Set(originalTeams),
+            teams,
             time,
             kills,
             assists,
@@ -224,7 +239,6 @@
         })
         .filter(player => player.time > 0);
     };
-
 
     const renderTables = (playerTotals, playerMapStats) => {
       const totalsSorted = Array.from(playerTotals.values()).sort((a, b) => b.kills - a.kills);
@@ -291,8 +305,8 @@
     };
 
     const renderPerMinuteCharts = (playerMetrics) => {
-      if (!perMinuteChartsContainer) return 0;
-      perMinuteChartsContainer.innerHTML = '';
+      if (!perMinuteSection || !perMinuteTabs || !perMinuteChartCanvas) return 0;
+
       const metricDefinitions = [
         { id: 'scorePerMinute', key: 'scorePerMinute', label: 'Score Per Minute', helper: 'Per-minute scoring output.', color: chartPalette[0], totalKey: 'score' },
         { id: 'killsPerMinute', key: 'killsPerMinute', label: 'Kills Per Minute', helper: 'Eliminations efficiency.', color: chartPalette[1], totalKey: 'kills' },
@@ -300,35 +314,45 @@
         { id: 'capturesPerMinute', key: 'capturesPerMinute', label: 'Captures Per Minute', helper: 'Flag captures per minute.', color: chartPalette[3], totalKey: 'captures' },
         { id: 'returnsPerMinute', key: 'returnsPerMinute', label: 'Returns Per Minute', helper: 'Flag returns per minute.', color: chartPalette[4], totalKey: 'returns' }
       ];
-      let chartCount = 0;
 
-      metricDefinitions.forEach(def => {
-        const ranked = playerMetrics.slice().sort((a, b) => b[def.key] - a[def.key]);
-        if (!ranked.length) return;
+      const metricData = metricDefinitions
+        .map(def => {
+          const players = playerMetrics.slice().sort((a, b) => b[def.key] - a[def.key]);
+          return { ...def, players };
+        })
+        .filter(metric => metric.players.length > 0);
 
-        const card = document.createElement('div');
-        card.className = 'bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow space-y-4';
-        card.innerHTML = "<div><h3 class=\"text-lg font-semibold text-white\">" + def.label + "</h3><p class=\"text-sm text-gray-400\">" + def.helper + "</p></div>";
+      if (!metricData.length) {
+        perMinuteSection.style.display = 'none';
+        const existing = chartInstances.get('per-minute');
+        if (existing) existing.destroy();
+        chartInstances.delete('per-minute');
+        return 0;
+      }
 
-        const canvasWrapper = document.createElement('div');
-        canvasWrapper.className = 'overflow-x-auto';
-        const canvas = document.createElement('canvas');
-        const desiredWidth = Math.max(480, ranked.length * 32);
-        canvas.width = desiredWidth;
-        canvas.style.width = desiredWidth + 'px';
-        canvas.style.height = '320px';
-        canvasWrapper.appendChild(canvas);
-        card.appendChild(canvasWrapper);
-        perMinuteChartsContainer.appendChild(card);
-        const ctx = canvas.getContext('2d');
+      perMinuteTabs.innerHTML = '';
+      const ctx = perMinuteChartCanvas.getContext('2d');
+      const activateTab = (metricId) => {
+        perMinuteTabs.querySelectorAll('button').forEach(button => {
+          const isActive = button.dataset.metricId === metricId;
+          button.className = isActive
+            ? 'px-3 py-1 text-sm rounded bg-indigo-600 text-white shadow'
+            : 'px-3 py-1 text-sm rounded bg-gray-800 text-gray-300 hover:bg-gray-700';
+        });
+      };
+
+      const renderMetricChart = (metric) => {
+        const existing = chartInstances.get('per-minute');
+        if (existing) existing.destroy();
+
         const chart = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: ranked.map(player => player.name),
+            labels: metric.players.map(player => player.name),
             datasets: [{
-              label: def.label,
-              data: ranked.map(player => Number(player[def.key].toFixed(3))),
-              backgroundColor: ranked.map((_, idx) => chartPalette[idx % chartPalette.length])
+              label: metric.label,
+              data: metric.players.map(player => Number(player[metric.key].toFixed(3))),
+              backgroundColor: metric.players.map((_, idx) => chartPalette[idx % chartPalette.length])
             }]
           },
           options: {
@@ -346,8 +370,8 @@
               tooltip: {
                 callbacks: {
                   label: (context) => {
-                    const player = ranked[context.dataIndex];
-                    return [`${context.label}: ${formatNumber(context.raw, 2)} per min`, `${def.totalKey.replace(/([A-Z])/g, ' $1').trim()}: ${formatNumber(player[def.totalKey], 0)}`];
+                    const player = metric.players[context.dataIndex];
+                    return [`${context.label}: ${formatNumber(context.raw, 2)} per min`, `${metric.totalKey.replace(/([A-Z])/g, ' $1').trim()}: ${formatNumber(player[metric.totalKey], 0)}`];
                   }
                 }
               }
@@ -355,16 +379,30 @@
           }
         });
 
-        chartInstances.set(`per-minute-${def.id}`, chart);
-        chartCount += 1;
+        chartInstances.set('per-minute', chart);
+        activateTab(metric.id);
+      };
+
+      metricData.forEach((metric, idx) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.metricId = metric.id;
+        button.className = idx === 0
+          ? 'px-3 py-1 text-sm rounded bg-indigo-600 text-white shadow'
+          : 'px-3 py-1 text-sm rounded bg-gray-800 text-gray-300 hover:bg-gray-700';
+        button.textContent = metric.label;
+        button.addEventListener('click', () => renderMetricChart(metric));
+        perMinuteTabs.appendChild(button);
       });
 
-      return chartCount;
+      renderMetricChart(metricData[0]);
+      perMinuteSection.style.display = 'block';
+      return 1;
     };
 
     const renderKillShareCharts = (playerMetrics) => {
-      if (!killShareContainer) return 0;
-      killShareContainer.innerHTML = '';
+      if (!killShareSection || !killShareSelect || !killShareChartCanvas) return 0;
+
       const teamMap = new Map();
       playerMetrics.forEach(player => {
         if (!player.teams || !player.teams.size) return;
@@ -376,32 +414,48 @@
         });
       });
 
-      let chartCount = 0;
-      Array.from(teamMap.values()).sort((a, b) => {
-        const killsA = a.players.reduce((sum, player) => sum + player.kills, 0);
-        const killsB = b.players.reduce((sum, player) => sum + player.kills, 0);
-        return killsB - killsA;
-      }).forEach((entry, teamIdx) => {
-        const players = entry.players.filter(player => player.kills > 0).sort((a, b) => b.kills - a.kills);
-        const totalKills = players.reduce((sum, player) => sum + player.kills, 0);
-        if (!totalKills) return;
+      const teams = Array.from(teamMap.values())
+        .map(entry => {
+          const players = entry.players.filter(player => player.kills > 0).sort((a, b) => b.kills - a.kills);
+          const totalKills = players.reduce((sum, player) => sum + player.kills, 0);
+          return { ...entry, players, totalKills };
+        })
+        .filter(entry => entry.totalKills > 0)
+        .sort((a, b) => b.totalKills - a.totalKills);
 
-        const card = document.createElement('div');
-        card.className = 'bg-gray-800/60 border border-gray-700 rounded-xl p-6 shadow space-y-4';
-        card.innerHTML = `<div><h3 class="text-lg font-semibold text-white">${entry.name}</h3><p class="text-sm text-gray-400">Kill distribution across roster.</p></div>`;
-        const canvas = document.createElement('canvas');
-        canvas.style.height = '260px';
-        card.appendChild(canvas);
-        killShareContainer.appendChild(card);
+      const existing = chartInstances.get('kill-share');
+      if (existing) {
+        existing.destroy();
+        chartInstances.delete('kill-share');
+      }
 
-        const ctx = canvas.getContext('2d');
+      if (!teams.length) {
+        killShareSection.style.display = 'none';
+        killShareSelect.innerHTML = '';
+        return 0;
+      }
+
+      killShareSelect.innerHTML = '';
+      teams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = team.name;
+        option.textContent = `${team.name} (${formatNumber(team.totalKills, 0)} kills)`;
+        killShareSelect.appendChild(option);
+      });
+
+      const ctx = killShareChartCanvas.getContext('2d');
+
+      const renderTeamChart = (team) => {
+        const existingChart = chartInstances.get('kill-share');
+        if (existingChart) existingChart.destroy();
+
         const chart = new Chart(ctx, {
           type: 'doughnut',
           data: {
-            labels: players.map(player => player.name),
+            labels: team.players.map(player => player.name),
             datasets: [{
-              data: players.map(player => player.kills),
-              backgroundColor: players.map((_, idx) => chartPalette[(teamIdx + idx) % chartPalette.length]),
+              data: team.players.map(player => player.kills),
+              backgroundColor: team.players.map((_, idx) => chartPalette[idx % chartPalette.length]),
               borderColor: '#1f2937',
               borderWidth: 1
             }]
@@ -419,7 +473,7 @@
                 callbacks: {
                   label: (context) => {
                     const kills = context.raw;
-                    const percent = kills / totalKills;
+                    const percent = kills / team.totalKills;
                     return `${context.label}: ${formatNumber(kills, 0)} kills (${formatPercent(percent)})`;
                   }
                 }
@@ -427,15 +481,24 @@
             }
           }
         });
-        chartInstances.set(`kill-share-${entry.name}`, chart);
-        chartCount += 1;
-      });
 
-      return chartCount;
+        chartInstances.set('kill-share', chart);
+      };
+
+      killShareSelect.value = teams[0].name;
+      renderTeamChart(teams[0]);
+
+      killShareSelect.onchange = () => {
+        const team = teams.find(t => t.name === killShareSelect.value);
+        if (team) renderTeamChart(team);
+      };
+
+      killShareSection.style.display = 'block';
+      return 1;
     };
 
     const renderLeaderboards = (playerMetrics) => {
-      if (!leaderboardCardsContainer) return 0;
+      if (!leaderboardSection || !leaderboardCardsContainer) return 0;
       leaderboardCardsContainer.innerHTML = '';
       const metrics = [
         { key: 'scorePerMinute', label: 'Score Per Minute', helper: 'Highest scoring efficiency.' },
@@ -468,6 +531,7 @@
         cardCount += 1;
       });
 
+      leaderboardSection.style.display = cardCount ? 'block' : 'none';
       return cardCount;
     };
 
@@ -479,7 +543,6 @@
       if (killShareSection) killShareSection.style.display = killShareCount ? 'block' : 'none';
       const leaderboardCount = renderLeaderboards(playerMetrics);
       if (leaderboardSection) leaderboardSection.style.display = leaderboardCount ? 'block' : 'none';
-
       const shouldShow = (perMinuteCount + killShareCount + leaderboardCount) > 0;
       chartsSection.style.display = shouldShow ? 'block' : 'none';
     };
@@ -572,3 +635,5 @@
   <script src="./assets/include.js" defer></script>
 </body>
 </html>
+
+
