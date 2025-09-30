@@ -55,7 +55,7 @@
     <section class="bg-gray-800/60 border border-gray-700 rounded-xl shadow">
       <header class="px-6 py-4 border-b border-gray-700">
         <h2 class="text-2xl font-semibold text-white">Player Totals</h2>
-        <p class="text-sm text-gray-400">Season-long totals aggregated from every saved match.</p>
+        <p class="text-sm text-gray-400">Top 25 players by total kills. Use the explorer below for full details.</p>
       </header>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-700 text-sm">
@@ -84,32 +84,38 @@
 
     <section class="bg-gray-800/60 border border-gray-700 rounded-xl shadow">
       <header class="px-6 py-4 border-b border-gray-700">
-        <h2 class="text-2xl font-semibold text-white">Player Map Breakdown</h2>
-        <p class="text-sm text-gray-400">Track how each player performs on every map they've played.</p>
+        <h2 class="text-2xl font-semibold text-white">Player Explorer</h2>
+        <p class="text-sm text-gray-400">Select a player to view season totals and map-level performance.</p>
       </header>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-700 text-sm">
-          <thead class="bg-gray-800/80 text-gray-300 uppercase tracking-wide text-xs">
-            <tr>
-              <th class="px-4 py-3 text-left">Player</th>
-              <th class="px-4 py-3 text-left">Teams</th>
-              <th class="px-4 py-3 text-left">Map</th>
-              <th class="px-4 py-3 text-right">Matches</th>
-              <th class="px-4 py-3 text-right">Time (min)</th>
-              <th class="px-4 py-3 text-right">Kills</th>
-              <th class="px-4 py-3 text-right">Assists</th>
-              <th class="px-4 py-3 text-right">Score</th>
-              <th class="px-4 py-3 text-right">Captures</th>
-              <th class="px-4 py-3 text-right">Returns</th>
-              <th class="px-4 py-3 text-right">KPM</th>
-              <th class="px-4 py-3 text-right">APM</th>
-              <th class="px-4 py-3 text-right">SPM</th>
-              <th class="px-4 py-3 text-right">CPM</th>
-              <th class="px-4 py-3 text-right">RPM</th>
-            </tr>
-          </thead>
-          <tbody id="playerMapBody" class="divide-y divide-gray-800"></tbody>
-        </table>
+      <div class="p-6 space-y-6">
+        <div class="flex flex-wrap items-center gap-3">
+          <label for="playerDetailSelect" class="text-sm text-gray-300">Player</label>
+          <select id="playerDetailSelect" class="bg-gray-900 border border-gray-700 text-gray-100 rounded px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+        </div>
+        <div id="playerDetailSummary" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-700 text-sm">
+            <thead class="bg-gray-800/80 text-gray-300 uppercase tracking-wide text-xs">
+              <tr>
+                <th class="px-4 py-3 text-left">Map</th>
+                <th class="px-4 py-3 text-left">Teams</th>
+                <th class="px-4 py-3 text-right">Matches</th>
+                <th class="px-4 py-3 text-right">Time (min)</th>
+                <th class="px-4 py-3 text-right">Kills</th>
+                <th class="px-4 py-3 text-right">Assists</th>
+                <th class="px-4 py-3 text-right">Score</th>
+                <th class="px-4 py-3 text-right">Captures</th>
+                <th class="px-4 py-3 text-right">Returns</th>
+                <th class="px-4 py-3 text-right">KPM</th>
+                <th class="px-4 py-3 text-right">APM</th>
+                <th class="px-4 py-3 text-right">SPM</th>
+                <th class="px-4 py-3 text-right">CPM</th>
+                <th class="px-4 py-3 text-right">RPM</th>
+              </tr>
+            </thead>
+            <tbody id="playerDetailMapBody" class="divide-y divide-gray-800"></tbody>
+          </table>
+        </div>
       </div>
     </section>
   </main>
@@ -151,6 +157,9 @@
     const summaryContainer = document.getElementById('summaryCards');
     const playerTotalsBody = document.getElementById('playerTotalsBody');
     const playerMapBody = document.getElementById('playerMapBody');
+    const playerDetailSelect = document.getElementById('playerDetailSelect');
+    const playerDetailSummary = document.getElementById('playerDetailSummary');
+    const playerDetailMapBody = document.getElementById('playerDetailMapBody');
 
     const chartInstances = new Map();
     let pendingChartBuild = null;
@@ -242,68 +251,187 @@
 
     const renderTables = (playerTotals, playerMapStats) => {
       const totalsSorted = Array.from(playerTotals.values()).sort((a, b) => b.kills - a.kills);
-      playerTotalsBody.innerHTML = '';
-      totalsSorted.forEach(player => {
-        const row = document.createElement('tr');
-        const totalTime = toNumber(player.time);
-        const kpm = totalTime > 0 ? toNumber(player.kills) / totalTime : 0;
-        const apm = totalTime > 0 ? toNumber(player.assists) / totalTime : 0;
-        const spm = totalTime > 0 ? toNumber(player.score) / totalTime : 0;
-        const cpm = totalTime > 0 ? toNumber(player.captures) / totalTime : 0;
-        const rpm = totalTime > 0 ? toNumber(player.returns) / totalTime : 0;
-        row.innerHTML = `
-          <td class="px-4 py-3 text-left text-white">${player.name}</td>
-          <td class="px-4 py-3 text-left text-gray-300">${Array.from(player.teams || []).join(', ') || '-'}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.matches), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(totalTime, 2)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.kills), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.assists), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.score), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.captures), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.returns), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(kpm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(apm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(spm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(cpm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(rpm)}</td>
-        `;
-        playerTotalsBody.appendChild(row);
-      });
 
-      const mapRows = Array.from(playerMapStats.values()).sort((a, b) => {
-        if (a.player === b.player) return toNumber(b.kills) - toNumber(a.kills);
-        return a.player.localeCompare(b.player);
-      });
-      playerMapBody.innerHTML = '';
-      mapRows.forEach(entry => {
-        const totalTime = toNumber(entry.time);
-        const kpm = totalTime > 0 ? toNumber(entry.kills) / totalTime : 0;
-        const apm = totalTime > 0 ? toNumber(entry.assists) / totalTime : 0;
-        const spm = totalTime > 0 ? toNumber(entry.score) / totalTime : 0;
-        const cpm = totalTime > 0 ? toNumber(entry.captures) / totalTime : 0;
-        const rpm = totalTime > 0 ? toNumber(entry.returns) / totalTime : 0;
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td class="px-4 py-3 text-left text-white">${entry.player}</td>
-          <td class="px-4 py-3 text-left text-gray-300">${Array.from(entry.teams || []).join(', ') || '-'}</td>
-          <td class="px-4 py-3 text-left text-gray-200">${entry.map}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.matches), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(totalTime, 2)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.kills), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.assists), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.score), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.captures), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.returns), 0)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(kpm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(apm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(spm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(cpm)}</td>
-          <td class="px-4 py-3 text-right">${formatNumber(rpm)}</td>
-        `;
-        playerMapBody.appendChild(row);
-      });
+      if (playerTotalsBody) {
+        playerTotalsBody.innerHTML = '';
+        totalsSorted
+          .slice(0, 25)
+          .forEach(player => {
+            const row = document.createElement('tr');
+            const totalTime = toNumber(player.time);
+            const kpm = totalTime > 0 ? toNumber(player.kills) / totalTime : 0;
+            const apm = totalTime > 0 ? toNumber(player.assists) / totalTime : 0;
+            const spm = totalTime > 0 ? toNumber(player.score) / totalTime : 0;
+            const cpm = totalTime > 0 ? toNumber(player.captures) / totalTime : 0;
+            const rpm = totalTime > 0 ? toNumber(player.returns) / totalTime : 0;
+            row.innerHTML = `
+              <td class="px-4 py-3 text-left text-white">${player.name}</td>
+              <td class="px-4 py-3 text-left text-gray-300">${Array.from(player.teams || []).join(', ') || '-'}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.matches), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(totalTime, 2)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.kills), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.assists), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.score), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.captures), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(player.returns), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(kpm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(apm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(spm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(cpm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(rpm)}</td>
+            `;
+            playerTotalsBody.appendChild(row);
+          });
+      }
+
+      if (playerDetailSelect && playerDetailSummary && playerDetailMapBody) {
+        const previousSelection = playerDetailSelect.value;
+        const playerNames = totalsSorted
+          .map(player => player.name)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+
+        playerDetailSelect.innerHTML = '';
+        playerNames.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          playerDetailSelect.appendChild(option);
+        });
+
+        const renderPlayerDetail = (playerName) => {
+          const player = playerTotals.get(playerName);
+          if (!player) {
+            playerDetailSummary.innerHTML = '<p class="text-sm text-gray-400">Select a player to view their stats.</p>';
+            playerDetailMapBody.innerHTML = '';
+            return;
+          }
+
+          const teams = Array.from(player.teams || []).filter(Boolean);
+          const totalTime = toNumber(player.time);
+          const matches = toNumber(player.matches);
+          const kills = toNumber(player.kills);
+          const assists = toNumber(player.assists);
+          const score = toNumber(player.score);
+          const captures = toNumber(player.captures);
+          const returns = toNumber(player.returns);
+          const kpm = totalTime > 0 ? kills / totalTime : 0;
+          const apm = totalTime > 0 ? assists / totalTime : 0;
+          const spm = totalTime > 0 ? score / totalTime : 0;
+          const cpm = totalTime > 0 ? captures / totalTime : 0;
+          const rpm = totalTime > 0 ? returns / totalTime : 0;
+
+          const summaryCards = [
+            { label: 'Teams', value: teams.length ? teams.join(', ') : '-', helper: 'Season affiliations.' },
+            { label: 'Matches', value: formatNumber(matches, 0), helper: 'Recorded games.' },
+            { label: 'Playtime (min)', value: formatNumber(totalTime, 2), helper: 'Minutes tracked.' },
+            { label: 'Kills', value: formatNumber(kills, 0), helper: `${formatNumber(kpm)} per min` },
+            { label: 'Assists', value: formatNumber(assists, 0), helper: `${formatNumber(apm)} per min` },
+            { label: 'Score', value: formatNumber(score, 0), helper: `${formatNumber(spm)} per min` },
+            { label: 'Captures', value: formatNumber(captures, 0), helper: `${formatNumber(cpm)} per min` },
+            { label: 'Returns', value: formatNumber(returns, 0), helper: `${formatNumber(rpm)} per min` }
+          ];
+
+          playerDetailSummary.innerHTML = summaryCards.map(card => `
+            <div class="bg-gray-800/60 border border-gray-700 rounded-lg p-4 shadow">
+              <p class="text-xs uppercase tracking-wide text-indigo-300">${card.label}</p>
+              <p class="mt-2 text-xl font-semibold text-white">${card.value}</p>
+              <p class="mt-1 text-xs text-gray-400">${card.helper}</p>
+            </div>
+          `).join('');
+
+          playerDetailMapBody.innerHTML = '';
+          const maps = Array.from(playerMapStats.values())
+            .filter(entry => entry.player === playerName)
+            .sort((a, b) => {
+              const matchDiff = toNumber(b.matches) - toNumber(a.matches);
+              if (matchDiff !== 0) return matchDiff;
+              return toNumber(b.kills) - toNumber(a.kills);
+            });
+
+          if (!maps.length) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `<td class="px-4 py-3 text-sm text-gray-400" colspan="14">No map stats recorded for this player yet.</td>`;
+            playerDetailMapBody.appendChild(emptyRow);
+            return;
+          }
+
+          maps.forEach(entry => {
+            const mapTime = toNumber(entry.time);
+            const mapKpm = mapTime > 0 ? toNumber(entry.kills) / mapTime : 0;
+            const mapApm = mapTime > 0 ? toNumber(entry.assists) / mapTime : 0;
+            const mapSpm = mapTime > 0 ? toNumber(entry.score) / mapTime : 0;
+            const mapCpm = mapTime > 0 ? toNumber(entry.captures) / mapTime : 0;
+            const mapRpm = mapTime > 0 ? toNumber(entry.returns) / mapTime : 0;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td class="px-4 py-3 text-left text-white">${entry.map}</td>
+              <td class="px-4 py-3 text-left text-gray-300">${Array.from(entry.teams || []).join(', ') || '-'}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.matches), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(mapTime, 2)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.kills), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.assists), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.score), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.captures), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.returns), 0)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(mapKpm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(mapApm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(mapSpm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(mapCpm)}</td>
+              <td class="px-4 py-3 text-right">${formatNumber(mapRpm)}</td>
+            `;
+            playerDetailMapBody.appendChild(row);
+          });
+        };
+
+        if (!playerNames.length) {
+          playerDetailSummary.innerHTML = '<p class="text-sm text-gray-400">No players available yet.</p>';
+          playerDetailMapBody.innerHTML = '';
+          playerDetailSelect.disabled = true;
+        } else {
+          playerDetailSelect.disabled = false;
+          const initialSelection = playerNames.includes(previousSelection) ? previousSelection : playerNames[0];
+          playerDetailSelect.value = initialSelection;
+          renderPlayerDetail(initialSelection);
+          playerDetailSelect.onchange = () => renderPlayerDetail(playerDetailSelect.value);
+        }
+      }
+
+      if (playerMapBody) {
+        const mapRows = Array.from(playerMapStats.values()).sort((a, b) => {
+          if (a.player === b.player) return toNumber(b.kills) - toNumber(a.kills);
+          return a.player.localeCompare(b.player);
+        });
+        playerMapBody.innerHTML = '';
+        mapRows.forEach(entry => {
+          const mapTime = toNumber(entry.time);
+          const mapKpm = mapTime > 0 ? toNumber(entry.kills) / mapTime : 0;
+          const mapApm = mapTime > 0 ? toNumber(entry.assists) / mapTime : 0;
+          const mapSpm = mapTime > 0 ? toNumber(entry.score) / mapTime : 0;
+          const mapCpm = mapTime > 0 ? toNumber(entry.captures) / mapTime : 0;
+          const mapRpm = mapTime > 0 ? toNumber(entry.returns) / mapTime : 0;
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td class="px-4 py-3 text-left text-white">${entry.player}</td>
+            <td class="px-4 py-3 text-left text-gray-300">${Array.from(entry.teams || []).join(', ') || '-'}</td>
+            <td class="px-4 py-3 text-left text-gray-200">${entry.map}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.matches), 0)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(mapTime, 2)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.kills), 0)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.assists), 0)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.score), 0)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.captures), 0)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(toNumber(entry.returns), 0)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(mapKpm)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(mapApm)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(mapSpm)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(mapCpm)}</td>
+            <td class="px-4 py-3 text-right">${formatNumber(mapRpm)}</td>
+          `;
+          playerMapBody.appendChild(row);
+        });
+      }
     };
-
     const renderPerMinuteCharts = (playerMetrics) => {
       if (!perMinuteSection || !perMinuteTabs || !perMinuteChartCanvas) return 0;
 
@@ -635,5 +763,4 @@
   <script src="./assets/include.js" defer></script>
 </body>
 </html>
-
 
