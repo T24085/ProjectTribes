@@ -220,10 +220,53 @@
   }
 
   function initLiveAnnouncementBanner() {
-    const banner = document.getElementById('live-announcement-banner');
-    const nav = document.querySelector('nav');
-    const panel = document.getElementById('live-teams-panel');
+    const banner = document.getElementById("live-announcement-banner");
+    const nav = document.querySelector("nav");
+    const panel = document.getElementById("live-teams-panel");
     if (!banner || !nav) return;
+
+    const BANNER_GAP = 12;
+    const iconMarkup = "<span class='banner-icon' aria-hidden='true'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'><path fill='currentColor' d='M1.45 7.88a.75.75 0 0 1 1.06-.03A11.94 11.94 0 0 1 10 5c2.99 0 5.73 1.12 7.49 2.85a.75.75 0 0 1-1.03 1.09A10.44 10.44 0 0 0 10 6.5c-2.62 0-5 1-6.46 2.44a.75.75 0 0 1-1.06-.03zm2.94 3a.75.75 0 0 1 1.06-.05A7.45 7.45 0 0 1 10 9c2.09 0 3.99.86 5.55 2.3a.75.75 0 1 1-1 1.12A5.95 5.95 0 0 0 10 10.5a5.95 5.95 0 0 0-4.55 1.92.75.75 0 0 1-1.06-.03zM10 13.25a2.25 2.25 0 1 1 0 4.5 2.25 2.25 0 0 1 0-4.5z'/></svg></span>";
+    const htmlEscapes = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "\u0027": "&#39;" };
+    const escapeHtml = (str = "") => String(str).replace(/[&<>\"\u0027]/g, ch => htmlEscapes[ch] || ch);
+    const highlight = (team) => `<strong>${escapeHtml(team)}</strong>`;
+    const formatMessage = (teams) => {
+      if (!teams.length) return "";
+      if (teams.length === 1) return `${highlight(teams[0])} is live!`;
+      if (teams.length === 2) return `${highlight(teams[0])} vs ${highlight(teams[1])} is live!`;
+      const extra = teams.length - 2;
+      return `${highlight(teams[0])} vs ${highlight(teams[1])} + ${extra} more live!`;
+    };
+    const syncLayout = () => {
+      const navHeight = nav.offsetHeight;
+      const isVisible = banner.classList.contains("is-visible");
+      const bannerHeight = isVisible ? banner.offsetHeight : 0;
+      banner.style.top = `${navHeight + BANNER_GAP}px`;
+      if (panel) {
+        panel.style.top = `${navHeight + (isVisible ? bannerHeight + BANNER_GAP : 0)}px`;
+      }
+    };
+    const hideBanner = () => {
+      banner.classList.remove("is-visible");
+      banner.innerHTML = "";
+      syncLayout();
+    };
+    const showBanner = (teams) => {
+      const message = formatMessage(teams);
+      if (!message) {
+        hideBanner();
+        return;
+      }
+      banner.innerHTML = `${iconMarkup}<span>${message}</span>`;
+      if (!banner.classList.contains("is-visible")) {
+        requestAnimationFrame(() => {
+          banner.classList.add("is-visible");
+          requestAnimationFrame(syncLayout);
+        });
+      } else {
+        syncLayout();
+      }
+    };
 
     const buildLoginMap = () => {
       const roster = TEAM_STREAMS || {};
@@ -241,12 +284,7 @@
       const loginMap = buildLoginMap();
       const logins = Object.keys(loginMap);
       if (!getToken() || !logins.length) {
-        banner.style.display = 'none';
-
-        banner.innerHTML = '';
-        if (panel) panel.style.top = nav.offsetHeight + 'px';
-        banner.style.top = nav.offsetHeight + 'px';
-
+        hideBanner();
         return;
       }
       try {
@@ -254,29 +292,22 @@
         const liveTeams = Array.from(new Set(
           streams.map(s => loginMap[s.user_login.toLowerCase()]).filter(Boolean)
         ));
-        if (liveTeams.length >= 2) {
-          banner.innerHTML = `<span>${liveTeams[0]} vs ${liveTeams[1]} is live!</span>`;
-          banner.style.display = 'block';
-        } else if (liveTeams.length === 1) {
-          banner.innerHTML = `<span>${liveTeams[0]} is live!</span>`;
-          banner.style.display = 'block';
+        if (liveTeams.length) {
+          showBanner(liveTeams);
         } else {
-          banner.innerHTML = '';
-          banner.style.display = 'none';
+          hideBanner();
         }
-        const navHeight = nav.offsetHeight;
-        const bannerHeight = banner.style.display === 'none' ? 0 : banner.offsetHeight;
-        banner.style.top = navHeight + 'px';
-        if (panel) panel.style.top = (navHeight + bannerHeight) + 'px';
       } catch (err) {
-        console.error('Unable to check live teams', err);
+        console.error("Unable to check live teams", err);
       }
     };
 
     if (!banner.dataset.init) {
-      banner.dataset.init = '1';
+      banner.dataset.init = "1";
       setInterval(checkTeams, 60 * 1000);
     }
+
+    syncLayout();
     checkTeams();
   }
 
