@@ -186,7 +186,7 @@
     .chat-panel {
       position: fixed;
       right: 0;
-      top: 0;
+      top: 4.75rem;
       bottom: 0;
       width: 300px;
       background: rgba(45, 55, 72, 0.9);
@@ -283,9 +283,9 @@
       .chat-panel {
         display: none;
         width: 100%;
-        height: 100%;
+        height: calc(100vh - 4.75rem);
         position: fixed;
-        top: 0;
+        top: 4.75rem;
         left: 0;
         z-index: 40;
       }
@@ -343,7 +343,7 @@
       <select id="chat-channel-select" onchange="updateChat()">
         <option value="">Select Channel Chat</option>
       </select>
-      <iframe id="chat-iframe" src="https://www.twitch.tv/embed/twitch/chat?parent=t24085.github.io"></iframe>
+      <iframe id="chat-iframe" src="about:blank" title="Twitch chat"></iframe>
     </div>
     <!-- Chat Toggle Button for Mobile -->
     <button class="chat-toggle" id="chat-toggle" onclick="toggleChat()">💬</button>
@@ -408,6 +408,24 @@
       'xry_tv',
       'z4t01'
     ].sort(); // Sort channels alphabetically
+
+    const parentHosts = Array.from(new Set([
+      window.location.hostname,
+      'www.tribesprofessionalleague.online',
+      'tribesprofessionalleague.online',
+      't24085.github.io',
+      'localhost',
+      '127.0.0.1'
+    ].filter(Boolean)));
+    if (!parentHosts.length) {
+      parentHosts.push('www.tribesprofessionalleague.online');
+    }
+    const parentQuery = parentHosts
+      .map(host => `parent=${encodeURIComponent(host)}`)
+      .join('&');
+    const buildPlayerUrl = channel => `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&${parentQuery}&autoplay=false`;
+    const buildChatUrl = channel => `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?${parentQuery}`;
+
     console.log('Channels length:', channels.length);
     let streamCount = channels.length;
     let hiddenChannels = JSON.parse(localStorage.getItem('hiddenChannels')) || [];
@@ -443,9 +461,15 @@
         const streamBox = document.createElement('div');
         streamBox.className = 'stream-box';
         streamBox.id = `stream-${streamIndex}`;
+        const playerSrc = buildPlayerUrl(channel);
         streamBox.innerHTML = `
           <div class="stream-label">Match ${streamIndex}</div>
-          <iframe class="stream-player" src="https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${window.location.hostname}" allowfullscreen="true"></iframe>
+          <iframe class="stream-player"
+            src="${playerSrc}"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowfullscreen="true"
+            title="Twitch stream ${channel}"
+            loading="lazy"></iframe>
         `;
         streamContainer.appendChild(streamBox);
       });
@@ -506,7 +530,7 @@
       const iframe = document.getElementById('chat-iframe');
       if (channel) {
         currentChatChannel = channel;
-        iframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?parent=${window.location.hostname}`;
+        iframe.src = buildChatUrl(channel);
       } else {
         iframe.src = 'about:blank';
       }
@@ -553,7 +577,9 @@
     // Toggle chat panel on mobile
     function toggleChat() {
       const chatPanel = document.getElementById('chat-panel');
+      if (!chatPanel) return;
       chatPanel.classList.toggle('active');
+      syncChatPanelOffset();
     }
 
     function addStreamer() {
@@ -670,6 +696,20 @@
     updateLiveChannels();
   </script>
   <script>
+    function syncChatPanelOffset() {
+      const chatPanel = document.getElementById('chat-panel');
+      if (!chatPanel) return;
+      const navEl = document.querySelector('nav');
+      if (!navEl) return;
+      const bannerEl = document.getElementById('live-announcement-banner');
+      const navHeight = navEl.offsetHeight || 0;
+      const bannerVisible = bannerEl && bannerEl.classList.contains('is-visible');
+      const bannerHeight = bannerVisible ? bannerEl.offsetHeight + 12 : 0;
+      const offset = Math.max(navHeight + bannerHeight + 12, 0);
+      chatPanel.style.top = offset + 'px';
+      chatPanel.style.height = 'calc(100vh - ' + offset + 'px)';
+    }
+
     async function loadNav() {
       const placeholder = document.getElementById('nav-placeholder');
       if (!placeholder) return;
@@ -678,6 +718,17 @@
         if (!res.ok) throw new Error('Nav fetch failed: ' + res.status);
         const html = await res.text();
         placeholder.innerHTML = html;
+        syncChatPanelOffset();
+        if (!window.__chatOffsetBound) {
+          window.addEventListener('resize', syncChatPanelOffset);
+          window.__chatOffsetBound = true;
+        }
+        const bannerEl = document.getElementById('live-announcement-banner');
+        if (bannerEl && !bannerEl.dataset.chatObserver) {
+          const observer = new MutationObserver(syncChatPanelOffset);
+          observer.observe(bannerEl, { attributes: true, attributeFilter: ['class', 'style'] });
+          bannerEl.dataset.chatObserver = '1';
+        }
         placeholder.querySelectorAll('script').forEach(oldScript => {
           const newScript = document.createElement('script');
           [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -694,6 +745,7 @@
         console.error('Failed to load navigation', err);
       }
     }
+    syncChatPanelOffset();
     loadNav();
   </script>
 </body>
