@@ -235,7 +235,7 @@
     }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr);
       gap: 2rem;
       align-items: stretch;
       margin-top: 0.5rem;
@@ -334,6 +334,7 @@
       gap: 1.35rem;
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
     }
     .support-card::before {
       content: '';
@@ -618,6 +619,71 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
+    .stream-card__stats {
+      position: relative;
+      z-index: 1;
+      margin-top: 1rem;
+      padding: 1.1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(13, 19, 33, 0.92);
+      display: none;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .stream-card__stats.is-open {
+      display: flex;
+    }
+    .stream-card__stats-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .stream-card__stats-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .stream-card__stats-meta img {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      object-fit: cover;
+    }
+    .stream-card__stats-meta .details { flex: 1; }
+    .stream-card__stats-meta .details strong {
+      display: block;
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
+    }
+    .stream-card__stats-meta .details span {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .stream-card__stats-message {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .stream-card__stats-link {
+      align-self: flex-start;
+      border-radius: 9999px;
+      padding: 0.5rem 1.05rem;
+      border: 1px solid rgba(129, 140, 248, 0.35);
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .stream-card__stats-link:hover {
+      background: rgba(79, 70, 229, 0.4);
+    }
     #chat-panel {
       position: relative;
       width: 100%;
@@ -632,6 +698,10 @@
       gap: 0.85rem;
       overflow: hidden;
       z-index: 2;
+
+      flex: 1 1 auto;
+      min-height: clamp(360px, 55vh, 620px);
+
     }
     #chat-panel.is-hidden { display: none; }
     .chat-header {
@@ -671,7 +741,9 @@
       flex: 1;
       border-radius: 0.95rem;
       background: #0b1220;
-      min-height: 280px;
+
+      min-height: clamp(320px, 50vh, 560px);
+
       border: none;
     }
     #chat-toggle {
@@ -865,6 +937,7 @@
     .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     @media (max-width: 1280px) {
       .hero { grid-template-columns: 1fr; }
+      .hero-card { order: -1; }
       nav#global-header { padding: 0.85rem 1.5rem; }
     }
     @media (max-width: 1024px) {
@@ -923,6 +996,28 @@
   </nav>
   <main>
     <section class="hero">
+      <div class="hero-side-stack">
+        <article id="chat-panel" aria-live="polite" data-layout="embedded">
+          <div class="chat-header">
+            <p>Twitch Chat</p>
+            <button type="button" id="close-chat">Close</button>
+          </div>
+          <select id="chat-channel-select">
+            <option value="">Select Channel Chat</option>
+          </select>
+          <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+        </article>
+        <article class="support-card" id="support-card">
+          <h2>Boost the League</h2>
+          <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
+          <div class="support-actions">
+            <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
+            <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
+            <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
+          </div>
+          <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
+        </article>
+      </div>
       <article class="hero-card">
         <h1>All Your Tribes Streams, One Wall.</h1>
         <p>Build a watch party that rivals Twitch itself. Track every roster, stack chats, and surface stats without leaving this page.</p>
@@ -945,28 +1040,6 @@
           <button type="button" id="scroll-to-grid">Jump to Streams</button>
         </div>
       </article>
-      <div class="hero-side-stack">
-        <article class="support-card" id="support-card">
-          <h2>Boost the League</h2>
-          <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
-          <div class="support-actions">
-            <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
-            <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
-            <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
-          </div>
-          <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
-        </article>
-        <article id="chat-panel" aria-live="polite" data-layout="embedded">
-          <div class="chat-header">
-            <p>Twitch Chat</p>
-            <button type="button" id="close-chat">Close</button>
-          </div>
-          <select id="chat-channel-select">
-            <option value="">Select Channel Chat</option>
-          </select>
-          <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
-        </article>
-      </div>
     </section>
 
     <section class="control-streams">
@@ -1096,8 +1169,7 @@
       liveSet: new Set(),
       lastLiveStreams: [],
       currentChatChannel: "",
-      streamerDirectory: new Map(),
-      liveInterval: null
+      streamerDirectory: new Map()
     };
 
     const teamIndex = new Map();
@@ -1347,9 +1419,12 @@
             </div>
           </div>
           <div class="stream-card__actions">
-            <button type="button" class="card-action" data-action="stats">View Stats</button>
+            <button type="button" class="card-action" data-action="stats" aria-expanded="false">View Stats</button>
             <button type="button" class="card-action" data-action="chat">Set Chat</button>
             <button type="button" class="card-action support" data-action="support">Send Bits</button>
+          </div>
+          <div class="stream-card__stats" hidden>
+            <div class="stream-card__stats-body"></div>
           </div>
         `;
         fragment.appendChild(card);
@@ -1628,7 +1703,7 @@
       if (actionBtn) {
         const action = actionBtn.dataset.action;
         if (action === "stats") {
-          openStatsDrawer(channel);
+          toggleCardStats(card, actionBtn);
         } else if (action === "chat") {
           setChatChannel(channel, { scrollIntoView: true });
         } else if (action === "support") {
@@ -1782,21 +1857,37 @@
       }
       return null;
     }
-    function renderStatsBody(meta, stats) {
-      if (!els.statsBody) return;
+    function buildStatsMarkup(meta, stats, { context = "drawer" } = {}) {
+      const isDrawer = context === "drawer";
       const fragments = [];
-      fragments.push(`
-        <div class="meta">
-          <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
-          <div class="details">
-            <strong>${escapeHtml(meta.displayName)}</strong>
-            <p>@${escapeHtml(meta.channel)}</p>
-            ${meta.team ? `<p>Team: ${escapeHtml(meta.team)}</p>` : ""}
+      if (isDrawer) {
+        fragments.push(`
+          <div class="meta">
+            <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
+            <div class="details">
+              <strong>${escapeHtml(meta.displayName)}</strong>
+              <p>@${escapeHtml(meta.channel)}</p>
+              ${meta.team ? `<p>Team: ${escapeHtml(meta.team)}</p>` : ""}
+            </div>
           </div>
-        </div>
-      `);
+        `);
+      } else {
+        fragments.push(`
+          <div class="stream-card__stats-meta">
+            <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
+            <div class="details">
+              <strong>${escapeHtml(meta.displayName)}</strong>
+              <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
+            </div>
+          </div>
+        `);
+      }
       if (meta.bio) {
-        fragments.push(`<p class="bio">${escapeHtml(meta.bio)}</p>`);
+        if (isDrawer) {
+          fragments.push(`<p class="bio">${escapeHtml(meta.bio)}</p>`);
+        } else {
+          fragments.push(`<p class="stream-card__stats-message">${escapeHtml(meta.bio)}</p>`);
+        }
       }
       if (stats) {
         const totalsConfig = [
@@ -1855,16 +1946,25 @@
         });
         fragments.push('</div>');
       } else {
-        fragments.push('<p class="bio">No aggregated stats published for this player yet. Check back after match data is saved.</p>');
+        const message = 'No aggregated stats published for this player yet. Check back after match data is saved.';
+        fragments.push(isDrawer ? `<p class="bio">${message}</p>` : `<p class="stream-card__stats-message">${message}</p>`);
       }
-      fragments.push(`
-        <div class="cta-row">
-          <button type="button" data-stats-action="focus">Focus Stream</button>
-          <button type="button" data-stats-action="support">Send Support</button>
-          <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
-        </div>
-      `);
-      els.statsBody.innerHTML = fragments.join("");
+      if (isDrawer) {
+        fragments.push(`
+          <div class="cta-row">
+            <button type="button" data-stats-action="focus">Focus Stream</button>
+            <button type="button" data-stats-action="support">Send Support</button>
+            <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
+          </div>
+        `);
+      } else {
+        fragments.push('<a class="stream-card__stats-link" href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>');
+      }
+      return fragments.join("");
+    }
+    function renderStatsBody(meta, stats) {
+      if (!els.statsBody) return;
+      els.statsBody.innerHTML = buildStatsMarkup(meta, stats, { context: "drawer" });
       const supportButton = els.statsBody.querySelector('[data-stats-action="support"]');
       if (supportButton) {
         supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
@@ -1877,7 +1977,70 @@
         });
       }
     }
+    async function toggleCardStats(card, triggerBtn) {
+      if (!card) return;
+      const panel = card.querySelector(".stream-card__stats");
+      if (!panel) return;
+      const body = panel.querySelector(".stream-card__stats-body");
+      if (!body) return;
+      const isOpen = panel.classList.contains("is-open");
+      if (isOpen) {
+        panel.classList.remove("is-open");
+        panel.setAttribute("hidden", "");
+        if (triggerBtn) {
+          triggerBtn.textContent = "View Stats";
+          triggerBtn.setAttribute("aria-expanded", "false");
+        }
+        return;
+      }
+      if (els.streamGrid) {
+        els.streamGrid.querySelectorAll(".stream-card__stats.is-open").forEach(other => {
+          if (other === panel) return;
+          other.classList.remove("is-open");
+          other.setAttribute("hidden", "");
+          const parentCard = other.closest(".stream-card");
+          const otherBtn = parentCard ? parentCard.querySelector('[data-action="stats"]') : null;
+          if (otherBtn) {
+            otherBtn.textContent = "View Stats";
+            otherBtn.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
+      panel.classList.add("is-open");
+      panel.removeAttribute("hidden");
+      if (triggerBtn) {
+        triggerBtn.textContent = "Hide Stats";
+        triggerBtn.setAttribute("aria-expanded", "true");
+      }
+      if (panel.dataset.loaded === "true") {
+        return;
+      }
+      body.innerHTML = '<p class="stream-card__stats-message">Loading stats…</p>';
+      try {
+        const channel = card.dataset.channel;
+        const bundle = await loadPlayerStats();
+        const meta = getStreamerMeta(channel);
+        const stats = resolvePlayerStats(bundle, meta);
+        body.innerHTML = buildStatsMarkup(meta, stats, { context: "card" });
+        panel.dataset.loaded = "true";
+      } catch (err) {
+        console.error("Card stats error", err);
+        body.innerHTML = '<p class="stream-card__stats-message">Unable to load stats right now.</p>';
+      }
+    }
     async function openStatsDrawer(channel) {
+      if (els.streamGrid) {
+        els.streamGrid.querySelectorAll(".stream-card__stats.is-open").forEach(panel => {
+          panel.classList.remove("is-open");
+          panel.setAttribute("hidden", "");
+          const parentCard = panel.closest(".stream-card");
+          const button = parentCard ? parentCard.querySelector('[data-action="stats"]') : null;
+          if (button) {
+            button.textContent = "View Stats";
+            button.setAttribute("aria-expanded", "false");
+          }
+        });
+      }
       const meta = getStreamerMeta(channel);
       if (els.statsDrawer) {
         els.statsDrawer.classList.add("open");
@@ -1909,14 +2072,6 @@
       if (els.statsBackdrop) {
         els.statsBackdrop.classList.remove("visible");
       }
-    }
-    function scheduleLiveRefresh() {
-      if (state.liveInterval) {
-        clearInterval(state.liveInterval);
-      }
-      state.liveInterval = window.setInterval(() => {
-        updateLiveChannels();
-      }, 60 * 1000);
     }
     async function updateLiveChannels() {
       if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
@@ -2012,11 +2167,6 @@
         syncChatPanelOffset();
         toggleChatVisibilityForViewport();
       });
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          updateLiveChannels();
-        }
-      });
     }
     async function init() {
       hydrateTeamIndex();
@@ -2026,7 +2176,6 @@
       renderAll();
       loadStreamerDirectory();
       updateLiveChannels();
-      scheduleLiveRefresh();
       const banner = document.getElementById("live-announcement-banner");
       if (banner) {
         const observer = new MutationObserver(syncChatPanelOffset);
