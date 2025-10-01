@@ -23,7 +23,6 @@
       --danger: #f87171;
       --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
-      --chat-panel-width: 320px;
     }
     *, *::before, *::after { box-sizing: border-box; }
     body > *:not(#support-effect-layer):not(#live-team-backdrop) {
@@ -60,10 +59,11 @@
     }
     .live-team-panel {
       flex: 1 1 0;
+      min-width: 0;
       position: relative;
       background-position: center;
-      background-repeat: no-repeat;
-      background-size: clamp(22rem, 40vw, 48rem) auto;
+      background-repeat: repeat;
+      background-size: clamp(12rem, 22vw, 26rem);
       filter: saturate(1.05);
     }
     .live-team-panel::after {
@@ -75,16 +75,16 @@
       z-index: 1;
     }
     #live-team-backdrop[data-count="1"] .live-team-panel {
-      background-size: clamp(32rem, 55vw, 60rem);
+      background-size: clamp(18rem, 32vw, 40rem);
     }
     #live-team-backdrop[data-count="2"] .live-team-panel {
-      background-size: clamp(24rem, 45vw, 52rem);
+      background-size: clamp(12rem, 24vw, 28rem);
     }
     #live-team-backdrop[data-count="3"] .live-team-panel {
-      background-size: clamp(20rem, 36vw, 44rem);
+      background-size: clamp(9rem, 18vw, 22rem);
     }
     #live-team-backdrop[data-count="4"] .live-team-panel {
-      background-size: clamp(18rem, 32vw, 38rem);
+      background-size: clamp(7rem, 14vw, 18rem);
     }
     body {
       margin: 0;
@@ -226,9 +226,9 @@
       .live-announcement-banner span { white-space: normal; }
     }
     main {
-      max-width: calc(1440px + var(--chat-panel-width));
+      max-width: 1440px;
       margin: 0 auto;
-      padding: 1.75rem 2rem 4rem calc(2rem + var(--chat-panel-width));
+      padding: 1.75rem 2rem 4rem;
       display: flex;
       flex-direction: column;
       gap: 2.5rem;
@@ -573,7 +573,6 @@
     }
     .stream-card:hover { transform: translateY(-4px); box-shadow: 0 32px 70px -32px rgba(99, 102, 241, 0.6); }
     .stream-card:hover::before { opacity: 0.6; }
-    .stream-card.chat-active::before { opacity: 0.85; background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(129, 140, 248, 0.9)); }
     .stream-card__head {
       position: relative;
       z-index: 1;
@@ -658,6 +657,41 @@
       color: #020617;
     }
     .card-action.link { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    .stream-card__extras {
+      position: relative;
+      z-index: 1;
+      margin-top: 1rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .stream-card__extras.is-visible { display: flex; }
+    .stream-card__extras > div {
+      border-radius: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.7);
+      padding: 0.95rem;
+    }
+    .stream-card__stats .stats-body {
+      padding: 0;
+      overflow: visible;
+    }
+    .stream-card__stats .stats-summary .stat {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .stream-card__placeholder {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .stream-card__chat iframe {
+      width: 100%;
+      height: 380px;
+      border: none;
+      border-radius: 0.85rem;
+      background: #0b1220;
+    }
     .empty-state {
       text-align: center;
       padding: 2.5rem 1rem;
@@ -677,133 +711,10 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
-    #chat-panel {
-      position: fixed;
-      right: 1.2rem;
-      top: 6rem;
-      width: 320px;
-      background: rgba(9, 13, 30, 0.95);
-      border: 1px solid rgba(129, 140, 248, 0.22);
-      border-radius: 1.25rem;
-      padding: 0.85rem;
-      box-shadow: 0 24px 60px -20px rgba(99, 102, 241, 0.45);
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-      z-index: 50;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-    #chat-panel.is-hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .chat-header p {
-      margin: 0;
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-    }
-    .chat-header button {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.7rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-    #chat-panel select {
-      width: 100%;
-      border-radius: 0.85rem;
-      padding: 0.6rem 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      background: rgba(15, 23, 42, 0.85);
-      color: var(--text-primary);
-    }
-    #chat-panel iframe {
-      flex: 1;
-      border-radius: 0.9rem;
-      background: #0b1220;
-    }
-    #chat-toggle {
-      position: fixed;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      border: none;
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.92), rgba(56, 189, 248, 0.92));
-      color: #020617;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 18px 45px -12px rgba(56, 189, 248, 0.6);
-      z-index: 55;
-      display: none;
-    }
-    #chat-toggle span {
-      display: block;
-      font-size: 0.7rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    #chat-panel.mobile-open {
-      display: flex;
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 0;
       top: 0;
       right: 0;
       padding: 1rem;
     }
-    .stats-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(3, 6, 12, 0.6);
-      backdrop-filter: blur(6px);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 70;
-    }
-    .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
-    .stats-drawer {
-      position: fixed;
-      top: 0;
-      right: -480px;
-      width: min(480px, 100%);
-      height: 100vh;
-      background: rgba(4, 10, 22, 0.97);
-      border-left: 1px solid rgba(129, 140, 248, 0.2);
-      box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
-      transition: right 0.35s ease;
-      z-index: 80;
-      display: flex;
-      flex-direction: column;
-    }
-    .stats-drawer.open { right: 0; }
-    .stats-drawer header {
-      padding: 1.5rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .stats-drawer header h3 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
-    .stats-drawer header button {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .stats-drawer header button:hover { color: var(--text-primary); }
     .stats-body {
       padding: 1.5rem;
       overflow-y: auto;
@@ -912,7 +823,6 @@
       .hero { grid-template-columns: 1fr; }
       .control-streams { grid-template-columns: 1fr; }
       nav#global-header { padding: 0.85rem 1.5rem; }
-      #chat-panel { width: 280px; }
     }
     @media (max-width: 1024px) {
       .control-panel { position: static; }
@@ -922,15 +832,12 @@
       nav#global-header .header-shell { flex-direction: column; align-items: flex-start; }
       .header-actions { width: 100%; justify-content: space-between; }
       #stream-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-      #chat-panel { display: none; }
-      #chat-toggle { display: flex; align-items: center; justify-content: center; }
     }
     @media (max-width: 640px) {
       .hero-actions button { flex: 1 1 45%; text-align: center; }
       .control-panel { padding: 1.2rem; }
       nav#global-header { padding: 0.75rem 1rem; }
       main { padding: 1.2rem 1rem 4rem; }
-      #chat-toggle { bottom: 1rem; right: 1rem; }
     }
   </style>
 </head>
@@ -1029,27 +936,6 @@
       </div>
     </section>
   </main>
-  <div id="chat-panel" class="is-hidden" aria-live="polite">
-    <div class="chat-header">
-      <p>Twitch Chat</p>
-      <button type="button" id="close-chat">Close</button>
-    </div>
-    <select id="chat-channel-select">
-      <option value="">Select Channel Chat</option>
-    </select>
-    <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
-  </div>
-  <button id="chat-toggle"><span>Chat</span></button>
-  <div class="stats-backdrop" id="stats-backdrop"></div>
-  <aside class="stats-drawer" id="stats-drawer">
-    <header>
-      <h3 id="stats-title">Player Stats</h3>
-      <button type="button" id="stats-close" aria-label="Close stats">&times;</button>
-    </header>
-    <div class="stats-body" id="stats-body">
-      <p class="bio">Select a streamer to view their aggregated league stats.</p>
-    </div>
-  </aside>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1111,15 +997,6 @@
       liveToggleButtons: Array.from(document.querySelectorAll('[data-role="live-only-toggle"]')),
       showAllButton: document.getElementById("show-all-streams"),
       resetButton: document.getElementById("reset-defaults"),
-      chatPanel: document.getElementById("chat-panel"),
-      chatSelect: document.getElementById("chat-channel-select"),
-      chatIframe: document.getElementById("chat-iframe"),
-      chatToggle: document.getElementById("chat-toggle"),
-      chatClose: document.getElementById("close-chat"),
-      statsDrawer: document.getElementById("stats-drawer"),
-      statsBackdrop: document.getElementById("stats-backdrop"),
-      statsTitle: document.getElementById("stats-title"),
-      statsBody: document.getElementById("stats-body"),
       toast: document.getElementById("toast"),
       effectLayer: document.getElementById("support-effect-layer"),
       addOpenBtn: document.getElementById("open-add-streamer"),
@@ -1141,9 +1018,9 @@
       showOnlyLive: false,
       liveSet: new Set(),
       lastLiveStreams: [],
-      currentChatChannel: "",
       streamerDirectory: new Map(),
-      liveInterval: null
+      liveInterval: null,
+      backdropSignature: ""
     };
 
     const teamIndex = new Map();
@@ -1231,7 +1108,6 @@ function toNumber(value, fallback = 0) {
       state.channels = sortAndDedup(loadList(STORAGE.CHANNELS, defaultChannels));
       state.hiddenChannels = sortAndDedup(loadList(STORAGE.HIDDEN, [])).filter(channel => state.channels.includes(channel));
       state.showOnlyLive = loadBool(STORAGE.SHOW_LIVE, false);
-      state.currentChatChannel = state.channels.find(channel => !state.hiddenChannels.includes(channel)) || state.channels[0] || "";
     }
     function hydrateTeamIndex() {
       teamIndex.clear();
@@ -1326,9 +1202,17 @@ function toNumber(value, fallback = 0) {
         container.classList.remove("is-visible");
         container.dataset.count = "0";
         document.body.classList.remove("has-live-backdrop");
+        state.backdropSignature = "";
         return;
       }
       const limited = teams.slice(0, 4);
+      const signature = `${limited.length}:${limited.join("|")}`;
+      container.dataset.count = String(limited.length);
+      if (signature === state.backdropSignature) {
+        document.body.classList.add("has-live-backdrop");
+        container.classList.add("is-visible");
+        return;
+      }
       const fragment = document.createDocumentFragment();
       limited.forEach(teamName => {
         const panel = document.createElement("div");
@@ -1343,10 +1227,10 @@ function toNumber(value, fallback = 0) {
         fragment.appendChild(panel);
       });
       container.innerHTML = "";
-      container.dataset.count = String(limited.length);
       container.appendChild(fragment);
       document.body.classList.add("has-live-backdrop");
       container.classList.add("is-visible");
+      state.backdropSignature = signature;
     }
 
     function renderStreamGrid() {
@@ -1372,6 +1256,8 @@ function toNumber(value, fallback = 0) {
         const card = document.createElement("article");
         card.className = "stream-card";
         card.dataset.channel = channel;
+        card.dataset.live = isLive ? "true" : "false";
+        card.classList.toggle("is-live", isLive);
         card.innerHTML = `
           <div class="stream-card__head">
             <div class="stream-card__identity">
@@ -1394,15 +1280,61 @@ function toNumber(value, fallback = 0) {
           </div>
           <div class="stream-card__actions">
             <button type="button" class="card-action" data-action="stats">View Stats</button>
-            <button type="button" class="card-action" data-action="chat">Set Chat</button>
+            <button type="button" class="card-action" data-action="chat">See Chat</button>
             <button type="button" class="card-action support" data-action="support">Send Bits</button>
+          </div>
+          <div class="stream-card__extras" data-role="extras">
+            <div class="stream-card__stats" data-role="stats-panel" hidden></div>
+            <div class="stream-card__chat" data-role="chat-panel" hidden>
+              <iframe title="${escapeHtml(meta.displayName)} chat" src="about:blank" data-src="${buildChatUrl(channel)}" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+            </div>
           </div>
         `;
         fragment.appendChild(card);
       });
       els.streamGrid.innerHTML = "";
       els.streamGrid.appendChild(fragment);
-      highlightChatCard();
+    }
+    function reorderStreamGrid() {
+      if (!els.streamGrid) return;
+      const existingCards = els.streamGrid.querySelectorAll(".stream-card");
+      if (!existingCards.length) return;
+      const fragment = document.createDocumentFragment();
+      state.channels.forEach(channel => {
+        const card = els.streamGrid.querySelector('[data-channel="' + channel + '"]');
+        if (card) {
+          fragment.appendChild(card);
+        }
+      });
+      if (fragment.childNodes.length) {
+        els.streamGrid.appendChild(fragment);
+      }
+    }
+    function updateStreamCardStatuses() {
+      if (!els.streamGrid) return;
+      const cards = els.streamGrid.querySelectorAll(".stream-card");
+      cards.forEach(card => {
+        const channel = card.dataset.channel;
+        if (!channel) return;
+        const isLive = state.liveSet.has(channel);
+        card.classList.toggle("is-live", isLive);
+        card.dataset.live = isLive ? "true" : "false";
+        const status = card.querySelector(".stream-card__status");
+        if (!status) return;
+        let badge = status.querySelector(".live-pill, .offline-pill");
+        if (!badge) {
+          badge = document.createElement("span");
+          status.innerHTML = "";
+          status.appendChild(badge);
+        }
+        if (isLive) {
+          badge.className = "live-pill";
+          badge.textContent = "Live";
+        } else {
+          badge.className = "offline-pill";
+          badge.textContent = "Offline";
+        }
+      });
     }
     function renderChannelManager() {
       if (!els.channelManager) return;
@@ -1438,90 +1370,131 @@ function toNumber(value, fallback = 0) {
       els.channelManager.innerHTML = "";
       els.channelManager.appendChild(fragment);
     }
-    function renderAll() {
-      renderStreamGrid();
+    function renderAll(options = {}) {
+      const { skipStreamGrid = false } = options;
+      if (!skipStreamGrid) {
+        renderStreamGrid();
+      }
       renderChannelManager();
       updateLiveToggleButtons();
-      updateChatOptions();
       renderLiveBanner();
       updateMetrics();
       updateLiveBackdrop();
-      syncChatPanelOffset();
+      updateStreamCardStatuses();
     }
-    function highlightChatCard() {
-      if (!els.streamGrid) return;
-      els.streamGrid.querySelectorAll(".stream-card.chat-active").forEach(card => card.classList.remove("chat-active"));
-      if (!state.currentChatChannel) return;
-      const card = els.streamGrid.querySelector('[data-channel="' + state.currentChatChannel + '"]');
-      if (card) card.classList.add("chat-active");
+    function findStreamCard(channel) {
+      if (!els.streamGrid) return null;
+      return els.streamGrid.querySelector('[data-channel="' + channel + '"]');
     }
-    function updateChatOptions() {
-      if (!els.chatSelect) return;
-      const visibleChannels = computeVisibleChannels();
-      const fragment = document.createDocumentFragment();
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Select Channel Chat";
-      fragment.appendChild(placeholder);
-      visibleChannels.sort((a, b) => a.localeCompare(b)).forEach((channel, index) => {
-        const option = document.createElement("option");
-        option.value = channel;
-        const meta = getStreamerMeta(channel);
-        option.textContent = `${index + 1}. ${meta.displayName || channel}`;
-        fragment.appendChild(option);
-      });
-      els.chatSelect.innerHTML = "";
-      els.chatSelect.appendChild(fragment);
-      if (!state.currentChatChannel || !visibleChannels.includes(state.currentChatChannel)) {
-        state.currentChatChannel = visibleChannels[0] || "";
+    function updateCardExtrasState(card) {
+      if (!card) return;
+      const extras = card.querySelector('[data-role="extras"]');
+      if (!extras) return;
+      const hasVisible = Array.from(extras.children || []).some(section => !section.hasAttribute("hidden"));
+      extras.classList.toggle("is-visible", hasVisible);
+    }
+    function syncCardActionLabels(card) {
+      if (!card) return;
+      const statsBtn = card.querySelector('[data-action="stats"]');
+      const statsPanel = card.querySelector('[data-role="stats-panel"]');
+      if (statsBtn && statsPanel) {
+        statsBtn.textContent = statsPanel.hasAttribute("hidden") ? "View Stats" : "Hide Stats";
       }
-      els.chatSelect.value = state.currentChatChannel || "";
-      updateChatFrame();
-    }
-    function updateChatFrame() {
-      if (!els.chatIframe) return;
-      if (state.currentChatChannel) {
-        const src = buildChatUrl(state.currentChatChannel);
-        if (els.chatIframe.dataset.src !== src) {
-          els.chatIframe.dataset.src = src;
-          els.chatIframe.src = src;
-        }
-      } else {
-        els.chatIframe.dataset.src = "about:blank";
-        els.chatIframe.src = "about:blank";
+      const chatBtn = card.querySelector('[data-action="chat"]');
+      const chatPanel = card.querySelector('[data-role="chat-panel"]');
+      if (chatBtn && chatPanel) {
+        chatBtn.textContent = chatPanel.hasAttribute("hidden") ? "See Chat" : "Hide Chat";
       }
-      highlightChatCard();
     }
-    function setChatChannel(channel, options = {}) {
+    async function toggleChannelStats(channel, options = {}) {
       const normalized = normalizeChannel(channel);
-      if (!state.channels.includes(normalized)) {
+      const card = options.card || findStreamCard(normalized);
+      if (!card) {
         showToast(`Add ${normalized} to the grid first.`);
         return;
       }
-      state.currentChatChannel = normalized;
-      updateChatOptions();
-      if (options.scrollIntoView && els.streamGrid) {
-        const card = els.streamGrid.querySelector('[data-channel=' + normalized + ']');
-        if (card) {
-          card.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+      const panel = card.querySelector('[data-role="stats-panel"]');
+      if (!panel) return;
+      const meta = getStreamerMeta(normalized);
+      const shouldShow = options.desiredState !== undefined ? options.desiredState : panel.hasAttribute("hidden");
+      if (!shouldShow) {
+        panel.setAttribute("hidden", "");
+        updateCardExtrasState(card);
+        syncCardActionLabels(card);
+        showToast(`Hiding stats for ${meta.displayName || meta.channel}`);
+        return;
       }
-      showToast(`Chat pinned to ${normalized}`);
+      panel.removeAttribute("hidden");
+      updateCardExtrasState(card);
+      syncCardActionLabels(card);
+      if (!panel.dataset.loaded) {
+        panel.innerHTML = '<div class="stats-body"><p class="stream-card__placeholder">Loading stats…</p></div>';
+        try {
+          const bundle = await loadPlayerStats();
+          const stats = resolvePlayerStats(bundle, meta);
+          panel.innerHTML = buildStatsMarkup(meta, stats);
+          const supportButton = panel.querySelector('[data-stats-action="support"]');
+          if (supportButton) {
+            supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
+          }
+          panel.dataset.loaded = "true";
+          showToast(`Showing stats for ${meta.displayName || meta.channel}`);
+        } catch (err) {
+          console.error("Unable to load stats", err);
+          panel.innerHTML = '<div class="stats-body"><p class="stream-card__placeholder">Unable to load stats right now.</p></div>';
+          showToast(`Unable to load stats for ${meta.displayName || meta.channel}`);
+        }
+      } else {
+        showToast(`Showing stats for ${meta.displayName || meta.channel}`);
+      }
+      updateCardExtrasState(card);
+      syncCardActionLabels(card);
+      if (options.scrollIntoView) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+    function toggleChannelChat(channel, options = {}) {
+      const normalized = normalizeChannel(channel);
+      const card = options.card || findStreamCard(normalized);
+      if (!card) {
+        showToast(`Add ${normalized} to the grid first.`);
+        return;
+      }
+      const panel = card.querySelector('[data-role="chat-panel"]');
+      if (!panel) return;
+      const meta = getStreamerMeta(normalized);
+      const shouldShow = options.desiredState !== undefined ? options.desiredState : panel.hasAttribute("hidden");
+      if (!shouldShow) {
+        panel.setAttribute("hidden", "");
+        updateCardExtrasState(card);
+        syncCardActionLabels(card);
+        showToast(`Hiding chat for ${meta.displayName || normalized}`);
+        return;
+      }
+      panel.removeAttribute("hidden");
+      const iframe = panel.querySelector("iframe");
+      if (iframe && !iframe.dataset.loaded) {
+        const src = iframe.dataset.src || buildChatUrl(normalized);
+        iframe.src = src;
+        iframe.dataset.loaded = "true";
+      }
+      updateCardExtrasState(card);
+      syncCardActionLabels(card);
+      if (options.scrollIntoView) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      showToast(`Showing chat for ${meta.displayName || normalized}`);
     }
     function toggleLiveMode() {
       state.showOnlyLive = !state.showOnlyLive;
       persistShowOnlyLive();
-      updateLiveToggleButtons();
-      renderStreamGrid();
-      updateChatOptions();
+      renderAll();
       showToast(state.showOnlyLive ? "Showing live channels only" : "Showing all channels");
     }
     function showAllChannels() {
       state.hiddenChannels = [];
       persistHidden();
-      renderStreamGrid();
-      renderChannelManager();
-      updateChatOptions();
+      renderAll();
       showToast("All streams visible");
     }
     function resetToDefaults() {
@@ -1530,49 +1503,10 @@ function toNumber(value, fallback = 0) {
       }
       state.channels = sortAndDedup(defaultChannels);
       state.hiddenChannels = [];
-      state.currentChatChannel = state.channels[0] || "";
       persistChannels();
       persistHidden();
       renderAll();
       showToast("Stream roster reset to defaults");
-    }
-    function syncChatPanelOffset() {
-      if (!els.chatPanel) return;
-      const nav = document.getElementById("global-header");
-      const banner = document.getElementById("live-announcement-banner");
-      let offset = nav ? nav.getBoundingClientRect().height + 24 : 72;
-      if (banner && banner.classList.contains("is-visible")) {
-        offset += banner.getBoundingClientRect().height + 14;
-      }
-      els.chatPanel.style.top = `${offset}px`;
-      els.chatPanel.style.height = `calc(100vh - ${offset + 32}px)`;
-    }
-    function toggleChatVisibilityForViewport() {
-      if (!els.chatPanel) return;
-      if (window.matchMedia("(max-width: 860px)").matches) {
-        els.chatPanel.classList.add("is-hidden");
-        els.chatPanel.classList.remove("mobile-open");
-      } else {
-        els.chatPanel.classList.remove("is-hidden");
-        els.chatPanel.classList.remove("mobile-open");
-      }
-    }
-    function toggleChatMobile() {
-      if (!els.chatPanel) return;
-      els.chatPanel.classList.toggle("mobile-open");
-      if (els.chatPanel.classList.contains("mobile-open")) {
-        els.chatPanel.classList.remove("is-hidden");
-      }
-    }
-    function closeChatMobile() {
-      if (!els.chatPanel) return;
-      els.chatPanel.classList.remove("mobile-open");
-      if (window.matchMedia("(max-width: 860px)").matches) {
-        els.chatPanel.classList.add("is-hidden");
-      }
-    }
-    function isChatMobileOpen() {
-      return !!els.chatPanel && els.chatPanel.classList.contains("mobile-open");
     }
     function handleAddChannel(event) {
       event.preventDefault();
@@ -1611,9 +1545,7 @@ function toNumber(value, fallback = 0) {
         showToast(`Hiding ${normalized}`);
       }
       persistHidden();
-      renderStreamGrid();
-      renderChannelManager();
-      updateChatOptions();
+      renderAll();
     }
     function removeChannel(channel) {
       const normalized = normalizeChannel(channel);
@@ -1621,9 +1553,6 @@ function toNumber(value, fallback = 0) {
       if (index === -1) return;
       state.channels.splice(index, 1);
       state.hiddenChannels = state.hiddenChannels.filter(value => value !== normalized);
-      if (state.currentChatChannel === normalized) {
-        state.currentChatChannel = state.channels[0] || "";
-      }
       persistChannels();
       persistHidden();
       renderAll();
@@ -1637,16 +1566,16 @@ function toNumber(value, fallback = 0) {
       if (actionBtn) {
         const action = actionBtn.dataset.action;
         if (action === "stats") {
-          openStatsDrawer(channel);
+          toggleChannelStats(channel, { card });
         } else if (action === "chat") {
-          setChatChannel(channel, { scrollIntoView: true });
+          toggleChannelChat(channel, { card });
         } else if (action === "support") {
           handleSupportForChannel(channel);
         }
         return;
       }
       if (event.target.closest(".stream-card__identity")) {
-        openStatsDrawer(channel);
+        toggleChannelStats(channel, { card, desiredState: true });
       }
     }
     function handleManagerClick(event) {
@@ -1661,9 +1590,9 @@ function toNumber(value, fallback = 0) {
       } else if (action === "remove") {
         removeChannel(channel);
       } else if (action === "chat") {
-        setChatChannel(channel, { scrollIntoView: true });
+        toggleChannelChat(channel, { desiredState: true, scrollIntoView: true });
       } else if (action === "stats") {
-        openStatsDrawer(channel);
+        toggleChannelStats(channel, { desiredState: true, scrollIntoView: true });
       }
     }
     let toastTimer = null;
@@ -1711,7 +1640,7 @@ function toNumber(value, fallback = 0) {
       event.preventDefault();
       const type = target.dataset.supportType;
       if (type === "bits") {
-        const channel = normalizeChannel(target.dataset.channel) || state.currentChatChannel || supportConfig.leagueChannel;
+        const channel = normalizeChannel(target.dataset.channel) || supportConfig.leagueChannel;
         handleSupportForChannel(channel);
       } else if (type === "paypal") {
         const url = target.dataset.url || supportConfig.paypalUrl;
@@ -1791,9 +1720,9 @@ function toNumber(value, fallback = 0) {
       }
       return null;
     }
-    function renderStatsBody(meta, stats) {
-      if (!els.statsBody) return;
+    function buildStatsMarkup(meta, stats) {
       const fragments = [];
+      fragments.push('<div class="stats-body">');
       fragments.push(`
         <div class="meta">
           <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
@@ -1868,56 +1797,12 @@ function toNumber(value, fallback = 0) {
       }
       fragments.push(`
         <div class="cta-row">
-          <button type="button" data-stats-action="focus">Focus Stream</button>
           <button type="button" data-stats-action="support">Send Support</button>
           <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
         </div>
       `);
-      els.statsBody.innerHTML = fragments.join("");
-      const supportButton = els.statsBody.querySelector('[data-stats-action="support"]');
-      if (supportButton) {
-        supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
-      }
-      const focusButton = els.statsBody.querySelector('[data-stats-action="focus"]');
-      if (focusButton) {
-        focusButton.addEventListener("click", () => {
-          setChatChannel(meta.channel, { scrollIntoView: true });
-          closeStatsDrawer();
-        });
-      }
-    }
-    async function openStatsDrawer(channel) {
-      const meta = getStreamerMeta(channel);
-      if (els.statsDrawer) {
-        els.statsDrawer.classList.add("open");
-      }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.classList.add("visible");
-      }
-      if (els.statsTitle) {
-        els.statsTitle.textContent = meta.displayName || meta.channel;
-      }
-      if (els.statsBody) {
-        els.statsBody.innerHTML = '<p class="bio">Loading stats…</p>';
-      }
-      try {
-        const bundle = await loadPlayerStats();
-        const stats = resolvePlayerStats(bundle, meta);
-        renderStatsBody(meta, stats);
-      } catch (err) {
-        console.error("Stats drawer error", err);
-        if (els.statsBody) {
-          els.statsBody.innerHTML = '<p class="bio">Unable to load stats right now.</p>';
-        }
-      }
-    }
-    function closeStatsDrawer() {
-      if (els.statsDrawer) {
-        els.statsDrawer.classList.remove("open");
-      }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.classList.remove("visible");
-      }
+      fragments.push('</div>');
+      return fragments.join("");
     }
     function scheduleLiveRefresh() {
       if (state.liveInterval) {
@@ -1931,7 +1816,12 @@ function toNumber(value, fallback = 0) {
       if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
         state.liveSet = new Set();
         state.lastLiveStreams = [];
-        renderAll();
+        const canSkip = !state.showOnlyLive && Boolean(els.streamGrid?.querySelector(".stream-card"));
+        if (canSkip) {
+          renderAll({ skipStreamGrid: true });
+        } else {
+          renderAll();
+        }
         return;
       }
       try {
@@ -1948,7 +1838,13 @@ function toNumber(value, fallback = 0) {
       } catch (err) {
         console.error("Unable to fetch live stream data", err);
       }
-      renderAll();
+      const canSkip = !state.showOnlyLive && Boolean(els.streamGrid?.querySelector(".stream-card"));
+      if (canSkip) {
+        reorderStreamGrid();
+        renderAll({ skipStreamGrid: true });
+      } else {
+        renderAll();
+      }
     }
     function bindEvents() {
       if (els.addChannelForm) {
@@ -1968,18 +1864,6 @@ function toNumber(value, fallback = 0) {
       }
       if (els.resetButton) {
         els.resetButton.addEventListener("click", resetToDefaults);
-      }
-      if (els.chatSelect) {
-        els.chatSelect.addEventListener("change", event => {
-          state.currentChatChannel = normalizeChannel(event.target.value);
-          updateChatFrame();
-        });
-      }
-      if (els.chatToggle) {
-        els.chatToggle.addEventListener("click", toggleChatMobile);
-      }
-      if (els.chatClose) {
-        els.chatClose.addEventListener("click", closeChatMobile);
       }
       if (els.addOpenBtn) {
         els.addOpenBtn.addEventListener("click", () => {
@@ -2008,26 +1892,26 @@ function toNumber(value, fallback = 0) {
       if (els.supportActions) {
         els.supportActions.addEventListener("click", handleSupportAction);
       }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.addEventListener("click", closeStatsDrawer);
-      }
-      const statsClose = document.getElementById("stats-close");
-      if (statsClose) {
-        statsClose.addEventListener("click", closeStatsDrawer);
-      }
       document.addEventListener("keydown", event => {
         if (event.key === "Escape") {
-          if (els.statsDrawer?.classList.contains("open")) {
-            closeStatsDrawer();
-          } else if (isChatMobileOpen()) {
-            closeChatMobile();
+          const openStats = els.streamGrid?.querySelector('[data-role="stats-panel"]:not([hidden])');
+          if (openStats) {
+            const card = openStats.closest(".stream-card");
+            if (card?.dataset.channel) {
+              toggleChannelStats(card.dataset.channel, { card, desiredState: false });
+              return;
+            }
+          }
+          const openChat = els.streamGrid?.querySelector('[data-role="chat-panel"]:not([hidden])');
+          if (openChat) {
+            const card = openChat.closest(".stream-card");
+            if (card?.dataset.channel) {
+              toggleChannelChat(card.dataset.channel, { card, desiredState: false });
+            }
           }
         }
       });
-      window.addEventListener("resize", () => {
-        syncChatPanelOffset();
-        toggleChatVisibilityForViewport();
-      });
+      window.addEventListener("resize", updateLiveBackdrop);
       document.addEventListener("visibilitychange", () => {
         if (!document.hidden) {
           updateLiveChannels();
@@ -2038,16 +1922,10 @@ function toNumber(value, fallback = 0) {
       hydrateTeamIndex();
       initializeState();
       bindEvents();
-      toggleChatVisibilityForViewport();
       renderAll();
       loadStreamerDirectory();
       updateLiveChannels();
       scheduleLiveRefresh();
-      const banner = document.getElementById("live-announcement-banner");
-      if (banner) {
-        const observer = new MutationObserver(syncChatPanelOffset);
-        observer.observe(banner, { attributes: true, attributeFilter: ["class", "style"] });
-      }
       if (window.twitchOAuth) {
         window.twitchOAuth.updateNav();
         if (window.twitchOAuth.initLiveTeamsMenu) {
