@@ -1335,6 +1335,7 @@ function toNumber(value, fallback = 0) {
           badge.textContent = "Offline";
         }
       });
+
     }
     function renderChannelManager() {
       if (!els.channelManager) return;
@@ -1380,7 +1381,9 @@ function toNumber(value, fallback = 0) {
       renderLiveBanner();
       updateMetrics();
       updateLiveBackdrop();
+
       updateStreamCardStatuses();
+
     }
     function findStreamCard(channel) {
       if (!els.streamGrid) return null;
@@ -1404,6 +1407,7 @@ function toNumber(value, fallback = 0) {
       const chatPanel = card.querySelector('[data-role="chat-panel"]');
       if (chatBtn && chatPanel) {
         chatBtn.textContent = chatPanel.hasAttribute("hidden") ? "See Chat" : "Hide Chat";
+
       }
     }
     async function toggleChannelStats(channel, options = {}) {
@@ -1424,6 +1428,7 @@ function toNumber(value, fallback = 0) {
         showToast(`Hiding stats for ${meta.displayName || meta.channel}`);
         return;
       }
+
       panel.removeAttribute("hidden");
       updateCardExtrasState(card);
       syncCardActionLabels(card);
@@ -1470,6 +1475,7 @@ function toNumber(value, fallback = 0) {
         syncCardActionLabels(card);
         showToast(`Hiding chat for ${meta.displayName || normalized}`);
         return;
+
       }
       panel.removeAttribute("hidden");
       const iframe = panel.querySelector("iframe");
@@ -1483,6 +1489,7 @@ function toNumber(value, fallback = 0) {
       if (options.scrollIntoView) {
         card.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+
       showToast(`Showing chat for ${meta.displayName || normalized}`);
     }
     function toggleLiveMode() {
