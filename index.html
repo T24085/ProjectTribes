@@ -460,7 +460,7 @@
     .streams-area { display: flex; flex-direction: column; gap: 1.35rem; }
     @media (min-width: 1200px) {
       .streams-area {
-        margin-left: calc(var(--chat-panel-width) + var(--page-gutter) + 1.5rem);
+        margin-right: calc(var(--chat-panel-width) + var(--page-gutter) + 1.5rem);
       }
     }
     .section-head { display: flex; flex-direction: column; gap: 0.4rem; }
@@ -618,7 +618,7 @@
     }
     #chat-panel {
       position: fixed;
-      left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
 
       top: 3.5rem;
       width: var(--chat-panel-width);
@@ -676,7 +676,7 @@
     #chat-toggle {
       position: fixed;
       bottom: 1.5rem;
-      left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
 
       width: 54px;
       height: 54px;
@@ -887,7 +887,7 @@
       .control-panel { padding: 1.2rem; }
       nav#global-header { padding: 0.75rem 1rem; }
       main { padding: 1.2rem 1rem 4rem; }
-      #chat-toggle { bottom: 1rem; left: 1rem; }
+      #chat-toggle { bottom: 1rem; right: 1rem; }
     }
   </style>
 </head>
