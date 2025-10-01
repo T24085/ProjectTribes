@@ -235,11 +235,18 @@
     }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr);
       gap: 2rem;
-      align-items: stretch;
+      align-items: flex-start;
       margin-top: 0.5rem;
     }
+    .hero-side-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+      min-width: 0;
+    }
+    .hero-side-stack > * { width: 100%; }
     .hero-card {
       background: var(--surface-glass);
       border-radius: 1.35rem;
@@ -327,6 +334,7 @@
       gap: 1.35rem;
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
     }
     .support-card::before {
       content: '';
@@ -458,11 +466,6 @@
     .badge-live { background: rgba(34, 197, 94, 0.22); color: #bbf7d0; }
     .badge-muted { background: rgba(248, 113, 113, 0.2); color: #fecaca; }
     .streams-area { display: flex; flex-direction: column; gap: 1.35rem; }
-    @media (min-width: 1200px) {
-      .streams-area {
-        margin-left: calc(var(--chat-panel-width) + var(--page-gutter) + 1.5rem);
-      }
-    }
     .section-head { display: flex; flex-direction: column; gap: 0.4rem; }
     .section-head h2 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
     .section-head p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
@@ -616,27 +619,88 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
-    #chat-panel {
-      position: fixed;
-      left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-
-      top: 3.5rem;
-      width: var(--chat-panel-width);
-      max-height: min(640px, calc(100vh - 5rem));
-
-      background: rgba(9, 13, 30, 0.95);
-      border: 1px solid rgba(129, 140, 248, 0.22);
-      border-radius: 1.25rem;
-      padding: 0.85rem;
-      box-shadow: 0 24px 60px -20px rgba(99, 102, 241, 0.45);
+    .stream-card__stats {
+      position: relative;
+      z-index: 1;
+      margin-top: 1rem;
+      padding: 1.1rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(13, 19, 33, 0.92);
+      display: none;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .stream-card__stats.is-open {
+      display: flex;
+    }
+    .stream-card__stats-body {
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
-      overflow: hidden;
-      z-index: 50;
-      transition: transform 0.3s ease, opacity 0.3s ease;
+      gap: 0.85rem;
     }
-    #chat-panel.is-hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
+    .stream-card__stats-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .stream-card__stats-meta img {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      object-fit: cover;
+    }
+    .stream-card__stats-meta .details { flex: 1; }
+    .stream-card__stats-meta .details strong {
+      display: block;
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
+    }
+    .stream-card__stats-meta .details span {
+      display: block;
+      margin-top: 0.25rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .stream-card__stats-message {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .stream-card__stats-link {
+      align-self: flex-start;
+      border-radius: 9999px;
+      padding: 0.5rem 1.05rem;
+      border: 1px solid rgba(129, 140, 248, 0.35);
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .stream-card__stats-link:hover {
+      background: rgba(79, 70, 229, 0.4);
+    }
+    #chat-panel {
+      position: relative;
+      width: 100%;
+      background: rgba(9, 13, 30, 0.92);
+      border: 1px solid rgba(129, 140, 248, 0.24);
+      border-radius: 1.35rem;
+      padding: 1.25rem;
+      box-shadow: 0 24px 60px -30px rgba(99, 102, 241, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      overflow: hidden;
+      z-index: 2;
+      flex: 1 1 auto;
+      min-height: clamp(360px, 55vh, 620px);
+    }
+    #chat-panel.is-hidden { display: none; }
     .chat-header {
       display: flex;
       justify-content: space-between;
@@ -659,24 +723,28 @@
       text-transform: uppercase;
       cursor: pointer;
     }
+    @media (min-width: 861px) {
+      .chat-header button { display: none; }
+    }
     #chat-panel select {
       width: 100%;
       border-radius: 0.85rem;
-      padding: 0.6rem 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      background: rgba(15, 23, 42, 0.85);
+      padding: 0.65rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(15, 23, 42, 0.88);
       color: var(--text-primary);
     }
     #chat-panel iframe {
       flex: 1;
-      border-radius: 0.9rem;
+      border-radius: 0.95rem;
       background: #0b1220;
-      min-height: 220px;
+      min-height: clamp(320px, 50vh, 560px);
+      border: none;
     }
     #chat-toggle {
       position: fixed;
       bottom: 1.5rem;
-      left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
 
       width: 54px;
       height: 54px;
@@ -706,76 +774,10 @@
       top: 0;
       right: 0;
       padding: 1rem;
-    }
-    .stats-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(3, 6, 12, 0.6);
-      backdrop-filter: blur(6px);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 70;
-    }
-    .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
-    .stats-drawer {
-      position: fixed;
-
-      top: 4.25rem;
-      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-      width: min(460px, calc(100vw - 2.5rem));
-      max-height: calc(100vh - 5.5rem);
-
-      background: rgba(4, 10, 22, 0.97);
-      border-left: 1px solid rgba(129, 140, 248, 0.2);
-      box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
-      transform: translateX(100%);
-      transition: transform 0.35s ease;
       z-index: 80;
-      display: flex;
-      flex-direction: column;
-      border-radius: 1.25rem 0 0 1.25rem;
-      overflow: hidden;
+      background: rgba(9, 13, 30, 0.96);
+      box-shadow: none;
     }
-    .stats-drawer.open { transform: translateX(0); }
-    .stats-drawer header {
-      padding: 1.5rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .stats-drawer header h3 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
-    .stats-drawer header button {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .stats-drawer header button:hover { color: var(--text-primary); }
-    .stats-body {
-      padding: 1.5rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1.35rem;
-      flex: 1;
-    }
-    .stats-body .meta {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .stats-body .meta img {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      object-fit: cover;
-      border: 2px solid rgba(129, 140, 248, 0.42);
-    }
-    .stats-body .meta .details { flex: 1; }
-    .stats-body .meta .details p { margin: 0.2rem 0; color: var(--text-muted); font-size: 0.9rem; }
     .stats-summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -798,33 +800,6 @@
       margin-top: 0.35rem;
       font-size: 1.25rem;
       font-weight: 600;
-    }
-    .stats-body .bio {
-      font-size: 0.9rem;
-      line-height: 1.55;
-      color: var(--text-muted);
-    }
-    .stats-body .cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-    .stats-body .cta-row a,
-    .stats-body .cta-row button {
-      border-radius: 9999px;
-      padding: 0.6rem 1.1rem;
-      border: 1px solid rgba(129, 140, 248, 0.3);
-      background: rgba(15, 23, 42, 0.75);
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: background var(--transition-snappy);
-    }
-    .stats-body .cta-row a:hover,
-    .stats-body .cta-row button:hover {
-      background: rgba(79, 70, 229, 0.4);
     }
     #support-effect-layer { position: fixed; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
     #support-effect-layer .support-spark {
@@ -861,8 +836,32 @@
     .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     @media (max-width: 1280px) {
       .hero { grid-template-columns: 1fr; }
+      .hero-card { order: -1; }
       nav#global-header { padding: 0.85rem 1.5rem; }
-      #chat-panel { width: 280px; }
+    }
+    @media (min-width: 1281px) {
+      main {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+        gap: 2.5rem 2rem;
+        align-items: flex-start;
+      }
+      .hero {
+        display: contents;
+      }
+      .hero-side-stack {
+        grid-column: 1;
+        margin-top: 0.5rem;
+      }
+      .hero-card {
+        grid-column: 2;
+        margin-top: 0.5rem;
+      }
+      .control-streams {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-top: 1.5rem;
+      }
     }
     @media (max-width: 1024px) {
       :root { --page-gutter: 1.35rem; }
@@ -875,11 +874,6 @@
       #stream-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
       #chat-panel { display: none; }
       #chat-toggle { display: flex; align-items: center; justify-content: center; }
-      .stats-drawer {
-        right: 0;
-        width: 100%;
-        border-radius: 0;
-      }
     }
     @media (max-width: 640px) {
       :root { --page-gutter: 1rem; }
@@ -887,7 +881,7 @@
       .control-panel { padding: 1.2rem; }
       nav#global-header { padding: 0.75rem 1rem; }
       main { padding: 1.2rem 1rem 4rem; }
-      #chat-toggle { bottom: 1rem; left: 1rem; }
+      #chat-toggle { bottom: 1rem; right: 1rem; }
     }
   </style>
 </head>
@@ -920,6 +914,28 @@
   </nav>
   <main>
     <section class="hero">
+      <div class="hero-side-stack">
+        <article id="chat-panel" aria-live="polite" data-layout="embedded">
+          <div class="chat-header">
+            <p>Twitch Chat</p>
+            <button type="button" id="close-chat">Close</button>
+          </div>
+          <select id="chat-channel-select">
+            <option value="">Select Channel Chat</option>
+          </select>
+          <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+        </article>
+        <article class="support-card" id="support-card">
+          <h2>Boost the League</h2>
+          <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
+          <div class="support-actions">
+            <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
+            <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
+            <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
+          </div>
+          <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
+        </article>
+      </div>
       <article class="hero-card">
         <h1>All Your Tribes Streams, One Wall.</h1>
         <p>Build a watch party that rivals Twitch itself. Track every roster, stack chats, and surface stats without leaving this page.</p>
@@ -941,16 +957,6 @@
           <button type="button" id="open-add-streamer">Add Streamer</button>
           <button type="button" id="scroll-to-grid">Jump to Streams</button>
         </div>
-      </article>
-      <article class="support-card" id="support-card">
-        <h2>Boost the League</h2>
-        <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
-        <div class="support-actions">
-          <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
-          <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
-          <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
-        </div>
-        <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
       </article>
     </section>
 
@@ -979,27 +985,7 @@
       </div>
     </section>
   </main>
-  <div id="chat-panel" class="is-hidden" aria-live="polite">
-    <div class="chat-header">
-      <p>Twitch Chat</p>
-      <button type="button" id="close-chat">Close</button>
-    </div>
-    <select id="chat-channel-select">
-      <option value="">Select Channel Chat</option>
-    </select>
-    <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
-  </div>
   <button id="chat-toggle"><span>Chat</span></button>
-  <div class="stats-backdrop" id="stats-backdrop"></div>
-  <aside class="stats-drawer" id="stats-drawer">
-    <header>
-      <h3 id="stats-title">Player Stats</h3>
-      <button type="button" id="stats-close" aria-label="Close stats">&times;</button>
-    </header>
-    <div class="stats-body" id="stats-body">
-      <p class="bio">Select a streamer to view their aggregated league stats.</p>
-    </div>
-  </aside>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1066,10 +1052,6 @@
       chatIframe: document.getElementById("chat-iframe"),
       chatToggle: document.getElementById("chat-toggle"),
       chatClose: document.getElementById("close-chat"),
-      statsDrawer: document.getElementById("stats-drawer"),
-      statsBackdrop: document.getElementById("stats-backdrop"),
-      statsTitle: document.getElementById("stats-title"),
-      statsBody: document.getElementById("stats-body"),
       toast: document.getElementById("toast"),
       effectLayer: document.getElementById("support-effect-layer"),
       addOpenBtn: document.getElementById("open-add-streamer"),
@@ -1091,8 +1073,7 @@
       liveSet: new Set(),
       lastLiveStreams: [],
       currentChatChannel: "",
-      streamerDirectory: new Map(),
-      liveInterval: null
+      streamerDirectory: new Map()
     };
 
     const teamIndex = new Map();
@@ -1342,9 +1323,12 @@
             </div>
           </div>
           <div class="stream-card__actions">
-            <button type="button" class="card-action" data-action="stats">View Stats</button>
+            <button type="button" class="card-action" data-action="stats" aria-expanded="false">View Stats</button>
             <button type="button" class="card-action" data-action="chat">Set Chat</button>
             <button type="button" class="card-action support" data-action="support">Send Bits</button>
+          </div>
+          <div class="stream-card__stats" hidden>
+            <div class="stream-card__stats-body"></div>
           </div>
         `;
         fragment.appendChild(card);
@@ -1486,7 +1470,7 @@
       showToast("Stream roster reset to defaults");
     }
     function syncChatPanelOffset() {
-      if (!els.chatPanel && !els.statsDrawer) return;
+      if (!els.chatPanel) return;
       const nav = document.getElementById("global-header");
       const banner = document.getElementById("live-announcement-banner");
       const navHeight = nav ? nav.getBoundingClientRect().height : 64;
@@ -1497,32 +1481,26 @@
       if (bannerVisible) {
         chatTop = Math.max(chatTop, navHeight + bannerHeight + 32);
       }
-      if (els.chatPanel) {
-        els.chatPanel.style.top = `${chatTop}px`;
-        els.chatPanel.style.bottom = "auto";
-        const availableHeight = window.innerHeight - chatTop - 40;
-        if (availableHeight > 0) {
-          const upperBound = Math.min(availableHeight, 640);
-
-          const lowerBound = Math.min(availableHeight, 320);
-          const resolvedHeight = Math.max(upperBound, lowerBound);
-          els.chatPanel.style.height = `${resolvedHeight}px`;
-          els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
-        } else {
-          els.chatPanel.style.height = "320px";
-          els.chatPanel.style.maxHeight = "320px";
-        }
+      const isEmbeddedChat = !!els.chatPanel && els.chatPanel.dataset.layout === "embedded";
+      if (isEmbeddedChat) {
+        els.chatPanel.style.removeProperty("top");
+        els.chatPanel.style.removeProperty("bottom");
+        els.chatPanel.style.removeProperty("height");
+        els.chatPanel.style.removeProperty("max-height");
+        return;
       }
-      if (els.statsDrawer) {
-
-        const statsTop = bannerVisible
-          ? Math.max(baseOffset, navHeight + bannerHeight + 24)
-          : baseOffset;
-        els.statsDrawer.style.top = `${statsTop}px`;
-        const statsHeight = `calc(100vh - ${statsTop + 32}px)`;
-
-        els.statsDrawer.style.maxHeight = statsHeight;
-        els.statsDrawer.style.height = statsHeight;
+      els.chatPanel.style.top = `${chatTop}px`;
+      els.chatPanel.style.bottom = "auto";
+      const availableHeight = window.innerHeight - chatTop - 40;
+      if (availableHeight > 0) {
+        const upperBound = Math.min(availableHeight, 640);
+        const lowerBound = Math.min(availableHeight, 320);
+        const resolvedHeight = Math.max(upperBound, lowerBound);
+        els.chatPanel.style.height = `${resolvedHeight}px`;
+        els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
+      } else {
+        els.chatPanel.style.height = "320px";
+        els.chatPanel.style.maxHeight = "320px";
       }
     }
     function toggleChatVisibilityForViewport() {
@@ -1615,7 +1593,7 @@
       if (actionBtn) {
         const action = actionBtn.dataset.action;
         if (action === "stats") {
-          openStatsDrawer(channel);
+          toggleCardStats(card, actionBtn);
         } else if (action === "chat") {
           setChatChannel(channel, { scrollIntoView: true });
         } else if (action === "support") {
@@ -1624,7 +1602,8 @@
         return;
       }
       if (event.target.closest(".stream-card__identity")) {
-        openStatsDrawer(channel);
+        const statsButton = card.querySelector('[data-action="stats"]');
+        toggleCardStats(card, statsButton);
       }
     }
     function handleManagerClick(event) {
@@ -1641,7 +1620,19 @@
       } else if (action === "chat") {
         setChatChannel(channel, { scrollIntoView: true });
       } else if (action === "stats") {
-        openStatsDrawer(channel);
+        if (els.streamGrid) {
+          const card = els.streamGrid.querySelector(`.stream-card[data-channel="${channel}"]`);
+          if (card) {
+            const panel = card.querySelector(".stream-card__stats");
+            const statsButton = card.querySelector('[data-action="stats"]');
+            const isOpen = panel?.classList.contains("is-open");
+            if (!isOpen) {
+              toggleCardStats(card, statsButton);
+            }
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            statsButton?.focus({ preventScroll: true });
+          }
+        }
       }
     }
     let toastTimer = null;
@@ -1769,21 +1760,19 @@
       }
       return null;
     }
-    function renderStatsBody(meta, stats) {
-      if (!els.statsBody) return;
+    function buildStatsMarkup(meta, stats) {
       const fragments = [];
       fragments.push(`
-        <div class="meta">
+        <div class="stream-card__stats-meta">
           <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
           <div class="details">
             <strong>${escapeHtml(meta.displayName)}</strong>
-            <p>@${escapeHtml(meta.channel)}</p>
-            ${meta.team ? `<p>Team: ${escapeHtml(meta.team)}</p>` : ""}
+            <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
           </div>
         </div>
       `);
       if (meta.bio) {
-        fragments.push(`<p class="bio">${escapeHtml(meta.bio)}</p>`);
+        fragments.push(`<p class="stream-card__stats-message">${escapeHtml(meta.bio)}</p>`);
       }
       if (stats) {
         const totalsConfig = [
@@ -1842,68 +1831,62 @@
         });
         fragments.push('</div>');
       } else {
-        fragments.push('<p class="bio">No aggregated stats published for this player yet. Check back after match data is saved.</p>');
+        const message = 'No aggregated stats published for this player yet. Check back after match data is saved.';
+        fragments.push(`<p class="stream-card__stats-message">${message}</p>`);
       }
-      fragments.push(`
-        <div class="cta-row">
-          <button type="button" data-stats-action="focus">Focus Stream</button>
-          <button type="button" data-stats-action="support">Send Support</button>
-          <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
-        </div>
-      `);
-      els.statsBody.innerHTML = fragments.join("");
-      const supportButton = els.statsBody.querySelector('[data-stats-action="support"]');
-      if (supportButton) {
-        supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
+      fragments.push('<a class="stream-card__stats-link" href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>');
+      return fragments.join("");
+    }
+    async function toggleCardStats(card, triggerBtn) {
+      if (!card) return;
+      const panel = card.querySelector(".stream-card__stats");
+      if (!panel) return;
+      const body = panel.querySelector(".stream-card__stats-body");
+      if (!body) return;
+      const isOpen = panel.classList.contains("is-open");
+      if (isOpen) {
+        panel.classList.remove("is-open");
+        panel.setAttribute("hidden", "");
+        if (triggerBtn) {
+          triggerBtn.textContent = "View Stats";
+          triggerBtn.setAttribute("aria-expanded", "false");
+        }
+        return;
       }
-      const focusButton = els.statsBody.querySelector('[data-stats-action="focus"]');
-      if (focusButton) {
-        focusButton.addEventListener("click", () => {
-          setChatChannel(meta.channel, { scrollIntoView: true });
-          closeStatsDrawer();
+      if (els.streamGrid) {
+        els.streamGrid.querySelectorAll(".stream-card__stats.is-open").forEach(other => {
+          if (other === panel) return;
+          other.classList.remove("is-open");
+          other.setAttribute("hidden", "");
+          const parentCard = other.closest(".stream-card");
+          const otherBtn = parentCard ? parentCard.querySelector('[data-action="stats"]') : null;
+          if (otherBtn) {
+            otherBtn.textContent = "View Stats";
+            otherBtn.setAttribute("aria-expanded", "false");
+          }
         });
       }
-    }
-    async function openStatsDrawer(channel) {
-      const meta = getStreamerMeta(channel);
-      if (els.statsDrawer) {
-        els.statsDrawer.classList.add("open");
+      panel.classList.add("is-open");
+      panel.removeAttribute("hidden");
+      if (triggerBtn) {
+        triggerBtn.textContent = "Hide Stats";
+        triggerBtn.setAttribute("aria-expanded", "true");
       }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.classList.add("visible");
+      if (panel.dataset.loaded === "true") {
+        return;
       }
-      if (els.statsTitle) {
-        els.statsTitle.textContent = meta.displayName || meta.channel;
-      }
-      if (els.statsBody) {
-        els.statsBody.innerHTML = '<p class="bio">Loading stats…</p>';
-      }
+      body.innerHTML = '<p class="stream-card__stats-message">Loading stats…</p>';
       try {
+        const channel = card.dataset.channel;
         const bundle = await loadPlayerStats();
+        const meta = getStreamerMeta(channel);
         const stats = resolvePlayerStats(bundle, meta);
-        renderStatsBody(meta, stats);
+        body.innerHTML = buildStatsMarkup(meta, stats);
+        panel.dataset.loaded = "true";
       } catch (err) {
-        console.error("Stats drawer error", err);
-        if (els.statsBody) {
-          els.statsBody.innerHTML = '<p class="bio">Unable to load stats right now.</p>';
-        }
+        console.error("Card stats error", err);
+        body.innerHTML = '<p class="stream-card__stats-message">Unable to load stats right now.</p>';
       }
-    }
-    function closeStatsDrawer() {
-      if (els.statsDrawer) {
-        els.statsDrawer.classList.remove("open");
-      }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.classList.remove("visible");
-      }
-    }
-    function scheduleLiveRefresh() {
-      if (state.liveInterval) {
-        clearInterval(state.liveInterval);
-      }
-      state.liveInterval = window.setInterval(() => {
-        updateLiveChannels();
-      }, 60 * 1000);
     }
     async function updateLiveChannels() {
       if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
@@ -1979,30 +1962,14 @@
       if (els.supportActions) {
         els.supportActions.addEventListener("click", handleSupportAction);
       }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.addEventListener("click", closeStatsDrawer);
-      }
-      const statsClose = document.getElementById("stats-close");
-      if (statsClose) {
-        statsClose.addEventListener("click", closeStatsDrawer);
-      }
       document.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-          if (els.statsDrawer?.classList.contains("open")) {
-            closeStatsDrawer();
-          } else if (isChatMobileOpen()) {
-            closeChatMobile();
-          }
+        if (event.key === "Escape" && isChatMobileOpen()) {
+          closeChatMobile();
         }
       });
       window.addEventListener("resize", () => {
         syncChatPanelOffset();
         toggleChatVisibilityForViewport();
-      });
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          updateLiveChannels();
-        }
       });
     }
     async function init() {
@@ -2013,7 +1980,6 @@
       renderAll();
       loadStreamerDirectory();
       updateLiveChannels();
-      scheduleLiveRefresh();
       const banner = document.getElementById("live-announcement-banner");
       if (banner) {
         const observer = new MutationObserver(syncChatPanelOffset);
