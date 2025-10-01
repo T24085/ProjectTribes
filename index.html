@@ -65,14 +65,16 @@
       position: relative;
       background-position: center;
       background-repeat: repeat;
-      background-size: clamp(9rem, 16vw, 18rem);
+
+      background-size: clamp(6rem, 12vw, 12rem);
+
       filter: saturate(1.05);
     }
     .live-team-panel::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(3, 7, 18, 0.65), rgba(3, 7, 18, 0.35));
+      background: linear-gradient(180deg, rgba(3, 7, 18, 0.52), rgba(3, 7, 18, 0.28));
       pointer-events: none;
       z-index: 1;
     }
@@ -80,7 +82,9 @@
     #live-team-backdrop[data-count="2"] .live-team-panel,
     #live-team-backdrop[data-count="3"] .live-team-panel,
     #live-team-backdrop[data-count="4"] .live-team-panel {
-      background-size: clamp(9rem, 16vw, 18rem);
+
+      background-size: clamp(6rem, 12vw, 12rem);
+
     }
     body {
       margin: 0;
@@ -615,10 +619,11 @@
     #chat-panel {
       position: fixed;
       left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-      top: 4.25rem;
-      width: var(--chat-panel-width);
 
-      max-height: min(620px, calc(100vh - 5.75rem));
+      top: 3.5rem;
+      width: var(--chat-panel-width);
+      max-height: min(640px, calc(100vh - 5rem));
+
       background: rgba(9, 13, 30, 0.95);
       border: 1px solid rgba(129, 140, 248, 0.22);
       border-radius: 1.25rem;
@@ -715,12 +720,12 @@
     .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
     .stats-drawer {
       position: fixed;
-      top: 5rem;
 
+      top: 4.25rem;
       right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-
       width: min(460px, calc(100vw - 2.5rem));
-      max-height: calc(100vh - 6.5rem);
+      max-height: calc(100vh - 5.5rem);
+
       background: rgba(4, 10, 22, 0.97);
       border-left: 1px solid rgba(129, 140, 248, 0.2);
       box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
@@ -934,7 +939,6 @@
         </div>
         <div class="hero-actions">
           <button type="button" id="open-add-streamer">Add Streamer</button>
-          <button type="button" id="open-manager">Manage List</button>
           <button type="button" id="scroll-to-grid">Jump to Streams</button>
         </div>
       </article>
@@ -1069,7 +1073,6 @@
       toast: document.getElementById("toast"),
       effectLayer: document.getElementById("support-effect-layer"),
       addOpenBtn: document.getElementById("open-add-streamer"),
-      manageOpenBtn: document.getElementById("open-manager"),
       scrollToGridBtn: document.getElementById("scroll-to-grid"),
       controlPanel: document.getElementById("control-panel"),
       streamsArea: document.getElementById("streams-area"),
@@ -1131,11 +1134,11 @@
       }
       return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     }
-function toNumber(value, fallback = 0) {
+    function toNumber(value, fallback = 0) {
       const num = Number(value);
       return Number.isFinite(num) ? num : fallback;
     }
-        function buildPlayerUrl(channel) {
+    function buildPlayerUrl(channel) {
       return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&${parentQuery}&autoplay=false`;
     }
     function buildChatUrl(channel) {
@@ -1486,17 +1489,21 @@ function toNumber(value, fallback = 0) {
       if (!els.chatPanel && !els.statsDrawer) return;
       const nav = document.getElementById("global-header");
       const banner = document.getElementById("live-announcement-banner");
-      let offset = nav ? nav.getBoundingClientRect().height + 16 : 72;
-      if (banner && banner.classList.contains("is-visible")) {
-        offset += banner.getBoundingClientRect().height + 12;
+      const navHeight = nav ? nav.getBoundingClientRect().height : 64;
+      const bannerVisible = !!banner && banner.classList.contains("is-visible");
+      const bannerHeight = bannerVisible ? banner.getBoundingClientRect().height || 0 : 0;
+      const baseOffset = navHeight + 16;
+      let chatTop = Math.max(32, baseOffset - 40);
+      if (bannerVisible) {
+        chatTop = Math.max(chatTop, navHeight + bannerHeight + 32);
       }
       if (els.chatPanel) {
-        const topOffset = Math.max(56, offset - 24);
-        els.chatPanel.style.top = `${topOffset}px`;
+        els.chatPanel.style.top = `${chatTop}px`;
         els.chatPanel.style.bottom = "auto";
-        const availableHeight = window.innerHeight - topOffset - 48;
+        const availableHeight = window.innerHeight - chatTop - 40;
         if (availableHeight > 0) {
-          const upperBound = Math.min(availableHeight, 620);
+          const upperBound = Math.min(availableHeight, 640);
+
           const lowerBound = Math.min(availableHeight, 320);
           const resolvedHeight = Math.max(upperBound, lowerBound);
           els.chatPanel.style.height = `${resolvedHeight}px`;
@@ -1507,8 +1514,13 @@ function toNumber(value, fallback = 0) {
         }
       }
       if (els.statsDrawer) {
-        els.statsDrawer.style.top = `${offset}px`;
-        const statsHeight = `calc(100vh - ${offset + 32}px)`;
+
+        const statsTop = bannerVisible
+          ? Math.max(baseOffset, navHeight + bannerHeight + 24)
+          : baseOffset;
+        els.statsDrawer.style.top = `${statsTop}px`;
+        const statsHeight = `calc(100vh - ${statsTop + 32}px)`;
+
         els.statsDrawer.style.maxHeight = statsHeight;
         els.statsDrawer.style.height = statsHeight;
       }
@@ -1952,13 +1964,6 @@ function toNumber(value, fallback = 0) {
           if (els.addChannelInput) {
             els.addChannelInput.focus({ preventScroll: false });
           }
-          if (els.controlPanel) {
-            els.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        });
-      }
-      if (els.manageOpenBtn) {
-        els.manageOpenBtn.addEventListener("click", () => {
           if (els.controlPanel) {
             els.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
           }
