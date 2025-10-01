@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tribes Professional League Dashboard</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#eaf4ff', 400:'#60a5fa', 500:'#3b82f6', 600:'#2563eb' }
+          },
+          boxShadow: {
+            card: '0 10px 30px -10px rgba(0,0,0,.6)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Twitch OAuth helper (unchanged external file expected) -->
+  <script src="oauth.js"></script>
+
+  <style>
+    /* Cinematic background + readability overlay */
+    body::before{
+      content:""; position:fixed; inset:0;
+      background:
+        radial-gradient(80% 60% at 50% 0%, rgba(2,6,23,.55), transparent 70%),
+        linear-gradient(to bottom, rgba(2,6,23,.85), rgba(2,6,23,.4)),
+        url('https://github.com/T24085/images/blob/main/ss_fe25c58da0c50913fac070eea8150ee2e3cb178d.1920x1080.jpg?raw=true') center/cover no-repeat fixed;
+      z-index:-1;
+    }
+    @media (prefers-reduced-motion: reduce){
+      .hover\:scale-105:hover{ transform:none !important; }
+      .animate-ping, .animate-pulse { animation: none !important; }
+    }
+
+    /* Legacy hooks (kept but unused by new toggling); harmless */
+    .team-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:1.5rem; }
+  </style>
+</head>
+<body class="text-white antialiased selection:bg-brand-600/30">
+  <!-- Sticky nav placeholder -->
+  <div id="nav-placeholder" data-include="nav.html"></div>
+
+  <!-- Hero -->
+  <header class="relative py-14 border-b border-white/10">
+    <div class="mx-auto max-w-7xl px-4 text-center">
+      <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight">
+        Tribes Professional League Dashboard
+      </h1>
+      <p class="mt-3 text-lg text-slate-300">
+        Your hub for all Tribes Professional League teams and history
+      </p>
+    </div>
+  </header>
+
+  <!-- Teams -->
+  <section class="mx-auto max-w-7xl px-4 py-14">
+    <div class="flex items-baseline justify-between gap-4 mb-8">
+      <h2 class="text-3xl font-bold tracking-tight">Select a Team</h2>
+      <div class="hidden md:flex items-center gap-2 text-sm text-slate-300">
+        <span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Live now</span>
+      </div>
+    </div>
+
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <!-- TeamCard template repeated per team -->
+      <!-- Avalanche -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://www.team-avalanche.online/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/aV%21.png" alt="Avalanche team logo with snowy mountain and jetpack motif" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-Avalanche" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Avalanche <span class="text-slate-400 text-base">[aV!]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @Tritium Jones</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('Avalanche')"
+              class="rounded-xl bg-brand-600 hover:bg-brand-500 active:bg-brand-600 px-4 py-2 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500">View Roster</button>
+            <button onclick="showStreams('Avalanche')"
+              class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- ePidemic -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-ePi/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/ePi.png" alt="ePidemic team logo with biohazard and jetpack design" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-ePidemic" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">ePidemic <span class="text-slate-400 text-base">[ePi]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @[ePi] Convik</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('ePidemic')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('ePidemic')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- DPRK -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/TeamDPRK/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/TeamDPRKLogo3.png" alt="DPRK team logo with red star and futuristic tribal design" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-DPRK" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">DPRK</h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: ColonelFatso</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('DPRK')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('DPRK')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Zen -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-Zen/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/Zenlogo.png" alt="Zen team logo with minimalist tribal and jetpack symbol" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-Zen" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Zen <span class="text-slate-400 text-base">[ℨ]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @ℨ Gigz</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('Zen')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('Zen')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- TXM -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-TXM/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/TXM.png" alt="Texas Militia team logo with lone star and tribal motif" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-TXM" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Texas Militia <span class="text-slate-400 text-base">[TXM]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @OpCats</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('TXM')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('TXM')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- FPS -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-FPS/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/FPSlogo.png" alt="Flag Pole Smokers team logo with flag and smoke design" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-FPS" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Flag Pole Smokers <span class="text-slate-400 text-base">[FPS]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @S...</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('FPS')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('FPS')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- FT -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-FT/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/FTlogo.png" alt="Flying Tractors team logo with tractor and jetpack imagery" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-FT" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Flying Tractors <span class="text-slate-400 text-base">[^T^]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @p...</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('Flying Tractors')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('FT')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- HoE -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-HOE/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/HoE.png" alt="Hegemony of Euros team logo with European and tribal elements" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-HoE" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Hegemony of Euros <span class="text-slate-400 text-base">[HoE]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @[ɧơɛ] Katar Xwokark</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('Hegemony of Euros')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('HoE')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- KTL -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-KTL/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/KTLlogo.png" alt="KTL team logo with futuristic tribal design" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-KTL" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">KTL</h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @n0xide</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('KTL')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Magic -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-Magic/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/Magic.png" alt="Magic team logo with mystical and tribal symbols" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-Magic" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Magic <span class="text-slate-400 text-base">[Wiz]</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @[wiz] Lange</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('Magic')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('Magic')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- null -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-Null/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/NullLogo.png" alt="null team logo with abstract tribal design" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-null" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">null</h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @_...</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('null')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Toxic Aimers -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-Toxic-Aimers/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/ToxicAimersLogo.png" alt="Toxic Aimers team logo with toxic and tribal motifs" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-Toxic-Aimers" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">Toxic Aimers</h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: @R...</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('Toxic Aimers')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- UE -->
+      <article class="group rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md shadow-card overflow-hidden transition-transform duration-200 hover:scale-105">
+        <a href="https://t24085.github.io/Team-UE/" target="_blank" class="block">
+          <div class="relative">
+            <img src="images/UE.png" alt="UE team logo with futuristic tribal design" loading="lazy" class="w-full aspect-[16/9] object-cover" />
+            <span id="live-UE" aria-live="polite"
+                  class="absolute top-3 left-3 hidden items-center gap-2 rounded-full bg-emerald-400/20 px-3 py-1 text-emerald-300 ring-1 ring-emerald-400/40">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-xs font-semibold tracking-wide">LIVE</span>
+            </span>
+          </div>
+        </a>
+        <div class="p-5">
+          <h3 class="text-xl font-bold tracking-tight">UE</h3>
+          <p class="mt-1 text-sm text-slate-300">Captain: DeadManWalking</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button onclick="showRoster('UE')" class="rounded-xl bg-brand-600 hover:bg-brand-500 px-4 py-2 text-sm font-semibold">View Roster</button>
+            <button onclick="showStreams('UE')" class="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm font-semibold">Streams</button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- History -->
+  <section class="py-14 bg-gradient-to-b from-slate-900/60 to-slate-950/80 border-t border-white/10">
+    <div class="mx-auto max-w-4xl px-4">
+      <h2 class="text-3xl font-bold tracking-tight text-center mb-8">History of Tribes</h2>
+      <div class="prose prose-invert prose-headings:tracking-tight prose-p:leading-relaxed max-w-none bg-white/5 ring-1 ring-white/10 backdrop-blur-md rounded-2xl p-6">
+        <p class="text-lg mb-4">
+          The Tribes series, a groundbreaking collection of science fiction first-person shooter video games, began with <em>Starsiege: Tribes</em> in 1998, developed by Dynamix, a subsidiary of Sierra Entertainment. Set in the far future (2471–3940), the series is a spin-off from the mecha simulation series <em>Metaltech</em>. Its narrative revolves around a conflict sparked by the creation of the first cybrid, a bio-cybernetic AI named Prometheus, in 2471. By 2602, Prometheus leads a cybrid rebellion against humanity, which is eventually quelled, setting the stage for the tribal conflicts that define the series. <em>Starsiege: Tribes</em> introduced innovative mechanics like jetpacks, skiing, and large-scale multiplayer battles, earning it a reputation as one of the most influential FPS games.
+        </p>
+        <p class="text-lg mb-4">
+          The series continued with <em>Tribes 2</em> (2001), which expanded on the original's mechanics with enhanced graphics, more complex maps, and up to 128-player matches, fostering a vibrant competitive scene. <em>Tribes: Aerial Assault</em> (2002) brought the series to consoles, while <em>Tribes: Vengeance</em> (2004) focused on a single-player campaign alongside multiplayer. <em>Tribes: Ascend</em> (2012), developed by Hi-Rez Studios, revitalized the franchise with modern graphics and free-to-play mechanics, receiving critical acclaim (IGN: 9/10, PC Gamer: 88/100). The latest installment, <em>Tribes 3: Rivals</em>, announced in November 2023 and launched in Early Access on March 12, 2024, by Prophecy Games, returns to the series' roots with team-based capture-the-flag gameplay, jetpacks, and skiing, though it has struggled with player retention.
+        </p>
+        <p class="text-lg mb-0">
+          Tribes revolutionized the FPS genre by introducing dynamic movement systems and large-scale team-based gameplay, influencing titles like <em>Halo</em>. Its competitive community, marked by fierce rivalries between teams like 5150 and South Side Stoners, laid the groundwork for modern esports, with the Tribes Shoutcast Network pioneering professional commentary. The series' emphasis on teamwork, speed, and strategy, coupled with its passionate community, has kept it alive through fan-driven servers and mods, culminating in the excitement surrounding <em>Tribes 3: Rivals</em>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hubcast Central Streams -->
+  <section class="mx-auto max-w-7xl px-4 py-14">
+    <h2 class="text-3xl font-bold tracking-tight text-center mb-8">Hubcast Central Streams</h2>
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md p-6 text-center shadow-card">
+        <h3 class="text-xl font-semibold">
+          TootZ
+          <span id="hub-live-tootzgaming" aria-live="polite"
+                class="ml-2 hidden align-middle rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-300 text-xs font-bold ring-1 ring-emerald-400/40">LIVE</span>
+        </h3>
+        <a href="https://www.twitch.tv/tootzgaming" target="_blank" class="mt-2 inline-block text-brand-400 hover:text-brand-300 underline-offset-4 hover:underline">Watch on Twitch</a>
+      </div>
+      <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md p-6 text-center shadow-card">
+        <h3 class="text-xl font-semibold">
+          OoOoO
+          <span id="hub-live-oo0oo_live" aria-live="polite"
+                class="ml-2 hidden align-middle rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-300 text-xs font-bold ring-1 ring-emerald-400/40">LIVE</span>
+        </h3>
+        <a href="https://www.twitch.tv/oo0oo_live" target="_blank" class="mt-2 inline-block text-brand-400 hover:text-brand-300 underline-offset-4 hover:underline">Watch on Twitch</a>
+      </div>
+      <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md p-6 text-center shadow-card">
+        <h3 class="text-xl font-semibold">
+          Hawxter
+          <span id="hub-live-hawxter_" aria-live="polite"
+                class="ml-2 hidden align-middle rounded-full bg-emerald-400/20 px-2 py-0.5 text-emerald-300 text-xs font-bold ring-1 ring-emerald-400/40">LIVE</span>
+        </h3>
+        <a href="https://www.twitch.tv/hawxter_" target="_blank" class="mt-2 inline-block text-brand-400 hover:text-brand-300 underline-offset-4 hover:underline">Watch on Twitch</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Draft Tournament Stats -->
+  <section class="mx-auto max-w-7xl px-4 pb-14">
+    <h2 class="text-3xl font-bold tracking-tight text-center mb-8">Draft Tournament Stats</h2>
+    <div class="rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md p-6 text-center shadow-card">
+      <p class="text-lg mb-4">Check out the latest results and statistics for the Fat Boys of Summer Draft Tournament.</p>
+      <a href="https://t24085.github.io/FatBoysofSummerDraft/dashboard" target="_blank"
+         class="rounded-xl bg-brand-600 hover:bg-brand-500 active:bg-brand-600 px-4 py-2 font-semibold inline-block">View Tournament Stats</a>
+    </div>
+  </section>
+
+  <!-- Live Teams (personalized followed list) -->
+  <section id="live-teams" class="mx-auto max-w-7xl px-4 pb-14 hidden">
+    <h2 class="text-3xl font-bold tracking-tight text-center mb-8">Live Teams</h2>
+    <div id="liveTeamsList" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+  </section>
+
+  <!-- Roster Modal -->
+  <div id="rosterModal" role="dialog" aria-modal="true" aria-labelledby="rosterTitle"
+       class="modal fixed inset-0 hidden items-center justify-center bg-black/70 backdrop-blur-sm z-[1000]">
+    <div class="modal-content w-[min(92vw,42rem)] max-h-[85vh] overflow-y-auto rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10">
+      <h2 id="rosterTitle" class="text-2xl font-bold mb-3"></h2>
+      <p id="rosterContent" class="text-slate-200 whitespace-pre-line"></p>
+      <button onclick="closeModal()" class="mt-6 rounded-xl bg-rose-600 hover:bg-rose-500 px-4 py-2 font-semibold">Close</button>
+    </div>
+  </div>
+
+  <!-- Streams Modal -->
+  <div id="streamsModal" role="dialog" aria-modal="true" aria-labelledby="streamsTitle"
+       class="modal fixed inset-0 hidden items-center justify-center bg-black/70 backdrop-blur-sm z-[1000]">
+    <div class="modal-content w-[min(92vw,42rem)] max-h-[85vh] overflow-y-auto rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10">
+      <h2 id="streamsTitle" class="text-2xl font-bold mb-3"></h2>
+      <div id="streamsContent" class="space-y-2"></div>
+      <button onclick="closeModal()" class="mt-6 rounded-xl bg-rose-600 hover:bg-rose-500 px-4 py-2 font-semibold">Close</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-white/10">
+    <div class="mx-auto max-w-7xl px-4 py-8 text-center text-slate-400">
+      © 2025 Tribes Professional League Dashboard. Built for the community.
+    </div>
+  </footer>
+
+  <!-- ====== App Logic (unchanged data, refined behavior) ====== -->
+  <script>
+    // roster map populated by Firebase later
+    var rosters = {};
+    const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
+
+    const streams = {
+      'Avalanche': [
+        { name: 'Wriggles', url: 'https://www.twitch.tv/wrigglespk' },
+        { name: 'TritiumJones', url: 'https://www.twitch.tv/tritiumjones' },
+        { name: 'Dean', url: 'https://www.twitch.tv/wholuvsdean' },
+        { name: 'PROJ', url: 'https://www.twitch.tv/prj_tv' },
+        { name: 'Ggglygy', url: 'https://www.twitch.tv/ggglygy' },
+        { name: 'BakaToma', url: 'https://www.twitch.tv/bakatoma1' }
+      ],
+      'ePidemic': [
+        { name: 'Kenxai', url: 'https://www.twitch.tv/kenxai' },
+        { name: 'Makasuro', url: 'https://www.twitch.tv/makasuro' }
+      ],
+      'DPRK': [
+        { name: 'CheezeCaek', url: 'https://www.twitch.tv/cheezecaek' },
+        { name: 'silynn', url: 'https://www.twitch.tv/cheddox' },
+        { name: 'ColonelFatso', url: 'https://www.twitch.tv/colonelfatso' },
+        { name: 'Pandora', url: 'https://www.twitch.tv/pandoracast' },
+        { name: 'Nemesis', url: 'https://www.twitch.tv/seansguitarworldbang' }
+      ],
+      'Zen': [
+        { name: 'Mikesters', url: 'https://www.twitch.tv/mikesters17' },
+        { name: 'Nikebeamz', url: 'https://www.twitch.tv/nikebeamz' }
+      ],
+      'TXM': [
+        { name: 'Prizzo', url: 'https://www.twitch.tv/prizzo4real' },
+        { name: 'OperationCats', url: 'https://www.twitch.tv/operationcats' },
+        { name: 'Goshawk', url: 'https://www.twitch.tv/g0shawk' },
+        { name: 'Visis', url: 'https://www.twitch.tv/visisgaming' },
+        { name: 'Cryof', url: 'https://www.twitch.tv/cryofzshooter' },
+        { name: 'Jive', url: 'https://www.twitch.tv/heavenlyjive' },
+        { name: 'freefood', url: 'https://www.twitch.tv/freefoodd' },
+        { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
+      ],
+      'FPS': [
+        { name: 'SulliedSoc', url: 'https://www.twitch.tv/SulliedSoc' },
+        { name: 'Beldark', url: 'https://www.twitch.tv/beldarkk' }
+      ],
+      'FT': [
+        { name: 'Mikeax2', url: 'https://www.twitch.tv/mikeax2' },
+        { name: 'nato', url: 'https://www.twitch.tv/natopotato262' },
+        { name: 'playb0x', url: 'https://www.twitch.tv/playb0x' }
+      ],
+      'HoE': [
+        { name: 'Katar', url: 'https://www.twitch.tv/karolk10' },
+        { name: 'gwej', url: 'https://www.twitch.tv/gwej' },
+        { name: 'cym3', url: 'https://www.twitch.tv/cymm3' }
+      ],
+      'Magic': [
+        { name: 'XRY', url: 'https://www.twitch.tv/xry_tv' },
+        { name: 'Splitsecond', url: 'https://www.twitch.tv/splitsecondta' },
+        { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
+      ],
+      'UE': [
+        { name: 'PabloSexcrobar', url: 'https://www.twitch.tv/eltimablo' },
+        { name: 'RoamenCota', url: 'https://www.twitch.tv/roamencota' },
+        { name: 'Simmons', url: 'https://www.twitch.tv/simmons572' },
+        { name: 'Def_Monk (YT)', url: 'https://www.youtube.com/@defmonk0/streams' },
+        { name: 'Deadmanwalking (YT)', url: 'https://www.youtube.com/@DeadManWalking-UF-/streams' }
+      ]
+    };
+
+    // Modal helpers: toggle Tailwind 'hidden'
+    function openModal(id){
+      const m = document.getElementById(id);
+      if(!m) return;
+      m.classList.remove('hidden');
+      const first = m.querySelector('button, a, [tabindex]:not([tabindex="-1"])');
+      first?.focus();
+    }
+    function closeModal(){
+      document.getElementById('rosterModal')?.classList.add('hidden');
+      document.getElementById('streamsModal')?.classList.add('hidden');
+    }
+
+    function showRoster(team) {
+      const title = document.getElementById('rosterTitle');
+      const content = document.getElementById('rosterContent');
+      title.textContent = `${team} Roster`;
+      content.textContent = (window.rosters && (window.rosters[team] || window.rosters[team?.replace(/[^A-Za-z0-9 ]/g,'').trim()])) || 'No roster information available.';
+      openModal('rosterModal');
+    }
+
+    function showStreams(team) {
+      const title = document.getElementById('streamsTitle');
+      const content = document.getElementById('streamsContent');
+      title.textContent = `${team} Streams`;
+      content.innerHTML = '';
+      if (streams[team] && streams[team].length > 0) {
+        streams[team].forEach(stream => {
+          const p = document.createElement('p');
+          p.innerHTML = `<a href="${stream.url}" target="_blank" class="text-brand-400 hover:underline">${stream.name}</a>`;
+          content.appendChild(p);
+        });
+      } else {
+        const p = document.createElement('p');
+        p.textContent = 'No streams available for this team.';
+        content.appendChild(p);
+      }
+      openModal('streamsModal');
+    }
+
+    // Close modal when clicking outside or pressing ESC
+    window.addEventListener('click', e => { if (e.target.classList?.contains('modal')) closeModal(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // Utility: mark live by toggling 'hidden'
+    function markLive(id, isLive){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.classList.toggle('hidden', !isLive);
+    }
+
+    function updateTeamLiveStatus() {
+      const teamLogins = {};
+      for (const [team, list] of Object.entries(streams)) {
+        teamLogins[team] = list
+          .map(s => {
+            const m = s.url.match(/twitch\.tv\/([^/?]+)/i);
+            return m ? m[1].toLowerCase() : null;
+          })
+          .filter(Boolean);
+      }
+      const allLogins = [...new Set(Object.values(teamLogins).flat())];
+
+      if (allLogins.length === 0 || !window.twitchOAuth || !twitchOAuth.getToken()) return;
+
+      window.twitchOAuth.fetchLiveStreams(allLogins)
+        .then(streams => {
+          const liveSet = new Set((streams || []).map(s => s.user_login.toLowerCase()));
+          for (const [team, logins] of Object.entries(teamLogins)) {
+            const id = 'live-' + team.replace(/\s+/g, '-');
+            const isLive = logins.some(l => liveSet.has(l));
+            markLive(id, isLive);
+          }
+        })
+        .catch(err => console.error('Failed to fetch live teams', err));
+    }
+
+    const hubCasters = ['tootzgaming', 'oo0oo_live', 'hawxter_'];
+    function updateHubcasterStatus() {
+      if (!window.twitchOAuth || !twitchOAuth.getToken()) return;
+      window.twitchOAuth.fetchLiveStreams(hubCasters)
+        .then(streams => {
+          const liveSet = new Set((streams || []).map(s => s.user_login.toLowerCase()));
+          hubCasters.forEach(login => {
+            markLive('hub-live-' + login, liveSet.has(login));
+          });
+        })
+        .catch(err => console.error('Failed to fetch hubcasters', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        if (window.twitchOAuth) {
+          await twitchOAuth.fetchUser(); // validates token if present
+        }
+        updateTeamLiveStatus();
+        updateHubcasterStatus();
+
+        // Personalized followed streams (if authorized)
+        if (window.twitchOAuth && twitchOAuth.getToken()) {
+          twitchOAuth.fetchFollowedStreams().then(followed => {
+            if (!followed || followed.length === 0) return;
+            const section = document.getElementById('live-teams');
+            const list = document.getElementById('liveTeamsList');
+            followed.forEach(stream => {
+              const div = document.createElement('div');
+              div.className = 'rounded-2xl bg-white/5 ring-1 ring-white/10 backdrop-blur-md p-6 text-center shadow-card';
+              div.innerHTML = `
+                <h3 class="text-xl font-bold">${stream.user_name}</h3>
+                <a href="https://www.twitch.tv/${stream.user_login}" target="_blank" class="text-brand-400 hover:underline">Watch on Twitch</a>
+              `;
+              list.appendChild(div);
+            });
+            section.classList.remove('hidden');
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  </script>
+
+  <!-- Firebase (unchanged config, just used to build rosters map) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    onSnapshot(collection(db, 'teams'), (snapshot) => {
+      const map = {};
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const players = (data.players || []).map(p => p.name).join(', ');
+        const bench = (data.benchPlayers || []).join(', ');
+        const roster = `Players: ${players}${bench ? `\nBench: ${bench}` : ''}`;
+        const name = data.teamName || '';
+        const tag = data.teamTag || '';
+        if (name) {
+          map[name] = roster;
+          const cleanName = name.replace(/[^A-Za-z0-9 ]/g, '').trim();
+          if (cleanName && cleanName !== name) map[cleanName] = roster;
+        }
+        if (tag) {
+          map[tag] = roster;
+          const cleanTag = tag.replace(/[^A-Za-z0-9 ]/g, '').trim();
+          if (cleanTag && cleanTag !== tag) map[cleanTag] = roster;
+        }
+      });
+      window.rosters = map;
+    });
+  </script>
+
+  <!-- Load navigation and re-init Twitch bits in nav if present -->
+  <script>
+    async function loadNav() {
+      const placeholder = document.getElementById('nav-placeholder');
+      try {
+        const res = await fetch('./nav.html');
+        if (!res.ok) throw new Error(`Nav fetch failed: ${res.status}`);
+        const html = await res.text();
+        placeholder.innerHTML = html;
+        // re-run any scripts in nav.html
+        placeholder.querySelectorAll('script').forEach(oldScript => {
+          const newScript = document.createElement('script');
+          [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
+          newScript.textContent = oldScript.textContent;
+          oldScript.replaceWith(newScript);
+        });
+        if (window.twitchOAuth) {
+          window.twitchOAuth.updateNav?.();
+          window.twitchOAuth.initLiveTeamsMenu?.();
+        }
+      } catch (err) {
+        console.error('Failed to load navigation', err);
+      }
+    }
+    loadNav();
+  </script>
+</body>
+</html>

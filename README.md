@@ -28,7 +28,7 @@ This repository hosts the static website for the **Tribes 3: Rivals** community.
 - [News](News.html)
 - [News Admin](NewsAdmin.html)
 - [Streamer Kits](StreamerKits.html)
-- [Twitch Feed Displays](TwitchFeedDisplays.html)
+- [TPL Live Hub](index.html)
 - [Twitch Feed Mobile](TwitchFeedMobile.html)
 - [Streamers Directory](Streamers.html)
 - [Submit a Streamer](StreamersSubmit.html)
