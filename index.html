@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tribes Professional League | Live Hub</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="Tribes Professional League.png" type="image/png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css">
   <script src="oauth.js"></script>
   <style>
     :root {
@@ -23,8 +25,65 @@
       --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
     }
     *, *::before, *::after { box-sizing: border-box; }
+    body.has-live-backdrop {
+      background: #030712;
+    }
+    #live-team-backdrop {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      pointer-events: none;
+      z-index: -2;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: opacity 0.45s ease;
+    }
+    #live-team-backdrop.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    #live-team-backdrop::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(15, 23, 42, 0.75), transparent 65%), radial-gradient(circle at 80% 30%, rgba(15, 23, 42, 0.65), transparent 60%), linear-gradient(220deg, rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.7));
+      pointer-events: none;
+      z-index: 1;
+    }
+    .live-team-panel {
+      flex: 1 1 0;
+      position: relative;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: clamp(22rem, 40vw, 48rem) auto;
+      filter: saturate(1.05);
+    }
+    .live-team-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(3, 7, 18, 0.65), rgba(3, 7, 18, 0.35));
+      pointer-events: none;
+      z-index: 1;
+    }
+    #live-team-backdrop[data-count="1"] .live-team-panel {
+      background-size: clamp(32rem, 55vw, 60rem);
+    }
+    #live-team-backdrop[data-count="2"] .live-team-panel {
+      background-size: clamp(24rem, 45vw, 52rem);
+    }
+    #live-team-backdrop[data-count="3"] .live-team-panel {
+      background-size: clamp(20rem, 36vw, 44rem);
+    }
+    #live-team-backdrop[data-count="4"] .live-team-panel {
+      background-size: clamp(18rem, 32vw, 38rem);
+    }
     body {
       margin: 0;
+
       min-height: 100vh;
       background: var(--bg-gradient), var(--bg-color);
       color: var(--text-primary);
@@ -838,6 +897,7 @@
 </head>
 <body>
   <div id="support-effect-layer"></div>
+  <div id="live-team-backdrop"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="live-announcement-banner" class="live-announcement-banner" aria-live="polite" role="status"></div>
   <nav id="global-header">
@@ -978,6 +1038,23 @@
     const supportConfig = {
       leagueChannel: "tribesprofessionalleague",
       paypalUrl: "https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA"
+    };
+
+    const TEAM_LOGOS = {
+      Avalanche: "TribesLeagueLogo's/aV!.png",
+      ePidemic: "TribesLeagueLogo's/ePi.png",
+      DPRK: "TribesLeagueLogo's/TeamDPRKLogo3.png",
+      Zen: "TribesLeagueLogo's/Zenlogo.png",
+      TXM: "TribesLeagueLogo's/TXM.png",
+      FPS: "TribesLeagueLogo's/FPSlogo.png",
+      FT: "TribesLeagueLogo's/FTlogo.png",
+      HoE: "TribesLeagueLogo's/HoE.png",
+      Magic: "TribesLeagueLogo's/Magic.png",
+      DeadStop: "DeadStopLogo.png",
+      UE: "TribesLeagueLogo's/UE.png",
+      KTL: "TribesLeagueLogo's/KTLlogo.png",
+      Null: "TribesLeagueLogo's/NullLogo.png",
+      ToxicAimers: "TribesLeagueLogo's/ToxicAimersLogo.png"
     };
 
     const STORAGE = {
@@ -1192,6 +1269,44 @@ function toNumber(value, fallback = 0) {
         els.liveBanner.appendChild(div);
       });
     }
+    function updateLiveBackdrop() {
+      const container = document.getElementById("live-team-backdrop");
+      if (!container) return;
+      const teams = [];
+      (state.lastLiveStreams || []).forEach(stream => {
+        const login = (stream?.user_login || stream?.user_name || "").toLowerCase();
+        if (!login) return;
+        const mapping = teamIndex.get(login);
+        const teamName = mapping?.team;
+        if (teamName && !teams.includes(teamName)) {
+          teams.push(teamName);
+        }
+      });
+      if (!teams.length) {
+        container.innerHTML = "";
+        container.classList.remove("is-visible");
+        container.dataset.count = "0";
+        document.body.classList.remove("has-live-backdrop");
+        return;
+      }
+      const limited = teams.slice(0, 4);
+      const fragment = document.createDocumentFragment();
+      limited.forEach(teamName => {
+        const panel = document.createElement("div");
+        panel.className = "live-team-panel";
+        const logoCandidate = TEAM_LOGOS[teamName] || TEAM_LOGOS[teamName?.replace(/\s+/g, "")] || "Tribes Professional League.png";
+        const logoUrl = /^https?:/i.test(logoCandidate) ? logoCandidate : encodeURI(logoCandidate);
+        panel.style.backgroundImage = `url(${logoUrl})`;
+        panel.dataset.team = teamName;
+        fragment.appendChild(panel);
+      });
+      container.innerHTML = "";
+      container.dataset.count = String(limited.length);
+      container.appendChild(fragment);
+      document.body.classList.add("has-live-backdrop");
+      container.classList.add("is-visible");
+    }
+
     function renderStreamGrid() {
       if (!els.streamGrid) return;
       const visibleChannels = computeVisibleChannels();
@@ -1232,7 +1347,7 @@ function toNumber(value, fallback = 0) {
           </div>
           <div class="stream-card__player">
             <div class="player-frame">
-              <iframe src="${buildPlayerUrl(channel)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="${escapeHtml(meta.displayName)} stream"></iframe>
+              <iframe src="${buildPlayerUrl(channel)}" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${escapeHtml(meta.displayName)} stream"></iframe>
             </div>
           </div>
           <div class="stream-card__actions">
@@ -1288,6 +1403,7 @@ function toNumber(value, fallback = 0) {
       updateChatOptions();
       renderLiveBanner();
       updateMetrics();
+      updateLiveBackdrop();
       syncChatPanelOffset();
     }
     function highlightChatCard() {
