@@ -61,8 +61,8 @@
       flex: 1 1 0;
       position: relative;
       background-position: center;
-      background-repeat: no-repeat;
-      background-size: clamp(22rem, 40vw, 48rem) auto;
+      background-repeat: repeat;
+      background-size: clamp(9rem, 16vw, 18rem);
       filter: saturate(1.05);
     }
     .live-team-panel::after {
@@ -73,17 +73,11 @@
       pointer-events: none;
       z-index: 1;
     }
-    #live-team-backdrop[data-count="1"] .live-team-panel {
-      background-size: clamp(32rem, 55vw, 60rem);
-    }
-    #live-team-backdrop[data-count="2"] .live-team-panel {
-      background-size: clamp(24rem, 45vw, 52rem);
-    }
-    #live-team-backdrop[data-count="3"] .live-team-panel {
-      background-size: clamp(20rem, 36vw, 44rem);
-    }
+    #live-team-backdrop[data-count="1"] .live-team-panel,
+    #live-team-backdrop[data-count="2"] .live-team-panel,
+    #live-team-backdrop[data-count="3"] .live-team-panel,
     #live-team-backdrop[data-count="4"] .live-team-panel {
-      background-size: clamp(18rem, 32vw, 38rem);
+      background-size: clamp(9rem, 16vw, 18rem);
     }
     body {
       margin: 0;
@@ -168,7 +162,7 @@
     #live-teams-panel .live-dot { color: #34d399; font-size: 0.8rem; }
     .live-announcement-banner {
       position: fixed;
-      top: 0.85rem;
+      top: 5.5rem;
       left: 50%;
       transform: translate(-50%, -120%) scaleX(0.94);
       transform-origin: top center;
@@ -382,25 +376,27 @@
       color: #e2e8f0;
     }
     .control-streams {
-      display: grid;
-      grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
-      gap: 2rem;
-      align-items: start;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
     }
     .control-panel {
       background: var(--panel-bg);
       border-radius: 1.25rem;
       border: 1px solid rgba(148, 163, 184, 0.2);
-      padding: 1.6rem;
+      padding: 1.4rem 1.6rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 1rem 1.4rem;
+    }
+    .control-panel form {
       display: flex;
       flex-direction: column;
-      gap: 1.3rem;
-      position: sticky;
-      top: 6rem;
+      gap: 0.55rem;
+      flex: 1 1 280px;
+      min-width: 260px;
     }
-    .control-panel header h3 { margin: 0; font-size: 1.2rem; letter-spacing: -0.01em; }
-    .control-panel header p { margin: 0.35rem 0 0; color: var(--text-muted); font-size: 0.9rem; }
-    .control-panel form { display: flex; flex-direction: column; gap: 0.6rem; }
     .control-panel label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
     .control-panel .input-row { display: flex; gap: 0.6rem; }
     .control-panel input[type="text"] {
@@ -425,6 +421,8 @@
     }
     .control-panel .inline-actions {
       display: flex;
+      flex: 1 1 220px;
+      justify-content: flex-end;
       flex-wrap: wrap;
       gap: 0.6rem;
     }
@@ -440,57 +438,9 @@
       cursor: pointer;
     }
     .control-panel .inline-actions button:hover {
-      background: rgba(129, 140, 248, 0.32);
-      border-color: rgba(129, 140, 248, 0.42);
+      background: rgba(99, 102, 241, 0.4);
+      border-color: rgba(148, 163, 184, 0.4);
     }
-    .channel-manager {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      max-height: 380px;
-      overflow-y: auto;
-      padding-right: 0.3rem;
-    }
-    .channel-row {
-      background: rgba(148, 163, 184, 0.08);
-      border: 1px solid rgba(148, 163, 184, 0.18);
-      border-radius: 1rem;
-      padding: 0.85rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.65rem;
-    }
-    .channel-row__top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .channel-row__meta { display: flex; flex-direction: column; gap: 0.1rem; }
-    .channel-row__name { font-weight: 600; letter-spacing: -0.01em; }
-    .channel-row__handle { font-size: 0.75rem; color: var(--text-muted); }
-    .channel-row__team { font-size: 0.7rem; color: rgba(129, 140, 248, 0.75); text-transform: uppercase; letter-spacing: 0.12em; }
-    .channel-row__badges { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-    .channel-row__actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .pill-btn {
-      border: none;
-      border-radius: 9999px;
-      padding: 0.35rem 0.9rem;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      background: rgba(79, 70, 229, 0.22);
-      color: #e0e7ff;
-      cursor: pointer;
-      transition: background var(--transition-snappy);
-    }
-    .pill-btn:hover { background: rgba(99, 102, 241, 0.4); }
-    .pill-btn.danger { background: rgba(248, 113, 113, 0.22); color: #fecaca; }
-    .pill-btn.secondary { background: rgba(148, 163, 184, 0.15); color: #cbd5f5; }
     .badge {
       font-size: 0.68rem;
       padding: 0.2rem 0.55rem;
@@ -656,8 +606,8 @@
     }
     #chat-panel {
       position: fixed;
-      right: 1.2rem;
-      top: 6rem;
+      left: 1.5rem;
+      top: 5rem;
       width: 320px;
       background: rgba(9, 13, 30, 0.95);
       border: 1px solid rgba(129, 140, 248, 0.22);
@@ -709,7 +659,7 @@
     #chat-toggle {
       position: fixed;
       bottom: 1.5rem;
-      right: 1.5rem;
+      left: 1.5rem;
       width: 54px;
       height: 54px;
       border-radius: 50%;
@@ -752,19 +702,22 @@
     .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
     .stats-drawer {
       position: fixed;
-      top: 0;
-      right: -480px;
-      width: min(480px, 100%);
-      height: 100vh;
+      top: 5rem;
+      right: 1.5rem;
+      width: min(460px, calc(100vw - 2.5rem));
+      max-height: calc(100vh - 6.5rem);
       background: rgba(4, 10, 22, 0.97);
       border-left: 1px solid rgba(129, 140, 248, 0.2);
       box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
-      transition: right 0.35s ease;
+      transform: translateX(100%);
+      transition: transform 0.35s ease;
       z-index: 80;
       display: flex;
       flex-direction: column;
+      border-radius: 1.25rem 0 0 1.25rem;
+      overflow: hidden;
     }
-    .stats-drawer.open { right: 0; }
+    .stats-drawer.open { transform: translateX(0); }
     .stats-drawer header {
       padding: 1.5rem;
       border-bottom: 1px solid rgba(148, 163, 184, 0.14);
@@ -787,6 +740,7 @@
       display: flex;
       flex-direction: column;
       gap: 1.35rem;
+      flex: 1;
     }
     .stats-body .meta {
       display: flex;
@@ -887,7 +841,6 @@
     .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     @media (max-width: 1280px) {
       .hero { grid-template-columns: 1fr; }
-      .control-streams { grid-template-columns: 1fr; }
       nav#global-header { padding: 0.85rem 1.5rem; }
       #chat-panel { width: 280px; }
     }
@@ -901,13 +854,18 @@
       #stream-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
       #chat-panel { display: none; }
       #chat-toggle { display: flex; align-items: center; justify-content: center; }
+      .stats-drawer {
+        right: 0;
+        width: 100%;
+        border-radius: 0;
+      }
     }
     @media (max-width: 640px) {
       .hero-actions button { flex: 1 1 45%; text-align: center; }
       .control-panel { padding: 1.2rem; }
       nav#global-header { padding: 0.75rem 1rem; }
       main { padding: 1.2rem 1rem 4rem; }
-      #chat-toggle { bottom: 1rem; right: 1rem; }
+      #chat-toggle { bottom: 1rem; left: 1rem; }
     }
   </style>
 </head>
@@ -977,10 +935,6 @@
 
     <section class="control-streams">
       <aside class="control-panel" id="control-panel">
-        <header>
-          <h3>Stream List</h3>
-          <p>Add, hide, or reorder the channels that render in the wall.</p>
-        </header>
         <form id="add-channel-form">
           <label for="add-channel-input">Add a Twitch channel</label>
           <div class="input-row">
@@ -990,10 +944,8 @@
         </form>
         <div class="inline-actions">
           <button type="button" data-role="live-only-toggle">Show Only Live</button>
-          <button type="button" id="show-all-streams">Show All</button>
-          <button type="button" id="reset-defaults">Reset to League Defaults</button>
+          <button type="button" id="show-all-streams">Show All Streams</button>
         </div>
-        <div class="channel-manager" id="channel-manager"></div>
       </aside>
 
       <div class="streams-area" id="streams-area">
@@ -1514,15 +1466,23 @@ function toNumber(value, fallback = 0) {
       showToast("Stream roster reset to defaults");
     }
     function syncChatPanelOffset() {
-      if (!els.chatPanel) return;
+      if (!els.chatPanel && !els.statsDrawer) return;
       const nav = document.getElementById("global-header");
       const banner = document.getElementById("live-announcement-banner");
-      let offset = nav ? nav.getBoundingClientRect().height + 24 : 72;
+      let offset = nav ? nav.getBoundingClientRect().height + 16 : 72;
       if (banner && banner.classList.contains("is-visible")) {
-        offset += banner.getBoundingClientRect().height + 14;
+        offset += banner.getBoundingClientRect().height + 12;
       }
-      els.chatPanel.style.top = `${offset}px`;
-      els.chatPanel.style.height = `calc(100vh - ${offset + 32}px)`;
+      if (els.chatPanel) {
+        els.chatPanel.style.top = `${offset}px`;
+        els.chatPanel.style.height = `calc(100vh - ${offset + 32}px)`;
+      }
+      if (els.statsDrawer) {
+        els.statsDrawer.style.top = `${offset}px`;
+        const statsHeight = `calc(100vh - ${offset + 32}px)`;
+        els.statsDrawer.style.maxHeight = statsHeight;
+        els.statsDrawer.style.height = statsHeight;
+      }
     }
     function toggleChatVisibilityForViewport() {
       if (!els.chatPanel) return;
