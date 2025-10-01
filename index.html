@@ -169,7 +169,7 @@
     #live-teams-panel .live-dot { color: #34d399; font-size: 0.8rem; }
     .live-announcement-banner {
       position: fixed;
-      top: 0.85rem;
+      top: 0;
       left: 50%;
       transform: translate(-50%, -120%) scaleX(0.94);
       transform-origin: top center;
@@ -1407,7 +1407,6 @@ function toNumber(value, fallback = 0) {
       const chatPanel = card.querySelector('[data-role="chat-panel"]');
       if (chatBtn && chatPanel) {
         chatBtn.textContent = chatPanel.hasAttribute("hidden") ? "See Chat" : "Hide Chat";
-
       }
     }
     async function toggleChannelStats(channel, options = {}) {
