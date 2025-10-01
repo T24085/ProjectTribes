@@ -25,6 +25,10 @@
       --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
     }
     *, *::before, *::after { box-sizing: border-box; }
+    body > *:not(#support-effect-layer):not(#live-team-backdrop) {
+      position: relative;
+      z-index: 2;
+    }
     body.has-live-backdrop {
       background: #030712;
     }
@@ -35,7 +39,7 @@
       align-items: stretch;
       justify-content: center;
       pointer-events: none;
-      z-index: -2;
+      z-index: 0;
       opacity: 0;
       visibility: hidden;
       overflow: hidden;
@@ -521,7 +525,7 @@
     #live-channel-banner .viewers { color: rgba(226, 232, 240, 0.65); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
     #stream-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
       gap: 1.35rem;
     }
     .stream-card {
@@ -587,8 +591,20 @@
       border: 1px solid rgba(148, 163, 184, 0.16);
       background: #000;
     }
-    .player-frame { position: relative; width: 100%; padding-top: 56.25%; }
+    .player-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 300px; }
     .player-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    @supports not (aspect-ratio: 16 / 9) {
+      .player-frame {
+        padding-top: 56.25%;
+      }
+      .player-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    }
     .stream-card__actions {
       position: relative;
       z-index: 1;
@@ -998,7 +1014,7 @@
     <select id="chat-channel-select">
       <option value="">Select Channel Chat</option>
     </select>
-    <iframe id="chat-iframe" src="about:blank" title="Twitch chat"></iframe>
+    <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
   </div>
   <button id="chat-toggle"><span>Chat</span></button>
   <div class="stats-backdrop" id="stats-backdrop"></div>
@@ -1295,7 +1311,10 @@ function toNumber(value, fallback = 0) {
         const panel = document.createElement("div");
         panel.className = "live-team-panel";
         const logoCandidate = TEAM_LOGOS[teamName] || TEAM_LOGOS[teamName?.replace(/\s+/g, "")] || "Tribes Professional League.png";
-        const logoUrl = /^https?:/i.test(logoCandidate) ? logoCandidate : encodeURI(logoCandidate);
+        let logoUrl = logoCandidate;
+        if (!/^https?:/i.test(logoCandidate)) {
+          logoUrl = encodeURI(logoCandidate).replace(/'/g, '%27');
+        }
         panel.style.backgroundImage = `url(${logoUrl})`;
         panel.dataset.team = teamName;
         fragment.appendChild(panel);
@@ -1347,7 +1366,7 @@ function toNumber(value, fallback = 0) {
           </div>
           <div class="stream-card__player">
             <div class="player-frame">
-              <iframe src="${buildPlayerUrl(channel)}" allow="autoplay; fullscreen; picture-in-picture" loading="lazy" title="${escapeHtml(meta.displayName)} stream"></iframe>
+              <iframe src="${buildPlayerUrl(channel)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="${escapeHtml(meta.displayName)} stream"></iframe>
             </div>
           </div>
           <div class="stream-card__actions">
