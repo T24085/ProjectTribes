@@ -59,10 +59,11 @@
     }
     .live-team-panel {
       flex: 1 1 0;
+      min-width: 0;
       position: relative;
       background-position: center;
-      background-repeat: no-repeat;
-      background-size: clamp(22rem, 40vw, 48rem) auto;
+      background-repeat: repeat;
+      background-size: clamp(12rem, 22vw, 26rem);
       filter: saturate(1.05);
     }
     .live-team-panel::after {
@@ -74,16 +75,16 @@
       z-index: 1;
     }
     #live-team-backdrop[data-count="1"] .live-team-panel {
-      background-size: clamp(32rem, 55vw, 60rem);
+      background-size: clamp(18rem, 32vw, 40rem);
     }
     #live-team-backdrop[data-count="2"] .live-team-panel {
-      background-size: clamp(24rem, 45vw, 52rem);
+      background-size: clamp(12rem, 24vw, 28rem);
     }
     #live-team-backdrop[data-count="3"] .live-team-panel {
-      background-size: clamp(20rem, 36vw, 44rem);
+      background-size: clamp(9rem, 18vw, 22rem);
     }
     #live-team-backdrop[data-count="4"] .live-team-panel {
-      background-size: clamp(18rem, 32vw, 38rem);
+      background-size: clamp(7rem, 14vw, 18rem);
     }
     body {
       margin: 0;
@@ -1018,7 +1019,8 @@
       liveSet: new Set(),
       lastLiveStreams: [],
       streamerDirectory: new Map(),
-      liveInterval: null
+      liveInterval: null,
+      backdropSignature: ""
     };
 
     const teamIndex = new Map();
@@ -1200,9 +1202,17 @@ function toNumber(value, fallback = 0) {
         container.classList.remove("is-visible");
         container.dataset.count = "0";
         document.body.classList.remove("has-live-backdrop");
+        state.backdropSignature = "";
         return;
       }
       const limited = teams.slice(0, 4);
+      const signature = `${limited.length}:${limited.join("|")}`;
+      container.dataset.count = String(limited.length);
+      if (signature === state.backdropSignature) {
+        document.body.classList.add("has-live-backdrop");
+        container.classList.add("is-visible");
+        return;
+      }
       const fragment = document.createDocumentFragment();
       limited.forEach(teamName => {
         const panel = document.createElement("div");
@@ -1217,10 +1227,10 @@ function toNumber(value, fallback = 0) {
         fragment.appendChild(panel);
       });
       container.innerHTML = "";
-      container.dataset.count = String(limited.length);
       container.appendChild(fragment);
       document.body.classList.add("has-live-backdrop");
       container.classList.add("is-visible");
+      state.backdropSignature = signature;
     }
 
     function renderStreamGrid() {
@@ -1246,6 +1256,8 @@ function toNumber(value, fallback = 0) {
         const card = document.createElement("article");
         card.className = "stream-card";
         card.dataset.channel = channel;
+        card.dataset.live = isLive ? "true" : "false";
+        card.classList.toggle("is-live", isLive);
         card.innerHTML = `
           <div class="stream-card__head">
             <div class="stream-card__identity">
@@ -1283,6 +1295,48 @@ function toNumber(value, fallback = 0) {
       els.streamGrid.innerHTML = "";
       els.streamGrid.appendChild(fragment);
     }
+    function reorderStreamGrid() {
+      if (!els.streamGrid) return;
+      const existingCards = els.streamGrid.querySelectorAll(".stream-card");
+      if (!existingCards.length) return;
+      const fragment = document.createDocumentFragment();
+      state.channels.forEach(channel => {
+        const card = els.streamGrid.querySelector('[data-channel="' + channel + '"]');
+        if (card) {
+          fragment.appendChild(card);
+        }
+      });
+      if (fragment.childNodes.length) {
+        els.streamGrid.appendChild(fragment);
+      }
+    }
+    function updateStreamCardStatuses() {
+      if (!els.streamGrid) return;
+      const cards = els.streamGrid.querySelectorAll(".stream-card");
+      cards.forEach(card => {
+        const channel = card.dataset.channel;
+        if (!channel) return;
+        const isLive = state.liveSet.has(channel);
+        card.classList.toggle("is-live", isLive);
+        card.dataset.live = isLive ? "true" : "false";
+        const status = card.querySelector(".stream-card__status");
+        if (!status) return;
+        let badge = status.querySelector(".live-pill, .offline-pill");
+        if (!badge) {
+          badge = document.createElement("span");
+          status.innerHTML = "";
+          status.appendChild(badge);
+        }
+        if (isLive) {
+          badge.className = "live-pill";
+          badge.textContent = "Live";
+        } else {
+          badge.className = "offline-pill";
+          badge.textContent = "Offline";
+        }
+      });
+
+    }
     function renderChannelManager() {
       if (!els.channelManager) return;
       const fragment = document.createDocumentFragment();
@@ -1317,13 +1371,19 @@ function toNumber(value, fallback = 0) {
       els.channelManager.innerHTML = "";
       els.channelManager.appendChild(fragment);
     }
-    function renderAll() {
-      renderStreamGrid();
+    function renderAll(options = {}) {
+      const { skipStreamGrid = false } = options;
+      if (!skipStreamGrid) {
+        renderStreamGrid();
+      }
       renderChannelManager();
       updateLiveToggleButtons();
       renderLiveBanner();
       updateMetrics();
       updateLiveBackdrop();
+
+      updateStreamCardStatuses();
+
     }
     function findStreamCard(channel) {
       if (!els.streamGrid) return null;
@@ -1347,6 +1407,7 @@ function toNumber(value, fallback = 0) {
       const chatPanel = card.querySelector('[data-role="chat-panel"]');
       if (chatBtn && chatPanel) {
         chatBtn.textContent = chatPanel.hasAttribute("hidden") ? "See Chat" : "Hide Chat";
+
       }
     }
     async function toggleChannelStats(channel, options = {}) {
@@ -1367,6 +1428,7 @@ function toNumber(value, fallback = 0) {
         showToast(`Hiding stats for ${meta.displayName || meta.channel}`);
         return;
       }
+
       panel.removeAttribute("hidden");
       updateCardExtrasState(card);
       syncCardActionLabels(card);
@@ -1413,6 +1475,7 @@ function toNumber(value, fallback = 0) {
         syncCardActionLabels(card);
         showToast(`Hiding chat for ${meta.displayName || normalized}`);
         return;
+
       }
       panel.removeAttribute("hidden");
       const iframe = panel.querySelector("iframe");
@@ -1426,6 +1489,7 @@ function toNumber(value, fallback = 0) {
       if (options.scrollIntoView) {
         card.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+
       showToast(`Showing chat for ${meta.displayName || normalized}`);
     }
     function toggleLiveMode() {
@@ -1759,7 +1823,12 @@ function toNumber(value, fallback = 0) {
       if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
         state.liveSet = new Set();
         state.lastLiveStreams = [];
-        renderAll();
+        const canSkip = !state.showOnlyLive && Boolean(els.streamGrid?.querySelector(".stream-card"));
+        if (canSkip) {
+          renderAll({ skipStreamGrid: true });
+        } else {
+          renderAll();
+        }
         return;
       }
       try {
@@ -1776,7 +1845,13 @@ function toNumber(value, fallback = 0) {
       } catch (err) {
         console.error("Unable to fetch live stream data", err);
       }
-      renderAll();
+      const canSkip = !state.showOnlyLive && Boolean(els.streamGrid?.querySelector(".stream-card"));
+      if (canSkip) {
+        reorderStreamGrid();
+        renderAll({ skipStreamGrid: true });
+      } else {
+        renderAll();
+      }
     }
     function bindEvents() {
       if (els.addChannelForm) {
