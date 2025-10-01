@@ -1925,6 +1925,11 @@
         const streams = await window.twitchOAuth.fetchLiveStreams(state.channels);
         state.lastLiveStreams = streams || [];
         state.liveSet = new Set((streams || []).map(stream => stream.user_login.toLowerCase()));
+        if (state.showOnlyLive && state.liveSet.size === 0) {
+          state.showOnlyLive = false;
+          persistShowOnlyLive();
+          showToast("No live streams right now — showing all channels.");
+        }
         state.channels.sort((a, b) => {
           const aLive = state.liveSet.has(a);
           const bLive = state.liveSet.has(b);
