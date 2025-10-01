@@ -65,7 +65,9 @@
       position: relative;
       background-position: center;
       background-repeat: repeat;
+
       background-size: clamp(6rem, 12vw, 12rem);
+
       filter: saturate(1.05);
     }
     .live-team-panel::after {
@@ -80,7 +82,9 @@
     #live-team-backdrop[data-count="2"] .live-team-panel,
     #live-team-backdrop[data-count="3"] .live-team-panel,
     #live-team-backdrop[data-count="4"] .live-team-panel {
+
       background-size: clamp(6rem, 12vw, 12rem);
+
     }
     body {
       margin: 0;
@@ -454,6 +458,11 @@
     .badge-live { background: rgba(34, 197, 94, 0.22); color: #bbf7d0; }
     .badge-muted { background: rgba(248, 113, 113, 0.2); color: #fecaca; }
     .streams-area { display: flex; flex-direction: column; gap: 1.35rem; }
+    @media (min-width: 1200px) {
+      .streams-area {
+        margin-left: calc(var(--chat-panel-width) + var(--page-gutter) + 1.5rem);
+      }
+    }
     .section-head { display: flex; flex-direction: column; gap: 0.4rem; }
     .section-head h2 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
     .section-head p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
@@ -610,9 +619,11 @@
     #chat-panel {
       position: fixed;
       left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+
       top: 3.5rem;
       width: var(--chat-panel-width);
       max-height: min(640px, calc(100vh - 5rem));
+
       background: rgba(9, 13, 30, 0.95);
       border: 1px solid rgba(129, 140, 248, 0.22);
       border-radius: 1.25rem;
@@ -666,6 +677,7 @@
       position: fixed;
       bottom: 1.5rem;
       left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+
       width: 54px;
       height: 54px;
       border-radius: 50%;
@@ -708,10 +720,12 @@
     .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
     .stats-drawer {
       position: fixed;
+
       top: 4.25rem;
       right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
       width: min(460px, calc(100vw - 2.5rem));
       max-height: calc(100vh - 5.5rem);
+
       background: rgba(4, 10, 22, 0.97);
       border-left: 1px solid rgba(129, 140, 248, 0.2);
       box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
@@ -1489,6 +1503,7 @@
         const availableHeight = window.innerHeight - chatTop - 40;
         if (availableHeight > 0) {
           const upperBound = Math.min(availableHeight, 640);
+
           const lowerBound = Math.min(availableHeight, 320);
           const resolvedHeight = Math.max(upperBound, lowerBound);
           els.chatPanel.style.height = `${resolvedHeight}px`;
@@ -1499,11 +1514,13 @@
         }
       }
       if (els.statsDrawer) {
+
         const statsTop = bannerVisible
           ? Math.max(baseOffset, navHeight + bannerHeight + 24)
           : baseOffset;
         els.statsDrawer.style.top = `${statsTop}px`;
         const statsHeight = `calc(100vh - ${statsTop + 32}px)`;
+
         els.statsDrawer.style.maxHeight = statsHeight;
         els.statsDrawer.style.height = statsHeight;
       }
