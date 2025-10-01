@@ -716,7 +716,9 @@
     .stats-drawer {
       position: fixed;
       top: 5rem;
-      right: 1.5rem;
+
+      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+
       width: min(460px, calc(100vw - 2.5rem));
       max-height: calc(100vh - 6.5rem);
       background: rgba(4, 10, 22, 0.97);
