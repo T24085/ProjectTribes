@@ -692,13 +692,16 @@
       border-radius: 1.35rem;
       padding: 1.25rem;
       box-shadow: 0 24px 60px -30px rgba(99, 102, 241, 0.45);
+
       display: flex;
       flex-direction: column;
       gap: 0.85rem;
       overflow: hidden;
       z-index: 2;
+
       flex: 1 1 auto;
       min-height: clamp(360px, 55vh, 620px);
+
     }
     #chat-panel.is-hidden { display: none; }
     .chat-header {
@@ -738,7 +741,9 @@
       flex: 1;
       border-radius: 0.95rem;
       background: #0b1220;
+
       min-height: clamp(320px, 50vh, 560px);
+
       border: none;
     }
     #chat-toggle {
@@ -934,6 +939,7 @@
       .hero { grid-template-columns: 1fr; }
       .hero-card { order: -1; }
       nav#global-header { padding: 0.85rem 1.5rem; }
+
     }
     @media (min-width: 1281px) {
       main {
@@ -957,6 +963,7 @@
       .control-streams {
         grid-column: 2;
       }
+
     }
     @media (max-width: 1024px) {
       :root { --page-gutter: 1.35rem; }
