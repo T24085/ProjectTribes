@@ -692,13 +692,16 @@
       border-radius: 1.35rem;
       padding: 1.25rem;
       box-shadow: 0 24px 60px -30px rgba(99, 102, 241, 0.45);
+
       display: flex;
       flex-direction: column;
       gap: 0.85rem;
       overflow: hidden;
       z-index: 2;
+
       flex: 1 1 auto;
       min-height: clamp(360px, 55vh, 620px);
+
     }
     #chat-panel.is-hidden { display: none; }
     .chat-header {
@@ -738,7 +741,9 @@
       flex: 1;
       border-radius: 0.95rem;
       background: #0b1220;
+
       min-height: clamp(320px, 50vh, 560px);
+
       border: none;
     }
     #chat-toggle {
@@ -838,6 +843,7 @@
       .hero { grid-template-columns: 1fr; }
       .hero-card { order: -1; }
       nav#global-header { padding: 0.85rem 1.5rem; }
+
     }
     @media (min-width: 1281px) {
       main {
@@ -851,6 +857,7 @@
       }
       .hero-side-stack {
         grid-column: 1;
+
         margin-top: 0.5rem;
       }
       .hero-card {
@@ -858,10 +865,12 @@
         margin-top: 0.5rem;
       }
       .control-streams {
+
         grid-column: 1 / -1;
         grid-row: 2;
         margin-top: 1.5rem;
       }
+
     }
     @media (max-width: 1024px) {
       :root { --page-gutter: 1.35rem; }
@@ -1488,6 +1497,7 @@
         els.chatPanel.style.removeProperty("height");
         els.chatPanel.style.removeProperty("max-height");
         return;
+
       }
       els.chatPanel.style.top = `${chatTop}px`;
       els.chatPanel.style.bottom = "auto";
@@ -1760,6 +1770,7 @@
       }
       return null;
     }
+
     function buildStatsMarkup(meta, stats) {
       const fragments = [];
       fragments.push(`
@@ -1768,11 +1779,24 @@
           <div class="details">
             <strong>${escapeHtml(meta.displayName)}</strong>
             <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
+
           </div>
-        </div>
-      `);
+        `);
+      } else {
+        fragments.push(`
+          <div class="stream-card__stats-meta">
+            <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
+            <div class="details">
+              <strong>${escapeHtml(meta.displayName)}</strong>
+              <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
+            </div>
+          </div>
+        `);
+      }
       if (meta.bio) {
+
         fragments.push(`<p class="stream-card__stats-message">${escapeHtml(meta.bio)}</p>`);
+
       }
       if (stats) {
         const totalsConfig = [
@@ -1832,7 +1856,9 @@
         fragments.push('</div>');
       } else {
         const message = 'No aggregated stats published for this player yet. Check back after match data is saved.';
+
         fragments.push(`<p class="stream-card__stats-message">${message}</p>`);
+
       }
       fragments.push('<a class="stream-card__stats-link" href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>');
       return fragments.join("");
