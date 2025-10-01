@@ -23,9 +23,7 @@
       --danger: #f87171;
       --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
-      --page-max-width: 1440px;
-      --page-gutter: 2rem;
-      --chat-panel-width: clamp(280px, 23vw, 340px);
+      --chat-panel-width: 320px;
     }
     *, *::before, *::after { box-sizing: border-box; }
     body > *:not(#support-effect-layer):not(#live-team-backdrop) {
@@ -64,27 +62,29 @@
       flex: 1 1 0;
       position: relative;
       background-position: center;
-      background-repeat: repeat;
-
-      background-size: clamp(6rem, 12vw, 12rem);
-
+      background-repeat: no-repeat;
+      background-size: clamp(22rem, 40vw, 48rem) auto;
       filter: saturate(1.05);
     }
     .live-team-panel::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(3, 7, 18, 0.52), rgba(3, 7, 18, 0.28));
+      background: linear-gradient(180deg, rgba(3, 7, 18, 0.65), rgba(3, 7, 18, 0.35));
       pointer-events: none;
       z-index: 1;
     }
-    #live-team-backdrop[data-count="1"] .live-team-panel,
-    #live-team-backdrop[data-count="2"] .live-team-panel,
-    #live-team-backdrop[data-count="3"] .live-team-panel,
+    #live-team-backdrop[data-count="1"] .live-team-panel {
+      background-size: clamp(32rem, 55vw, 60rem);
+    }
+    #live-team-backdrop[data-count="2"] .live-team-panel {
+      background-size: clamp(24rem, 45vw, 52rem);
+    }
+    #live-team-backdrop[data-count="3"] .live-team-panel {
+      background-size: clamp(20rem, 36vw, 44rem);
+    }
     #live-team-backdrop[data-count="4"] .live-team-panel {
-
-      background-size: clamp(6rem, 12vw, 12rem);
-
+      background-size: clamp(18rem, 32vw, 38rem);
     }
     body {
       margin: 0;
@@ -169,7 +169,7 @@
     #live-teams-panel .live-dot { color: #34d399; font-size: 0.8rem; }
     .live-announcement-banner {
       position: fixed;
-      top: 6.5rem;
+      top: 0.85rem;
       left: 50%;
       transform: translate(-50%, -120%) scaleX(0.94);
       transform-origin: top center;
@@ -226,27 +226,20 @@
       .live-announcement-banner span { white-space: normal; }
     }
     main {
-      max-width: var(--page-max-width);
+      max-width: calc(1440px + var(--chat-panel-width));
       margin: 0 auto;
-      padding: 1.75rem var(--page-gutter) 4rem;
+      padding: 1.75rem 2rem 4rem calc(2rem + var(--chat-panel-width));
       display: flex;
       flex-direction: column;
       gap: 2.5rem;
     }
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.15fr);
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
       gap: 2rem;
-      align-items: flex-start;
+      align-items: stretch;
       margin-top: 0.5rem;
     }
-    .hero-side-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 1.75rem;
-      min-width: 0;
-    }
-    .hero-side-stack > * { width: 100%; }
     .hero-card {
       background: var(--surface-glass);
       border-radius: 1.35rem;
@@ -334,7 +327,6 @@
       gap: 1.35rem;
       position: relative;
       overflow: hidden;
-      flex-shrink: 0;
     }
     .support-card::before {
       content: '';
@@ -393,27 +385,47 @@
     .control-streams {
       display: flex;
       flex-direction: column;
-      gap: 2.5rem;
+      gap: 1.5rem;
     }
     .control-panel {
-      background: var(--panel-bg);
+      background: rgba(15, 23, 42, 0.72);
       border-radius: 1.25rem;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      padding: 1.4rem 1.6rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 1.1rem 1.5rem;
       display: flex;
       flex-wrap: wrap;
-      align-items: flex-start;
-      gap: 1rem 1.4rem;
+      align-items: flex-end;
+      gap: 1rem 1.25rem;
+      position: relative;
+      top: auto;
+      width: 100%;
+      box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.75);
     }
+    .control-panel header {
+      flex: 1 1 100%;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .control-panel header h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(226, 232, 240, 0.7);
+    }
+    .control-panel header p { display: none; }
     .control-panel form {
       display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
+      align-items: center;
+      gap: 0.75rem;
       flex: 1 1 280px;
       min-width: 260px;
     }
-    .control-panel label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
-    .control-panel .input-row { display: flex; gap: 0.6rem; }
+    .control-panel label { display: none; }
+    .control-panel .input-row { display: flex; gap: 0.75rem; flex: 1; }
     .control-panel input[type="text"] {
       flex: 1;
       padding: 0.65rem 0.85rem;
@@ -436,8 +448,6 @@
     }
     .control-panel .inline-actions {
       display: flex;
-      flex: 1 1 220px;
-      justify-content: flex-end;
       flex-wrap: wrap;
       gap: 0.6rem;
     }
@@ -453,9 +463,57 @@
       cursor: pointer;
     }
     .control-panel .inline-actions button:hover {
-      background: rgba(99, 102, 241, 0.4);
-      border-color: rgba(148, 163, 184, 0.4);
+      background: rgba(129, 140, 248, 0.32);
+      border-color: rgba(129, 140, 248, 0.42);
     }
+    .channel-manager {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 0.3rem;
+    }
+    .channel-row {
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .channel-row__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .channel-row__meta { display: flex; flex-direction: column; gap: 0.1rem; }
+    .channel-row__name { font-weight: 600; letter-spacing: -0.01em; }
+    .channel-row__handle { font-size: 0.75rem; color: var(--text-muted); }
+    .channel-row__team { font-size: 0.7rem; color: rgba(129, 140, 248, 0.75); text-transform: uppercase; letter-spacing: 0.12em; }
+    .channel-row__badges { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .channel-row__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .pill-btn {
+      border: none;
+      border-radius: 9999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      background: rgba(79, 70, 229, 0.22);
+      color: #e0e7ff;
+      cursor: pointer;
+      transition: background var(--transition-snappy);
+    }
+    .pill-btn:hover { background: rgba(99, 102, 241, 0.4); }
+    .pill-btn.danger { background: rgba(248, 113, 113, 0.22); color: #fecaca; }
+    .pill-btn.secondary { background: rgba(148, 163, 184, 0.15); color: #cbd5f5; }
     .badge {
       font-size: 0.68rem;
       padding: 0.2rem 0.55rem;
@@ -619,91 +677,23 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
-    .stream-card__stats {
-      position: relative;
-      z-index: 1;
-      margin-top: 1rem;
-      padding: 1.1rem;
-      border-radius: 1rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      background: rgba(13, 19, 33, 0.92);
-      display: none;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-    .stream-card__stats.is-open {
-      display: flex;
-    }
-    .stream-card__stats-body {
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-    }
-    .stream-card__stats-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-    .stream-card__stats-meta img {
-      width: 52px;
-      height: 52px;
-      border-radius: 16px;
-      border: 1px solid rgba(129, 140, 248, 0.45);
-      object-fit: cover;
-    }
-    .stream-card__stats-meta .details { flex: 1; }
-    .stream-card__stats-meta .details strong {
-      display: block;
-      font-size: 1.02rem;
-      letter-spacing: -0.01em;
-    }
-    .stream-card__stats-meta .details span {
-      display: block;
-      margin-top: 0.25rem;
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-    }
-    .stream-card__stats-message {
-      margin: 0;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-    .stream-card__stats-link {
-      align-self: flex-start;
-      border-radius: 9999px;
-      padding: 0.5rem 1.05rem;
-      border: 1px solid rgba(129, 140, 248, 0.35);
-      background: rgba(15, 23, 42, 0.75);
-      color: var(--text-primary);
-      font-size: 0.78rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .stream-card__stats-link:hover {
-      background: rgba(79, 70, 229, 0.4);
-    }
     #chat-panel {
-      position: relative;
-      width: 100%;
-      background: rgba(9, 13, 30, 0.92);
-      border: 1px solid rgba(129, 140, 248, 0.24);
-      border-radius: 1.35rem;
-      padding: 1.25rem;
-      box-shadow: 0 24px 60px -30px rgba(99, 102, 241, 0.45);
-
+      position: fixed;
+      right: 1.2rem;
+      top: 6rem;
+      width: 320px;
+      background: rgba(9, 13, 30, 0.95);
+      border: 1px solid rgba(129, 140, 248, 0.22);
+      border-radius: 1.25rem;
+      padding: 0.85rem;
+      box-shadow: 0 24px 60px -20px rgba(99, 102, 241, 0.45);
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
-      overflow: hidden;
-      z-index: 2;
-
-      flex: 1 1 auto;
-      min-height: clamp(360px, 55vh, 620px);
-
+      gap: 0.55rem;
+      z-index: 50;
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
-    #chat-panel.is-hidden { display: none; }
+    #chat-panel.is-hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
     .chat-header {
       display: flex;
       justify-content: space-between;
@@ -726,31 +716,23 @@
       text-transform: uppercase;
       cursor: pointer;
     }
-    @media (min-width: 861px) {
-      .chat-header button { display: none; }
-    }
     #chat-panel select {
       width: 100%;
       border-radius: 0.85rem;
-      padding: 0.65rem 0.85rem;
-      border: 1px solid rgba(148, 163, 184, 0.28);
-      background: rgba(15, 23, 42, 0.88);
+      padding: 0.6rem 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.85);
       color: var(--text-primary);
     }
     #chat-panel iframe {
       flex: 1;
-      border-radius: 0.95rem;
+      border-radius: 0.9rem;
       background: #0b1220;
-
-      min-height: clamp(320px, 50vh, 560px);
-
-      border: none;
     }
     #chat-toggle {
       position: fixed;
       bottom: 1.5rem;
-      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-
+      right: 1.5rem;
       width: 54px;
       height: 54px;
       border-radius: 50%;
@@ -779,10 +761,70 @@
       top: 0;
       right: 0;
       padding: 1rem;
-      z-index: 80;
-      background: rgba(9, 13, 30, 0.96);
-      box-shadow: none;
     }
+    .stats-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 70;
+    }
+    .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
+    .stats-drawer {
+      position: fixed;
+      top: 0;
+      right: -480px;
+      width: min(480px, 100%);
+      height: 100vh;
+      background: rgba(4, 10, 22, 0.97);
+      border-left: 1px solid rgba(129, 140, 248, 0.2);
+      box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
+      transition: right 0.35s ease;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+    }
+    .stats-drawer.open { right: 0; }
+    .stats-drawer header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stats-drawer header h3 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
+    .stats-drawer header button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .stats-drawer header button:hover { color: var(--text-primary); }
+    .stats-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+    .stats-body .meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .stats-body .meta img {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 2px solid rgba(129, 140, 248, 0.42);
+    }
+    .stats-body .meta .details { flex: 1; }
+    .stats-body .meta .details p { margin: 0.2rem 0; color: var(--text-muted); font-size: 0.9rem; }
     .stats-summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -805,6 +847,33 @@
       margin-top: 0.35rem;
       font-size: 1.25rem;
       font-weight: 600;
+    }
+    .stats-body .bio {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+    .stats-body .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .stats-body .cta-row a,
+    .stats-body .cta-row button {
+      border-radius: 9999px;
+      padding: 0.6rem 1.1rem;
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background var(--transition-snappy);
+    }
+    .stats-body .cta-row a:hover,
+    .stats-body .cta-row button:hover {
+      background: rgba(79, 70, 229, 0.4);
     }
     #support-effect-layer { position: fixed; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
     #support-effect-layer .support-spark {
@@ -841,41 +910,13 @@
     .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
     @media (max-width: 1280px) {
       .hero { grid-template-columns: 1fr; }
-      .hero-card { order: -1; }
+      .control-streams { grid-template-columns: 1fr; }
       nav#global-header { padding: 0.85rem 1.5rem; }
-
-    }
-    @media (min-width: 1281px) {
-      main {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
-        gap: 2.5rem 2rem;
-        align-items: flex-start;
-      }
-      .hero {
-        display: contents;
-      }
-      .hero-side-stack {
-        grid-column: 1;
-
-        margin-top: 0.5rem;
-      }
-      .hero-card {
-        grid-column: 2;
-        margin-top: 0.5rem;
-      }
-      .control-streams {
-
-        grid-column: 1 / -1;
-        grid-row: 2;
-        margin-top: 1.5rem;
-      }
-
+      #chat-panel { width: 280px; }
     }
     @media (max-width: 1024px) {
-      :root { --page-gutter: 1.35rem; }
       .control-panel { position: static; }
-      main { padding: 1.5rem var(--page-gutter) 4rem; }
+      main { padding: 1.5rem 1.35rem 4rem; }
     }
     @media (max-width: 860px) {
       nav#global-header .header-shell { flex-direction: column; align-items: flex-start; }
@@ -885,7 +926,6 @@
       #chat-toggle { display: flex; align-items: center; justify-content: center; }
     }
     @media (max-width: 640px) {
-      :root { --page-gutter: 1rem; }
       .hero-actions button { flex: 1 1 45%; text-align: center; }
       .control-panel { padding: 1.2rem; }
       nav#global-header { padding: 0.75rem 1rem; }
@@ -923,28 +963,6 @@
   </nav>
   <main>
     <section class="hero">
-      <div class="hero-side-stack">
-        <article id="chat-panel" aria-live="polite" data-layout="embedded">
-          <div class="chat-header">
-            <p>Twitch Chat</p>
-            <button type="button" id="close-chat">Close</button>
-          </div>
-          <select id="chat-channel-select">
-            <option value="">Select Channel Chat</option>
-          </select>
-          <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
-        </article>
-        <article class="support-card" id="support-card">
-          <h2>Boost the League</h2>
-          <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
-          <div class="support-actions">
-            <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
-            <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
-            <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
-          </div>
-          <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
-        </article>
-      </div>
       <article class="hero-card">
         <h1>All Your Tribes Streams, One Wall.</h1>
         <p>Build a watch party that rivals Twitch itself. Track every roster, stack chats, and surface stats without leaving this page.</p>
@@ -964,13 +982,28 @@
         </div>
         <div class="hero-actions">
           <button type="button" id="open-add-streamer">Add Streamer</button>
+          <button type="button" id="open-manager">Manage List</button>
           <button type="button" id="scroll-to-grid">Jump to Streams</button>
         </div>
+      </article>
+      <article class="support-card" id="support-card">
+        <h2>Boost the League</h2>
+        <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
+        <div class="support-actions">
+          <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
+          <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
+          <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
+        </div>
+        <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
       </article>
     </section>
 
     <section class="control-streams">
       <aside class="control-panel" id="control-panel">
+        <header>
+          <h3>Stream List</h3>
+          <p>Add, hide, or reorder the channels that render in the wall.</p>
+        </header>
         <form id="add-channel-form">
           <label for="add-channel-input">Add a Twitch channel</label>
           <div class="input-row">
@@ -980,8 +1013,10 @@
         </form>
         <div class="inline-actions">
           <button type="button" data-role="live-only-toggle">Show Only Live</button>
-          <button type="button" id="show-all-streams">Show All Streams</button>
+          <button type="button" id="show-all-streams">Show All</button>
+          <button type="button" id="reset-defaults">Reset to League Defaults</button>
         </div>
+        <div class="channel-manager" id="channel-manager"></div>
       </aside>
 
       <div class="streams-area" id="streams-area">
@@ -994,7 +1029,27 @@
       </div>
     </section>
   </main>
+  <div id="chat-panel" class="is-hidden" aria-live="polite">
+    <div class="chat-header">
+      <p>Twitch Chat</p>
+      <button type="button" id="close-chat">Close</button>
+    </div>
+    <select id="chat-channel-select">
+      <option value="">Select Channel Chat</option>
+    </select>
+    <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+  </div>
   <button id="chat-toggle"><span>Chat</span></button>
+  <div class="stats-backdrop" id="stats-backdrop"></div>
+  <aside class="stats-drawer" id="stats-drawer">
+    <header>
+      <h3 id="stats-title">Player Stats</h3>
+      <button type="button" id="stats-close" aria-label="Close stats">&times;</button>
+    </header>
+    <div class="stats-body" id="stats-body">
+      <p class="bio">Select a streamer to view their aggregated league stats.</p>
+    </div>
+  </aside>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1061,9 +1116,14 @@
       chatIframe: document.getElementById("chat-iframe"),
       chatToggle: document.getElementById("chat-toggle"),
       chatClose: document.getElementById("close-chat"),
+      statsDrawer: document.getElementById("stats-drawer"),
+      statsBackdrop: document.getElementById("stats-backdrop"),
+      statsTitle: document.getElementById("stats-title"),
+      statsBody: document.getElementById("stats-body"),
       toast: document.getElementById("toast"),
       effectLayer: document.getElementById("support-effect-layer"),
       addOpenBtn: document.getElementById("open-add-streamer"),
+      manageOpenBtn: document.getElementById("open-manager"),
       scrollToGridBtn: document.getElementById("scroll-to-grid"),
       controlPanel: document.getElementById("control-panel"),
       streamsArea: document.getElementById("streams-area"),
@@ -1082,7 +1142,8 @@
       liveSet: new Set(),
       lastLiveStreams: [],
       currentChatChannel: "",
-      streamerDirectory: new Map()
+      streamerDirectory: new Map(),
+      liveInterval: null
     };
 
     const teamIndex = new Map();
@@ -1124,11 +1185,11 @@
       }
       return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     }
-    function toNumber(value, fallback = 0) {
+function toNumber(value, fallback = 0) {
       const num = Number(value);
       return Number.isFinite(num) ? num : fallback;
     }
-    function buildPlayerUrl(channel) {
+        function buildPlayerUrl(channel) {
       return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&${parentQuery}&autoplay=false`;
     }
     function buildChatUrl(channel) {
@@ -1332,12 +1393,9 @@
             </div>
           </div>
           <div class="stream-card__actions">
-            <button type="button" class="card-action" data-action="stats" aria-expanded="false">View Stats</button>
+            <button type="button" class="card-action" data-action="stats">View Stats</button>
             <button type="button" class="card-action" data-action="chat">Set Chat</button>
             <button type="button" class="card-action support" data-action="support">Send Bits</button>
-          </div>
-          <div class="stream-card__stats" hidden>
-            <div class="stream-card__stats-body"></div>
           </div>
         `;
         fragment.appendChild(card);
@@ -1482,36 +1540,12 @@
       if (!els.chatPanel) return;
       const nav = document.getElementById("global-header");
       const banner = document.getElementById("live-announcement-banner");
-      const navHeight = nav ? nav.getBoundingClientRect().height : 64;
-      const bannerVisible = !!banner && banner.classList.contains("is-visible");
-      const bannerHeight = bannerVisible ? banner.getBoundingClientRect().height || 0 : 0;
-      const baseOffset = navHeight + 16;
-      let chatTop = Math.max(32, baseOffset - 40);
-      if (bannerVisible) {
-        chatTop = Math.max(chatTop, navHeight + bannerHeight + 32);
+      let offset = nav ? nav.getBoundingClientRect().height + 24 : 72;
+      if (banner && banner.classList.contains("is-visible")) {
+        offset += banner.getBoundingClientRect().height + 14;
       }
-      const isEmbeddedChat = !!els.chatPanel && els.chatPanel.dataset.layout === "embedded";
-      if (isEmbeddedChat) {
-        els.chatPanel.style.removeProperty("top");
-        els.chatPanel.style.removeProperty("bottom");
-        els.chatPanel.style.removeProperty("height");
-        els.chatPanel.style.removeProperty("max-height");
-        return;
-
-      }
-      els.chatPanel.style.top = `${chatTop}px`;
-      els.chatPanel.style.bottom = "auto";
-      const availableHeight = window.innerHeight - chatTop - 40;
-      if (availableHeight > 0) {
-        const upperBound = Math.min(availableHeight, 640);
-        const lowerBound = Math.min(availableHeight, 320);
-        const resolvedHeight = Math.max(upperBound, lowerBound);
-        els.chatPanel.style.height = `${resolvedHeight}px`;
-        els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
-      } else {
-        els.chatPanel.style.height = "320px";
-        els.chatPanel.style.maxHeight = "320px";
-      }
+      els.chatPanel.style.top = `${offset}px`;
+      els.chatPanel.style.height = `calc(100vh - ${offset + 32}px)`;
     }
     function toggleChatVisibilityForViewport() {
       if (!els.chatPanel) return;
@@ -1603,7 +1637,7 @@
       if (actionBtn) {
         const action = actionBtn.dataset.action;
         if (action === "stats") {
-          toggleCardStats(card, actionBtn);
+          openStatsDrawer(channel);
         } else if (action === "chat") {
           setChatChannel(channel, { scrollIntoView: true });
         } else if (action === "support") {
@@ -1612,8 +1646,7 @@
         return;
       }
       if (event.target.closest(".stream-card__identity")) {
-        const statsButton = card.querySelector('[data-action="stats"]');
-        toggleCardStats(card, statsButton);
+        openStatsDrawer(channel);
       }
     }
     function handleManagerClick(event) {
@@ -1630,19 +1663,7 @@
       } else if (action === "chat") {
         setChatChannel(channel, { scrollIntoView: true });
       } else if (action === "stats") {
-        if (els.streamGrid) {
-          const card = els.streamGrid.querySelector(`.stream-card[data-channel="${channel}"]`);
-          if (card) {
-            const panel = card.querySelector(".stream-card__stats");
-            const statsButton = card.querySelector('[data-action="stats"]');
-            const isOpen = panel?.classList.contains("is-open");
-            if (!isOpen) {
-              toggleCardStats(card, statsButton);
-            }
-            card.scrollIntoView({ behavior: "smooth", block: "center" });
-            statsButton?.focus({ preventScroll: true });
-          }
-        }
+        openStatsDrawer(channel);
       }
     }
     let toastTimer = null;
@@ -1770,33 +1791,21 @@
       }
       return null;
     }
-
-    function buildStatsMarkup(meta, stats) {
+    function renderStatsBody(meta, stats) {
+      if (!els.statsBody) return;
       const fragments = [];
       fragments.push(`
-        <div class="stream-card__stats-meta">
+        <div class="meta">
           <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
           <div class="details">
             <strong>${escapeHtml(meta.displayName)}</strong>
-            <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
-
+            <p>@${escapeHtml(meta.channel)}</p>
+            ${meta.team ? `<p>Team: ${escapeHtml(meta.team)}</p>` : ""}
           </div>
-        `);
-      } else {
-        fragments.push(`
-          <div class="stream-card__stats-meta">
-            <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
-            <div class="details">
-              <strong>${escapeHtml(meta.displayName)}</strong>
-              <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
-            </div>
-          </div>
-        `);
-      }
+        </div>
+      `);
       if (meta.bio) {
-
-        fragments.push(`<p class="stream-card__stats-message">${escapeHtml(meta.bio)}</p>`);
-
+        fragments.push(`<p class="bio">${escapeHtml(meta.bio)}</p>`);
       }
       if (stats) {
         const totalsConfig = [
@@ -1855,64 +1864,68 @@
         });
         fragments.push('</div>');
       } else {
-        const message = 'No aggregated stats published for this player yet. Check back after match data is saved.';
-
-        fragments.push(`<p class="stream-card__stats-message">${message}</p>`);
-
+        fragments.push('<p class="bio">No aggregated stats published for this player yet. Check back after match data is saved.</p>');
       }
-      fragments.push('<a class="stream-card__stats-link" href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>');
-      return fragments.join("");
-    }
-    async function toggleCardStats(card, triggerBtn) {
-      if (!card) return;
-      const panel = card.querySelector(".stream-card__stats");
-      if (!panel) return;
-      const body = panel.querySelector(".stream-card__stats-body");
-      if (!body) return;
-      const isOpen = panel.classList.contains("is-open");
-      if (isOpen) {
-        panel.classList.remove("is-open");
-        panel.setAttribute("hidden", "");
-        if (triggerBtn) {
-          triggerBtn.textContent = "View Stats";
-          triggerBtn.setAttribute("aria-expanded", "false");
-        }
-        return;
+      fragments.push(`
+        <div class="cta-row">
+          <button type="button" data-stats-action="focus">Focus Stream</button>
+          <button type="button" data-stats-action="support">Send Support</button>
+          <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
+        </div>
+      `);
+      els.statsBody.innerHTML = fragments.join("");
+      const supportButton = els.statsBody.querySelector('[data-stats-action="support"]');
+      if (supportButton) {
+        supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
       }
-      if (els.streamGrid) {
-        els.streamGrid.querySelectorAll(".stream-card__stats.is-open").forEach(other => {
-          if (other === panel) return;
-          other.classList.remove("is-open");
-          other.setAttribute("hidden", "");
-          const parentCard = other.closest(".stream-card");
-          const otherBtn = parentCard ? parentCard.querySelector('[data-action="stats"]') : null;
-          if (otherBtn) {
-            otherBtn.textContent = "View Stats";
-            otherBtn.setAttribute("aria-expanded", "false");
-          }
+      const focusButton = els.statsBody.querySelector('[data-stats-action="focus"]');
+      if (focusButton) {
+        focusButton.addEventListener("click", () => {
+          setChatChannel(meta.channel, { scrollIntoView: true });
+          closeStatsDrawer();
         });
       }
-      panel.classList.add("is-open");
-      panel.removeAttribute("hidden");
-      if (triggerBtn) {
-        triggerBtn.textContent = "Hide Stats";
-        triggerBtn.setAttribute("aria-expanded", "true");
+    }
+    async function openStatsDrawer(channel) {
+      const meta = getStreamerMeta(channel);
+      if (els.statsDrawer) {
+        els.statsDrawer.classList.add("open");
       }
-      if (panel.dataset.loaded === "true") {
-        return;
+      if (els.statsBackdrop) {
+        els.statsBackdrop.classList.add("visible");
       }
-      body.innerHTML = '<p class="stream-card__stats-message">Loading stats…</p>';
+      if (els.statsTitle) {
+        els.statsTitle.textContent = meta.displayName || meta.channel;
+      }
+      if (els.statsBody) {
+        els.statsBody.innerHTML = '<p class="bio">Loading stats…</p>';
+      }
       try {
-        const channel = card.dataset.channel;
         const bundle = await loadPlayerStats();
-        const meta = getStreamerMeta(channel);
         const stats = resolvePlayerStats(bundle, meta);
-        body.innerHTML = buildStatsMarkup(meta, stats);
-        panel.dataset.loaded = "true";
+        renderStatsBody(meta, stats);
       } catch (err) {
-        console.error("Card stats error", err);
-        body.innerHTML = '<p class="stream-card__stats-message">Unable to load stats right now.</p>';
+        console.error("Stats drawer error", err);
+        if (els.statsBody) {
+          els.statsBody.innerHTML = '<p class="bio">Unable to load stats right now.</p>';
+        }
       }
+    }
+    function closeStatsDrawer() {
+      if (els.statsDrawer) {
+        els.statsDrawer.classList.remove("open");
+      }
+      if (els.statsBackdrop) {
+        els.statsBackdrop.classList.remove("visible");
+      }
+    }
+    function scheduleLiveRefresh() {
+      if (state.liveInterval) {
+        clearInterval(state.liveInterval);
+      }
+      state.liveInterval = window.setInterval(() => {
+        updateLiveChannels();
+      }, 60 * 1000);
     }
     async function updateLiveChannels() {
       if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
@@ -1925,11 +1938,6 @@
         const streams = await window.twitchOAuth.fetchLiveStreams(state.channels);
         state.lastLiveStreams = streams || [];
         state.liveSet = new Set((streams || []).map(stream => stream.user_login.toLowerCase()));
-        if (state.showOnlyLive && state.liveSet.size === 0) {
-          state.showOnlyLive = false;
-          persistShowOnlyLive();
-          showToast("No live streams right now — showing all channels.");
-        }
         state.channels.sort((a, b) => {
           const aLive = state.liveSet.has(a);
           const bLive = state.liveSet.has(b);
@@ -1983,6 +1991,13 @@
           }
         });
       }
+      if (els.manageOpenBtn) {
+        els.manageOpenBtn.addEventListener("click", () => {
+          if (els.controlPanel) {
+            els.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
       if (els.scrollToGridBtn) {
         els.scrollToGridBtn.addEventListener("click", () => {
           if (els.streamsArea) {
@@ -1993,14 +2008,30 @@
       if (els.supportActions) {
         els.supportActions.addEventListener("click", handleSupportAction);
       }
+      if (els.statsBackdrop) {
+        els.statsBackdrop.addEventListener("click", closeStatsDrawer);
+      }
+      const statsClose = document.getElementById("stats-close");
+      if (statsClose) {
+        statsClose.addEventListener("click", closeStatsDrawer);
+      }
       document.addEventListener("keydown", event => {
-        if (event.key === "Escape" && isChatMobileOpen()) {
-          closeChatMobile();
+        if (event.key === "Escape") {
+          if (els.statsDrawer?.classList.contains("open")) {
+            closeStatsDrawer();
+          } else if (isChatMobileOpen()) {
+            closeChatMobile();
+          }
         }
       });
       window.addEventListener("resize", () => {
         syncChatPanelOffset();
         toggleChatVisibilityForViewport();
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          updateLiveChannels();
+        }
       });
     }
     async function init() {
@@ -2011,6 +2042,7 @@
       renderAll();
       loadStreamerDirectory();
       updateLiveChannels();
+      scheduleLiveRefresh();
       const banner = document.getElementById("live-announcement-banner");
       if (banner) {
         const observer = new MutationObserver(syncChatPanelOffset);
