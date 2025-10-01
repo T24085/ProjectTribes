@@ -240,6 +240,13 @@
       align-items: stretch;
       margin-top: 0.5rem;
     }
+    .hero-side-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+      min-width: 0;
+    }
+    .hero-side-stack > * { width: 100%; }
     .hero-card {
       background: var(--surface-glass);
       border-radius: 1.35rem;
@@ -458,11 +465,6 @@
     .badge-live { background: rgba(34, 197, 94, 0.22); color: #bbf7d0; }
     .badge-muted { background: rgba(248, 113, 113, 0.2); color: #fecaca; }
     .streams-area { display: flex; flex-direction: column; gap: 1.35rem; }
-    @media (min-width: 1200px) {
-      .streams-area {
-        margin-left: calc(var(--chat-panel-width) + var(--page-gutter) + 1.5rem);
-      }
-    }
     .section-head { display: flex; flex-direction: column; gap: 0.4rem; }
     .section-head h2 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
     .section-head p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
@@ -617,26 +619,20 @@
       text-transform: uppercase;
     }
     #chat-panel {
-      position: fixed;
-      left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-
-      top: 3.5rem;
-      width: var(--chat-panel-width);
-      max-height: min(640px, calc(100vh - 5rem));
-
-      background: rgba(9, 13, 30, 0.95);
-      border: 1px solid rgba(129, 140, 248, 0.22);
-      border-radius: 1.25rem;
-      padding: 0.85rem;
-      box-shadow: 0 24px 60px -20px rgba(99, 102, 241, 0.45);
+      position: relative;
+      width: 100%;
+      background: rgba(9, 13, 30, 0.92);
+      border: 1px solid rgba(129, 140, 248, 0.24);
+      border-radius: 1.35rem;
+      padding: 1.25rem;
+      box-shadow: 0 24px 60px -30px rgba(99, 102, 241, 0.45);
       display: flex;
       flex-direction: column;
-      gap: 0.55rem;
+      gap: 0.85rem;
       overflow: hidden;
-      z-index: 50;
-      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 2;
     }
-    #chat-panel.is-hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
+    #chat-panel.is-hidden { display: none; }
     .chat-header {
       display: flex;
       justify-content: space-between;
@@ -659,24 +655,28 @@
       text-transform: uppercase;
       cursor: pointer;
     }
+    @media (min-width: 861px) {
+      .chat-header button { display: none; }
+    }
     #chat-panel select {
       width: 100%;
       border-radius: 0.85rem;
-      padding: 0.6rem 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      background: rgba(15, 23, 42, 0.85);
+      padding: 0.65rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(15, 23, 42, 0.88);
       color: var(--text-primary);
     }
     #chat-panel iframe {
       flex: 1;
-      border-radius: 0.9rem;
+      border-radius: 0.95rem;
       background: #0b1220;
-      min-height: 220px;
+      min-height: 280px;
+      border: none;
     }
     #chat-toggle {
       position: fixed;
       bottom: 1.5rem;
-      left: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
+      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
 
       width: 54px;
       height: 54px;
@@ -706,6 +706,9 @@
       top: 0;
       right: 0;
       padding: 1rem;
+      z-index: 80;
+      background: rgba(9, 13, 30, 0.96);
+      box-shadow: none;
     }
     .stats-backdrop {
       position: fixed;
@@ -862,7 +865,6 @@
     @media (max-width: 1280px) {
       .hero { grid-template-columns: 1fr; }
       nav#global-header { padding: 0.85rem 1.5rem; }
-      #chat-panel { width: 280px; }
     }
     @media (max-width: 1024px) {
       :root { --page-gutter: 1.35rem; }
@@ -887,7 +889,7 @@
       .control-panel { padding: 1.2rem; }
       nav#global-header { padding: 0.75rem 1rem; }
       main { padding: 1.2rem 1rem 4rem; }
-      #chat-toggle { bottom: 1rem; left: 1rem; }
+      #chat-toggle { bottom: 1rem; right: 1rem; }
     }
   </style>
 </head>
@@ -942,16 +944,28 @@
           <button type="button" id="scroll-to-grid">Jump to Streams</button>
         </div>
       </article>
-      <article class="support-card" id="support-card">
-        <h2>Boost the League</h2>
-        <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
-        <div class="support-actions">
-          <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
-          <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
-          <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
-        </div>
-        <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
-      </article>
+      <div class="hero-side-stack">
+        <article class="support-card" id="support-card">
+          <h2>Boost the League</h2>
+          <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
+          <div class="support-actions">
+            <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
+            <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
+            <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
+          </div>
+          <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
+        </article>
+        <article id="chat-panel" aria-live="polite" data-layout="embedded">
+          <div class="chat-header">
+            <p>Twitch Chat</p>
+            <button type="button" id="close-chat">Close</button>
+          </div>
+          <select id="chat-channel-select">
+            <option value="">Select Channel Chat</option>
+          </select>
+          <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
+        </article>
+      </div>
     </section>
 
     <section class="control-streams">
@@ -979,16 +993,6 @@
       </div>
     </section>
   </main>
-  <div id="chat-panel" class="is-hidden" aria-live="polite">
-    <div class="chat-header">
-      <p>Twitch Chat</p>
-      <button type="button" id="close-chat">Close</button>
-    </div>
-    <select id="chat-channel-select">
-      <option value="">Select Channel Chat</option>
-    </select>
-    <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
-  </div>
   <button id="chat-toggle"><span>Chat</span></button>
   <div class="stats-backdrop" id="stats-backdrop"></div>
   <aside class="stats-drawer" id="stats-drawer">
@@ -1497,20 +1501,28 @@
       if (bannerVisible) {
         chatTop = Math.max(chatTop, navHeight + bannerHeight + 32);
       }
+      const isEmbeddedChat = !!els.chatPanel && els.chatPanel.dataset.layout === "embedded";
       if (els.chatPanel) {
-        els.chatPanel.style.top = `${chatTop}px`;
-        els.chatPanel.style.bottom = "auto";
-        const availableHeight = window.innerHeight - chatTop - 40;
-        if (availableHeight > 0) {
-          const upperBound = Math.min(availableHeight, 640);
-
-          const lowerBound = Math.min(availableHeight, 320);
-          const resolvedHeight = Math.max(upperBound, lowerBound);
-          els.chatPanel.style.height = `${resolvedHeight}px`;
-          els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
+        if (isEmbeddedChat) {
+          els.chatPanel.style.removeProperty("top");
+          els.chatPanel.style.removeProperty("bottom");
+          els.chatPanel.style.removeProperty("height");
+          els.chatPanel.style.removeProperty("max-height");
         } else {
-          els.chatPanel.style.height = "320px";
-          els.chatPanel.style.maxHeight = "320px";
+          els.chatPanel.style.top = `${chatTop}px`;
+          els.chatPanel.style.bottom = "auto";
+          const availableHeight = window.innerHeight - chatTop - 40;
+          if (availableHeight > 0) {
+            const upperBound = Math.min(availableHeight, 640);
+
+            const lowerBound = Math.min(availableHeight, 320);
+            const resolvedHeight = Math.max(upperBound, lowerBound);
+            els.chatPanel.style.height = `${resolvedHeight}px`;
+            els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
+          } else {
+            els.chatPanel.style.height = "320px";
+            els.chatPanel.style.maxHeight = "320px";
+          }
         }
       }
       if (els.statsDrawer) {
