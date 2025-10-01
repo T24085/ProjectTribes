@@ -607,8 +607,11 @@
     #chat-panel {
       position: fixed;
       left: 1.5rem;
-      top: 6rem;
+
+      top: 4.25rem;
+
       width: 320px;
+      max-height: min(620px, calc(100vh - 5.75rem));
       background: rgba(9, 13, 30, 0.95);
       border: 1px solid rgba(129, 140, 248, 0.22);
       border-radius: 1.25rem;
@@ -617,6 +620,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.55rem;
+      overflow: hidden;
       z-index: 50;
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
@@ -655,6 +659,7 @@
       flex: 1;
       border-radius: 0.9rem;
       background: #0b1220;
+      min-height: 220px;
     }
     #chat-toggle {
       position: fixed;
@@ -702,10 +707,12 @@
     .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
     .stats-drawer {
       position: fixed;
-      top: 0;
-      right: 0;
-      width: min(480px, 100%);
-      height: 100vh;
+
+      top: 5rem;
+      right: 1.5rem;
+      width: min(460px, calc(100vw - 2.5rem));
+      max-height: calc(100vh - 6.5rem);
+
       background: rgba(4, 10, 22, 0.97);
       border-left: 1px solid rgba(129, 140, 248, 0.2);
       box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
@@ -714,6 +721,8 @@
       z-index: 80;
       display: flex;
       flex-direction: column;
+      border-radius: 1.25rem 0 0 1.25rem;
+      overflow: hidden;
     }
     .stats-drawer.open { transform: translateX(0); }
     .stats-drawer header {
@@ -738,6 +747,7 @@
       display: flex;
       flex-direction: column;
       gap: 1.35rem;
+      flex: 1;
     }
     .stats-body .meta {
       display: flex;
@@ -851,6 +861,11 @@
       #stream-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
       #chat-panel { display: none; }
       #chat-toggle { display: flex; align-items: center; justify-content: center; }
+      .stats-drawer {
+        right: 0;
+        width: 100%;
+        border-radius: 0;
+      }
     }
     @media (max-width: 640px) {
       .hero-actions button { flex: 1 1 45%; text-align: center; }
@@ -1458,15 +1473,35 @@ function toNumber(value, fallback = 0) {
       showToast("Stream roster reset to defaults");
     }
     function syncChatPanelOffset() {
-      if (!els.chatPanel) return;
+      if (!els.chatPanel && !els.statsDrawer) return;
       const nav = document.getElementById("global-header");
       const banner = document.getElementById("live-announcement-banner");
-      let offset = nav ? nav.getBoundingClientRect().height + 24 : 72;
+      let offset = nav ? nav.getBoundingClientRect().height + 16 : 72;
       if (banner && banner.classList.contains("is-visible")) {
-        offset += banner.getBoundingClientRect().height + 14;
+        offset += banner.getBoundingClientRect().height + 12;
       }
-      els.chatPanel.style.top = `${offset}px`;
-      els.chatPanel.style.height = `calc(100vh - ${offset + 32}px)`;
+      if (els.chatPanel) {
+        const topOffset = Math.max(56, offset - 24);
+        els.chatPanel.style.top = `${topOffset}px`;
+        els.chatPanel.style.bottom = "auto";
+        const availableHeight = window.innerHeight - topOffset - 48;
+        if (availableHeight > 0) {
+          const upperBound = Math.min(availableHeight, 620);
+          const lowerBound = Math.min(availableHeight, 320);
+          const resolvedHeight = Math.max(upperBound, lowerBound);
+          els.chatPanel.style.height = `${resolvedHeight}px`;
+          els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
+        } else {
+          els.chatPanel.style.height = "320px";
+          els.chatPanel.style.maxHeight = "320px";
+        }
+      }
+      if (els.statsDrawer) {
+        els.statsDrawer.style.top = `${offset}px`;
+        const statsHeight = `calc(100vh - ${offset + 32}px)`;
+        els.statsDrawer.style.maxHeight = statsHeight;
+        els.statsDrawer.style.height = statsHeight;
+      }
     }
     function toggleChatVisibilityForViewport() {
       if (!els.chatPanel) return;
