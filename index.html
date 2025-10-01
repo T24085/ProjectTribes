@@ -783,75 +783,6 @@
       background: rgba(9, 13, 30, 0.96);
       box-shadow: none;
     }
-    .stats-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(3, 6, 12, 0.6);
-      backdrop-filter: blur(6px);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 70;
-    }
-    .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
-    .stats-drawer {
-      position: fixed;
-
-      top: 4.25rem;
-      right: max(var(--page-gutter), calc((100vw - var(--page-max-width)) / 2 + var(--page-gutter)));
-      width: min(460px, calc(100vw - 2.5rem));
-      max-height: calc(100vh - 5.5rem);
-
-      background: rgba(4, 10, 22, 0.97);
-      border-left: 1px solid rgba(129, 140, 248, 0.2);
-      box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
-      transform: translateX(100%);
-      transition: transform 0.35s ease;
-      z-index: 80;
-      display: flex;
-      flex-direction: column;
-      border-radius: 1.25rem 0 0 1.25rem;
-      overflow: hidden;
-    }
-    .stats-drawer.open { transform: translateX(0); }
-    .stats-drawer header {
-      padding: 1.5rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .stats-drawer header h3 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
-    .stats-drawer header button {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1.5rem;
-      cursor: pointer;
-    }
-    .stats-drawer header button:hover { color: var(--text-primary); }
-    .stats-body {
-      padding: 1.5rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1.35rem;
-      flex: 1;
-    }
-    .stats-body .meta {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .stats-body .meta img {
-      width: 72px;
-      height: 72px;
-      border-radius: 18px;
-      object-fit: cover;
-      border: 2px solid rgba(129, 140, 248, 0.42);
-    }
-    .stats-body .meta .details { flex: 1; }
-    .stats-body .meta .details p { margin: 0.2rem 0; color: var(--text-muted); font-size: 0.9rem; }
     .stats-summary {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -874,33 +805,6 @@
       margin-top: 0.35rem;
       font-size: 1.25rem;
       font-weight: 600;
-    }
-    .stats-body .bio {
-      font-size: 0.9rem;
-      line-height: 1.55;
-      color: var(--text-muted);
-    }
-    .stats-body .cta-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-    .stats-body .cta-row a,
-    .stats-body .cta-row button {
-      border-radius: 9999px;
-      padding: 0.6rem 1.1rem;
-      border: 1px solid rgba(129, 140, 248, 0.3);
-      background: rgba(15, 23, 42, 0.75);
-      color: var(--text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: background var(--transition-snappy);
-    }
-    .stats-body .cta-row a:hover,
-    .stats-body .cta-row button:hover {
-      background: rgba(79, 70, 229, 0.4);
     }
     #support-effect-layer { position: fixed; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
     #support-effect-layer .support-spark {
@@ -976,11 +880,6 @@
       #stream-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
       #chat-panel { display: none; }
       #chat-toggle { display: flex; align-items: center; justify-content: center; }
-      .stats-drawer {
-        right: 0;
-        width: 100%;
-        border-radius: 0;
-      }
     }
     @media (max-width: 640px) {
       :root { --page-gutter: 1rem; }
@@ -1093,16 +992,6 @@
     </section>
   </main>
   <button id="chat-toggle"><span>Chat</span></button>
-  <div class="stats-backdrop" id="stats-backdrop"></div>
-  <aside class="stats-drawer" id="stats-drawer">
-    <header>
-      <h3 id="stats-title">Player Stats</h3>
-      <button type="button" id="stats-close" aria-label="Close stats">&times;</button>
-    </header>
-    <div class="stats-body" id="stats-body">
-      <p class="bio">Select a streamer to view their aggregated league stats.</p>
-    </div>
-  </aside>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -1169,10 +1058,6 @@
       chatIframe: document.getElementById("chat-iframe"),
       chatToggle: document.getElementById("chat-toggle"),
       chatClose: document.getElementById("close-chat"),
-      statsDrawer: document.getElementById("stats-drawer"),
-      statsBackdrop: document.getElementById("stats-backdrop"),
-      statsTitle: document.getElementById("stats-title"),
-      statsBody: document.getElementById("stats-body"),
       toast: document.getElementById("toast"),
       effectLayer: document.getElementById("support-effect-layer"),
       addOpenBtn: document.getElementById("open-add-streamer"),
@@ -1591,7 +1476,7 @@
       showToast("Stream roster reset to defaults");
     }
     function syncChatPanelOffset() {
-      if (!els.chatPanel && !els.statsDrawer) return;
+      if (!els.chatPanel) return;
       const nav = document.getElementById("global-header");
       const banner = document.getElementById("live-announcement-banner");
       const navHeight = nav ? nav.getBoundingClientRect().height : 64;
@@ -1603,39 +1488,26 @@
         chatTop = Math.max(chatTop, navHeight + bannerHeight + 32);
       }
       const isEmbeddedChat = !!els.chatPanel && els.chatPanel.dataset.layout === "embedded";
-      if (els.chatPanel) {
-        if (isEmbeddedChat) {
-          els.chatPanel.style.removeProperty("top");
-          els.chatPanel.style.removeProperty("bottom");
-          els.chatPanel.style.removeProperty("height");
-          els.chatPanel.style.removeProperty("max-height");
-        } else {
-          els.chatPanel.style.top = `${chatTop}px`;
-          els.chatPanel.style.bottom = "auto";
-          const availableHeight = window.innerHeight - chatTop - 40;
-          if (availableHeight > 0) {
-            const upperBound = Math.min(availableHeight, 640);
+      if (isEmbeddedChat) {
+        els.chatPanel.style.removeProperty("top");
+        els.chatPanel.style.removeProperty("bottom");
+        els.chatPanel.style.removeProperty("height");
+        els.chatPanel.style.removeProperty("max-height");
+        return;
 
-            const lowerBound = Math.min(availableHeight, 320);
-            const resolvedHeight = Math.max(upperBound, lowerBound);
-            els.chatPanel.style.height = `${resolvedHeight}px`;
-            els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
-          } else {
-            els.chatPanel.style.height = "320px";
-            els.chatPanel.style.maxHeight = "320px";
-          }
-        }
       }
-      if (els.statsDrawer) {
-
-        const statsTop = bannerVisible
-          ? Math.max(baseOffset, navHeight + bannerHeight + 24)
-          : baseOffset;
-        els.statsDrawer.style.top = `${statsTop}px`;
-        const statsHeight = `calc(100vh - ${statsTop + 32}px)`;
-
-        els.statsDrawer.style.maxHeight = statsHeight;
-        els.statsDrawer.style.height = statsHeight;
+      els.chatPanel.style.top = `${chatTop}px`;
+      els.chatPanel.style.bottom = "auto";
+      const availableHeight = window.innerHeight - chatTop - 40;
+      if (availableHeight > 0) {
+        const upperBound = Math.min(availableHeight, 640);
+        const lowerBound = Math.min(availableHeight, 320);
+        const resolvedHeight = Math.max(upperBound, lowerBound);
+        els.chatPanel.style.height = `${resolvedHeight}px`;
+        els.chatPanel.style.maxHeight = `${Math.max(resolvedHeight, lowerBound)}px`;
+      } else {
+        els.chatPanel.style.height = "320px";
+        els.chatPanel.style.maxHeight = "320px";
       }
     }
     function toggleChatVisibilityForViewport() {
@@ -1737,7 +1609,8 @@
         return;
       }
       if (event.target.closest(".stream-card__identity")) {
-        openStatsDrawer(channel);
+        const statsButton = card.querySelector('[data-action="stats"]');
+        toggleCardStats(card, statsButton);
       }
     }
     function handleManagerClick(event) {
@@ -1754,7 +1627,19 @@
       } else if (action === "chat") {
         setChatChannel(channel, { scrollIntoView: true });
       } else if (action === "stats") {
-        openStatsDrawer(channel);
+        if (els.streamGrid) {
+          const card = els.streamGrid.querySelector(`.stream-card[data-channel="${channel}"]`);
+          if (card) {
+            const panel = card.querySelector(".stream-card__stats");
+            const statsButton = card.querySelector('[data-action="stats"]');
+            const isOpen = panel?.classList.contains("is-open");
+            if (!isOpen) {
+              toggleCardStats(card, statsButton);
+            }
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+            statsButton?.focus({ preventScroll: true });
+          }
+        }
       }
     }
     let toastTimer = null;
@@ -1882,18 +1767,16 @@
       }
       return null;
     }
-    function buildStatsMarkup(meta, stats, { context = "drawer" } = {}) {
-      const isDrawer = context === "drawer";
+
+    function buildStatsMarkup(meta, stats) {
       const fragments = [];
-      if (isDrawer) {
-        fragments.push(`
-          <div class="meta">
-            <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
-            <div class="details">
-              <strong>${escapeHtml(meta.displayName)}</strong>
-              <p>@${escapeHtml(meta.channel)}</p>
-              ${meta.team ? `<p>Team: ${escapeHtml(meta.team)}</p>` : ""}
-            </div>
+      fragments.push(`
+        <div class="stream-card__stats-meta">
+          <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
+          <div class="details">
+            <strong>${escapeHtml(meta.displayName)}</strong>
+            <span>${meta.team ? escapeHtml(meta.team) : '@' + escapeHtml(meta.channel)}</span>
+
           </div>
         `);
       } else {
@@ -1908,11 +1791,9 @@
         `);
       }
       if (meta.bio) {
-        if (isDrawer) {
-          fragments.push(`<p class="bio">${escapeHtml(meta.bio)}</p>`);
-        } else {
-          fragments.push(`<p class="stream-card__stats-message">${escapeHtml(meta.bio)}</p>`);
-        }
+
+        fragments.push(`<p class="stream-card__stats-message">${escapeHtml(meta.bio)}</p>`);
+
       }
       if (stats) {
         const totalsConfig = [
@@ -1972,35 +1853,12 @@
         fragments.push('</div>');
       } else {
         const message = 'No aggregated stats published for this player yet. Check back after match data is saved.';
-        fragments.push(isDrawer ? `<p class="bio">${message}</p>` : `<p class="stream-card__stats-message">${message}</p>`);
+
+        fragments.push(`<p class="stream-card__stats-message">${message}</p>`);
+
       }
-      if (isDrawer) {
-        fragments.push(`
-          <div class="cta-row">
-            <button type="button" data-stats-action="focus">Focus Stream</button>
-            <button type="button" data-stats-action="support">Send Support</button>
-            <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
-          </div>
-        `);
-      } else {
-        fragments.push('<a class="stream-card__stats-link" href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>');
-      }
+      fragments.push('<a class="stream-card__stats-link" href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>');
       return fragments.join("");
-    }
-    function renderStatsBody(meta, stats) {
-      if (!els.statsBody) return;
-      els.statsBody.innerHTML = buildStatsMarkup(meta, stats, { context: "drawer" });
-      const supportButton = els.statsBody.querySelector('[data-stats-action="support"]');
-      if (supportButton) {
-        supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
-      }
-      const focusButton = els.statsBody.querySelector('[data-stats-action="focus"]');
-      if (focusButton) {
-        focusButton.addEventListener("click", () => {
-          setChatChannel(meta.channel, { scrollIntoView: true });
-          closeStatsDrawer();
-        });
-      }
     }
     async function toggleCardStats(card, triggerBtn) {
       if (!card) return;
@@ -2046,56 +1904,11 @@
         const bundle = await loadPlayerStats();
         const meta = getStreamerMeta(channel);
         const stats = resolvePlayerStats(bundle, meta);
-        body.innerHTML = buildStatsMarkup(meta, stats, { context: "card" });
+        body.innerHTML = buildStatsMarkup(meta, stats);
         panel.dataset.loaded = "true";
       } catch (err) {
         console.error("Card stats error", err);
         body.innerHTML = '<p class="stream-card__stats-message">Unable to load stats right now.</p>';
-      }
-    }
-    async function openStatsDrawer(channel) {
-      if (els.streamGrid) {
-        els.streamGrid.querySelectorAll(".stream-card__stats.is-open").forEach(panel => {
-          panel.classList.remove("is-open");
-          panel.setAttribute("hidden", "");
-          const parentCard = panel.closest(".stream-card");
-          const button = parentCard ? parentCard.querySelector('[data-action="stats"]') : null;
-          if (button) {
-            button.textContent = "View Stats";
-            button.setAttribute("aria-expanded", "false");
-          }
-        });
-      }
-      const meta = getStreamerMeta(channel);
-      if (els.statsDrawer) {
-        els.statsDrawer.classList.add("open");
-      }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.classList.add("visible");
-      }
-      if (els.statsTitle) {
-        els.statsTitle.textContent = meta.displayName || meta.channel;
-      }
-      if (els.statsBody) {
-        els.statsBody.innerHTML = '<p class="bio">Loading stats…</p>';
-      }
-      try {
-        const bundle = await loadPlayerStats();
-        const stats = resolvePlayerStats(bundle, meta);
-        renderStatsBody(meta, stats);
-      } catch (err) {
-        console.error("Stats drawer error", err);
-        if (els.statsBody) {
-          els.statsBody.innerHTML = '<p class="bio">Unable to load stats right now.</p>';
-        }
-      }
-    }
-    function closeStatsDrawer() {
-      if (els.statsDrawer) {
-        els.statsDrawer.classList.remove("open");
-      }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.classList.remove("visible");
       }
     }
     async function updateLiveChannels() {
@@ -2172,20 +1985,9 @@
       if (els.supportActions) {
         els.supportActions.addEventListener("click", handleSupportAction);
       }
-      if (els.statsBackdrop) {
-        els.statsBackdrop.addEventListener("click", closeStatsDrawer);
-      }
-      const statsClose = document.getElementById("stats-close");
-      if (statsClose) {
-        statsClose.addEventListener("click", closeStatsDrawer);
-      }
       document.addEventListener("keydown", event => {
-        if (event.key === "Escape") {
-          if (els.statsDrawer?.classList.contains("open")) {
-            closeStatsDrawer();
-          } else if (isChatMobileOpen()) {
-            closeChatMobile();
-          }
+        if (event.key === "Escape" && isChatMobileOpen()) {
+          closeChatMobile();
         }
       });
       window.addEventListener("resize", () => {
