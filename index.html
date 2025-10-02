@@ -3718,72 +3718,112 @@
     window.hideTeamStats = hideTeamStats;
     window.updateLivePlayerIndicators = updateLivePlayerIndicators;
     // Recent Matches functionality
-    function loadRecentMatches() {
+    async function loadRecentMatches() {
       const recentMatchesGrid = document.getElementById('recent-matches-grid');
       if (!recentMatchesGrid) return;
 
-      // Sample recent matches data - in a real app, this would come from Firebase
-      const recentMatches = [
-        {
-          teamA: 'DPRK',
-          teamB: 'Zen',
-          scoreA: 3,
-          scoreB: 1,
-          date: '2024-01-15',
-          winner: 'DPRK'
-        },
-        {
-          teamA: 'Avalanche',
-          teamB: 'Magic',
-          scoreA: 2,
-          scoreB: 3,
-          date: '2024-01-14',
-          winner: 'Magic'
-        },
-        {
-          teamA: 'FPS',
-          teamB: 'Toxic Aimers',
-          scoreA: 3,
-          scoreB: 0,
-          date: '2024-01-13',
-          winner: 'FPS'
-        },
-        {
-          teamA: 'HoE',
-          teamB: 'TXM',
-          scoreA: 1,
-          scoreB: 3,
-          date: '2024-01-12',
-          winner: 'TXM'
+      try {
+        // Get the current active season
+        const seasonsRef = collection(db, 'leagueSeasons');
+        const seasonsSnapshot = await getDocs(seasonsRef);
+        const seasons = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Find the active season
+        const activeSeason = seasons.find(s => s.active === true);
+        if (!activeSeason) {
+          console.log('No active season found');
+          recentMatchesGrid.innerHTML = '<div class="text-center text-gray-400 py-4">No active season</div>';
+          return;
         }
-      ];
 
-      recentMatchesGrid.innerHTML = '';
+        // Get TPL-O schedule data
+        const scheduleRef = doc(db, 'leagueSchedules', `${activeSeason.season}-TPL-O`);
+        const scheduleSnapshot = await getDoc(scheduleRef);
+        
+        if (!scheduleSnapshot.exists()) {
+          console.log('No TPL-O schedule found');
+          recentMatchesGrid.innerHTML = '<div class="text-center text-gray-400 py-4">No TPL-O schedule found</div>';
+          return;
+        }
 
-      recentMatches.forEach(match => {
-        const matchCard = document.createElement('div');
-        matchCard.className = 'recent-match-card';
+        const scheduleData = scheduleSnapshot.data();
+        const weeks = scheduleData.weeks || [];
 
-        const teamA = TEAM_DATA[match.teamA];
-        const teamB = TEAM_DATA[match.teamB];
+        // Collect all completed matches with scores
+        const completedMatches = [];
+        weeks.forEach(week => {
+          if (week.matches) {
+            week.matches.forEach(match => {
+              // Only include matches that have both scores (completed matches)
+              if (match.homeScore !== null && match.awayScore !== null && 
+                  match.homeScore !== undefined && match.awayScore !== undefined) {
+                completedMatches.push({
+                  teamA: match.away,
+                  teamB: match.home,
+                  scoreA: match.awayScore,
+                  scoreB: match.homeScore,
+                  date: match.date || 'Unknown Date',
+                  week: week.week,
+                  phase: week.phase || 'regular'
+                });
+              }
+            });
+          }
+        });
 
-        matchCard.innerHTML = `
-          <div class="match-teams">
-            <div class="team-info">
-              <img src="${teamA?.logo || ''}" alt="${match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
-              <span class="team-name ${match.winner === match.teamA ? 'winner' : ''}">${match.teamA}</span>
+        // Sort by date (most recent first) and take the last 6 matches
+        const recentMatches = completedMatches
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 6);
+
+        // Clear the grid
+        recentMatchesGrid.innerHTML = '';
+
+        if (recentMatches.length === 0) {
+          recentMatchesGrid.innerHTML = '<div class="text-center text-gray-400 py-4">No recent matches found</div>';
+          return;
+        }
+
+        // Render the matches
+        recentMatches.forEach(match => {
+          const matchCard = document.createElement('div');
+          matchCard.className = 'recent-match-card';
+
+          const teamA = TEAM_DATA[match.teamA];
+          const teamB = TEAM_DATA[match.teamB];
+
+          // Determine winner
+          const winner = match.scoreA > match.scoreB ? match.teamA : match.teamB;
+
+          // Format the date
+          const formattedDate = match.date !== 'Unknown Date' ? 
+            new Date(match.date).toLocaleDateString() : 
+            `Week ${match.week}`;
+
+          matchCard.innerHTML = `
+            <div class="match-teams">
+              <div class="team-info">
+                <img src="${teamA?.logo || ''}" alt="${match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
+                <span class="team-name ${winner === match.teamA ? 'winner' : ''}">${match.teamA}</span>
+              </div>
+              <span class="match-score">${match.scoreA} - ${match.scoreB}</span>
+              <div class="team-info">
+                <span class="team-name ${winner === match.teamB ? 'winner' : ''}">${match.teamB}</span>
+                <img src="${teamB?.logo || ''}" alt="${match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
+              </div>
             </div>
-            <span class="match-score">${match.scoreA} - ${match.scoreB}</span>
-            <div class="team-info">
-              <span class="team-name ${match.winner === match.teamB ? 'winner' : ''}">${match.teamB}</span>
-              <img src="${teamB?.logo || ''}" alt="${match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
-            </div>
-          </div>
-          <div class="match-date">${new Date(match.date).toLocaleDateString()}</div>
-        `;
+            <div class="match-date">${formattedDate}</div>
+          `;
 
-        recentMatchesGrid.appendChild(matchCard);
-      });
+          recentMatchesGrid.appendChild(matchCard);
+        });
+
+        console.log(`Loaded ${recentMatches.length} recent matches from TPL-O schedule`);
+
+      } catch (error) {
+        console.error('Error loading recent matches:', error);
+        recentMatchesGrid.innerHTML = '<div class="text-center text-red-400 py-4">Error loading recent matches</div>';
+      }
     }
 
     window.showGuestExperience = showGuestExperience;
