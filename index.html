@@ -1463,11 +1463,14 @@
       
       // Load active match first, then team rosters
       loadActiveMatch().then(() => {
-        loadTeamRosters();
-      });
+      loadTeamRosters();
+    });
       
       // Load current poll for main page
       loadCurrentPollForMainPage();
+      
+      // Set up real-time poll updates
+      setInterval(loadCurrentPollForMainPage, 5000); // Update every 5 seconds
       
       initializeTwitchPlayer();
       initializePlayerStats();
@@ -1613,6 +1616,11 @@
         });
         
         console.log('Loaded complete team rosters:', teamRosters);
+        
+        // Update player tabs if teams are selected
+        if (selectedTeams.teamA && selectedTeams.teamB) {
+          updatePlayerTabs();
+        }
       } catch (error) {
         console.error('Error loading team rosters:', error);
       }
@@ -1652,7 +1660,7 @@
                 <div class="poll-option">
                   <span class="option-number">${index + 1}.</span>
                   <span class="option-text">${option}</span>
-                </div>
+          </div>
               `).join('')}
             </div>
             <p class="poll-meta">Created: ${new Date(currentPoll.createdAt?.toDate?.() || currentPoll.createdAt).toLocaleString()}</p>
@@ -1764,7 +1772,7 @@
         if (docSnap.exists()) {
           const pollData = docSnap.data();
           updateMainPagePollDisplay(pollData);
-        } else {
+          } else {
           updateMainPagePollDisplay(null);
         }
       } catch (error) {
@@ -1785,12 +1793,21 @@
           pollTitle.textContent = pollData.question;
         }
 
-        // Update the voting buttons
+        // Update the voting buttons with results
         const voteButtons = pollSection.querySelectorAll('.vote-btn');
+        const votes = pollData.votes || {};
+        const totalVotes = Object.keys(votes).length;
+
         pollData.options.forEach((option, index) => {
           if (voteButtons[index]) {
-            voteButtons[index].textContent = option;
+            const optionVotes = Object.values(votes).filter(vote => vote === index).length;
+            const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
+            
+            voteButtons[index].textContent = `${option} (${optionVotes} votes - ${percentage}%)`;
             voteButtons[index].style.display = 'block';
+            
+            // Add visual indicator for vote percentage
+            voteButtons[index].style.background = `linear-gradient(90deg, var(--accent) ${percentage}%, rgba(148, 163, 184, 0.2) ${percentage}%)`;
           }
         });
 
@@ -1800,6 +1817,16 @@
             voteButtons[i].style.display = 'none';
           }
         }
+
+        // Add total votes display
+        let totalVotesDisplay = pollSection.querySelector('.total-votes');
+        if (!totalVotesDisplay) {
+          totalVotesDisplay = document.createElement('div');
+          totalVotesDisplay.className = 'total-votes';
+          totalVotesDisplay.style.cssText = 'text-align: center; margin-top: 0.5rem; font-size: 0.875rem; color: var(--text-muted);';
+          pollSection.appendChild(totalVotesDisplay);
+        }
+        totalVotesDisplay.textContent = `Total Votes: ${totalVotes}`;
 
         console.log('Updated main page poll display:', pollData);
       } else {
@@ -1814,12 +1841,23 @@
         if (voteButtons[1]) voteButtons[1].textContent = 'Team B';
         if (voteButtons[0]) voteButtons[0].style.display = 'block';
         if (voteButtons[1]) voteButtons[1].style.display = 'block';
+        
+        // Reset button styles
+        voteButtons.forEach(btn => {
+          btn.style.background = '';
+        });
 
         // Hide additional buttons
         for (let i = 2; i < voteButtons.length; i++) {
           if (voteButtons[i]) {
             voteButtons[i].style.display = 'none';
           }
+        }
+
+        // Remove total votes display
+        const totalVotesDisplay = pollSection.querySelector('.total-votes');
+        if (totalVotesDisplay) {
+          totalVotesDisplay.remove();
         }
       }
     }
@@ -2718,7 +2756,9 @@
             console.log('Loaded active match:', selectedTeams);
             // Update the main page display
             updateMatchDisplay();
-            loadTeamRosters();
+            loadTeamRosters().then(() => {
+              // Player tabs will be updated in loadTeamRosters
+            });
           }
         } else {
           // Set default match if none exists
@@ -2762,7 +2802,9 @@
         selectedTeams.teamA = teamA;
         selectedTeams.teamB = teamB;
         updateMatchDisplay();
-        loadTeamRosters();
+        loadTeamRosters().then(() => {
+          // Player tabs will be updated in loadTeamRosters
+        });
         
         console.log('Active match saved:', teamA, 'vs', teamB);
       } catch (error) {
