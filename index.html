@@ -43,8 +43,8 @@
       top: 0;
       bottom: 0;
       width: 50%;
-      opacity: 0.15;
-      background-size: 120px;
+      opacity: 0.2;
+      background-size: 150px;
       background-repeat: repeat;
       pointer-events: none;
       z-index: -1;
@@ -973,9 +973,11 @@
       if (teamA && teamB) {
         loadMatchupImageWithFallbacks(teamA.folder, teamB.folder, matchDisplay);
         
-        // Set team logo background pattern like in ScrimWatcher
-        document.getElementById('bg-left').style.backgroundImage = `url(${teamA.logo})`;
-        document.getElementById('bg-right').style.backgroundImage = `url(${teamB.logo})`;
+      // Set team logo background pattern like in ScrimWatcher
+      console.log('Setting background images:', teamA.logo, teamB.logo);
+      document.getElementById('bg-left').style.backgroundImage = `url(${teamA.logo})`;
+      document.getElementById('bg-right').style.backgroundImage = `url(${teamB.logo})`;
+      console.log('Background images set successfully');
       } else {
         // Clear background patterns if no teams selected
         document.getElementById('bg-left').style.backgroundImage = '';
@@ -1321,8 +1323,22 @@
       testImage.src = testPath;
     }
     
-    // Make test function available globally for debugging
+    // Test function to manually set background images
+    function testBackgroundImages() {
+      console.log('Testing background images...');
+      const testLogo = 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/TeamDPRKLogo3.png';
+      
+      document.getElementById('bg-left').style.backgroundImage = `url(${testLogo})`;
+      document.getElementById('bg-right').style.backgroundImage = `url(${testLogo})`;
+      
+      console.log('Background images set to:', testLogo);
+      console.log('Left background:', document.getElementById('bg-left').style.backgroundImage);
+      console.log('Right background:', document.getElementById('bg-right').style.backgroundImage);
+    }
+    
+    // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
+    window.testBackgroundImages = testBackgroundImages;
   </script>
 </body>
 </html>
