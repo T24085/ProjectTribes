@@ -881,6 +881,29 @@
       color: var(--danger);
     }
 
+    /* Team Line Chart Styles */
+    .team-line-chart {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: var(--surface-glass);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .chart-header {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+
     /* Admin Login Form Styles */
     .login-form {
       max-width: 400px;
@@ -3617,45 +3640,20 @@
           </div>
         </div>
         
-        <div class="team-comparison">
-          <div class="comparison-header">Team Comparison</div>
-          <div class="comparison-grid">
-            <div class="comparison-team">
-              <div style="font-weight: 600; margin-bottom: 1rem;">${teamAData.name}</div>
-            </div>
-            <div class="comparison-vs">VS</div>
-            <div class="comparison-team">
-              <div style="font-weight: 600; margin-bottom: 1rem;">${teamBData.name}</div>
-            </div>
-          </div>
-          
-          <div class="comparison-metric">
-            <div class="comparison-metric-label">Total Kills</div>
-            <div class="comparison-metric-values">
-              <div class="comparison-value ${teamAStats.totalKills > teamBStats.totalKills ? 'winner' : teamAStats.totalKills < teamBStats.totalKills ? 'loser' : ''}">${teamAStats.totalKills}</div>
-              <div class="comparison-value ${teamBStats.totalKills > teamAStats.totalKills ? 'winner' : teamBStats.totalKills < teamAStats.totalKills ? 'loser' : ''}">${teamBStats.totalKills}</div>
-            </div>
-          </div>
-          
-          <div class="comparison-metric">
-            <div class="comparison-metric-label">Total Score</div>
-            <div class="comparison-metric-values">
-              <div class="comparison-value ${teamAStats.totalScore > teamBStats.totalScore ? 'winner' : teamAStats.totalScore < teamBStats.totalScore ? 'loser' : ''}">${teamAStats.totalScore}</div>
-              <div class="comparison-value ${teamBStats.totalScore > teamAStats.totalScore ? 'winner' : teamBStats.totalScore < teamAStats.totalScore ? 'loser' : ''}">${teamBStats.totalScore}</div>
-            </div>
-          </div>
-          
-          <div class="comparison-metric">
-            <div class="comparison-metric-label">Total Captures</div>
-            <div class="comparison-metric-values">
-              <div class="comparison-value ${teamAStats.totalCaptures > teamBStats.totalCaptures ? 'winner' : teamAStats.totalCaptures < teamBStats.totalCaptures ? 'loser' : ''}">${teamAStats.totalCaptures}</div>
-              <div class="comparison-value ${teamBStats.totalCaptures > teamAStats.totalCaptures ? 'winner' : teamBStats.totalCaptures < teamAStats.totalCaptures ? 'loser' : ''}">${teamBStats.totalCaptures}</div>
-            </div>
+        <div class="team-line-chart">
+          <div class="chart-header">Team Stats Comparison</div>
+          <div class="chart-container">
+            <canvas id="team-stats-chart" width="400" height="200"></canvas>
           </div>
         </div>
       `;
 
       statsSection.style.display = 'block';
+      
+      // Create the line chart after a short delay to ensure DOM is ready
+      setTimeout(() => {
+        createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
+      }, 100);
     }
 
     function calculateTeamStats(roster) {
@@ -3709,10 +3707,148 @@
       };
     }
 
+    function createTeamStatsLineChart(teamAStats, teamBStats, teamAName, teamBName) {
+      const canvas = document.getElementById('team-stats-chart');
+      if (!canvas) {
+        console.error('Team stats chart canvas not found');
+        return;
+      }
+
+      // Destroy existing chart if it exists
+      if (window.teamStatsChart) {
+        window.teamStatsChart.destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      
+      // Prepare data for the line chart
+      const stats = [
+        { label: 'Kills', teamA: teamAStats.totalKills, teamB: teamBStats.totalKills },
+        { label: 'Assists', teamA: teamAStats.totalAssists, teamB: teamBStats.totalAssists },
+        { label: 'Score', teamA: teamAStats.totalScore, teamB: teamBStats.totalScore },
+        { label: 'Captures', teamA: teamAStats.totalCaptures, teamB: teamBStats.totalCaptures },
+        { label: 'Returns', teamA: teamAStats.totalReturns, teamB: teamBStats.totalReturns }
+      ];
+
+      // Normalize data for better visualization (use percentages of max values)
+      const maxValues = stats.reduce((max, stat) => ({
+        kills: Math.max(max.kills, stat.teamA, stat.teamB),
+        assists: Math.max(max.assists, stat.teamA, stat.teamB),
+        score: Math.max(max.score, stat.teamA, stat.teamB),
+        captures: Math.max(max.captures, stat.teamA, stat.teamB),
+        returns: Math.max(max.returns, stat.teamA, stat.teamB)
+      }), { kills: 0, assists: 0, score: 0, captures: 0, returns: 0 });
+
+      const normalizedStats = stats.map(stat => ({
+        label: stat.label,
+        teamA: maxValues[stat.label.toLowerCase()] > 0 ? (stat.teamA / maxValues[stat.label.toLowerCase()]) * 100 : 0,
+        teamB: maxValues[stat.label.toLowerCase()] > 0 ? (stat.teamB / maxValues[stat.label.toLowerCase()]) * 100 : 0
+      }));
+
+      window.teamStatsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: normalizedStats.map(stat => stat.label),
+          datasets: [
+            {
+              label: teamAName,
+              data: normalizedStats.map(stat => stat.teamA),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 3,
+              fill: false,
+              tension: 0.4,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 6
+            },
+            {
+              label: teamBName,
+              data: normalizedStats.map(stat => stat.teamB),
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              borderWidth: 3,
+              fill: false,
+              tension: 0.4,
+              pointBackgroundColor: '#ef4444',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#e2e8f0',
+                font: {
+                  size: 14,
+                  weight: 'bold'
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#ffffff',
+              bodyColor: '#e2e8f0',
+              borderColor: 'rgba(148, 163, 184, 0.2)',
+              borderWidth: 1,
+              callbacks: {
+                label: function(context) {
+                  const statIndex = context.dataIndex;
+                  const originalValue = stats[statIndex][context.dataset.label === teamAName ? 'teamA' : 'teamB'];
+                  return `${context.dataset.label}: ${originalValue.toLocaleString()}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: '#94a3b8',
+                font: {
+                  size: 12
+                }
+              },
+              grid: {
+                color: 'rgba(148, 163, 184, 0.1)'
+              }
+            },
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                color: '#94a3b8',
+                font: {
+                  size: 12
+                },
+                callback: function(value) {
+                  return value + '%';
+                }
+              },
+              grid: {
+                color: 'rgba(148, 163, 184, 0.1)'
+              }
+            }
+          }
+        }
+      });
+    }
+
     function hideTeamStats() {
       const statsSection = document.getElementById('team-stats-section');
       if (statsSection) {
         statsSection.style.display = 'none';
+      }
+      
+      // Destroy the team stats chart if it exists
+      if (window.teamStatsChart) {
+        window.teamStatsChart.destroy();
+        window.teamStatsChart = null;
       }
     }
 
@@ -3755,11 +3891,19 @@
         const seasonsSnapshot = await getDocs(seasonsRef);
         const seasons = seasonsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        // Find the active season
-        const activeSeason = seasons.find(s => s.active === true);
+        // Find the active season, or use the latest season if none is active
+        let activeSeason = seasons.find(s => s.active === true);
+        if (!activeSeason && seasons.length > 0) {
+          // If no active season, use the latest season (highest season number)
+          activeSeason = seasons.reduce((latest, current) => {
+            return current.season > latest.season ? current : latest;
+          });
+          console.log('No active season found, using latest season:', activeSeason.season);
+        }
+        
         if (!activeSeason) {
-          console.log('No active season found');
-          recentMatchesGrid.innerHTML = '<div class="text-center text-gray-400 py-4">No active season</div>';
+          console.log('No seasons found');
+          recentMatchesGrid.innerHTML = '<div class="text-center text-gray-400 py-4">No seasons found</div>';
           return;
         }
 
@@ -3782,8 +3926,10 @@
           if (week.matches) {
             week.matches.forEach(match => {
               // Only include matches that have both scores (completed matches)
+              // Handle cases where scores might be 0 (valid completed match)
               if (match.homeScore !== null && match.awayScore !== null && 
-                  match.homeScore !== undefined && match.awayScore !== undefined) {
+                  match.homeScore !== undefined && match.awayScore !== undefined &&
+                  match.home && match.away) { // Ensure both teams are present
                 completedMatches.push({
                   teamA: match.away,
                   teamB: match.home,
