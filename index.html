@@ -682,6 +682,155 @@
       padding: 2rem;
     }
 
+    /* Admin Panel Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .modal-header h2 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .admin-section {
+      margin-bottom: 2rem;
+    }
+
+    .admin-section h3 {
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .current-match {
+      background: var(--surface-glass);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    .match-selector {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .team-selector {
+      flex: 1;
+    }
+
+    .team-selector label {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .vs-divider {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .live-status {
+      background: var(--surface-glass);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    /* Live Player Indicators */
+    .player-tab.live {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+    }
+
+    .player-tab.live:hover {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
+      border-color: rgba(34, 197, 94, 0.5);
+    }
+
+    .player-tab.live::before {
+      content: "🔴";
+      margin-right: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .live-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
     /* Footer */
     footer {
       background: var(--card-bg);
@@ -753,6 +902,8 @@
         <a href="#" class="nav-link">News</a>
       </div>
       <div class="auth-buttons">
+        <button id="admin-login-btn" class="btn btn-secondary" style="display: none;">Admin Login</button>
+        <button id="admin-panel-btn" class="btn btn-secondary" style="display: none;">Admin Panel</button>
         <button id="twitch-login-btn" class="btn btn-primary">Sign in with Twitch</button>
         <span id="twitch-user" style="display: none; color: var(--text-muted); font-size: 0.9rem;"></span>
       </div>
@@ -823,6 +974,54 @@
           </div>
           <div id="player-stats-content">
             <div class="stats-loading">Loading player statistics...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Panel Modal -->
+      <div id="admin-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Admin Panel - Set Active Match</h2>
+            <button id="close-admin-modal" class="btn btn-secondary">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="admin-section">
+              <h3>Current Active Match</h3>
+              <div id="current-match-display" class="current-match">
+                <p>No active match set</p>
+              </div>
+            </div>
+            
+            <div class="admin-section">
+              <h3>Set New Active Match</h3>
+              <div class="match-selector">
+                <div class="team-selector">
+                  <label for="admin-team-a">Team A:</label>
+                  <select id="admin-team-a" class="form-select">
+                    <option value="">Select Team A</option>
+                  </select>
+                </div>
+                <div class="vs-divider">VS</div>
+                <div class="team-selector">
+                  <label for="admin-team-b">Team B:</label>
+                  <select id="admin-team-b" class="form-select">
+                    <option value="">Select Team B</option>
+                  </select>
+                </div>
+              </div>
+              <div class="admin-actions">
+                <button id="set-active-match" class="btn btn-primary">Set Active Match</button>
+                <button id="clear-active-match" class="btn btn-danger">Clear Match</button>
+              </div>
+            </div>
+            
+            <div class="admin-section">
+              <h3>Live Player Status</h3>
+              <div id="live-players-status" class="live-status">
+                <p>Checking live status...</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -915,7 +1114,12 @@
       initializeTeamSelection();
       initializeChat();
       initializeVoting();
-      loadTeamRosters();
+      
+      // Load active match first, then team rosters
+      loadActiveMatch().then(() => {
+        loadTeamRosters();
+      });
+      
       initializeTwitchPlayer();
       initializePlayerStats();
       
@@ -923,7 +1127,41 @@
       if (window.twitchOAuth) {
         window.twitchOAuth.updateNav();
       }
+      
+      // Set up admin system
+      setupAdminSystem();
+      
+      // Check admin status
+      checkAdminStatus();
+      
+      // Set up periodic live player checks
+      setInterval(() => {
+        updateLivePlayerIndicators();
+      }, 30000); // Check every 30 seconds
     });
+
+    // Set up admin system event listeners
+    function setupAdminSystem() {
+      // Admin login button
+      document.getElementById('admin-login-btn').addEventListener('click', () => {
+        if (window.twitchOAuth) {
+          window.twitchOAuth.login();
+        }
+      });
+
+      // Admin panel button
+      document.getElementById('admin-panel-btn').addEventListener('click', showAdminPanel);
+
+      // Close admin modal
+      document.getElementById('close-admin-modal').addEventListener('click', hideAdminPanel);
+
+      // Close modal when clicking outside
+      document.getElementById('admin-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'admin-modal') {
+          hideAdminPanel();
+        }
+      });
+    }
 
     async function loadTeamRosters() {
       try {
@@ -1324,6 +1562,11 @@
           }
         }
       }
+
+      // Update live indicators after a short delay to allow Twitch data to load
+      setTimeout(() => {
+        updateLivePlayerIndicators();
+      }, 1000);
     }
 
     function initializeChat() {
@@ -1864,6 +2107,229 @@
       }
     }
 
+    // Admin System
+    let activeMatch = null;
+    let isAdmin = false;
+    let livePlayers = new Set();
+
+    // Check if user is admin (simple check for now - can be enhanced)
+    function checkAdminStatus() {
+      // For now, check if user is logged in with Twitch
+      // In production, you'd check against a list of admin Twitch IDs
+      const twitchUser = document.getElementById('twitch-user');
+      if (twitchUser && twitchUser.style.display !== 'none') {
+        const adminTwitchIds = ['tribesprofessionalleague', 'your_admin_twitch_id']; // Add admin Twitch IDs here
+        const currentUser = twitchUser.textContent;
+        isAdmin = adminTwitchIds.some(id => currentUser.toLowerCase().includes(id.toLowerCase()));
+        
+        if (isAdmin) {
+          document.getElementById('admin-login-btn').style.display = 'none';
+          document.getElementById('admin-panel-btn').style.display = 'inline-block';
+        } else {
+          document.getElementById('admin-login-btn').style.display = 'inline-block';
+          document.getElementById('admin-panel-btn').style.display = 'none';
+        }
+      } else {
+        document.getElementById('admin-login-btn').style.display = 'inline-block';
+        document.getElementById('admin-panel-btn').style.display = 'none';
+      }
+    }
+
+    // Load active match from Firebase
+    async function loadActiveMatch() {
+      try {
+        const doc = await db.collection('admin').doc('activeMatch').get();
+        if (doc.exists) {
+          activeMatch = doc.data();
+          updateCurrentMatchDisplay();
+          if (activeMatch.teamA && activeMatch.teamB) {
+            selectedTeams.teamA = activeMatch.teamA;
+            selectedTeams.teamB = activeMatch.teamB;
+            loadTeamRosters();
+          }
+        } else {
+          // Set default match if none exists
+          setDefaultMatch();
+        }
+      } catch (error) {
+        console.error('Error loading active match:', error);
+        setDefaultMatch();
+      }
+    }
+
+    // Set default match (first two teams)
+    function setDefaultMatch() {
+      const teamKeys = Object.keys(TEAM_DATA);
+      if (teamKeys.length >= 2) {
+        selectedTeams.teamA = teamKeys[0];
+        selectedTeams.teamB = teamKeys[1];
+        loadTeamRosters();
+      }
+    }
+
+    // Save active match to Firebase
+    async function saveActiveMatch(teamA, teamB) {
+      try {
+        await db.collection('admin').doc('activeMatch').set({
+          teamA: teamA,
+          teamB: teamB,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        activeMatch = { teamA, teamB };
+        updateCurrentMatchDisplay();
+        console.log('Active match saved:', teamA, 'vs', teamB);
+      } catch (error) {
+        console.error('Error saving active match:', error);
+        alert('Failed to save active match. Please try again.');
+      }
+    }
+
+    // Update current match display
+    function updateCurrentMatchDisplay() {
+      const display = document.getElementById('current-match-display');
+      if (activeMatch && activeMatch.teamA && activeMatch.teamB) {
+        const teamAData = TEAM_DATA[activeMatch.teamA];
+        const teamBData = TEAM_DATA[activeMatch.teamB];
+        display.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="${teamAData.logo}" alt="${teamAData.name}" style="width: 40px; height: 40px; border-radius: 50%;">
+            <span style="font-weight: 600;">${teamAData.name}</span>
+            <span style="color: var(--text-muted);">VS</span>
+            <span style="font-weight: 600;">${teamBData.name}</span>
+            <img src="${teamBData.logo}" alt="${teamBData.name}" style="width: 40px; height: 40px; border-radius: 50%;">
+          </div>
+        `;
+      } else {
+        display.innerHTML = '<p>No active match set</p>';
+      }
+    }
+
+    // Initialize admin panel
+    function initializeAdminPanel() {
+      // Populate team selectors
+      const teamASelect = document.getElementById('admin-team-a');
+      const teamBSelect = document.getElementById('admin-team-b');
+      
+      Object.keys(TEAM_DATA).forEach(teamKey => {
+        const team = TEAM_DATA[teamKey];
+        const optionA = new Option(team.name, teamKey);
+        const optionB = new Option(team.name, teamKey);
+        teamASelect.add(optionA);
+        teamBSelect.add(optionB);
+      });
+
+      // Set current match if exists
+      if (activeMatch && activeMatch.teamA && activeMatch.teamB) {
+        teamASelect.value = activeMatch.teamA;
+        teamBSelect.value = activeMatch.teamB;
+      }
+
+      // Event listeners
+      document.getElementById('set-active-match').addEventListener('click', () => {
+        const teamA = teamASelect.value;
+        const teamB = teamBSelect.value;
+        
+        if (!teamA || !teamB) {
+          alert('Please select both teams');
+          return;
+        }
+        
+        if (teamA === teamB) {
+          alert('Teams must be different');
+          return;
+        }
+        
+        saveActiveMatch(teamA, teamB);
+        // Update the main display
+        selectedTeams.teamA = teamA;
+        selectedTeams.teamB = teamB;
+        loadTeamRosters();
+        hideAdminPanel();
+      });
+
+      document.getElementById('clear-active-match').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the active match?')) {
+          saveActiveMatch('', '');
+          setDefaultMatch();
+          hideAdminPanel();
+        }
+      });
+
+      // Update live status
+      updateLivePlayersStatus();
+    }
+
+    // Show admin panel
+    function showAdminPanel() {
+      if (!isAdmin) {
+        alert('Admin access required');
+        return;
+      }
+      document.getElementById('admin-modal').style.display = 'flex';
+      initializeAdminPanel();
+    }
+
+    // Hide admin panel
+    function hideAdminPanel() {
+      document.getElementById('admin-modal').style.display = 'none';
+    }
+
+    // Update live players status
+    function updateLivePlayersStatus() {
+      const statusDiv = document.getElementById('live-players-status');
+      if (livePlayers.size === 0) {
+        statusDiv.innerHTML = '<p>No live players detected</p>';
+      } else {
+        const liveList = Array.from(livePlayers).map(player => `<span class="live-indicator"></span>${player}`).join('<br>');
+        statusDiv.innerHTML = `<p><strong>Live Players (${livePlayers.size}):</strong></p><p>${liveList}</p>`;
+      }
+    }
+
+    // Check for live players and update indicators
+    function updateLivePlayerIndicators() {
+      if (!window.twitchOAuth || !window.twitchOAuth.liveStreams) {
+        return;
+      }
+
+      const liveStreams = window.twitchOAuth.liveStreams;
+      const playerTabs = document.querySelectorAll('.player-tab');
+      
+      // Clear previous live indicators
+      playerTabs.forEach(tab => tab.classList.remove('live'));
+      livePlayers.clear();
+
+      // Check each player tab
+      playerTabs.forEach(tab => {
+        if (tab.dataset.team && tab.dataset.playerIndex !== undefined) {
+          const team = tab.dataset.team;
+          const playerIndex = tab.dataset.playerIndex;
+          const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+          const roster = teamRosters[teamKey] || [];
+          const player = roster[playerIndex];
+          
+          if (player) {
+            const playerName = player.name || player.displayName;
+            const twitchHandle = getTwitchHandleForPlayer(player);
+            
+            // Check if this player is live
+            const isLive = liveStreams.some(stream => 
+              stream.user_login.toLowerCase() === twitchHandle.toLowerCase()
+            );
+            
+            if (isLive) {
+              tab.classList.add('live');
+              livePlayers.add(playerName);
+            }
+          }
+        }
+      });
+
+      // Update admin panel if open
+      if (document.getElementById('admin-modal').style.display === 'flex') {
+        updateLivePlayersStatus();
+      }
+    }
+
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
@@ -1875,6 +2341,8 @@
     window.showPlayerStats = showPlayerStats;
     window.hidePlayerStats = hidePlayerStats;
     window.debugPlayerNames = debugPlayerNames;
+    window.showAdminPanel = showAdminPanel;
+    window.hideAdminPanel = hideAdminPanel;
   </script>
 </body>
 </html>
