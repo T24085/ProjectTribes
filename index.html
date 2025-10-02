@@ -2469,24 +2469,8 @@
           console.log('Twitch player loaded successfully');
         };
 
-        // Add timeout to detect content classification errors
-        setTimeout(() => {
-          const iframe = document.getElementById('stream-frame');
-          if (iframe) {
-            try {
-              // Check if iframe content is accessible (will throw error if blocked)
-              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-              if (!iframeDoc || iframeDoc.body.innerHTML.includes('Failed to determine content classification')) {
-                console.log('Content classification error detected - showing fallback');
-                showContentBlockedFallback();
-              }
-            } catch (error) {
-              // Cross-origin error means content is blocked
-              console.log('Cross-origin content blocked - showing fallback');
-              showContentBlockedFallback();
-            }
-          }
-        }, 3000);
+        // Note: Removed iframe content check as it's unreliable for Twitch embeds
+        // Cross-origin restrictions prevent checking iframe content even when working properly
 
         // Also listen for console errors that might indicate content blocking
         const originalConsoleError = console.error;
@@ -2565,16 +2549,6 @@
           </ul>
           <p>Or try refreshing the page after adjusting settings.</p>
           <div style="margin-top: 1rem;">
-            <button onclick="location.reload()" style="
-              background: var(--accent);
-              color: white;
-              border: none;
-              padding: 0.75rem 1.5rem;
-              border-radius: 0.5rem;
-              cursor: pointer;
-              margin-right: 0.5rem;
-              font-size: 1rem;
-            ">Refresh Page</button>
             <button onclick="restoreStreamFrame()" style="
               background: var(--success);
               color: white;
@@ -2585,6 +2559,16 @@
               font-size: 1rem;
               margin-right: 0.5rem;
             ">Try Again</button>
+            <button onclick="location.reload()" style="
+              background: var(--accent);
+              color: white;
+              border: none;
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              cursor: pointer;
+              font-size: 1rem;
+              margin-right: 0.5rem;
+            ">Refresh Page</button>
             <button onclick="showAlternativeContent()" style="
               background: var(--surface-glass);
               color: var(--text-primary);
@@ -2595,6 +2579,9 @@
               font-size: 1rem;
             ">Show Alternative Content</button>
           </div>
+          <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-muted);">
+            If you're using Edge and logged into Twitch, try clicking "Try Again" first.
+          </p>
         `;
         
         // Replace the iframe with the blocked content message
