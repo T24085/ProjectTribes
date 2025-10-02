@@ -2178,7 +2178,15 @@
     // Name mapping for players where database name doesn't match oauth.js name
     const PLAYER_NAME_MAPPING = {
       'Panda': 'Pandora',
-      'Glem': 'Glem' // Add other mappings as needed
+      'Glem': 'Glem',
+      'CheezeCaek': 'CheezeCaek',
+      'Nemesis': 'Nemesis',
+      'Jive': 'Jive',
+      'Howsya': 'Howsya',
+      'Prizzo': 'Prizzo',
+      'Rhino': 'Rhino',
+      'LightningMcMeme': 'LightningMcMeme',
+      'Radishblue': 'Radishblue'
     };
 
     function getTwitchHandleForPlayer(player) {
@@ -2223,11 +2231,15 @@
           const twitchHandle = getTwitchHandleForPlayer(player);
           
           if (twitchHandle) {
-            const streamFrame = document.querySelector('.stream-frame');
-            const parentDomain = window.location.hostname;
-            // Use the same format as TribesScrimWatcher
-            streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
-            console.log(`Loading stream for ${player.name}: ${twitchHandle}`);
+            const streamFrame = document.getElementById('stream-frame');
+            if (streamFrame) {
+              const parentDomain = window.location.hostname;
+              // Use the same format as TribesScrimWatcher
+              streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
+              console.log(`Loading stream for ${player.name}: ${twitchHandle}`);
+            } else {
+              console.error('Stream frame element not found!');
+            }
           } else {
             console.log('No Twitch handle found for player:', player);
           }
@@ -2327,7 +2339,7 @@
     function initializeVoting() {
       const voteButtons = document.querySelectorAll('.vote-btn');
       
-      voteButtons.forEach(button => {
+      voteButtons.forEach((button, index) => {
         button.addEventListener('click', function() {
           // Remove voted class from all buttons
           voteButtons.forEach(btn => btn.classList.remove('voted'));
@@ -2337,11 +2349,51 @@
           // Trigger confetti celebration
           triggerVoteCelebration();
           
+          // Save vote to Firebase
+          saveVote(index);
+          
           // Show confirmation
           const teamName = this.textContent;
           alert(`You voted for ${teamName}!`);
         });
       });
+    }
+
+    async function saveVote(optionIndex) {
+      try {
+        // Generate a unique user ID for this session
+        let userId = localStorage.getItem('voteUserId');
+        if (!userId) {
+          userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('voteUserId', userId);
+        }
+
+        // Get current poll data
+        const pollDoc = await getDoc(doc(db, 'admin', 'currentPoll'));
+        if (pollDoc.exists()) {
+          const pollData = pollDoc.data();
+          const votes = pollData.votes || {};
+          
+          // Update the vote
+          votes[userId] = optionIndex;
+          
+          // Save back to Firebase
+          await setDoc(doc(db, 'admin', 'currentPoll'), {
+            ...pollData,
+            votes: votes
+          }, { merge: true });
+          
+          console.log('Vote saved successfully:', { userId, optionIndex });
+          
+          // Refresh the poll display
+          setTimeout(() => {
+            loadCurrentPollForMainPage();
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error saving vote:', error);
+        alert('Failed to save vote. Please try again.');
+      }
     }
 
     function triggerVoteCelebration() {
