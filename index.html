@@ -1208,8 +1208,9 @@
           
           if (twitchHandle) {
             const streamFrame = document.querySelector('.stream-frame');
-            const parentQuery = `parent=${encodeURIComponent(window.location.hostname)}`;
-            streamFrame.src = `https://player.twitch.tv/?channel=${twitchHandle}&${parentQuery}&autoplay=false`;
+            const parentDomain = window.location.hostname;
+            // Use the same format as TribesScrimWatcher
+            streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
             console.log(`Loading stream for ${player.name}: ${twitchHandle}`);
           } else {
             console.log('No Twitch handle found for player:', player);
@@ -1274,19 +1275,17 @@
     function initializeTwitchPlayer() {
       const streamFrame = document.getElementById('stream-frame');
       if (streamFrame) {
-        // Get the current hostname and protocol
-        const hostname = window.location.hostname;
-        const protocol = window.location.protocol;
-        const currentUrl = `${protocol}//${hostname}`;
+        // Get the current hostname - same as TribesScrimWatcher
+        const parentDomain = window.location.hostname;
         
         // Update the iframe src with the correct parent parameter
         const currentSrc = streamFrame.src;
         const newSrc = currentSrc.includes('parent=') 
-          ? currentSrc.replace(/parent=[^&]*/, `parent=${encodeURIComponent(hostname)}`)
-          : `${currentSrc}&parent=${encodeURIComponent(hostname)}`;
+          ? currentSrc.replace(/parent=[^&]*/, `parent=${parentDomain}`)
+          : `${currentSrc}&parent=${parentDomain}`;
         
         streamFrame.src = newSrc;
-        console.log('Twitch player initialized with parent:', hostname);
+        console.log('Twitch player initialized with parent:', parentDomain);
         
         // Add error handling for the iframe
         streamFrame.onerror = function() {
@@ -1388,11 +1387,29 @@
       // Show all available mappings
       console.log('Available name mappings:', PLAYER_NAME_MAPPING);
     }
+
+    // Test function to verify Twitch player URL format
+    function testTwitchPlayerFormat() {
+      console.log('Testing Twitch player URL format...');
+      const parentDomain = window.location.hostname;
+      const testChannel = 'pandoracast';
+      
+      const testUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(testChannel)}&parent=${parentDomain}&autoplay=false`;
+      console.log('Test URL format:', testUrl);
+      
+      // Test if this matches TribesScrimWatcher format
+      const streamFrame = document.querySelector('.stream-frame');
+      if (streamFrame) {
+        streamFrame.src = testUrl;
+        console.log('Applied test URL to player');
+      }
+    }
     
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
     window.testPlayerMapping = testPlayerMapping;
+    window.testTwitchPlayerFormat = testTwitchPlayerFormat;
   </script>
 </body>
 </html>
