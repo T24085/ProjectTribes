@@ -1479,6 +1479,11 @@
       // Initialize Twitch OAuth functionality
       if (window.twitchOAuth) {
         window.twitchOAuth.updateNav();
+      } else {
+        // Handle non-authenticated users
+        console.log('Twitch OAuth not available - showing guest experience');
+        // Delay to ensure page is fully loaded
+        setTimeout(showGuestExperience, 1000);
       }
       
       // Set up admin system
@@ -2271,6 +2276,84 @@
       }
     }
 
+    // Handle guest experience for non-authenticated users
+    function showGuestExperience() {
+      // Show a message in the stream area for guests
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        const guestDiv = document.createElement('div');
+        guestDiv.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          background: var(--card-bg);
+          color: var(--text-primary);
+          text-align: center;
+          padding: 2rem;
+        `;
+        guestDiv.innerHTML = `
+          <h3>Welcome to Tribes Professional League</h3>
+          <p>Sign in with Twitch to watch live streams and access all features.</p>
+          <p>You can still view match information, team stats, and vote in polls!</p>
+          <button onclick="document.getElementById('twitch-login-btn').click()" style="
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-size: 1rem;
+          ">Sign in with Twitch</button>
+        `;
+        
+        // Replace the iframe with the guest message
+        streamFrame.parentNode.replaceChild(guestDiv, streamFrame);
+      }
+
+      // Disable player tab functionality for guests
+      const playerTabs = document.querySelectorAll('.player-tab');
+      playerTabs.forEach(tab => {
+        tab.style.opacity = '0.6';
+        tab.style.cursor = 'not-allowed';
+        tab.title = 'Sign in with Twitch to watch player streams';
+      });
+    }
+
+    // Restore authenticated experience when user signs in
+    function restoreAuthenticatedExperience() {
+      // Restore player tab functionality
+      const playerTabs = document.querySelectorAll('.player-tab');
+      playerTabs.forEach(tab => {
+        tab.style.opacity = '1';
+        tab.style.cursor = 'pointer';
+        tab.title = '';
+      });
+
+      // Restore the Twitch player
+      const streamContainer = document.querySelector('.stream-container');
+      if (streamContainer) {
+        const guestDiv = streamContainer.querySelector('div');
+        if (guestDiv && guestDiv.innerHTML.includes('Welcome to Tribes Professional League')) {
+          // Restore the original iframe
+          const iframe = document.createElement('iframe');
+          iframe.className = 'stream-frame';
+          iframe.id = 'stream-frame';
+          iframe.src = 'https://player.twitch.tv/?channel=tribesprofessionalleague&autoplay=false';
+          iframe.allowFullscreen = true;
+          
+          streamContainer.replaceChild(iframe, guestDiv);
+          
+          // Re-initialize the Twitch player
+          setTimeout(() => {
+            initializeTwitchPlayer();
+          }, 500);
+        }
+      }
+    }
+
     // Test function to manually load DPRK vs Zen image
     function testDPRKvsZen() {
       const matchDisplay = document.getElementById('match-display');
@@ -2924,7 +3007,7 @@
       console.log('Checking live player indicators...');
       
       if (!window.twitchOAuth) {
-        console.log('Twitch OAuth not available');
+        console.log('Twitch OAuth not available - skipping live indicators');
         return;
       }
 
@@ -3205,6 +3288,8 @@
     window.showTeamStats = showTeamStats;
     window.hideTeamStats = hideTeamStats;
     window.updateLivePlayerIndicators = updateLivePlayerIndicators;
+    window.showGuestExperience = showGuestExperience;
+    window.restoreAuthenticatedExperience = restoreAuthenticatedExperience;
     window.testLiveIndicators = function() {
       console.log('=== Live Indicators Test ===');
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
