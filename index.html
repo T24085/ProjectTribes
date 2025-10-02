@@ -1159,6 +1159,40 @@
       });
     }
 
+    // Name mapping for players where database name doesn't match oauth.js name
+    const PLAYER_NAME_MAPPING = {
+      'Panda': 'Pandora',
+      'Glem': 'Glem' // Add other mappings as needed
+    };
+
+    function getTwitchHandleForPlayer(player) {
+      // First try to get the handle from the player object
+      let twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
+      
+      // If no handle found, try to map the name and look it up in oauth.js
+      if (!twitchHandle && player.name) {
+        const mappedName = PLAYER_NAME_MAPPING[player.name] || player.name;
+        
+        // Look up in oauth.js TEAM_STREAMS data
+        if (window.twitchOAuth && window.twitchOAuth.TEAM_STREAMS) {
+          for (const [teamName, streams] of Object.entries(window.twitchOAuth.TEAM_STREAMS)) {
+            const streamer = streams.find(s => s.name === mappedName);
+            if (streamer) {
+              // Extract Twitch handle from URL
+              const match = streamer.url.match(/twitch\.tv\/([^/?]+)/i);
+              if (match) {
+                twitchHandle = match[1];
+                console.log(`Found Twitch handle for ${player.name} (mapped to ${mappedName}): ${twitchHandle}`);
+                break;
+              }
+            }
+          }
+        }
+      }
+      
+      return twitchHandle;
+    }
+
     function updateStreamForPlayer(selectedTab) {
       const team = selectedTab.dataset.team;
       const playerIndex = selectedTab.dataset.playerIndex;
@@ -1169,13 +1203,14 @@
         const player = roster[playerIndex];
         
         if (player) {
-          // Try different possible field names for Twitch handle
-          const twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
+          // Use the new function to get Twitch handle
+          const twitchHandle = getTwitchHandleForPlayer(player);
           
           if (twitchHandle) {
             const streamFrame = document.querySelector('.stream-frame');
             const parentQuery = `parent=${encodeURIComponent(window.location.hostname)}`;
             streamFrame.src = `https://player.twitch.tv/?channel=${twitchHandle}&${parentQuery}&autoplay=false`;
+            console.log(`Loading stream for ${player.name}: ${twitchHandle}`);
           } else {
             console.log('No Twitch handle found for player:', player);
           }
@@ -1335,10 +1370,29 @@
       console.log('Left background:', document.getElementById('bg-left').style.backgroundImage);
       console.log('Right background:', document.getElementById('bg-right').style.backgroundImage);
     }
+
+    // Test function to check player name mapping
+    function testPlayerMapping() {
+      console.log('Testing player name mapping...');
+      
+      // Test Panda -> Pandora mapping
+      const testPlayer = { name: 'Panda', twitch: '' };
+      const handle = getTwitchHandleForPlayer(testPlayer);
+      console.log(`Panda mapping result: ${handle}`);
+      
+      // Test Glem mapping
+      const testPlayer2 = { name: 'Glem', twitch: '' };
+      const handle2 = getTwitchHandleForPlayer(testPlayer2);
+      console.log(`Glem mapping result: ${handle2}`);
+      
+      // Show all available mappings
+      console.log('Available name mappings:', PLAYER_NAME_MAPPING);
+    }
     
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
+    window.testPlayerMapping = testPlayerMapping;
   </script>
 </body>
 </html>
