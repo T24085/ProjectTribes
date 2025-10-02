@@ -1015,6 +1015,89 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
+    
+    /* Poll Management Styles */
+    .poll-management {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    .current-poll {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+    .current-poll h4 {
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .poll-actions {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+    .poll-actions h4 {
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    .poll-actions .form-group {
+      margin-bottom: 1rem;
+    }
+    .poll-actions .form-group label {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .poll-actions .form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+    .poll-actions .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+    
+    .current-poll-content h5 {
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .poll-options {
+      margin-bottom: 1rem;
+    }
+    .poll-option {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(148, 163, 184, 0.1);
+      border-radius: 0.25rem;
+    }
+    .option-number {
+      font-weight: 600;
+      margin-right: 0.5rem;
+      color: var(--accent);
+    }
+    .option-text {
+      color: var(--text-primary);
+    }
+    .poll-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+    }
 
     /* Footer */
     footer {
@@ -1104,25 +1187,8 @@
       <div class="spectating-section">
         <div class="spectating-header">
           <div class="spectating-label">Spectating</div>
-          <button class="team-select-btn" id="team-select-btn">Select Teams</button>
         </div>
         
-        <!-- Team Selection Modal -->
-        <div class="team-selection-modal" id="team-selection-modal">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h3>Select Teams</h3>
-              <button class="modal-close" id="modal-close">&times;</button>
-            </div>
-            <div class="team-selection-grid" id="team-selection-grid">
-              <!-- Teams will be populated here -->
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn-secondary" id="cancel-selection">Cancel</button>
-              <button class="btn btn-primary" id="confirm-selection" disabled>Start Match</button>
-            </div>
-          </div>
-        </div>
 
         <div class="match-display" id="match-display">
           <div class="team-score" id="team-a-display">
@@ -1254,6 +1320,46 @@
                 <p>Checking live status...</p>
               </div>
             </div>
+            
+            <div class="admin-section">
+              <h3>Vote Polls</h3>
+              <div class="poll-management">
+                <div class="current-poll">
+                  <h4>Current Poll</h4>
+                  <div id="current-poll-display">
+                    <p>No active poll</p>
+                  </div>
+                </div>
+                
+                <div class="poll-actions">
+                  <h4>Create/Edit Poll</h4>
+                  <div class="form-group">
+                    <label for="poll-question">Poll Question:</label>
+                    <input id="poll-question" type="text" class="form-select" placeholder="Enter poll question">
+                  </div>
+                  <div class="form-group">
+                    <label for="poll-option-1">Option 1:</label>
+                    <input id="poll-option-1" type="text" class="form-select" placeholder="First option">
+                  </div>
+                  <div class="form-group">
+                    <label for="poll-option-2">Option 2:</label>
+                    <input id="poll-option-2" type="text" class="form-select" placeholder="Second option">
+                  </div>
+                  <div class="form-group">
+                    <label for="poll-option-3">Option 3 (optional):</label>
+                    <input id="poll-option-3" type="text" class="form-select" placeholder="Third option">
+                  </div>
+                  <div class="form-group">
+                    <label for="poll-option-4">Option 4 (optional):</label>
+                    <input id="poll-option-4" type="text" class="form-select" placeholder="Fourth option">
+                  </div>
+                  <div class="admin-actions">
+                    <button id="save-poll" class="btn btn-primary">Save Poll</button>
+                    <button id="clear-poll" class="btn btn-danger">Clear Poll</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1351,7 +1457,7 @@
     let teamRosters = {};
 
     document.addEventListener('DOMContentLoaded', function() {
-      initializeTeamSelection();
+      initializePollManagement();
       initializeChat();
       initializeVoting();
       
@@ -1509,87 +1615,131 @@
       }
     }
 
-    function initializeTeamSelection() {
-      const teamSelectBtn = document.getElementById('team-select-btn');
-      const modal = document.getElementById('team-selection-modal');
-      const modalClose = document.getElementById('modal-close');
-      const cancelBtn = document.getElementById('cancel-selection');
-      const confirmBtn = document.getElementById('confirm-selection');
-      const teamGrid = document.getElementById('team-selection-grid');
+    // Poll Management functionality
+    let currentPoll = null;
 
-      // Populate team grid
-      Object.entries(TEAM_DATA).forEach(([teamKey, teamInfo]) => {
-        const teamOption = document.createElement('div');
-        teamOption.className = 'team-option';
-        teamOption.dataset.teamKey = teamKey;
-        teamOption.innerHTML = `
-          <div class="team-option-logo">
-            <img src="${teamInfo.logo}" alt="${teamInfo.name}" onerror="this.style.display='none'">
+    async function loadCurrentPoll() {
+      try {
+        const docRef = doc(db, 'admin', 'currentPoll');
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          currentPoll = docSnap.data();
+          updateCurrentPollDisplay();
+          populatePollForm();
+        } else {
+          currentPoll = null;
+          updateCurrentPollDisplay();
+        }
+      } catch (error) {
+        console.error('Error loading current poll:', error);
+      }
+    }
+
+    function updateCurrentPollDisplay() {
+      const display = document.getElementById('current-poll-display');
+      if (!display) return;
+
+      if (currentPoll) {
+        display.innerHTML = `
+          <div class="current-poll-content">
+            <h5>${currentPoll.question}</h5>
+            <div class="poll-options">
+              ${currentPoll.options.map((option, index) => `
+                <div class="poll-option">
+                  <span class="option-number">${index + 1}.</span>
+                  <span class="option-text">${option}</span>
+                </div>
+              `).join('')}
+            </div>
+            <p class="poll-meta">Created: ${new Date(currentPoll.createdAt?.toDate?.() || currentPoll.createdAt).toLocaleString()}</p>
           </div>
-          <div class="team-option-name">${teamInfo.name}</div>
         `;
-        
-        teamOption.addEventListener('click', function() {
-          const teamKey = this.dataset.teamKey;
-          
-          // Check if this team is already selected
-          if (selectedTeams.teamA === teamKey || selectedTeams.teamB === teamKey) {
-            // Deselect if already selected
-            if (selectedTeams.teamA === teamKey) selectedTeams.teamA = null;
-            if (selectedTeams.teamB === teamKey) selectedTeams.teamB = null;
-            this.classList.remove('selected');
-          } else {
-            // Select team if we have space
-            if (!selectedTeams.teamA) {
-              selectedTeams.teamA = teamKey;
-              this.classList.add('selected');
-            } else if (!selectedTeams.teamB) {
-              selectedTeams.teamB = teamKey;
-              this.classList.add('selected');
-            } else {
-              // Both slots full, replace team A
-              const oldTeamA = document.querySelector(`[data-team-key="${selectedTeams.teamA}"]`);
-              if (oldTeamA) oldTeamA.classList.remove('selected');
-              selectedTeams.teamA = teamKey;
-              this.classList.add('selected');
-            }
-          }
-          
-          // Update confirm button state
-          confirmBtn.disabled = !selectedTeams.teamA || !selectedTeams.teamB;
-        });
-        
-        teamGrid.appendChild(teamOption);
-      });
+      } else {
+        display.innerHTML = '<p>No active poll</p>';
+      }
+    }
 
-      // Open modal
-      teamSelectBtn.addEventListener('click', () => {
-        modal.classList.add('active');
-      });
+    function populatePollForm() {
+      if (currentPoll) {
+        document.getElementById('poll-question').value = currentPoll.question || '';
+        document.getElementById('poll-option-1').value = currentPoll.options?.[0] || '';
+        document.getElementById('poll-option-2').value = currentPoll.options?.[1] || '';
+        document.getElementById('poll-option-3').value = currentPoll.options?.[2] || '';
+        document.getElementById('poll-option-4').value = currentPoll.options?.[3] || '';
+      }
+    }
 
-      // Close modal functions
-      function closeModal() {
-        modal.classList.remove('active');
+    async function savePoll() {
+      try {
+        const question = document.getElementById('poll-question').value.trim();
+        const option1 = document.getElementById('poll-option-1').value.trim();
+        const option2 = document.getElementById('poll-option-2').value.trim();
+        const option3 = document.getElementById('poll-option-3').value.trim();
+        const option4 = document.getElementById('poll-option-4').value.trim();
+
+        if (!question || !option1 || !option2) {
+          alert('Please fill in the question and at least two options.');
+          return;
+        }
+
+        const options = [option1, option2];
+        if (option3) options.push(option3);
+        if (option4) options.push(option4);
+
+        const pollData = {
+          question,
+          options,
+          createdAt: serverTimestamp(),
+          votes: {} // Initialize empty votes object
+        };
+
+        await setDoc(doc(db, 'admin', 'currentPoll'), pollData);
+        
+        currentPoll = pollData;
+        updateCurrentPollDisplay();
+        alert('Poll saved successfully!');
+      } catch (error) {
+        console.error('Error saving poll:', error);
+        alert('Failed to save poll. Please try again.');
+      }
+    }
+
+    async function clearPoll() {
+      try {
+        await setDoc(doc(db, 'admin', 'currentPoll'), {});
+        currentPoll = null;
+        updateCurrentPollDisplay();
+        
+        // Clear form
+        document.getElementById('poll-question').value = '';
+        document.getElementById('poll-option-1').value = '';
+        document.getElementById('poll-option-2').value = '';
+        document.getElementById('poll-option-3').value = '';
+        document.getElementById('poll-option-4').value = '';
+        
+        alert('Poll cleared successfully!');
+      } catch (error) {
+        console.error('Error clearing poll:', error);
+        alert('Failed to clear poll. Please try again.');
+      }
+    }
+
+    function initializePollManagement() {
+      // Load current poll
+      loadCurrentPoll();
+
+      // Set up event listeners
+      const saveBtn = document.getElementById('save-poll');
+      const clearBtn = document.getElementById('clear-poll');
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', savePoll);
       }
 
-      modalClose.addEventListener('click', closeModal);
-      cancelBtn.addEventListener('click', closeModal);
-
-      // Confirm selection
-      confirmBtn.addEventListener('click', () => {
-        if (selectedTeams.teamA && selectedTeams.teamB) {
-          updateMatchDisplay();
-          updatePlayerTabs();
-          closeModal();
-        }
-      });
-
-      // Close modal on backdrop click
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          closeModal();
-        }
-      });
+      if (clearBtn) {
+        clearBtn.addEventListener('click', clearPoll);
+      }
     }
 
     function updateMatchDisplay() {
@@ -2596,6 +2746,9 @@
 
       // Update live status
       updateLivePlayersStatus();
+      
+      // Load current poll
+      loadCurrentPoll();
     }
 
     // Show admin panel
@@ -2731,16 +2884,16 @@
                 <div class="team-metric-label">Total Assists</div>
               </div>
               <div class="team-metric">
-                <div class="team-metric-value">${teamAStats.totalDeaths}</div>
-                <div class="team-metric-label">Total Deaths</div>
+                <div class="team-metric-value">${teamAStats.totalScore}</div>
+                <div class="team-metric-label">Total Score</div>
               </div>
               <div class="team-metric">
-                <div class="team-metric-value">${teamAStats.kdRatio.toFixed(2)}</div>
-                <div class="team-metric-label">K/D Ratio</div>
+                <div class="team-metric-value">${teamAStats.totalCaptures}</div>
+                <div class="team-metric-label">Total Captures</div>
               </div>
               <div class="team-metric">
-                <div class="team-metric-value">${teamAStats.avgKillsPerMinute.toFixed(2)}</div>
-                <div class="team-metric-label">Kills/Min</div>
+                <div class="team-metric-value">${teamAStats.totalReturns}</div>
+                <div class="team-metric-label">Total Returns</div>
               </div>
               <div class="team-metric">
                 <div class="team-metric-value">${teamAStats.totalTime.toFixed(1)}h</div>
@@ -2764,16 +2917,16 @@
                 <div class="team-metric-label">Total Assists</div>
               </div>
               <div class="team-metric">
-                <div class="team-metric-value">${teamBStats.totalDeaths}</div>
-                <div class="team-metric-label">Total Deaths</div>
+                <div class="team-metric-value">${teamBStats.totalScore}</div>
+                <div class="team-metric-label">Total Score</div>
               </div>
               <div class="team-metric">
-                <div class="team-metric-value">${teamBStats.kdRatio.toFixed(2)}</div>
-                <div class="team-metric-label">K/D Ratio</div>
+                <div class="team-metric-value">${teamBStats.totalCaptures}</div>
+                <div class="team-metric-label">Total Captures</div>
               </div>
               <div class="team-metric">
-                <div class="team-metric-value">${teamBStats.avgKillsPerMinute.toFixed(2)}</div>
-                <div class="team-metric-label">Kills/Min</div>
+                <div class="team-metric-value">${teamBStats.totalReturns}</div>
+                <div class="team-metric-label">Total Returns</div>
               </div>
               <div class="team-metric">
                 <div class="team-metric-value">${teamBStats.totalTime.toFixed(1)}h</div>
@@ -2804,18 +2957,18 @@
           </div>
           
           <div class="comparison-metric">
-            <div class="comparison-metric-label">K/D Ratio</div>
+            <div class="comparison-metric-label">Total Score</div>
             <div class="comparison-metric-values">
-              <div class="comparison-value ${teamAStats.kdRatio > teamBStats.kdRatio ? 'winner' : teamAStats.kdRatio < teamBStats.kdRatio ? 'loser' : ''}">${teamAStats.kdRatio.toFixed(2)}</div>
-              <div class="comparison-value ${teamBStats.kdRatio > teamAStats.kdRatio ? 'winner' : teamBStats.kdRatio < teamAStats.kdRatio ? 'loser' : ''}">${teamBStats.kdRatio.toFixed(2)}</div>
+              <div class="comparison-value ${teamAStats.totalScore > teamBStats.totalScore ? 'winner' : teamAStats.totalScore < teamBStats.totalScore ? 'loser' : ''}">${teamAStats.totalScore}</div>
+              <div class="comparison-value ${teamBStats.totalScore > teamAStats.totalScore ? 'winner' : teamBStats.totalScore < teamAStats.totalScore ? 'loser' : ''}">${teamBStats.totalScore}</div>
             </div>
           </div>
           
           <div class="comparison-metric">
-            <div class="comparison-metric-label">Kills/Min</div>
+            <div class="comparison-metric-label">Total Captures</div>
             <div class="comparison-metric-values">
-              <div class="comparison-value ${teamAStats.avgKillsPerMinute > teamBStats.avgKillsPerMinute ? 'winner' : teamAStats.avgKillsPerMinute < teamBStats.avgKillsPerMinute ? 'loser' : ''}">${teamAStats.avgKillsPerMinute.toFixed(2)}</div>
-              <div class="comparison-value ${teamBStats.avgKillsPerMinute > teamAStats.avgKillsPerMinute ? 'winner' : teamBStats.avgKillsPerMinute < teamAStats.avgKillsPerMinute ? 'loser' : ''}">${teamBStats.avgKillsPerMinute.toFixed(2)}</div>
+              <div class="comparison-value ${teamAStats.totalCaptures > teamBStats.totalCaptures ? 'winner' : teamAStats.totalCaptures < teamBStats.totalCaptures ? 'loser' : ''}">${teamAStats.totalCaptures}</div>
+              <div class="comparison-value ${teamBStats.totalCaptures > teamAStats.totalCaptures ? 'winner' : teamBStats.totalCaptures < teamAStats.totalCaptures ? 'loser' : ''}">${teamBStats.totalCaptures}</div>
             </div>
           </div>
         </div>
@@ -2827,7 +2980,9 @@
     function calculateTeamStats(roster) {
       let totalKills = 0;
       let totalAssists = 0;
-      let totalDeaths = 0;
+      let totalScore = 0;
+      let totalCaptures = 0;
+      let totalReturns = 0;
       let totalTime = 0;
 
       roster.forEach(player => {
@@ -2850,22 +3005,26 @@
           if (playerStats) {
             totalKills += parseFloat(playerStats.kills) || 0;
             totalAssists += parseFloat(playerStats.assists) || 0;
-            totalDeaths += parseFloat(playerStats.deaths) || 0;
+            totalScore += parseFloat(playerStats.score) || 0;
+            totalCaptures += parseFloat(playerStats.captures) || 0;
+            totalReturns += parseFloat(playerStats.returns) || 0;
             totalTime += parseFloat(playerStats.time) || 0;
           }
         }
       });
 
-      const kdRatio = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
       const avgKillsPerMinute = totalTime > 0 ? (totalKills / (totalTime * 60)) : 0;
+      const avgScorePerMinute = totalTime > 0 ? (totalScore / (totalTime * 60)) : 0;
 
       return {
         totalKills,
         totalAssists,
-        totalDeaths,
+        totalScore,
+        totalCaptures,
+        totalReturns,
         totalTime,
-        kdRatio,
-        avgKillsPerMinute
+        avgKillsPerMinute,
+        avgScorePerMinute
       };
     }
 
