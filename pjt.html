@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tribes Professional League | Spectating Platform</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="Tribes Professional League.png" type="image/png">
+  <style>
+    :root {
+      --bg-color: #030712;
+      --bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 55%), radial-gradient(circle at 80% 30%, rgba(129, 140, 248, 0.12), transparent 60%), linear-gradient(220deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.94));
+      --panel-bg: rgba(15, 23, 42, 0.82);
+      --surface-glass: rgba(17, 24, 39, 0.65);
+      --card-bg: rgba(13, 19, 33, 0.84);
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+      --accent-strong: #38bdf8;
+      --success: #22c55e;
+      --danger: #f87171;
+      --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-gradient), var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    nav#global-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(8, 11, 26, 0.85);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      backdrop-filter: blur(16px);
+      padding: 1rem 2rem;
+    }
+
+    .header-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-brand img {
+      height: 46px;
+      width: auto;
+      border-radius: 0.75rem;
+      background: rgba(30, 41, 59, 0.65);
+      padding: 0.35rem 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .nav-link {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background var(--transition-snappy);
+    }
+
+    .nav-link:hover {
+      background: rgba(129, 140, 248, 0.2);
+    }
+
+    .auth-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all var(--transition-snappy);
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: rgba(129, 140, 248, 0.3);
+      border-color: rgba(129, 140, 248, 0.5);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.9), rgba(56, 189, 248, 0.9));
+      border: none;
+      color: #020617;
+      font-weight: 700;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 2rem;
+      min-height: calc(100vh - 100px);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Spectating Section */
+    .spectating-section {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .spectating-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .spectating-label {
+      background: var(--danger);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .team-select-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+    }
+
+    .team-select-btn:hover {
+      background: #7c3aed;
+      transform: translateY(-1px);
+    }
+
+    /* Team Selection Modal */
+    .team-selection-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .team-selection-modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+    }
+
+    .team-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .team-option {
+      background: var(--surface-glass);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+    }
+
+    .team-option:hover {
+      border-color: rgba(129, 140, 248, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .team-option.selected {
+      border-color: var(--accent);
+      background: rgba(139, 92, 246, 0.2);
+    }
+
+    .team-option-logo {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 0.5rem;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .team-option-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .team-option-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+
+    .btn-secondary {
+      background: rgba(148, 163, 184, 0.2);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Match Display */
+    .match-display {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      margin: 1rem 0;
+      position: relative;
+      min-height: 200px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .match-display::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+
+    .match-display.has-background::before {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .match-display > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .team-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .team-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .team-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .team-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      text-align: center;
+      color: white;
+    }
+
+    .vs-text {
+      font-size: 2rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Player Tabs */
+    .player-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .player-tabs::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .player-tabs::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+
+    .player-tabs::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .player-tab {
+      padding: 0.75rem 1rem;
+      background: var(--surface-glass);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+
+    .player-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .player-tab:hover:not(.active) {
+      background: rgba(129, 140, 248, 0.2);
+      border-color: rgba(129, 140, 248, 0.3);
+    }
+
+    /* Active Stream */
+    .active-stream {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+    }
+
+    .stream-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .sidebar-section {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .sidebar-section h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    /* Voting Section */
+    .voting-section {
+      text-align: center;
+    }
+
+    .vote-buttons {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .vote-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      background: var(--surface-glass);
+      color: var(--text-primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+    }
+
+    .vote-btn:hover {
+      border-color: var(--accent);
+      background: rgba(139, 92, 246, 0.2);
+    }
+
+    .vote-btn.voted {
+      border-color: var(--success);
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    /* Chat Section */
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-messages {
+      flex: 1;
+      min-height: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .chat-input-container {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      background: var(--surface-glass);
+      color: var(--text-primary);
+    }
+
+    .chat-send {
+      padding: 0.5rem 1rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Match Cards */
+    .match-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .match-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .match-card h4 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    /* Footer */
+    footer {
+      background: var(--card-bg);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 2rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .sidebar {
+        order: -1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 1rem;
+      }
+
+      .header-container {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .header-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .match-display {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .vs-text {
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <nav id="global-header">
+    <div class="header-container">
+      <div class="header-brand">
+        <img src="Tribes Professional League.png" alt="Tribes Professional League logo" onerror="this.style.display='none'">
+        <div>
+          <h1 class="brand-title">Tribes Professional League</h1>
+          <p class="brand-subtitle">Spectating Platform</p>
+        </div>
+      </div>
+      <div class="header-nav">
+        <a href="#" class="nav-link">Main</a>
+        <a href="#" class="nav-link">Matches</a>
+        <a href="#" class="nav-link">Statistics</a>
+        <a href="#" class="nav-link">News</a>
+      </div>
+      <div class="auth-buttons">
+        <a href="#" class="btn">Login / Register</a>
+        <a href="#" class="btn btn-primary">Continue with Twitch</a>
+        <a href="#" class="btn btn-primary">Continue with Discord</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Spectating Section -->
+      <div class="spectating-section">
+        <div class="spectating-header">
+          <div class="spectating-label">Spectating</div>
+          <button class="team-select-btn" id="team-select-btn">Select Teams</button>
+        </div>
+        
+        <!-- Team Selection Modal -->
+        <div class="team-selection-modal" id="team-selection-modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Select Teams</h3>
+              <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="team-selection-grid" id="team-selection-grid">
+              <!-- Teams will be populated here -->
+            </div>
+            <div class="modal-actions">
+              <button class="btn btn-secondary" id="cancel-selection">Cancel</button>
+              <button class="btn btn-primary" id="confirm-selection" disabled>Start Match</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="match-display" id="match-display">
+          <div class="team-score" id="team-a-display">
+            <div class="team-logo" id="team-a-logo">
+              <img src="images/TeamDPRKLogo3.png" alt="Team A" onerror="this.style.display='none'">
+            </div>
+            <div class="team-name" id="team-a-name">Team A</div>
+          </div>
+          <div class="vs-text">VS</div>
+          <div class="team-score" id="team-b-display">
+            <div class="team-logo" id="team-b-logo">
+              <img src="images/TeamDPRKLogo3.png" alt="Team B" onerror="this.style.display='none'">
+            </div>
+            <div class="team-name" id="team-b-name">Team B</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player Tabs -->
+      <div class="player-tabs" id="player-tabs">
+        <!-- Player tabs will be populated here -->
+      </div>
+
+      <!-- Active Stream -->
+      <div class="active-stream">
+        <iframe class="stream-frame" src="https://player.twitch.tv/?channel=tribesprofessionalleague&parent=localhost&autoplay=false" allowfullscreen></iframe>
+      </div>
+
+      <!-- Match Cards -->
+      <div class="match-cards">
+        <div class="match-card">
+          <h4>Match Statistics</h4>
+          <p>Live match statistics will appear here</p>
+        </div>
+        <div class="match-card">
+          <h4>Recent Matches</h4>
+          <p>Recent match results will appear here</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Voting Section -->
+      <div class="sidebar-section voting-section">
+        <h3>Vote for Winner</h3>
+        <div class="vote-buttons">
+          <button class="vote-btn" id="vote-team-a">Team A</button>
+          <button class="vote-btn" id="vote-team-b">Team B</button>
+        </div>
+      </div>
+
+      <!-- Chat Section -->
+      <div class="sidebar-section chat-section">
+        <h3>Live Chat</h3>
+        <div class="chat-messages" id="chat-messages">
+          <p style="color: var(--text-muted); text-align: center;">Chat messages will appear here</p>
+        </div>
+        <div class="chat-input-container">
+          <input type="text" class="chat-input" id="chat-input" placeholder="Type a message...">
+          <button class="chat-send" id="chat-send">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2024 Tribes Professional League. All rights reserved.</p>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+
+    const TEAM_DATA = {
+      'Avalanche': { logo: 'TribesLeagueLogo\'s/aV!.png', name: 'Avalanche', folder: 'AV!' },
+      'ePidemic': { logo: 'TribesLeagueLogo\'s/ePi.png', name: 'ePidemic', folder: 'EPI' },
+      'DPRK': { logo: 'TribesLeagueLogo\'s/TeamDPRKLogo3.png', name: 'DPRK', folder: 'DPRK' },
+      'Zen': { logo: 'TribesLeagueLogo\'s/Zenlogo.png', name: 'Zen', folder: 'ZEN' },
+      'TXM': { logo: 'TribesLeagueLogo\'s/TXM.png', name: 'TXM', folder: 'TXM' },
+      'FPS': { logo: 'TribesLeagueLogo\'s/FPSlogo.png', name: 'Flag Pole Smokers', folder: 'FPS' },
+      'FT': { logo: 'TribesLeagueLogo\'s/FTlogo.png', name: 'Flying Tractors', folder: 'FT' },
+      'HoE': { logo: 'TribesLeagueLogo\'s/HoE.png', name: 'Hegemony of Euros', folder: 'HOE' },
+      'Magic': { logo: 'TribesLeagueLogo\'s/Magic.png', name: 'Magic', folder: 'WIZ' },
+      'DeadStop': { logo: 'DeadStopLogo.png', name: 'DeadStop', folder: 'DS' },
+      'UE': { logo: 'TribesLeagueLogo\'s/UE.png', name: 'Unhandled Exception', folder: 'UE' },
+      'KTL': { logo: 'TribesLeagueLogo\'s/KTLlogo.png', name: 'KTL', folder: 'KTL' },
+      'Null': { logo: 'TribesLeagueLogo\'s/NullLogo.png', name: 'null', folder: 'Null' },
+      'ToxicAimers': { logo: 'TribesLeagueLogo\'s/ToxicAimersLogo.png', name: 'Toxic Aimers', folder: 'TA' }
+    };
+
+    let selectedTeams = { teamA: null, teamB: null };
+    let teamRosters = {};
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeTeamSelection();
+      initializeChat();
+      initializeVoting();
+      loadTeamRosters();
+    });
+
+    async function loadTeamRosters() {
+      try {
+        const teamsRef = collection(db, 'teams');
+        const teamsSnapshot = await getDocs(teamsRef);
+        
+        teamsSnapshot.forEach(doc => {
+          const teamData = doc.data();
+          if (teamData.teamName) {
+            // Load complete roster including all players and bench players
+            const completeRoster = [];
+            
+            // Add main roster players
+            if (teamData.players && Array.isArray(teamData.players)) {
+              completeRoster.push(...teamData.players);
+            }
+            
+            // Add bench players if they exist
+            if (teamData.benchPlayers && Array.isArray(teamData.benchPlayers)) {
+              completeRoster.push(...teamData.benchPlayers);
+            }
+            
+            // Add any additional roster data
+            if (teamData.roster && Array.isArray(teamData.roster)) {
+              completeRoster.push(...teamData.roster);
+            }
+            
+            teamRosters[teamData.teamName] = completeRoster;
+          }
+        });
+        
+        console.log('Loaded complete team rosters:', teamRosters);
+      } catch (error) {
+        console.error('Error loading team rosters:', error);
+      }
+    }
+
+    function initializeTeamSelection() {
+      const teamSelectBtn = document.getElementById('team-select-btn');
+      const modal = document.getElementById('team-selection-modal');
+      const modalClose = document.getElementById('modal-close');
+      const cancelBtn = document.getElementById('cancel-selection');
+      const confirmBtn = document.getElementById('confirm-selection');
+      const teamGrid = document.getElementById('team-selection-grid');
+
+      // Populate team grid
+      Object.entries(TEAM_DATA).forEach(([teamKey, teamInfo]) => {
+        const teamOption = document.createElement('div');
+        teamOption.className = 'team-option';
+        teamOption.dataset.teamKey = teamKey;
+        teamOption.innerHTML = `
+          <div class="team-option-logo">
+            <img src="${teamInfo.logo}" alt="${teamInfo.name}" onerror="this.style.display='none'">
+          </div>
+          <div class="team-option-name">${teamInfo.name}</div>
+        `;
+        
+        teamOption.addEventListener('click', function() {
+          const teamKey = this.dataset.teamKey;
+          
+          // Check if this team is already selected
+          if (selectedTeams.teamA === teamKey || selectedTeams.teamB === teamKey) {
+            // Deselect if already selected
+            if (selectedTeams.teamA === teamKey) selectedTeams.teamA = null;
+            if (selectedTeams.teamB === teamKey) selectedTeams.teamB = null;
+            this.classList.remove('selected');
+          } else {
+            // Select team if we have space
+            if (!selectedTeams.teamA) {
+              selectedTeams.teamA = teamKey;
+              this.classList.add('selected');
+            } else if (!selectedTeams.teamB) {
+              selectedTeams.teamB = teamKey;
+              this.classList.add('selected');
+            } else {
+              // Both slots full, replace team A
+              const oldTeamA = document.querySelector(`[data-team-key="${selectedTeams.teamA}"]`);
+              if (oldTeamA) oldTeamA.classList.remove('selected');
+              selectedTeams.teamA = teamKey;
+              this.classList.add('selected');
+            }
+          }
+          
+          // Update confirm button state
+          confirmBtn.disabled = !selectedTeams.teamA || !selectedTeams.teamB;
+        });
+        
+        teamGrid.appendChild(teamOption);
+      });
+
+      // Open modal
+      teamSelectBtn.addEventListener('click', () => {
+        modal.classList.add('active');
+      });
+
+      // Close modal functions
+      function closeModal() {
+        modal.classList.remove('active');
+      }
+
+      modalClose.addEventListener('click', closeModal);
+      cancelBtn.addEventListener('click', closeModal);
+
+      // Confirm selection
+      confirmBtn.addEventListener('click', () => {
+        if (selectedTeams.teamA && selectedTeams.teamB) {
+          updateMatchDisplay();
+          updatePlayerTabs();
+          closeModal();
+        }
+      });
+
+      // Close modal on backdrop click
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeModal();
+        }
+      });
+    }
+
+    function updateMatchDisplay() {
+      const teamA = TEAM_DATA[selectedTeams.teamA];
+      const teamB = TEAM_DATA[selectedTeams.teamB];
+      const matchDisplay = document.getElementById('match-display');
+      
+      if (teamA) {
+        document.getElementById('team-a-name').textContent = teamA.name;
+        document.getElementById('team-a-logo').innerHTML = `<img src="${teamA.logo}" alt="${teamA.name}" onerror="this.style.display='none'">`;
+      }
+      
+      if (teamB) {
+        document.getElementById('team-b-name').textContent = teamB.name;
+        document.getElementById('team-b-logo').innerHTML = `<img src="${teamB.logo}" alt="${teamB.name}" onerror="this.style.display='none'">`;
+      }
+      
+      // Set background image based on team matchup
+      if (teamA && teamB) {
+        loadMatchupImageWithFallbacks(teamA.folder, teamB.folder, matchDisplay);
+      }
+    }
+    
+    function loadMatchupImageWithFallbacks(teamAFolder, teamBFolder, matchDisplay) {
+      console.log('Loading matchup image for:', teamAFolder, 'vs', teamBFolder);
+      
+      // Try different naming conventions
+      const possiblePaths = [
+        `TribesLeagueLogo's/TeamMatchUps/${teamAFolder}/${teamAFolder}vs${teamBFolder}.png`,
+        `TribesLeagueLogo's/TeamMatchUps/${teamBFolder}/${teamBFolder}vs${teamAFolder}.png`,
+        `TribesLeagueLogo's/TeamMatchUps/${teamAFolder}/${teamAFolder}Vs${teamBFolder}.png`,
+        `TribesLeagueLogo's/TeamMatchUps/${teamBFolder}/${teamBFolder}Vs${teamAFolder}.png`,
+        `TribesLeagueLogo's/TeamMatchUps/${teamAFolder}/${teamAFolder}VS${teamBFolder}.png`,
+        `TribesLeagueLogo's/TeamMatchUps/${teamBFolder}/${teamBFolder}VS${teamAFolder}.png`,
+        // Try with exact case matching for known files
+        `TribesLeagueLogo's/TeamMatchUps/DPRK/DPRKvsZen.png`,
+        `TribesLeagueLogo's/TeamMatchUps/ZEN/DPRKvsZen.png`
+      ];
+      
+      console.log('All possible paths:', possiblePaths);
+      
+      let currentIndex = 0;
+      
+      function tryNextPath() {
+        if (currentIndex >= possiblePaths.length) {
+          console.log('All matchup image paths failed, removing background');
+          matchDisplay.style.backgroundImage = 'none';
+          return;
+        }
+        
+        const currentPath = possiblePaths[currentIndex];
+        console.log(`Trying matchup image path ${currentIndex + 1}/${possiblePaths.length}:`, currentPath);
+        
+        const testImage = new Image();
+        
+        testImage.onload = function() {
+          console.log('✅ Matchup image loaded successfully:', currentPath);
+          matchDisplay.style.backgroundImage = `url(${currentPath})`;
+          matchDisplay.style.backgroundSize = 'cover';
+          matchDisplay.style.backgroundPosition = 'center';
+          matchDisplay.style.backgroundRepeat = 'no-repeat';
+          matchDisplay.classList.add('has-background');
+        };
+        
+        testImage.onerror = function() {
+          console.log('❌ Failed to load:', currentPath);
+          currentIndex++;
+          tryNextPath();
+        };
+        
+        testImage.src = currentPath;
+      }
+      
+      tryNextPath();
+    }
+
+    function updatePlayerTabs() {
+      const playerTabs = document.querySelector('.player-tabs');
+      const teamA = selectedTeams.teamA;
+      const teamB = selectedTeams.teamB;
+      
+      if (!teamA || !teamB) return;
+      
+      const teamARoster = teamRosters[teamA] || [];
+      const teamBRoster = teamRosters[teamB] || [];
+      
+      // Clear existing tabs
+      playerTabs.innerHTML = '';
+      
+      // Add team A players (all roster players)
+      teamARoster.forEach((player, index) => {
+        const tab = document.createElement('button');
+        tab.className = `player-tab ${index === 0 ? 'active' : ''}`;
+        tab.textContent = player.name || player.displayName || `Player ${index + 1}`;
+        tab.dataset.team = 'A';
+        tab.dataset.playerIndex = index;
+        playerTabs.appendChild(tab);
+      });
+      
+      // Add team B players (all roster players)
+      teamBRoster.forEach((player, index) => {
+        const tab = document.createElement('button');
+        tab.className = 'player-tab';
+        tab.textContent = player.name || player.displayName || `Player ${index + 1}`;
+        tab.dataset.team = 'B';
+        tab.dataset.playerIndex = index;
+        playerTabs.appendChild(tab);
+      });
+      
+      // Add match stats tab
+      const statsTab = document.createElement('button');
+      statsTab.className = 'player-tab';
+      statsTab.textContent = 'Match Stats';
+      playerTabs.appendChild(statsTab);
+      
+      // Re-initialize tab functionality
+      initializePlayerTabs();
+    }
+
+    function initializePlayerTabs() {
+      const playerTabs = document.querySelectorAll('.player-tab');
+      playerTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          // Remove active class from all tabs
+          playerTabs.forEach(t => t.classList.remove('active'));
+          // Add active class to clicked tab
+          this.classList.add('active');
+          
+          // Update stream if it's a player tab
+          if (this.dataset.team && this.dataset.playerIndex !== undefined) {
+            updateStreamForPlayer(this);
+          }
+        });
+      });
+    }
+
+    function updateStreamForPlayer(selectedTab) {
+      const team = selectedTab.dataset.team;
+      const playerIndex = selectedTab.dataset.playerIndex;
+      
+      if (team && playerIndex !== undefined) {
+        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+        const roster = teamRosters[teamKey] || [];
+        const player = roster[playerIndex];
+        
+        if (player) {
+          // Try different possible field names for Twitch handle
+          const twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
+          
+          if (twitchHandle) {
+            const streamFrame = document.querySelector('.stream-frame');
+            const parentQuery = `parent=${encodeURIComponent(window.location.hostname)}`;
+            streamFrame.src = `https://player.twitch.tv/?channel=${twitchHandle}&${parentQuery}&autoplay=false`;
+          } else {
+            console.log('No Twitch handle found for player:', player);
+          }
+        }
+      }
+    }
+
+    function initializeChat() {
+      const chatInput = document.querySelector('.chat-input');
+      const chatSend = document.querySelector('.chat-send');
+      const chatMessages = document.querySelector('.chat-messages');
+
+      function addMessage(message, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.style.marginBottom = '0.5rem';
+        messageDiv.style.padding = '0.5rem';
+        messageDiv.style.borderRadius = '4px';
+        messageDiv.style.backgroundColor = isUser ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+        messageDiv.textContent = message;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      chatSend.addEventListener('click', () => {
+        const message = chatInput.value.trim();
+        if (message) {
+          addMessage(`You: ${message}`, true);
+          chatInput.value = '';
+          
+          // Simulate response
+          setTimeout(() => {
+            addMessage('ChatBot: Thanks for the message!');
+          }, 1000);
+        }
+      });
+
+      chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          chatSend.click();
+        }
+      });
+    }
+
+    function initializeVoting() {
+      const voteButtons = document.querySelectorAll('.vote-btn');
+      
+      voteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          // Remove voted class from all buttons
+          voteButtons.forEach(btn => btn.classList.remove('voted'));
+          // Add voted class to clicked button
+          this.classList.add('voted');
+          
+          // Show confirmation
+          const teamName = this.textContent;
+          alert(`You voted for ${teamName}!`);
+        });
+      });
+    }
+
+    // Test function to manually load DPRK vs Zen image
+    function testDPRKvsZen() {
+      const matchDisplay = document.getElementById('match-display');
+      const testPath = "TribesLeagueLogo's/TeamMatchUps/DPRK/DPRKvsZen.png";
+      console.log('Testing direct path:', testPath);
+      
+      const testImage = new Image();
+      testImage.onload = function() {
+        console.log('✅ Direct test successful!');
+        matchDisplay.style.backgroundImage = `url(${testPath})`;
+        matchDisplay.style.backgroundSize = 'cover';
+        matchDisplay.style.backgroundPosition = 'center';
+        matchDisplay.style.backgroundRepeat = 'no-repeat';
+        matchDisplay.classList.add('has-background');
+      };
+      testImage.onerror = function() {
+        console.log('❌ Direct test failed!');
+      };
+      testImage.src = testPath;
+    }
+    
+    // Make test function available globally for debugging
+    window.testDPRKvsZen = testDPRKvsZen;
+  </script>
+</body>
+</html>
