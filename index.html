@@ -1544,20 +1544,20 @@
     ];
 
     const TEAM_DATA = {
-      'Avalanche': { logo: 'https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true', name: 'Avalanche', folder: 'AV!' },
-      'ePidemic': { logo: 'https://github.com/T24085/Team-ePi/blob/main/ePi.png?raw=true', name: 'ePidemic', folder: 'EPI' },
+      'AV!': { logo: 'https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true', name: 'Avalanche', folder: 'AV!' },
+      'EPI': { logo: 'https://github.com/T24085/Team-ePi/blob/main/ePi.png?raw=true', name: 'ePidemic', folder: 'EPI' },
       'DPRK': { logo: 'https://github.com/T24085/TeamDPRK/blob/main/TeamDPRKLogo3.png?raw=true', name: 'DPRK', folder: 'DPRK' },
       'Zen': { logo: 'https://github.com/T24085/Team-Zen/blob/main/Zenlogo.png?raw=true', name: 'Zen', folder: 'ZEN' },
-      'TXM': { logo: 'https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true', name: 'TXM', folder: 'TXM' },
+      'TXM': { logo: 'https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true', name: 'Texas Militia', folder: 'TXM' },
       'FPS': { logo: 'https://github.com/T24085/Team-FPS/blob/main/FPSlogo.png?raw=true', name: 'Flag Pole Smokers', folder: 'FPS' },
       'FT': { logo: 'https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true', name: 'Flying Tractors', folder: 'FT' },
       'HoE': { logo: 'https://github.com/T24085/Team-HOE/blob/main/HoE.png?raw=true', name: 'Hegemony of Euros', folder: 'HOE' },
-      'Magic': { logo: 'https://github.com/T24085/Team-Magic/blob/main/Magic.png?raw=true', name: 'Magic', folder: 'WIZ' },
-      'DeadStop': { logo: 'DeadStopLogo.png', name: 'DeadStop', folder: 'DS' },
+      'WIZ': { logo: 'https://github.com/T24085/Team-Magic/blob/main/Magic.png?raw=true', name: 'Magic', folder: 'WIZ' },
+      'DS': { logo: 'DeadStopLogo.png', name: 'DeadStop', folder: 'DS' },
       'UE': { logo: 'https://github.com/T24085/Team-UE/blob/main/UE.png?raw=true', name: 'Unhandled Exception', folder: 'UE' },
-      'KTL': { logo: 'https://github.com/T24085/Team-KTL/blob/main/KTLlogo.png?raw=true', name: 'KTL', folder: 'KTL' },
+      'KTL': { logo: 'https://github.com/T24085/Team-KTL/blob/main/KTLlogo.png?raw=true', name: 'Kicked to Lobby', folder: 'KTL' },
       'Null': { logo: 'https://github.com/T24085/Team-Null/blob/main/NullLogo.png?raw=true', name: 'null', folder: 'Null' },
-      'ToxicAimers': { logo: 'https://github.com/T24085/Team-Toxic-Aimers/blob/main/ToxicAimersLogo.png?raw=true', name: 'Toxic Aimers', folder: 'TA' }
+      'TA': { logo: 'https://github.com/T24085/Team-Toxic-Aimers/blob/main/ToxicAimersLogo.png?raw=true', name: 'Toxic Aimers', folder: 'TA' }
     };
 
     // Function to find team data by name (handles variations in team names)
@@ -1576,16 +1576,20 @@
         }
       }
       
-      // Handle common variations
+      // Handle common variations - map full names to abbreviations
       const variations = {
-        'Avalanche!': 'Avalanche',
+        'Avalanche!': 'AV!',
+        'Avalanche': 'AV!',
+        'ePidemic': 'EPI',
         'Hegemony of Euros': 'HoE',
         'Flying Tractors': 'FT',
         'Flag Pole Smokers': 'FPS',
-        'Toxic Aimers': 'ToxicAimers',
+        'Toxic Aimers': 'TA',
         'Texas Militia': 'TXM',
         'Kicked to Lobby': 'KTL',
         'Unhandled Exception': 'UE',
+        'Magic': 'WIZ',
+        'DeadStop': 'DS',
         'null': 'Null'
       };
       
@@ -1652,7 +1656,17 @@
       // Set up periodic live player checks
       setInterval(() => {
         updateLivePlayerIndicators();
-      }, 30000); // Check every 30 seconds
+      }, 10000); // Check every 10 seconds
+      
+      // Also check more frequently for the first few minutes
+      let quickChecks = 0;
+      const quickInterval = setInterval(() => {
+        updateLivePlayerIndicators();
+        quickChecks++;
+        if (quickChecks >= 12) { // Stop after 2 minutes (12 * 10 seconds)
+          clearInterval(quickInterval);
+        }
+      }, 10000);
     });
 
     // Set up admin system event listeners
@@ -3970,6 +3984,72 @@
     window.forceUpdateLiveIndicators = function() {
       console.log('Manually triggering live indicator update...');
       updateLivePlayerIndicators();
+    };
+    
+    // Comprehensive live indicators debug
+    window.debugLiveIndicatorsSystem = function() {
+      console.log('=== Live Indicators System Debug ===');
+      
+      // Check basic system status
+      console.log('1. System Status:');
+      console.log('  - Twitch OAuth available:', !!window.twitchOAuth);
+      console.log('  - Selected teams:', selectedTeams);
+      console.log('  - Team rosters loaded:', Object.keys(teamRosters).length > 0);
+      
+      // Check live streams data
+      console.log('2. Live Streams Data:');
+      if (window.twitchOAuth?.liveStreams) {
+        console.log('  - Live streams count:', window.twitchOAuth.liveStreams.length);
+        console.log('  - Live streams:', window.twitchOAuth.liveStreams.map(s => ({ 
+          name: s.user_name, 
+          login: s.user_login,
+          title: s.title 
+        })));
+      } else {
+        console.log('  - No live streams data available');
+      }
+      
+      // Check player tabs
+      console.log('3. Player Tabs:');
+      const playerTabs = document.querySelectorAll('.player-tab');
+      console.log('  - Total player tabs found:', playerTabs.length);
+      
+      playerTabs.forEach((tab, index) => {
+        const team = tab.dataset.team;
+        const playerIndex = tab.dataset.playerIndex;
+        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+        const roster = teamRosters[teamKey] || [];
+        const player = roster[playerIndex];
+        
+        if (player) {
+          const playerName = player.name || player.displayName;
+          const twitchHandle = getTwitchHandleForPlayer(player);
+          const hasLiveClass = tab.classList.contains('live');
+          
+          console.log(`  - Tab ${index + 1}: ${playerName} (${teamKey}) -> Twitch: ${twitchHandle} -> Live: ${hasLiveClass}`);
+        }
+      });
+      
+      // Check if updateLivePlayerIndicators is being called
+      console.log('4. Testing Live Indicator Update:');
+      console.log('  - Calling updateLivePlayerIndicators...');
+      updateLivePlayerIndicators();
+      
+      // Check CSS classes after update
+      setTimeout(() => {
+        console.log('5. After Update Check:');
+        const liveTabs = document.querySelectorAll('.player-tab.live');
+        console.log('  - Tabs with live class:', liveTabs.length);
+        liveTabs.forEach((tab, index) => {
+          const team = tab.dataset.team;
+          const playerIndex = tab.dataset.playerIndex;
+          const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+          const roster = teamRosters[teamKey] || [];
+          const player = roster[playerIndex];
+          const playerName = player ? (player.name || player.displayName) : 'Unknown';
+          console.log(`    - Live tab ${index + 1}: ${playerName}`);
+        });
+      }, 1000);
     };
     
     // Specific debug for Panda
