@@ -860,7 +860,19 @@
       font-weight: 700;
       letter-spacing: -0.01em;
     }
-    .match-poll__subhead,
+    .match-poll__subhead {
+      margin: 0;
+      color: rgba(226, 232, 240, 0.72);
+      font-size: 0.9rem;
+      line-height: 1.45;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 3rem;
+    }
+    .match-poll__subhead > * {
+      flex: 1 1 auto;
+    }
     .match-poll__meta,
     .match-poll__status {
       margin: 0;
@@ -869,6 +881,40 @@
       line-height: 1.45;
     }
     .match-poll__status { font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(148, 163, 184, 0.9); }
+    .match-poll__subhead-text {
+      display: inline-block;
+    }
+    .vs-image {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      max-width: 100%;
+    }
+    .vs-image img {
+      display: block;
+      max-width: min(100%, 420px);
+      height: auto;
+      filter: drop-shadow(0 24px 36px -20px rgba(15, 23, 42, 0.65));
+    }
+    .vs-image[data-state="text"] {
+      width: 100%;
+    }
+    .vs-image__fallback {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(226, 232, 240, 0.82);
+    }
+    .match-poll__subhead .vs-image {
+      justify-content: flex-start;
+    }
+    .match-poll__subhead .vs-image__fallback {
+      color: rgba(226, 232, 240, 0.72);
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+      line-height: 1.45;
+    }
     .match-poll__content { display: grid; gap: 1.25rem; }
     .match-poll__loading {
       display: grid;
@@ -1042,7 +1088,9 @@
             <div class="match-poll__heading">
               <p class="match-poll__eyebrow">Featured Match</p>
               <h2 class="match-poll__title">Who will win?</h2>
-              <p class="match-poll__subhead" id="match-poll-subhead">Loading featured matchup…</p>
+              <div class="match-poll__subhead" id="match-poll-subhead">
+                <span class="match-poll__subhead-text">Loading featured matchup…</span>
+              </div>
               <p class="match-poll__meta is-hidden" id="match-poll-meta"></p>
             </div>
             <p class="match-poll__status" id="match-poll-status">Loading votes…</p>
@@ -1171,6 +1219,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, query, where, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { createVsImage } from "./src/components/VsImage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -1296,6 +1345,12 @@
     };
 
     const teamIndex = new Map();
+    const teamMetaCache = new Map();
+    const slugPersistAttempts = new Set();
+    const missingSlugWarnings = new Set();
+    const VS_IMAGE_BASE_PATH = "TribesLeagueLogo's/TeamMatchUps";
+    const VS_IMAGE_FALLBACK_SRC = "";
+    const MATCH_POLL_LOADING_TEXT = "Loading featured matchup…";
 
     const pollEls = els.matchPoll || {};
     const pollState = {
@@ -1310,6 +1365,191 @@
       hasError: false,
       cleanupBound: false
     };
+
+    function sanitizeSlug(value) {
+      if (!value) return "";
+      return String(value)
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Za-z0-9]/g, "")
+        .toUpperCase();
+    }
+
+    function pickSlug(...values) {
+      for (const value of values) {
+        const slug = sanitizeSlug(value);
+        if (slug) return slug;
+      }
+      return "";
+    }
+
+    function toTeamDocRef(value) {
+      if (!value) return null;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed ? doc(db, "teams", trimmed) : null;
+      }
+      if (typeof value === "object") {
+        if (value?.path && value?.id && typeof value.path === "string") {
+          return value;
+        }
+        if (value?.id && typeof value.id === "string") {
+          return doc(db, "teams", value.id);
+        }
+      }
+      return null;
+    }
+
+    async function fetchTeamRecord(rawValue) {
+      const docRef = toTeamDocRef(rawValue);
+      if (!docRef) return null;
+      const cacheKey = docRef.path || docRef.id;
+      if (teamMetaCache.has(cacheKey)) {
+        return teamMetaCache.get(cacheKey);
+      }
+      try {
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) {
+          teamMetaCache.set(cacheKey, null);
+          return null;
+        }
+        const data = snap.data() || {};
+        const teamName = data.teamName || data.name || data.displayName || data.team || docRef.id;
+        let slug = sanitizeSlug(data.slug);
+        if (!slug) {
+          slug = pickSlug(
+            data.teamTag,
+            data.tag,
+            data.abbreviation,
+            data.abbrev,
+            teamName,
+            docRef.id
+          );
+          if (slug && !data.slug && !slugPersistAttempts.has(cacheKey)) {
+            slugPersistAttempts.add(cacheKey);
+            setDoc(docRef, { slug }, { merge: true }).catch(() => {});
+          }
+        }
+        const record = { id: docRef.id, name: teamName, slug, data };
+        teamMetaCache.set(cacheKey, record);
+        return record;
+      } catch (err) {
+        console.warn("Failed to fetch team metadata", rawValue, err);
+        teamMetaCache.set(cacheKey, null);
+        return null;
+      }
+    }
+
+    function setMatchSubheadContent(content) {
+      if (!pollEls.subhead) return;
+      pollEls.subhead.replaceChildren();
+      if (typeof content === "string") {
+        const span = document.createElement("span");
+        span.className = "match-poll__subhead-text";
+        span.textContent = content;
+        pollEls.subhead.appendChild(span);
+        pollEls.subhead.dataset.state = "text";
+        return;
+      }
+      if (content instanceof Node) {
+        pollEls.subhead.appendChild(content);
+        pollEls.subhead.dataset.state = content.dataset?.state || "custom";
+      }
+    }
+
+    function setMatchSubheadText(message) {
+      setMatchSubheadContent(message);
+    }
+
+    function warnMissingSlug(contextKey, details = {}) {
+      const {
+        teamAName,
+        teamBName,
+        teamASlug,
+        teamBSlug,
+        reason,
+        attemptedSrc,
+        teamAId,
+        teamBId
+      } = details;
+      const key = `${contextKey}:${teamASlug || "?"}-${teamBSlug || "?"}:${reason || "unknown"}`;
+      if (missingSlugWarnings.has(key)) return;
+      missingSlugWarnings.add(key);
+      const payload = {
+        teamA: teamAName || "Team A",
+        teamB: teamBName || "Team B",
+        teamAId: teamAId || null,
+        teamBId: teamBId || null,
+        teamASlug: teamASlug || null,
+        teamBSlug: teamBSlug || null
+      };
+      if (attemptedSrc) {
+        payload.asset = attemptedSrc;
+      }
+      console.warn(`[VSImage] Falling back for ${payload.teamA} vs ${payload.teamB} (${contextKey}) due to ${reason || "unknown"}.`, payload);
+    }
+
+    function renderMatchSubheadVs({ teamAName, teamBName, teamASlug, teamBSlug, teamAId, teamBId }) {
+      if (!pollEls.subhead) return;
+      if (!teamASlug || !teamBSlug) {
+        warnMissingSlug("match-poll", { teamAName, teamBName, teamASlug, teamBSlug, teamAId, teamBId, reason: "missing-slug" });
+      }
+      const element = createVsImage({
+        teamAName,
+        teamBName,
+        teamASlug,
+        teamBSlug,
+        basePath: VS_IMAGE_BASE_PATH,
+        fallbackSrc: VS_IMAGE_FALLBACK_SRC,
+        className: "vs-image",
+        fallbackClass: "match-poll__subhead-text",
+        onImageError: ({ attemptedSrc }) => {
+          warnMissingSlug("match-poll", {
+            teamAName,
+            teamBName,
+            teamASlug,
+            teamBSlug,
+            teamAId,
+            teamBId,
+            reason: "image-error",
+            attemptedSrc
+          });
+        }
+      });
+      setMatchSubheadContent(element);
+    }
+
+    function extractTeamReference(matchData, side) {
+      if (!matchData) return null;
+      const prefix = (side || "A").toUpperCase() === "B" ? "B" : "A";
+      const altKeys = prefix === "A" ? ["home", "blue"] : ["away", "red"];
+      const candidates = [
+        matchData[`team${prefix}Id`],
+        matchData[`team${prefix}ID`],
+        matchData[`team${prefix}`]?.id,
+        matchData[`team${prefix}`]?.teamId,
+        matchData[`team${prefix}`]?.ref,
+        matchData[`team${prefix}`]?.doc,
+        matchData[`team${prefix}Ref`],
+        matchData[`team${prefix}Doc`],
+        matchData[`${prefix.toLowerCase()}TeamId`],
+        matchData[`${altKeys[0]}Id`],
+        matchData[`${altKeys[0]}ID`],
+        matchData[`${altKeys[0]}TeamId`],
+        matchData[`${altKeys[0]}TeamID`],
+        matchData[`${altKeys[0]}Team`]?.id,
+        matchData[`${altKeys[0]}Team`]?.teamId,
+        matchData[`${altKeys[1]}Id`],
+        matchData[`${altKeys[1]}ID`],
+        matchData[`${altKeys[1]}TeamId`],
+        matchData[`${altKeys[1]}Team`]?.id,
+        matchData[`${altKeys[1]}Team`]?.teamId
+      ];
+      for (const candidate of candidates) {
+        if (candidate) return candidate;
+      }
+      return null;
+    }
 
     function pollEnabled() {
       return Boolean(pollEls?.container);
@@ -1527,9 +1767,11 @@
     }
 
     async function loadPollMatch() {
+      setMatchSubheadText(MATCH_POLL_LOADING_TEXT);
       if (!pollEnabled() || !pollState.matchId) {
         setPollLoading(false);
         setPollStatus("No match selected.");
+        setMatchSubheadText("No match selected.");
         pollState.matchLoaded = false;
         updatePollInteractivity();
         return false;
@@ -1546,6 +1788,7 @@
           updatePollUI();
           setPollLoading(false);
           setPollStatus("Match not found.");
+          setMatchSubheadText("Match not found.");
           setPollError("We couldn't find that match. Update the featured match ID to continue.");
           if (pollState.unsubscribe) {
             pollState.unsubscribe();
@@ -1571,9 +1814,48 @@
           if (pollEls.progressLabels.A) pollEls.progressLabels.A.textContent = pollState.teams.A;
           if (pollEls.progressLabels.B) pollEls.progressLabels.B.textContent = pollState.teams.B;
         }
-        if (pollEls.subhead) {
-          pollEls.subhead.textContent = `${pollState.teams.A} vs ${pollState.teams.B}`;
-        }
+        const teamARef = extractTeamReference(data, "A");
+        const teamBRef = extractTeamReference(data, "B");
+        const [teamAMeta, teamBMeta] = await Promise.all([
+          fetchTeamRecord(teamARef),
+          fetchTeamRecord(teamBRef)
+        ]);
+        const teamASlug = pickSlug(
+          teamAMeta?.slug,
+          data.teamASlug,
+          data.teamA_slug,
+          data.teamATag,
+          data.team1Tag,
+          data.team1Slug,
+          data.homeTag,
+          data.homeSlug,
+          data.blueTag,
+          data.blueSlug,
+          pollState.teams.A
+        );
+        const teamBSlug = pickSlug(
+          teamBMeta?.slug,
+          data.teamBSlug,
+          data.teamB_slug,
+          data.teamBTag,
+          data.team2Tag,
+          data.team2Slug,
+          data.awayTag,
+          data.awaySlug,
+          data.redTag,
+          data.redSlug,
+          pollState.teams.B
+        );
+        const teamAId = teamAMeta?.id || (typeof teamARef === "string" ? teamARef : teamARef?.id);
+        const teamBId = teamBMeta?.id || (typeof teamBRef === "string" ? teamBRef : teamBRef?.id);
+        renderMatchSubheadVs({
+          teamAName: pollState.teams.A,
+          teamBName: pollState.teams.B,
+          teamASlug,
+          teamBSlug,
+          teamAId,
+          teamBId
+        });
 
         const mapName = data.map ?? data.mapName ?? data.stage ?? "";
         const matchDate = formatMatchDate(data.scheduled ?? data.startTime ?? data.kickoff ?? data.date ?? data.created ?? "");
@@ -1597,6 +1879,7 @@
         updatePollUI();
         setPollLoading(false);
         setPollStatus("Match unavailable.");
+        setMatchSubheadText("Unable to load matchup.");
         setPollError("Unable to load match details. Please refresh and try again.");
         updatePollInteractivity();
         return false;
