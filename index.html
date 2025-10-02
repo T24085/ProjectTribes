@@ -1308,7 +1308,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -1357,8 +1357,8 @@
       
       // Load active match first, then team rosters
       loadActiveMatch().then(() => {
-        loadTeamRosters();
-      });
+      loadTeamRosters();
+    });
       
       initializeTwitchPlayer();
       initializePlayerStats();
@@ -2441,9 +2441,10 @@
     // Load active match from Firebase
     async function loadActiveMatch() {
       try {
-        const doc = await db.collection('admin').doc('activeMatch').get();
-        if (doc.exists) {
-          activeMatch = doc.data();
+        const docRef = doc(db, 'admin', 'activeMatch');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          activeMatch = docSnap.data();
           updateCurrentMatchDisplay();
           if (activeMatch.teamA && activeMatch.teamB) {
             selectedTeams.teamA = activeMatch.teamA;
@@ -2473,10 +2474,11 @@
     // Save active match to Firebase
     async function saveActiveMatch(teamA, teamB) {
       try {
-        await db.collection('admin').doc('activeMatch').set({
+        const docRef = doc(db, 'admin', 'activeMatch');
+        await setDoc(docRef, {
           teamA: teamA,
           teamB: teamB,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          timestamp: serverTimestamp()
         });
         activeMatch = { teamA, teamB };
         updateCurrentMatchDisplay();
