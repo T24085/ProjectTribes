@@ -737,7 +737,7 @@
 
       <!-- Active Stream -->
       <div class="active-stream">
-        <iframe class="stream-frame" src="https://player.twitch.tv/?channel=tribesprofessionalleague&parent=localhost&autoplay=false" allowfullscreen></iframe>
+        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=tribesprofessionalleague&autoplay=false" allowfullscreen></iframe>
       </div>
 
       <!-- Match Cards -->
@@ -827,6 +827,7 @@
       initializeChat();
       initializeVoting();
       loadTeamRosters();
+      initializeTwitchPlayer();
       
       // Initialize Twitch OAuth functionality
       if (window.twitchOAuth) {
@@ -1231,6 +1232,72 @@
           alert(`You voted for ${teamName}!`);
         });
       });
+    }
+
+    function initializeTwitchPlayer() {
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        // Get the current hostname and protocol
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        const currentUrl = `${protocol}//${hostname}`;
+        
+        // Update the iframe src with the correct parent parameter
+        const currentSrc = streamFrame.src;
+        const newSrc = currentSrc.includes('parent=') 
+          ? currentSrc.replace(/parent=[^&]*/, `parent=${encodeURIComponent(hostname)}`)
+          : `${currentSrc}&parent=${encodeURIComponent(hostname)}`;
+        
+        streamFrame.src = newSrc;
+        console.log('Twitch player initialized with parent:', hostname);
+        
+        // Add error handling for the iframe
+        streamFrame.onerror = function() {
+          console.error('Failed to load Twitch player');
+          // Show a fallback message or try alternative loading
+          showPlayerFallback();
+        };
+        
+        // Add load event listener
+        streamFrame.onload = function() {
+          console.log('Twitch player loaded successfully');
+        };
+      }
+    }
+
+    function showPlayerFallback() {
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        // Create a fallback div with instructions
+        const fallbackDiv = document.createElement('div');
+        fallbackDiv.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          background: var(--card-bg);
+          color: var(--text-primary);
+          text-align: center;
+          padding: 2rem;
+        `;
+        fallbackDiv.innerHTML = `
+          <h3>Stream Loading...</h3>
+          <p>If the stream doesn't load, try refreshing the page or check if the streamer is live.</p>
+          <button onclick="location.reload()" style="
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+          ">Refresh Page</button>
+        `;
+        
+        // Replace the iframe with fallback content
+        streamFrame.parentNode.replaceChild(fallbackDiv, streamFrame);
+      }
     }
 
     // Test function to manually load DPRK vs Zen image

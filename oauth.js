@@ -148,7 +148,15 @@
         }
       });
       if (!res.ok) {
-        if (res.status === 401) clearToken();
+        if (res.status === 401) {
+          clearToken();
+          console.log('Token expired, cleared');
+        } else if (res.status === 429) {
+          console.log('Rate limited by Twitch API (429)');
+          throw new Error('Rate limited: 429 Too Many Requests');
+        } else {
+          console.log(`Twitch API error: ${res.status} ${res.statusText}`);
+        }
         return [];
       }
       const json = await res.json();
@@ -280,7 +288,18 @@
       return loginToTeam;
     };
 
+    // Rate limiting to prevent 429 errors
+    let lastCheckTime = 0;
+    const MIN_CHECK_INTERVAL = 30000; // 30 seconds minimum between checks
+
     const checkTeams = async () => {
+      const now = Date.now();
+      if (now - lastCheckTime < MIN_CHECK_INTERVAL) {
+        console.log('Rate limiting: skipping team check');
+        return;
+      }
+      lastCheckTime = now;
+
       const loginMap = buildLoginMap();
       const logins = Object.keys(loginMap);
       if (!getToken() || !logins.length) {
@@ -299,6 +318,11 @@
         }
       } catch (err) {
         console.error("Unable to check live teams", err);
+        // If we get a 429 error, increase the interval temporarily
+        if (err.message && err.message.includes('429')) {
+          console.log('Rate limited by Twitch API, backing off...');
+          lastCheckTime = now + 120000; // Wait 2 minutes before next check
+        }
       }
     };
 
