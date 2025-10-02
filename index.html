@@ -3986,6 +3986,27 @@
       updateLivePlayerIndicators();
     };
     
+    // Simple test to add live class to Panda manually
+    window.testPandaLive = function() {
+      console.log('Testing Panda live indicator...');
+      const pandaTab = Array.from(document.querySelectorAll('.player-tab')).find(tab => {
+        const team = tab.dataset.team;
+        const playerIndex = tab.dataset.playerIndex;
+        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+        const roster = teamRosters[teamKey] || [];
+        const player = roster[playerIndex];
+        return player && (player.name === 'Panda' || player.displayName === 'Panda');
+      });
+      
+      if (pandaTab) {
+        console.log('Found Panda tab, adding live class...');
+        pandaTab.classList.add('live');
+        console.log('Panda tab classes after:', pandaTab.className);
+      } else {
+        console.log('Panda tab not found');
+      }
+    };
+    
     // Comprehensive live indicators debug
     window.debugLiveIndicatorsSystem = function() {
       console.log('=== Live Indicators System Debug ===');
@@ -4197,16 +4218,20 @@
             new Date(match.date).toLocaleDateString() : 
             `Week ${match.week}`;
 
+          // Get the abbreviation keys for display
+          const teamAKey = Object.keys(TEAM_DATA).find(key => TEAM_DATA[key] === teamA);
+          const teamBKey = Object.keys(TEAM_DATA).find(key => TEAM_DATA[key] === teamB);
+          
           matchCard.innerHTML = `
             <div class="match-teams">
               <div class="team-info">
-                <img src="${teamA?.logo || ''}" alt="${teamA?.name || match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
-                <span class="team-name ${winner === match.teamA ? 'winner' : ''}">${teamA?.name || match.teamA}</span>
+                <img src="${teamA?.logo || ''}" alt="${teamAKey || match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
+                <span class="team-name ${winner === match.teamA ? 'winner' : ''}">${teamAKey || match.teamA}</span>
               </div>
               <span class="match-score">${match.scoreA} - ${match.scoreB}</span>
               <div class="team-info">
-                <span class="team-name ${winner === match.teamB ? 'winner' : ''}">${teamB?.name || match.teamB}</span>
-                <img src="${teamB?.logo || ''}" alt="${teamB?.name || match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
+                <span class="team-name ${winner === match.teamB ? 'winner' : ''}">${teamBKey || match.teamB}</span>
+                <img src="${teamB?.logo || ''}" alt="${teamBKey || match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
               </div>
             </div>
             <div class="match-date">${formattedDate}</div>
