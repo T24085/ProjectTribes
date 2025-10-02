@@ -1560,6 +1560,43 @@
       'ToxicAimers': { logo: 'https://github.com/T24085/Team-Toxic-Aimers/blob/main/ToxicAimersLogo.png?raw=true', name: 'Toxic Aimers', folder: 'TA' }
     };
 
+    // Function to find team data by name (handles variations in team names)
+    function findTeamData(teamName) {
+      if (!teamName) return null;
+      
+      // Direct key match
+      if (TEAM_DATA[teamName]) {
+        return TEAM_DATA[teamName];
+      }
+      
+      // Try to find by name property
+      for (const [key, teamData] of Object.entries(TEAM_DATA)) {
+        if (teamData.name === teamName) {
+          return teamData;
+        }
+      }
+      
+      // Handle common variations
+      const variations = {
+        'Avalanche!': 'Avalanche',
+        'Hegemony of Euros': 'HoE',
+        'Flying Tractors': 'FT',
+        'Flag Pole Smokers': 'FPS',
+        'Toxic Aimers': 'ToxicAimers',
+        'Texas Militia': 'TXM',
+        'Kicked to Lobby': 'KTL',
+        'Unhandled Exception': 'UE',
+        'null': 'Null'
+      };
+      
+      if (variations[teamName]) {
+        return TEAM_DATA[variations[teamName]];
+      }
+      
+      console.log(`No team data found for: ${teamName}`);
+      return null;
+    }
+
     let selectedTeams = { teamA: null, teamB: null };
     let teamRosters = {};
 
@@ -3934,6 +3971,58 @@
       console.log('Manually triggering live indicator update...');
       updateLivePlayerIndicators();
     };
+    
+    // Specific debug for Panda
+    window.debugPandaLive = function() {
+      console.log('=== Panda Live Debug ===');
+      
+      // Check if Panda tab exists
+      const pandaTab = Array.from(document.querySelectorAll('.player-tab')).find(tab => {
+        const team = tab.dataset.team;
+        const playerIndex = tab.dataset.playerIndex;
+        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+        const roster = teamRosters[teamKey] || [];
+        const player = roster[playerIndex];
+        return player && (player.name === 'Panda' || player.displayName === 'Panda');
+      });
+      
+      if (pandaTab) {
+        console.log('Found Panda tab:', pandaTab);
+        console.log('Panda tab classes:', pandaTab.className);
+        console.log('Has live class:', pandaTab.classList.contains('live'));
+        
+        // Get Panda's player data
+        const team = pandaTab.dataset.team;
+        const playerIndex = pandaTab.dataset.playerIndex;
+        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+        const roster = teamRosters[teamKey] || [];
+        const player = roster[playerIndex];
+        
+        console.log('Panda player data:', player);
+        const twitchHandle = getTwitchHandleForPlayer(player);
+        console.log('Panda Twitch handle:', twitchHandle);
+        
+        // Check live streams
+        if (window.twitchOAuth?.liveStreams) {
+          console.log('Live streams:', window.twitchOAuth.liveStreams);
+          const pandaStream = window.twitchOAuth.liveStreams.find(stream => 
+            stream.user_login && stream.user_login.toLowerCase() === twitchHandle?.toLowerCase()
+          );
+          console.log('Panda stream found:', pandaStream);
+          
+          if (pandaStream) {
+            console.log('Panda should be live! Forcing live class...');
+            pandaTab.classList.add('live');
+          } else {
+            console.log('Panda stream not found in live streams');
+          }
+        } else {
+          console.log('No live streams data available');
+        }
+      } else {
+        console.log('Panda tab not found');
+      }
+    };
     // Recent Matches functionality
     async function loadRecentMatches() {
       const recentMatchesGrid = document.getElementById('recent-matches-grid');
@@ -4016,11 +4105,12 @@
           const matchCard = document.createElement('div');
           matchCard.className = 'recent-match-card';
 
-          const teamA = TEAM_DATA[match.teamA];
-          const teamB = TEAM_DATA[match.teamB];
+          const teamA = findTeamData(match.teamA);
+          const teamB = findTeamData(match.teamB);
 
           // Determine winner
           const winner = match.scoreA > match.scoreB ? match.teamA : match.teamB;
+          const winnerData = findTeamData(winner);
 
           // Format the date
           const formattedDate = match.date !== 'Unknown Date' ? 
@@ -4030,13 +4120,13 @@
           matchCard.innerHTML = `
             <div class="match-teams">
               <div class="team-info">
-                <img src="${teamA?.logo || ''}" alt="${match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
-                <span class="team-name ${winner === match.teamA ? 'winner' : ''}">${match.teamA}</span>
+                <img src="${teamA?.logo || ''}" alt="${teamA?.name || match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
+                <span class="team-name ${winner === match.teamA ? 'winner' : ''}">${teamA?.name || match.teamA}</span>
               </div>
               <span class="match-score">${match.scoreA} - ${match.scoreB}</span>
               <div class="team-info">
-                <span class="team-name ${winner === match.teamB ? 'winner' : ''}">${match.teamB}</span>
-                <img src="${teamB?.logo || ''}" alt="${match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
+                <span class="team-name ${winner === match.teamB ? 'winner' : ''}">${teamB?.name || match.teamB}</span>
+                <img src="${teamB?.logo || ''}" alt="${teamB?.name || match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
               </div>
             </div>
             <div class="match-date">${formattedDate}</div>
