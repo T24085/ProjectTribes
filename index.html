@@ -1018,9 +1018,11 @@
       showOnlyLive: false,
       liveSet: new Set(),
       lastLiveStreams: [],
+      hasFetchedLiveStreams: false,
       streamerDirectory: new Map(),
       liveInterval: null,
-      backdropSignature: ""
+      backdropSignature: "",
+      backdropChecked: false
     };
 
     const teamIndex = new Map();
@@ -1185,6 +1187,10 @@ function toNumber(value, fallback = 0) {
       });
     }
     function updateLiveBackdrop() {
+      if (state.backdropChecked || !state.hasFetchedLiveStreams) {
+        return;
+      }
+      state.backdropChecked = true;
       const container = document.getElementById("live-team-backdrop");
       if (!container) return;
       const teams = [];
@@ -1819,6 +1825,7 @@ function toNumber(value, fallback = 0) {
       }, 60 * 1000);
     }
     async function updateLiveChannels() {
+      state.hasFetchedLiveStreams = true;
       if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
         state.liveSet = new Set();
         state.lastLiveStreams = [];
