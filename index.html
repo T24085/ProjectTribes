@@ -1241,30 +1241,29 @@
           // Add active class to clicked tab
           this.classList.add('active');
           
-          // Update stream if it's a player tab
+          // Update stream and show stats if it's a player tab
           if (this.dataset.team && this.dataset.playerIndex !== undefined) {
             updateStreamForPlayer(this);
-          }
-        });
-
-        // Add double-click to show stats
-        tab.addEventListener('dblclick', function() {
-          if (this.dataset.team && this.dataset.playerIndex !== undefined) {
-            const team = this.dataset.team;
-            const playerIndex = this.dataset.playerIndex;
-            const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
-            const roster = teamRosters[teamKey] || [];
-            const player = roster[playerIndex];
-            
-            if (player) {
-              const playerName = player.name || player.displayName;
-              if (playerName) {
-                showPlayerStats(playerName);
-              }
-            }
+            showPlayerStatsForTab(this);
           }
         });
       });
+    }
+
+    function showPlayerStatsForTab(tab) {
+      const team = tab.dataset.team;
+      const playerIndex = tab.dataset.playerIndex;
+      const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+      const roster = teamRosters[teamKey] || [];
+      const player = roster[playerIndex];
+      
+      if (player) {
+        const playerName = player.name || player.displayName;
+        if (playerName) {
+          console.log('Showing stats for player:', playerName);
+          showPlayerStats(playerName);
+        }
+      }
     }
 
     // Name mapping for players where database name doesn't match oauth.js name
@@ -1603,9 +1602,44 @@
         return;
       }
 
-      const player = playerStatsData.playerTotals.get(playerName);
+      console.log('Looking for player stats:', playerName);
+      console.log('Available players in stats:', Array.from(playerStatsData.playerTotals.keys()));
+
+      // Try exact match first
+      let player = playerStatsData.playerTotals.get(playerName);
+      
+      // If no exact match, try case-insensitive search
       if (!player) {
-        statsContent.innerHTML = `<div class="text-center text-gray-400">No statistics found for ${playerName}</div>`;
+        const playerNames = Array.from(playerStatsData.playerTotals.keys());
+        const foundName = playerNames.find(name => 
+          name.toLowerCase() === playerName.toLowerCase()
+        );
+        if (foundName) {
+          player = playerStatsData.playerTotals.get(foundName);
+          console.log('Found case-insensitive match:', foundName);
+        }
+      }
+
+      // If still no match, try partial matching
+      if (!player) {
+        const playerNames = Array.from(playerStatsData.playerTotals.keys());
+        const foundName = playerNames.find(name => 
+          name.toLowerCase().includes(playerName.toLowerCase()) ||
+          playerName.toLowerCase().includes(name.toLowerCase())
+        );
+        if (foundName) {
+          player = playerStatsData.playerTotals.get(foundName);
+          console.log('Found partial match:', foundName);
+        }
+      }
+
+      if (!player) {
+        statsContent.innerHTML = `
+          <div class="text-center text-gray-400">
+            <p>No statistics found for "${playerName}"</p>
+            <p class="text-sm mt-2">Available players: ${Array.from(playerStatsData.playerTotals.keys()).slice(0, 10).join(', ')}${playerStatsData.playerTotals.size > 10 ? '...' : ''}</p>
+          </div>
+        `;
         statsSection.style.display = 'block';
         return;
       }
@@ -1785,6 +1819,51 @@
       }
     }
 
+    // Debug function to compare roster names with stats names
+    function debugPlayerNames() {
+      console.log('=== Player Name Debug ===');
+      console.log('Selected teams:', selectedTeams);
+      
+      if (selectedTeams.teamA && selectedTeams.teamB) {
+        const teamARoster = teamRosters[selectedTeams.teamA] || [];
+        const teamBRoster = teamRosters[selectedTeams.teamB] || [];
+        
+        console.log('Team A roster names:', teamARoster.map(p => p.name || p.displayName));
+        console.log('Team B roster names:', teamBRoster.map(p => p.name || p.displayName));
+      }
+      
+      if (playerStatsData) {
+        const statsNames = Array.from(playerStatsData.playerTotals.keys());
+        console.log('Stats database names:', statsNames);
+        
+        // Check for matches
+        if (selectedTeams.teamA && selectedTeams.teamB) {
+          const allRosterNames = [
+            ...(teamRosters[selectedTeams.teamA] || []).map(p => p.name || p.displayName),
+            ...(teamRosters[selectedTeams.teamB] || []).map(p => p.name || p.displayName)
+          ];
+          
+          console.log('=== Name Matching Analysis ===');
+          allRosterNames.forEach(rosterName => {
+            const exactMatch = statsNames.includes(rosterName);
+            const caseMatch = statsNames.find(s => s.toLowerCase() === rosterName.toLowerCase());
+            const partialMatch = statsNames.find(s => 
+              s.toLowerCase().includes(rosterName.toLowerCase()) ||
+              rosterName.toLowerCase().includes(s.toLowerCase())
+            );
+            
+            console.log(`"${rosterName}":`, {
+              exact: exactMatch,
+              caseInsensitive: caseMatch || 'none',
+              partial: partialMatch || 'none'
+            });
+          });
+        }
+      } else {
+        console.log('No player stats data loaded yet');
+      }
+    }
+
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
@@ -1795,6 +1874,7 @@
     window.testPlayerStats = testPlayerStats;
     window.showPlayerStats = showPlayerStats;
     window.hidePlayerStats = hidePlayerStats;
+    window.debugPlayerNames = debugPlayerNames;
   </script>
 </body>
 </html>
