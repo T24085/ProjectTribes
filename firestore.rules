@@ -48,5 +48,18 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    match /matchPolls/{pollId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /matchVotes/{pollId}/votes/{userId} {
+      allow read: if true;
+      allow create, update: if request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.team in ['A', 'B'] &&
+        request.resource.data.keys().hasOnly(['team', 'createdAt', 'updatedAt']);
+    }
   }
 }

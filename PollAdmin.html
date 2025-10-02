@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Match Poll Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="oauth.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="nav.html"></div>
+
+  <div id="loginDiv" class="max-w-sm mx-auto mt-10 space-y-4">
+    <h1 class="text-2xl font-bold text-center">Admin Login</h1>
+    <input id="email" type="email" placeholder="Email" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <input id="password" type="password" placeholder="Password" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <button id="loginBtn" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Login</button>
+  </div>
+
+  <div id="adminPanel" class="hidden container mx-auto px-4 mt-8 pb-12 space-y-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold">Match Poll Admin</h1>
+        <p class="text-sm text-gray-300">Create upcoming polls and decide which matchup appears on the main hub.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="clearActiveBtn" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded disabled:opacity-50 disabled:cursor-not-allowed">Clear Active Poll</button>
+        <button id="logoutBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded">Logout</button>
+      </div>
+    </div>
+
+    <form id="pollForm" class="bg-gray-800 border border-gray-700 rounded-lg p-6 space-y-4">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="md:col-span-2">
+          <label for="pollTitle" class="block text-sm mb-1 text-gray-300">Poll Title</label>
+          <input id="pollTitle" type="text" placeholder="Who will win?" class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700" />
+        </div>
+        <div>
+          <label for="teamASelect" class="block text-sm mb-1 text-gray-300">Team A</label>
+          <select id="teamASelect" class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700"></select>
+          <input id="teamAName" type="text" placeholder="Display name" class="mt-2 w-full px-3 py-2 rounded bg-gray-900 border border-gray-700" />
+        </div>
+        <div>
+          <label for="teamBSelect" class="block text-sm mb-1 text-gray-300">Team B</label>
+          <select id="teamBSelect" class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700"></select>
+          <input id="teamBName" type="text" placeholder="Display name" class="mt-2 w-full px-3 py-2 rounded bg-gray-900 border border-gray-700" />
+        </div>
+        <div>
+          <label for="voteId" class="block text-sm mb-1 text-gray-300">Vote Key</label>
+          <input id="voteId" type="text" placeholder="Defaults to poll ID" class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700" />
+          <p class="mt-1 text-xs text-gray-400">Letters, numbers, dashes, and underscores only. Votes are stored under this key.</p>
+        </div>
+        <div>
+          <label for="matchId" class="block text-sm mb-1 text-gray-300">Match Reference</label>
+          <input id="matchId" type="text" placeholder="Optional match document ID" class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700" />
+        </div>
+        <div>
+          <label for="scheduledAt" class="block text-sm mb-1 text-gray-300">Scheduled Date (local)</label>
+          <input id="scheduledAt" type="datetime-local" class="w-full px-3 py-2 rounded bg-gray-900 border border-gray-700" />
+        </div>
+        <div class="flex items-center gap-2 md:col-span-2">
+          <input id="setActive" type="checkbox" class="h-4 w-4" />
+          <label for="setActive" class="text-sm text-gray-300">Set as active on the main hub after saving</label>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button id="pollSubmitBtn" type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded">Create Poll</button>
+        <button id="pollFormCancel" type="button" class="hidden px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel Edit</button>
+      </div>
+    </form>
+
+    <section>
+      <h2 class="text-2xl font-semibold mb-4">Saved Polls</h2>
+      <div id="pollsList" class="space-y-4"></div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      onSnapshot,
+      query,
+      orderBy,
+      doc,
+      updateDoc,
+      deleteDoc,
+      serverTimestamp,
+      Timestamp,
+      writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    const ADMIN_UIDS = [
+      "DkBHsCzLK5a9KiX50g0pHJrEqGq2",
+      "A2ZV8vziNsXqZkyqHzAB266B9pP2"
+    ];
+
+    const loginDiv = document.getElementById("loginDiv");
+    const adminPanel = document.getElementById("adminPanel");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const clearActiveBtn = document.getElementById("clearActiveBtn");
+
+    const pollForm = document.getElementById("pollForm");
+    const pollSubmitBtn = document.getElementById("pollSubmitBtn");
+    const pollCancelBtn = document.getElementById("pollFormCancel");
+
+    const pollTitleInput = document.getElementById("pollTitle");
+    const teamASelect = document.getElementById("teamASelect");
+    const teamBSelect = document.getElementById("teamBSelect");
+    const teamANameInput = document.getElementById("teamAName");
+    const teamBNameInput = document.getElementById("teamBName");
+    const voteIdInput = document.getElementById("voteId");
+    const matchIdInput = document.getElementById("matchId");
+    const scheduledAtInput = document.getElementById("scheduledAt");
+    const setActiveInput = document.getElementById("setActive");
+    const pollsList = document.getElementById("pollsList");
+
+    const pollsRef = collection(db, "matchPolls");
+    const teamsRef = collection(db, "teams");
+
+    let pollsUnsub = null;
+    let teamsCache = [];
+
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[ch] || ch);
+    }
+
+    function coerceDate(value) {
+      if (!value) return null;
+      if (value instanceof Date) return value;
+      if (value?.toDate) {
+        try {
+          return value.toDate();
+        } catch {
+          return null;
+        }
+      }
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    function formatDateTime(value) {
+      const date = coerceDate(value);
+      if (!date) return "";
+      try {
+        return date.toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return "";
+      }
+    }
+
+    function toInputValue(value) {
+      const date = coerceDate(value);
+      if (!date) return "";
+      const pad = num => String(num).padStart(2, "0");
+      const yyyy = date.getFullYear();
+      const mm = pad(date.getMonth() + 1);
+      const dd = pad(date.getDate());
+      const hh = pad(date.getHours());
+      const min = pad(date.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+    }
+
+    function normalizeVoteKey(value = "") {
+      return value
+        .trim()
+        .replace(/[^A-Za-z0-9_-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+    }
+
+    function resetForm() {
+      pollForm.reset();
+      pollForm.dataset.editId = "";
+      pollSubmitBtn.textContent = "Create Poll";
+      pollCancelBtn.classList.add("hidden");
+      setActiveInput.checked = false;
+    }
+
+    async function loadTeams() {
+      const snap = await getDocs(teamsRef);
+      teamsCache = snap.docs.map(docSnap => ({
+        id: docSnap.id,
+        name: docSnap.data()?.teamName || docSnap.data()?.name || docSnap.id
+      })).sort((a, b) => a.name.localeCompare(b.name));
+      const defaultOption = '<option value="">Select team</option>';
+      teamASelect.innerHTML = defaultOption;
+      teamBSelect.innerHTML = defaultOption;
+      teamsCache.forEach(team => {
+        const optionA = document.createElement("option");
+        optionA.value = team.id;
+        optionA.textContent = team.name;
+        teamASelect.appendChild(optionA);
+        const optionB = document.createElement("option");
+        optionB.value = team.id;
+        optionB.textContent = team.name;
+        teamBSelect.appendChild(optionB);
+      });
+    }
+
+    function syncTeamName(selectEl, inputEl) {
+      const team = teamsCache.find(t => t.id === selectEl.value);
+      if (team) {
+        inputEl.value = team.name;
+      }
+    }
+
+    teamASelect.addEventListener("change", () => syncTeamName(teamASelect, teamANameInput));
+    teamBSelect.addEventListener("change", () => syncTeamName(teamBSelect, teamBNameInput));
+
+    async function setActivePoll(pollId) {
+      const snap = await getDocs(pollsRef);
+      if (snap.empty) return;
+      const batch = writeBatch(db);
+      snap.forEach(docSnap => {
+        const isTarget = docSnap.id === pollId;
+        const updateData = {
+          isActive: isTarget,
+          updatedAt: serverTimestamp()
+        };
+        if (isTarget) {
+          updateData.activatedAt = serverTimestamp();
+        }
+        batch.update(docSnap.ref, updateData);
+      });
+      await batch.commit();
+    }
+
+    async function clearActivePolls() {
+      const snap = await getDocs(pollsRef);
+      if (snap.empty) return;
+      const batch = writeBatch(db);
+      let changed = false;
+      snap.forEach(docSnap => {
+        if (docSnap.data()?.isActive) {
+          changed = true;
+          batch.update(docSnap.ref, {
+            isActive: false,
+            updatedAt: serverTimestamp()
+          });
+        }
+      });
+      if (changed) {
+        await batch.commit();
+      }
+    }
+
+    async function deletePollWithVotes(pollId) {
+      const votesRef = collection(db, "matchVotes", pollId, "votes");
+      try {
+        const votesSnap = await getDocs(votesRef);
+        const deletions = votesSnap.docs.map(docSnap => deleteDoc(docSnap.ref));
+        if (deletions.length) {
+          await Promise.allSettled(deletions);
+        }
+      } catch (err) {
+        console.error("Failed to delete poll votes", err);
+      }
+      await deleteDoc(doc(db, "matchPolls", pollId));
+    }
+
+    function renderPolls(docs) {
+      pollsList.innerHTML = "";
+      if (!docs.length) {
+        pollsList.innerHTML = '<p class="text-gray-300 text-sm">No polls saved yet. Use the form above to create one.</p>';
+        clearActiveBtn.disabled = true;
+        return;
+      }
+
+      const polls = docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+
+      polls.sort((a, b) => {
+        if (a.isActive && !b.isActive) return -1;
+        if (!a.isActive && b.isActive) return 1;
+        const aDate = coerceDate(a.scheduledAt) || coerceDate(a.createdAt);
+        const bDate = coerceDate(b.scheduledAt) || coerceDate(b.createdAt);
+        if (aDate && bDate) return bDate - aDate;
+        if (aDate) return -1;
+        if (bDate) return 1;
+        return a.title?.localeCompare(b.title || "") || 0;
+      });
+
+      clearActiveBtn.disabled = !polls.some(p => p.isActive);
+
+      polls.forEach(poll => {
+        const card = document.createElement("div");
+        card.className = "bg-gray-800 border border-gray-700 rounded-lg p-4 flex flex-col md:flex-row md:items-start md:justify-between gap-4";
+
+        const scheduledText = formatDateTime(poll.scheduledAt) || "TBD";
+        const voteKey = poll.voteId || poll.id;
+        const matchReference = poll.matchId ? `Match ID: ${escapeHtml(poll.matchId)}` : "";
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-xl font-semibold">${escapeHtml(poll.title || "Who will win?")}</h3>
+              ${poll.isActive ? '<span class="px-2 py-0.5 text-xs rounded bg-green-600">Active</span>' : ""}
+            </div>
+            <p class="text-sm text-gray-300 mt-1">${escapeHtml(poll.teamAName || "Team A")} vs ${escapeHtml(poll.teamBName || "Team B")}</p>
+            <p class="text-xs text-gray-400 mt-1">Scheduled: ${escapeHtml(scheduledText)}${matchReference ? ` • ${matchReference}` : ""}</p>
+            <p class="text-xs text-gray-500 mt-1">Vote key: ${escapeHtml(voteKey)}</p>
+          </div>
+          <div class="flex flex-col gap-2 items-start md:items-end">
+            <button data-action="set-active" data-id="${poll.id}" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 rounded text-sm ${poll.isActive ? 'opacity-50 cursor-not-allowed' : ''}" ${poll.isActive ? 'disabled' : ''}>Set Active</button>
+            <button data-action="edit" data-id="${poll.id}" class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded text-sm">Edit</button>
+            <button data-action="delete" data-id="${poll.id}" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm">Delete</button>
+          </div>
+        `;
+
+        pollsList.appendChild(card);
+      });
+
+      pollsList.querySelectorAll('[data-action="set-active"]').forEach(btn => {
+        btn.addEventListener("click", async event => {
+          const id = event.currentTarget.dataset.id;
+          if (!id) return;
+          try {
+            await setActivePoll(id);
+            alert("Active poll updated.");
+          } catch (err) {
+            console.error("Failed to activate poll", err);
+            alert("Unable to update the active poll. Please try again.");
+          }
+        });
+      });
+
+      pollsList.querySelectorAll('[data-action="edit"]').forEach(btn => {
+        btn.addEventListener("click", event => {
+          const id = event.currentTarget.dataset.id;
+          const poll = polls.find(p => p.id === id);
+          if (!poll) return;
+          pollForm.dataset.editId = poll.id;
+          pollSubmitBtn.textContent = "Update Poll";
+          pollCancelBtn.classList.remove("hidden");
+          pollTitleInput.value = poll.title || "";
+          teamASelect.value = poll.teamAId || "";
+          teamBSelect.value = poll.teamBId || "";
+          teamANameInput.value = poll.teamAName || "";
+          teamBNameInput.value = poll.teamBName || "";
+          voteIdInput.value = poll.voteId || "";
+          matchIdInput.value = poll.matchId || "";
+          scheduledAtInput.value = toInputValue(poll.scheduledAt);
+          setActiveInput.checked = Boolean(poll.isActive);
+          window.scrollTo({ top: pollForm.offsetTop - 80, behavior: "smooth" });
+        });
+      });
+
+      pollsList.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.addEventListener("click", async event => {
+          const id = event.currentTarget.dataset.id;
+          if (!id) return;
+          if (!confirm("Delete this poll? This will also remove its vote configuration.")) return;
+          try {
+            await deletePollWithVotes(id);
+            alert("Poll deleted.");
+          } catch (err) {
+            console.error("Failed to delete poll", err);
+            alert("Unable to delete the poll. Please try again.");
+          }
+        });
+      });
+    }
+
+    async function subscribeToPolls() {
+      if (pollsUnsub) {
+        pollsUnsub();
+        pollsUnsub = null;
+      }
+      const pollsQuery = query(pollsRef, orderBy("createdAt", "desc"));
+      pollsUnsub = onSnapshot(pollsQuery, snapshot => {
+        renderPolls(snapshot.docs);
+      }, err => {
+        console.error("Failed to load polls", err);
+        pollsList.innerHTML = '<p class="text-red-400 text-sm">Unable to load polls. Refresh the page.</p>';
+      });
+    }
+
+    loginBtn.addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password).catch(err => alert(err.message));
+    });
+
+    logoutBtn.addEventListener("click", () => signOut(auth));
+
+    pollCancelBtn.addEventListener("click", () => {
+      resetForm();
+    });
+
+    clearActiveBtn.addEventListener("click", async () => {
+      if (!confirm("Clear the active poll? The hub will hide the poll until a new one is activated.")) return;
+      try {
+        await clearActivePolls();
+        alert("Active poll cleared.");
+      } catch (err) {
+        console.error("Failed to clear active poll", err);
+        alert("Unable to clear the active poll. Please try again.");
+      }
+    });
+
+    pollForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      const teamAId = teamASelect.value || null;
+      const teamBId = teamBSelect.value || null;
+      const teamAName = teamANameInput.value.trim() || teamASelect.options[teamASelect.selectedIndex]?.textContent?.trim() || "";
+      const teamBName = teamBNameInput.value.trim() || teamBSelect.options[teamBSelect.selectedIndex]?.textContent?.trim() || "";
+      if (!teamAName || !teamBName) {
+        alert("Please select or enter both team names.");
+        return;
+      }
+      if (teamAId && teamBId && teamAId === teamBId) {
+        alert("Select two different teams for the poll.");
+        return;
+      }
+
+      const title = pollTitleInput.value.trim() || "Who will win?";
+      const normalizedVoteKey = normalizeVoteKey(voteIdInput.value);
+      const finalVoteKey = normalizedVoteKey || "";
+      if (normalizedVoteKey !== voteIdInput.value.trim()) {
+        voteIdInput.value = finalVoteKey;
+      }
+
+      const matchRef = matchIdInput.value.trim() || null;
+      const scheduledValue = scheduledAtInput.value ? new Date(scheduledAtInput.value) : null;
+      const scheduledTimestamp = scheduledValue && !Number.isNaN(scheduledValue.getTime()) ? Timestamp.fromDate(scheduledValue) : null;
+      const activateAfterSave = setActiveInput.checked;
+
+      const payload = {
+        title,
+        teamAId,
+        teamAName,
+        teamBId,
+        teamBName,
+        matchId: matchRef,
+        voteId: finalVoteKey || null,
+        scheduledAt: scheduledTimestamp || null,
+        updatedAt: serverTimestamp()
+      };
+
+      const editingId = pollForm.dataset.editId;
+
+      try {
+        if (editingId) {
+          const docRef = doc(db, "matchPolls", editingId);
+          await updateDoc(docRef, payload);
+          if (!finalVoteKey) {
+            await updateDoc(docRef, {
+              voteId: editingId,
+              updatedAt: serverTimestamp()
+            });
+          }
+          if (activateAfterSave) {
+            await setActivePoll(editingId);
+          }
+          alert("Poll updated.");
+        } else {
+          const docRef = await addDoc(pollsRef, {
+            ...payload,
+            isActive: Boolean(activateAfterSave),
+            createdAt: serverTimestamp()
+          });
+          const generatedId = docRef.id;
+          if (!finalVoteKey) {
+            await updateDoc(docRef, {
+              voteId: generatedId,
+              updatedAt: serverTimestamp()
+            });
+          }
+          if (activateAfterSave) {
+            await setActivePoll(generatedId);
+          }
+          alert("Poll created.");
+        }
+        resetForm();
+      } catch (err) {
+        console.error("Failed to save poll", err);
+        alert("Unable to save the poll. Please try again.");
+      }
+    });
+
+    onAuthStateChanged(auth, async user => {
+      const isAdmin = Boolean(user && ADMIN_UIDS.includes(user.uid));
+      if (isAdmin) {
+        loginDiv.classList.add("hidden");
+        adminPanel.classList.remove("hidden");
+        await loadTeams();
+        await subscribeToPolls();
+      } else {
+        loginDiv.classList.remove("hidden");
+        adminPanel.classList.add("hidden");
+        resetForm();
+        if (pollsUnsub) {
+          pollsUnsub();
+          pollsUnsub = null;
+        }
+        pollsList.innerHTML = "";
+        if (user) {
+          alert("Access denied.");
+          signOut(auth);
+        }
+      }
+    });
+  </script>
+  <script src="./assets/include.js" defer></script>
+</body>
+</html>
