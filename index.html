@@ -3011,6 +3011,11 @@
           
           <div class="stats-grid">
             <div class="stat-card">
+              <div class="stat-label">Score</div>
+              <div class="stat-value">${score.toFixed(0)}</div>
+              <div class="stat-rate">${spm.toFixed(2)}/min</div>
+            </div>
+            <div class="stat-card">
               <div class="stat-label">Kills</div>
               <div class="stat-value">${kills.toFixed(0)}</div>
               <div class="stat-rate">${kpm.toFixed(2)}/min</div>
@@ -3019,11 +3024,6 @@
               <div class="stat-label">Assists</div>
               <div class="stat-value">${assists.toFixed(0)}</div>
               <div class="stat-rate">${apm.toFixed(2)}/min</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Score</div>
-              <div class="stat-value">${score.toFixed(0)}</div>
-              <div class="stat-rate">${spm.toFixed(2)}/min</div>
             </div>
             <div class="stat-card">
               <div class="stat-label">Captures</div>
@@ -3062,24 +3062,34 @@
       }
 
       const ctx = canvas.getContext('2d');
+      // Normalize data for better visibility - use percentage of max value
+      const maxValue = Math.max(metrics.spm, metrics.kpm, metrics.apm, metrics.cpm, metrics.rpm);
+      const normalizedData = [
+        (metrics.spm / maxValue) * 100,   // Score/min (normalized)
+        (metrics.kpm / maxValue) * 100,   // Kills/min (normalized)
+        (metrics.apm / maxValue) * 100,   // Assists/min (normalized)
+        (metrics.cpm / maxValue) * 100,   // Captures/min (normalized)
+        (metrics.rpm / maxValue) * 100    // Returns/min (normalized)
+      ];
+
       currentStatsChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Kills/min', 'Assists/min', 'Score/min', 'Captures/min', 'Returns/min'],
+          labels: ['Score/min', 'Kills/min', 'Assists/min', 'Captures/min', 'Returns/min'],
           datasets: [{
-            label: `${playerName} Performance`,
-            data: [metrics.kpm, metrics.apm, metrics.spm, metrics.cpm, metrics.rpm],
+            label: `${playerName} Performance (Normalized)`,
+            data: normalizedData,
             backgroundColor: [
+              'rgba(16, 185, 129, 0.8)',  // Green for score
               'rgba(239, 68, 68, 0.8)',   // Red for kills
               'rgba(59, 130, 246, 0.8)',  // Blue for assists
-              'rgba(16, 185, 129, 0.8)',  // Green for score
               'rgba(245, 158, 11, 0.8)',  // Yellow for captures
               'rgba(139, 92, 246, 0.8)'   // Purple for returns
             ],
             borderColor: [
+              'rgba(16, 185, 129, 1)',
               'rgba(239, 68, 68, 1)',
               'rgba(59, 130, 246, 1)',
-              'rgba(16, 185, 129, 1)',
               'rgba(245, 158, 11, 1)',
               'rgba(139, 92, 246, 1)'
             ],
@@ -3094,13 +3104,27 @@
               labels: {
                 color: '#e2e8f0'
               }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const index = context.dataIndex;
+                  const originalValues = [metrics.spm, metrics.kpm, metrics.apm, metrics.cpm, metrics.rpm];
+                  const labels = ['Score/min', 'Kills/min', 'Assists/min', 'Captures/min', 'Returns/min'];
+                  return `${labels[index]}: ${originalValues[index].toFixed(2)}`;
+                }
+              }
             }
           },
           scales: {
             y: {
               beginAtZero: true,
+              max: 100,
               ticks: {
-                color: '#94a3b8'
+                color: '#94a3b8',
+                callback: function(value) {
+                  return value + '%';
+                }
               },
               grid: {
                 color: 'rgba(148, 163, 184, 0.1)'
