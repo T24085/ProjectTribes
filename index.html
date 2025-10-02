@@ -1694,6 +1694,10 @@
           votes: {} // Initialize empty votes object
         };
 
+        console.log('Attempting to save poll:', pollData);
+        console.log('Current user:', auth.currentUser);
+        console.log('Is admin:', isAdmin);
+
         await setDoc(doc(db, 'admin', 'currentPoll'), pollData);
         
         currentPoll = pollData;
@@ -1701,7 +1705,9 @@
         alert('Poll saved successfully!');
       } catch (error) {
         console.error('Error saving poll:', error);
-        alert('Failed to save poll. Please try again.');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        alert(`Failed to save poll: ${error.message}`);
       }
     }
 
@@ -2658,18 +2664,26 @@
     // Save active match to Firebase
     async function saveActiveMatch(teamA, teamB) {
       try {
-        const docRef = doc(db, 'admin', 'activeMatch');
-        await setDoc(docRef, {
+        const matchData = {
           teamA: teamA,
           teamB: teamB,
           timestamp: serverTimestamp()
-        });
+        };
+
+        console.log('Attempting to save active match:', matchData);
+        console.log('Current user:', auth.currentUser);
+        console.log('Is admin:', isAdmin);
+
+        const docRef = doc(db, 'admin', 'activeMatch');
+        await setDoc(docRef, matchData);
         activeMatch = { teamA, teamB };
         updateCurrentMatchDisplay();
         console.log('Active match saved:', teamA, 'vs', teamB);
       } catch (error) {
         console.error('Error saving active match:', error);
-        alert('Failed to save active match. Please try again.');
+        console.error('Error code:', error.code);
+        console.error('Error message:', error.message);
+        alert(`Failed to save active match: ${error.message}`);
       }
     }
 

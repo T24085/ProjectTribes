@@ -61,5 +61,10 @@ service cloud.firestore {
         request.resource.data.team in ['A', 'B'] &&
         request.resource.data.keys().hasOnly(['team', 'createdAt', 'updatedAt']);
     }
+
+    match /admin/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
