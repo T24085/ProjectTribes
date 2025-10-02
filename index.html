@@ -803,20 +803,20 @@
     const db = getFirestore(firebaseApp);
 
     const TEAM_DATA = {
-      'Avalanche': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/aV!.png', name: 'Avalanche', folder: 'AV!' },
-      'ePidemic': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/ePi.png', name: 'ePidemic', folder: 'EPI' },
-      'DPRK': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/TeamDPRKLogo3.png', name: 'DPRK', folder: 'DPRK' },
-      'Zen': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/Zenlogo.png', name: 'Zen', folder: 'ZEN' },
-      'TXM': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/TXM.png', name: 'TXM', folder: 'TXM' },
-      'FPS': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/FPSlogo.png', name: 'Flag Pole Smokers', folder: 'FPS' },
-      'FT': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/FTlogo.png', name: 'Flying Tractors', folder: 'FT' },
-      'HoE': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/HoE.png', name: 'Hegemony of Euros', folder: 'HOE' },
-      'Magic': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/Magic.png', name: 'Magic', folder: 'WIZ' },
-      'DeadStop': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/DeadStopLogo.png', name: 'DeadStop', folder: 'DS' },
-      'UE': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/UE.png', name: 'Unhandled Exception', folder: 'UE' },
-      'KTL': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/KTLlogo.png', name: 'KTL', folder: 'KTL' },
-      'Null': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/NullLogo.png', name: 'null', folder: 'Null' },
-      'ToxicAimers': { logo: 'https://raw.githubusercontent.com/T24085/ProjectTribes/main/TribesLeagueLogo\'s/ToxicAimersLogo.png', name: 'Toxic Aimers', folder: 'TA' }
+      'Avalanche': { logo: 'https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true', name: 'Avalanche', folder: 'AV!' },
+      'ePidemic': { logo: 'https://github.com/T24085/Team-ePi/blob/main/ePi.png?raw=true', name: 'ePidemic', folder: 'EPI' },
+      'DPRK': { logo: 'https://github.com/T24085/TeamDPRK/blob/main/TeamDPRKLogo3.png?raw=true', name: 'DPRK', folder: 'DPRK' },
+      'Zen': { logo: 'https://github.com/T24085/Team-Zen/blob/main/Zenlogo.png?raw=true', name: 'Zen', folder: 'ZEN' },
+      'TXM': { logo: 'https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true', name: 'TXM', folder: 'TXM' },
+      'FPS': { logo: 'https://github.com/T24085/Team-FPS/blob/main/FPSlogo.png?raw=true', name: 'Flag Pole Smokers', folder: 'FPS' },
+      'FT': { logo: 'https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true', name: 'Flying Tractors', folder: 'FT' },
+      'HoE': { logo: 'https://github.com/T24085/Team-HOE/blob/main/HoE.png?raw=true', name: 'Hegemony of Euros', folder: 'HOE' },
+      'Magic': { logo: 'https://github.com/T24085/Team-Magic/blob/main/Magic.png?raw=true', name: 'Magic', folder: 'WIZ' },
+      'DeadStop': { logo: 'DeadStopLogo.png', name: 'DeadStop', folder: 'DS' },
+      'UE': { logo: 'https://github.com/T24085/Team-UE/blob/main/UE.png?raw=true', name: 'Unhandled Exception', folder: 'UE' },
+      'KTL': { logo: 'https://github.com/T24085/Team-KTL/blob/main/KTLlogo.png?raw=true', name: 'KTL', folder: 'KTL' },
+      'Null': { logo: 'https://github.com/T24085/Team-Null/blob/main/NullLogo.png?raw=true', name: 'null', folder: 'Null' },
+      'ToxicAimers': { logo: 'https://github.com/T24085/Team-Toxic-Aimers/blob/main/ToxicAimersLogo.png?raw=true', name: 'Toxic Aimers', folder: 'TA' }
     };
 
     let selectedTeams = { teamA: null, teamB: null };
@@ -1404,12 +1404,48 @@
         console.log('Applied test URL to player');
       }
     }
+
+    // Test function to verify team logo URLs are working
+    function testTeamLogos() {
+      console.log('Testing team logo URLs...');
+      
+      // Test DPRK and Zen logos specifically
+      const dprkLogo = TEAM_DATA['DPRK'].logo;
+      const zenLogo = TEAM_DATA['Zen'].logo;
+      
+      console.log('DPRK logo URL:', dprkLogo);
+      console.log('Zen logo URL:', zenLogo);
+      
+      // Test loading the logos
+      const testImage1 = new Image();
+      testImage1.onload = function() {
+        console.log('✅ DPRK logo loaded successfully');
+        // Set as background to test
+        document.getElementById('bg-left').style.backgroundImage = `url(${dprkLogo})`;
+      };
+      testImage1.onerror = function() {
+        console.log('❌ DPRK logo failed to load');
+      };
+      testImage1.src = dprkLogo;
+      
+      const testImage2 = new Image();
+      testImage2.onload = function() {
+        console.log('✅ Zen logo loaded successfully');
+        // Set as background to test
+        document.getElementById('bg-right').style.backgroundImage = `url(${zenLogo})`;
+      };
+      testImage2.onerror = function() {
+        console.log('❌ Zen logo failed to load');
+      };
+      testImage2.src = zenLogo;
+    }
     
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
     window.testPlayerMapping = testPlayerMapping;
     window.testTwitchPlayerFormat = testTwitchPlayerFormat;
+    window.testTeamLogos = testTeamLogos;
   </script>
 </body>
 </html>
