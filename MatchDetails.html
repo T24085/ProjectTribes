@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TPL Match Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="oauth.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <div id="nav-placeholder" data-include="nav.html"></div>
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <header class="space-y-2">
+      <p id="matchBreadcrumb" class="text-sm text-slate-400">Match</p>
+      <h1 id="matchTitle" class="text-3xl sm:text-4xl font-bold tracking-tight text-white">Loading match…</h1>
+      <p id="matchMeta" class="text-sm text-slate-400">Fetching match details.</p>
+    </header>
+
+    <section id="pollSection" class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 shadow-xl">
+      <div id="pollLoading" class="animate-pulse space-y-4">
+        <div class="h-6 bg-slate-800 rounded w-48"></div>
+        <div class="h-12 bg-slate-800/80 rounded-xl"></div>
+        <div class="h-12 bg-slate-800/80 rounded-xl"></div>
+      </div>
+
+      <div id="pollContent" class="hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-2xl font-semibold text-white">Who will win?</h2>
+            <p id="pollSubhead" class="text-sm text-slate-400">Cast your vote to back your team.</p>
+          </div>
+          <p id="pollStatus" class="text-sm text-slate-400">Loading votes…</p>
+        </div>
+
+        <div id="pollLogin" class="mt-5 hidden">
+          <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+            <p class="text-sm text-slate-300">Log in to vote for your winner.</p>
+            <button id="pollLoginBtn" class="mt-3 inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400">
+              <span>Sign in with Twitch</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="pollOptions" class="mt-5 grid gap-3 sm:grid-cols-2">
+          <button id="voteOptionA" type="button" class="vote-option flex items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-4 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+            <span class="flex-1">
+              <span class="block text-xs uppercase tracking-wide text-slate-400">Team A</span>
+              <span class="block text-lg font-semibold text-white" data-team-name>A Team</span>
+            </span>
+            <span class="text-sm font-medium text-slate-300" data-team-count>0 votes</span>
+          </button>
+          <button id="voteOptionB" type="button" class="vote-option flex items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-4 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400">
+            <span class="flex-1">
+              <span class="block text-xs uppercase tracking-wide text-slate-400">Team B</span>
+              <span class="block text-lg font-semibold text-white" data-team-name>B Team</span>
+            </span>
+            <span class="text-sm font-medium text-slate-300" data-team-count>0 votes</span>
+          </button>
+        </div>
+
+        <div class="mt-6 space-y-4">
+          <div>
+            <div class="flex justify-between text-xs font-medium uppercase tracking-wide text-slate-400">
+              <span id="teamALabel">Team A</span>
+              <span id="teamAPercent">0%</span>
+            </div>
+            <div class="mt-2 h-3 rounded-full bg-slate-800 overflow-hidden">
+              <div id="teamAProgress" class="h-full bg-indigo-500" style="width: 0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-xs font-medium uppercase tracking-wide text-slate-400">
+              <span id="teamBLabel">Team B</span>
+              <span id="teamBPercent">0%</span>
+            </div>
+            <div class="mt-2 h-3 rounded-full bg-slate-800 overflow-hidden">
+              <div id="teamBProgress" class="h-full bg-rose-500" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <p id="pollEmptyState" class="mt-4 text-sm text-slate-400 hidden">No votes yet — be the first to choose a winner!</p>
+        <p id="pollError" class="mt-4 text-sm text-rose-400 hidden"></p>
+      </div>
+    </section>
+
+    <section id="matchDetails" class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-4">
+      <h2 class="text-xl font-semibold text-white">Match details</h2>
+      <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <dt class="text-xs uppercase tracking-wide text-slate-400">Matchup</dt>
+          <dd id="detailMatchup" class="text-base font-medium text-slate-100">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs uppercase tracking-wide text-slate-400">Map</dt>
+          <dd id="detailMap" class="text-base font-medium text-slate-100">—</dd>
+        </div>
+        <div>
+          <dt class="text-xs uppercase tracking-wide text-slate-400">Recorded</dt>
+          <dd id="detailCreated" class="text-base font-medium text-slate-100">—</dd>
+        </div>
+      </dl>
+      <p id="matchDetailsStatus" class="text-sm text-slate-400">Loading stats summary…</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      collection,
+      onSnapshot,
+      setDoc,
+      serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM',
+      authDomain: 'team-sign-up-b5646.firebaseapp.com',
+      projectId: 'team-sign-up-b5646',
+      storageBucket: 'team-sign-up-b5646.firebasestorage.app',
+      messagingSenderId: '951471144681',
+      appId: '1:951471144681:web:a2458675ce73ce9ad9ba78'
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const matchId = urlParams.get('matchId');
+
+    const matchTitleEl = document.getElementById('matchTitle');
+    const matchMetaEl = document.getElementById('matchMeta');
+    const breadcrumbEl = document.getElementById('matchBreadcrumb');
+    const detailMatchupEl = document.getElementById('detailMatchup');
+    const detailMapEl = document.getElementById('detailMap');
+    const detailCreatedEl = document.getElementById('detailCreated');
+    const matchDetailsStatusEl = document.getElementById('matchDetailsStatus');
+
+    const pollLoadingEl = document.getElementById('pollLoading');
+    const pollContentEl = document.getElementById('pollContent');
+    const pollStatusEl = document.getElementById('pollStatus');
+    const pollSubheadEl = document.getElementById('pollSubhead');
+    const pollLoginEl = document.getElementById('pollLogin');
+    const pollLoginBtn = document.getElementById('pollLoginBtn');
+    const pollOptionsEl = document.getElementById('pollOptions');
+    const pollErrorEl = document.getElementById('pollError');
+    const pollEmptyStateEl = document.getElementById('pollEmptyState');
+
+    const optionButtons = {
+      A: document.getElementById('voteOptionA'),
+      B: document.getElementById('voteOptionB')
+    };
+
+    const teamNameSpans = {
+      A: optionButtons.A.querySelector('[data-team-name]'),
+      B: optionButtons.B.querySelector('[data-team-name]')
+    };
+
+    const teamCountSpans = {
+      A: optionButtons.A.querySelector('[data-team-count]'),
+      B: optionButtons.B.querySelector('[data-team-count]')
+    };
+
+    const percentLabels = {
+      A: document.getElementById('teamAPercent'),
+      B: document.getElementById('teamBPercent')
+    };
+
+    const progressBars = {
+      A: document.getElementById('teamAProgress'),
+      B: document.getElementById('teamBProgress')
+    };
+
+    const progressNames = {
+      A: document.getElementById('teamALabel'),
+      B: document.getElementById('teamBLabel')
+    };
+
+    let currentMatch = null;
+    let unsubscribeVotes = null;
+    let voteCounts = { A: 0, B: 0 };
+    let currentUser = null;
+    let currentUserVote = null;
+    let savingVote = false;
+
+    function formatDate(value) {
+      if (!value) return '—';
+      try {
+        const date = value instanceof Date ? value : value.toDate?.() ?? value;
+        if (!(date instanceof Date)) return '—';
+        return date.toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (err) {
+        console.error('Failed to format date', err);
+        return '—';
+      }
+    }
+
+    function showError(message) {
+      pollErrorEl.textContent = message;
+      pollErrorEl.classList.remove('hidden');
+    }
+
+    function clearError() {
+      pollErrorEl.textContent = '';
+      pollErrorEl.classList.add('hidden');
+    }
+
+    function setLoadingState(isLoading) {
+      pollLoadingEl.classList.toggle('hidden', !isLoading);
+      pollContentEl.classList.toggle('hidden', isLoading);
+    }
+
+    function updateVoteUI() {
+      const totalVotes = voteCounts.A + voteCounts.B;
+      const percentA = totalVotes ? Math.round((voteCounts.A / totalVotes) * 100) : 0;
+      const percentB = totalVotes ? 100 - percentA : 0;
+
+      percentLabels.A.textContent = `${percentA}%`;
+      percentLabels.B.textContent = `${percentB}%`;
+
+      progressBars.A.style.width = `${percentA}%`;
+      progressBars.B.style.width = `${percentB}%`;
+
+      teamCountSpans.A.textContent = `${voteCounts.A} vote${voteCounts.A === 1 ? '' : 's'}`;
+      teamCountSpans.B.textContent = `${voteCounts.B} vote${voteCounts.B === 1 ? '' : 's'}`;
+
+      pollEmptyStateEl.classList.toggle('hidden', totalVotes !== 0);
+
+      Object.entries(optionButtons).forEach(([teamKey, button]) => {
+        button.classList.toggle('ring-2', currentUserVote === teamKey);
+        button.classList.toggle('ring-indigo-400', currentUserVote === 'A' && teamKey === 'A');
+        button.classList.toggle('ring-rose-400', currentUserVote === 'B' && teamKey === 'B');
+        button.classList.toggle('border-indigo-400', currentUserVote === 'A' && teamKey === 'A');
+        button.classList.toggle('border-rose-400', currentUserVote === 'B' && teamKey === 'B');
+        button.classList.toggle('bg-indigo-500/10', currentUserVote === 'A' && teamKey === 'A');
+        button.classList.toggle('bg-rose-500/10', currentUserVote === 'B' && teamKey === 'B');
+      });
+
+      let statusText = totalVotes ? `Live votes: ${totalVotes}` : 'No votes cast yet.';
+      if (!currentUser) {
+        statusText = totalVotes
+          ? `Live votes: ${totalVotes} — log in to vote.`
+          : 'Log in to vote and be the first!';
+      }
+      pollStatusEl.textContent = statusText;
+    }
+
+    function setAuthUI(isAuthenticated) {
+      pollLoginEl.classList.toggle('hidden', isAuthenticated);
+      pollOptionsEl.classList.toggle('opacity-50', !isAuthenticated);
+
+      const disableInteractions = !isAuthenticated || savingVote;
+      pollOptionsEl.classList.toggle('pointer-events-none', disableInteractions);
+
+      Object.values(optionButtons).forEach(btn => {
+        btn.disabled = disableInteractions;
+        btn.classList.toggle('cursor-not-allowed', disableInteractions);
+        btn.classList.toggle('cursor-pointer', !disableInteractions);
+      });
+
+      if (!isAuthenticated) {
+        currentUserVote = null;
+        updateVoteUI();
+      }
+    }
+
+    function setSavingState(isSaving) {
+      savingVote = isSaving;
+      if (isSaving) {
+        pollStatusEl.textContent = 'Submitting your vote…';
+      }
+      setAuthUI(Boolean(currentUser));
+    }
+
+    async function refreshUserVote() {
+      if (!currentUser || !matchId) return;
+      try {
+        const voteSnap = await getDoc(doc(db, 'matchVotes', matchId, 'votes', currentUser.id));
+        if (voteSnap.exists()) {
+          currentUserVote = voteSnap.data().team ?? null;
+          updateVoteUI();
+        }
+      } catch (err) {
+        console.error('Failed to load existing vote', err);
+      }
+    }
+
+    async function ensureUser() {
+      if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
+        currentUser = null;
+        setAuthUI(false);
+        return null;
+      }
+
+      try {
+        currentUser = await window.twitchOAuth.fetchUser();
+      } catch (err) {
+        console.error('Failed to fetch Twitch user', err);
+        currentUser = null;
+      }
+
+      setAuthUI(Boolean(currentUser));
+      if (currentUser) {
+        await refreshUserVote();
+      }
+      return currentUser;
+    }
+
+    async function submitVote(teamKey) {
+      if (!currentMatch) return;
+      if (!currentUser) {
+        setAuthUI(false);
+        return;
+      }
+      if (savingVote) return;
+      if (teamKey === currentUserVote) return;
+
+      clearError();
+      setSavingState(true);
+
+      try {
+        const voteRef = doc(db, 'matchVotes', matchId, 'votes', currentUser.id);
+        const payload = { team: teamKey };
+        if (currentUserVote) {
+          payload.updatedAt = serverTimestamp();
+        } else {
+          payload.createdAt = serverTimestamp();
+        }
+        await setDoc(voteRef, payload, { merge: true });
+        pollStatusEl.textContent = 'Vote saved!';
+      } catch (err) {
+        console.error('Failed to submit vote', err);
+        showError('Unable to save your vote. Please try again.');
+      } finally {
+        setSavingState(false);
+      }
+    }
+
+    function subscribeToVotes() {
+      if (!matchId) return;
+      const votesRef = collection(db, 'matchVotes', matchId, 'votes');
+      unsubscribeVotes = onSnapshot(votesRef, snapshot => {
+        clearError();
+        voteCounts = { A: 0, B: 0 };
+        let userVote = null;
+
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data.team === 'A') voteCounts.A += 1;
+          if (data.team === 'B') voteCounts.B += 1;
+          if (currentUser && docSnap.id === currentUser.id) {
+            userVote = data.team;
+          }
+        });
+
+        currentUserVote = userVote;
+        updateVoteUI();
+      }, err => {
+        console.error('Failed to subscribe to votes', err);
+        showError('Live vote updates are unavailable right now.');
+      });
+    }
+
+    async function loadMatch() {
+      if (!matchId) {
+        matchTitleEl.textContent = 'Match not found';
+        matchMetaEl.textContent = 'Missing matchId parameter in the URL.';
+        pollSubheadEl.textContent = 'Provide a valid match link to vote.';
+        setLoadingState(false);
+        pollStatusEl.textContent = 'Unable to load votes.';
+        pollOptionsEl.classList.add('pointer-events-none', 'opacity-50');
+        return;
+      }
+
+      try {
+        const matchRef = doc(db, 'matches', matchId);
+        const snap = await getDoc(matchRef);
+        if (!snap.exists()) {
+          matchTitleEl.textContent = 'Match not found';
+          matchMetaEl.textContent = 'This match could not be located. It may have been removed.';
+          pollSubheadEl.textContent = 'Unable to load teams for this match.';
+          setLoadingState(false);
+          pollOptionsEl.classList.add('pointer-events-none', 'opacity-50');
+          return;
+        }
+
+        currentMatch = snap.data();
+        const { team1, team2, map, created } = currentMatch;
+
+        breadcrumbEl.textContent = `Match • ${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
+        matchTitleEl.textContent = `${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
+        matchMetaEl.textContent = map ? `Map: ${map}` : 'Map not recorded';
+
+        detailMatchupEl.textContent = `${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
+        detailMapEl.textContent = map ?? '—';
+        detailCreatedEl.textContent = formatDate(created);
+        matchDetailsStatusEl.textContent = 'Stats summary will be available soon.';
+
+        teamNameSpans.A.textContent = team1 ?? 'Team A';
+        teamNameSpans.B.textContent = team2 ?? 'Team B';
+        progressNames.A.textContent = team1 ?? 'Team A';
+        progressNames.B.textContent = team2 ?? 'Team B';
+        pollSubheadEl.textContent = `Vote between ${team1 ?? 'Team A'} and ${team2 ?? 'Team B'}.`;
+
+        setLoadingState(false);
+        updateVoteUI();
+        subscribeToVotes();
+      } catch (err) {
+        console.error('Failed to load match', err);
+        matchTitleEl.textContent = 'Match unavailable';
+        matchMetaEl.textContent = 'We ran into an error loading this match.';
+        pollSubheadEl.textContent = 'Please refresh and try again.';
+        setLoadingState(false);
+        showError('Unable to load match details.');
+      }
+    }
+
+    optionButtons.A.addEventListener('click', () => submitVote('A'));
+    optionButtons.B.addEventListener('click', () => submitVote('B'));
+
+    pollLoginBtn.addEventListener('click', () => {
+      if (window.twitchOAuth) {
+        window.twitchOAuth.login();
+      }
+    });
+
+    window.addEventListener('storage', event => {
+      if (event.key === 'twitch_token') {
+        ensureUser();
+      }
+    });
+
+    await ensureUser();
+    await loadMatch();
+    setLoadingState(false);
+    updateVoteUI();
+
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribeVotes) unsubscribeVotes();
+    });
+  </script>
+  <script src="./assets/include.js" defer></script>
+</body>
+</html>
