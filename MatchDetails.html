@@ -6,6 +6,33 @@
   <title>TPL Match Details</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="oauth.js"></script>
+  <style>
+    .poll-subhead {
+      display: flex;
+      align-items: center;
+      min-height: 2.75rem;
+    }
+    .poll-subhead .poll-subhead-text {
+      display: inline-block;
+    }
+    .poll-subhead .vs-image {
+      display: inline-flex;
+      gap: 0.75rem;
+      justify-content: flex-start;
+      max-width: 100%;
+    }
+    .poll-subhead .vs-image img {
+      display: block;
+      max-width: min(100%, 360px);
+      height: auto;
+      filter: drop-shadow(0 18px 28px -22px rgba(15, 23, 42, 0.7));
+    }
+    .poll-subhead .vs-image__fallback {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
   <div id="nav-placeholder" data-include="nav.html"></div>
@@ -27,7 +54,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 class="text-2xl font-semibold text-white">Who will win?</h2>
-            <p id="pollSubhead" class="text-sm text-slate-400">Cast your vote to back your team.</p>
+            <div id="pollSubhead" class="poll-subhead text-sm text-slate-400">
+              <span class="poll-subhead-text">Cast your vote to back your team.</span>
+            </div>
           </div>
           <p id="pollStatus" class="text-sm text-slate-400">Loading votes…</p>
         </div>
@@ -115,6 +144,7 @@
       setDoc,
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { createVsImage } from './src/components/VsImage.js';
 
     const firebaseConfig = {
       apiKey: 'AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM',
@@ -185,6 +215,198 @@
     let currentUser = null;
     let currentUserVote = null;
     let savingVote = false;
+
+    const teamMetaCache = new Map();
+    const slugPersistAttempts = new Set();
+    const missingSlugWarnings = new Set();
+    const VS_IMAGE_BASE_PATH = "TribesLeagueLogo's/TeamMatchUps";
+    const VS_IMAGE_FALLBACK_SRC = '';
+    const POLL_LOADING_SUBHEAD = 'Loading matchup…';
+
+    function sanitizeSlug(value) {
+      if (!value) return '';
+      return String(value)
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^A-Za-z0-9]/g, '')
+        .toUpperCase();
+    }
+
+    function pickSlug(...values) {
+      for (const value of values) {
+        const slug = sanitizeSlug(value);
+        if (slug) return slug;
+      }
+      return '';
+    }
+
+    function toTeamDocRef(value) {
+      if (!value) return null;
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed ? doc(db, 'teams', trimmed) : null;
+      }
+      if (typeof value === 'object') {
+        if (value?.path && value?.id && typeof value.path === 'string') {
+          return value;
+        }
+        if (value?.id && typeof value.id === 'string') {
+          return doc(db, 'teams', value.id);
+        }
+      }
+      return null;
+    }
+
+    async function fetchTeamRecord(rawValue) {
+      const docRef = toTeamDocRef(rawValue);
+      if (!docRef) return null;
+      const cacheKey = docRef.path || docRef.id;
+      if (teamMetaCache.has(cacheKey)) {
+        return teamMetaCache.get(cacheKey);
+      }
+      try {
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) {
+          teamMetaCache.set(cacheKey, null);
+          return null;
+        }
+        const data = snap.data() || {};
+        const teamName = data.teamName || data.name || data.displayName || data.team || docRef.id;
+        let slug = sanitizeSlug(data.slug);
+        if (!slug) {
+          slug = pickSlug(
+            data.teamTag,
+            data.tag,
+            data.abbreviation,
+            data.abbrev,
+            teamName,
+            docRef.id
+          );
+          if (slug && !data.slug && !slugPersistAttempts.has(cacheKey)) {
+            slugPersistAttempts.add(cacheKey);
+            setDoc(docRef, { slug }, { merge: true }).catch(() => {});
+          }
+        }
+        const record = { id: docRef.id, name: teamName, slug, data };
+        teamMetaCache.set(cacheKey, record);
+        return record;
+      } catch (err) {
+        console.warn('Failed to fetch team metadata', rawValue, err);
+        teamMetaCache.set(cacheKey, null);
+        return null;
+      }
+    }
+
+    function setPollSubheadContent(content) {
+      if (!pollSubheadEl) return;
+      pollSubheadEl.replaceChildren();
+      if (typeof content === 'string') {
+        const span = document.createElement('span');
+        span.className = 'poll-subhead-text';
+        span.textContent = content;
+        pollSubheadEl.appendChild(span);
+        pollSubheadEl.dataset.state = 'text';
+        return;
+      }
+      if (content instanceof Node) {
+        pollSubheadEl.appendChild(content);
+        pollSubheadEl.dataset.state = content.dataset?.state || 'custom';
+      }
+    }
+
+    function setPollSubheadText(message) {
+      setPollSubheadContent(message);
+    }
+
+    function warnVsFallback(contextKey, details = {}) {
+      const {
+        teamAName,
+        teamBName,
+        teamASlug,
+        teamBSlug,
+        reason,
+        attemptedSrc,
+        teamAId,
+        teamBId
+      } = details;
+      const key = `${contextKey}:${teamASlug || '?'}-${teamBSlug || '?'}:${reason || 'unknown'}`;
+      if (missingSlugWarnings.has(key)) return;
+      missingSlugWarnings.add(key);
+      const payload = {
+        teamA: teamAName || 'Team A',
+        teamB: teamBName || 'Team B',
+        teamAId: teamAId || null,
+        teamBId: teamBId || null,
+        teamASlug: teamASlug || null,
+        teamBSlug: teamBSlug || null
+      };
+      if (attemptedSrc) {
+        payload.asset = attemptedSrc;
+      }
+      console.warn(`[VSImage] Falling back for ${payload.teamA} vs ${payload.teamB} (${contextKey}) due to ${reason || 'unknown'}.`, payload);
+    }
+
+    function renderPollSubheadVs({ teamAName, teamBName, teamASlug, teamBSlug, teamAId, teamBId }) {
+      if (!pollSubheadEl) return;
+      if (!teamASlug || !teamBSlug) {
+        warnVsFallback('match-details', { teamAName, teamBName, teamASlug, teamBSlug, teamAId, teamBId, reason: 'missing-slug' });
+      }
+      const element = createVsImage({
+        teamAName,
+        teamBName,
+        teamASlug,
+        teamBSlug,
+        basePath: VS_IMAGE_BASE_PATH,
+        fallbackSrc: VS_IMAGE_FALLBACK_SRC,
+        className: 'vs-image',
+        fallbackClass: 'poll-subhead-text',
+        onImageError: ({ attemptedSrc }) => {
+          warnVsFallback('match-details', {
+            teamAName,
+            teamBName,
+            teamASlug,
+            teamBSlug,
+            teamAId,
+            teamBId,
+            reason: 'image-error',
+            attemptedSrc
+          });
+        }
+      });
+      setPollSubheadContent(element);
+    }
+
+    function extractTeamReference(matchData, side) {
+      if (!matchData) return null;
+      const prefix = (side || 'A').toUpperCase() === 'B' ? 'B' : 'A';
+      const altKeys = prefix === 'A' ? ['home', 'blue'] : ['away', 'red'];
+      const candidates = [
+        matchData[`team${prefix}Id`],
+        matchData[`team${prefix}ID`],
+        matchData[`team${prefix}`]?.id,
+        matchData[`team${prefix}`]?.teamId,
+        matchData[`team${prefix}`]?.ref,
+        matchData[`team${prefix}`]?.doc,
+        matchData[`team${prefix}Ref`],
+        matchData[`team${prefix}Doc`],
+        matchData[`${prefix.toLowerCase()}TeamId`],
+        matchData[`${altKeys[0]}Id`],
+        matchData[`${altKeys[0]}ID`],
+        matchData[`${altKeys[0]}TeamId`],
+        matchData[`${altKeys[0]}TeamID`],
+        matchData[`${altKeys[0]}Team`]?.id,
+        matchData[`${altKeys[0]}Team`]?.teamId,
+        matchData[`${altKeys[1]}Id`],
+        matchData[`${altKeys[1]}ID`],
+        matchData[`${altKeys[1]}TeamId`],
+        matchData[`${altKeys[1]}Team`]?.id,
+        matchData[`${altKeys[1]}Team`]?.teamId
+      ];
+      for (const candidate of candidates) {
+        if (candidate) return candidate;
+      }
+      return null;
+    }
 
     function formatDate(value) {
       if (!value) return '—';
@@ -371,10 +593,11 @@
     }
 
     async function loadMatch() {
+      setPollSubheadText(POLL_LOADING_SUBHEAD);
       if (!matchId) {
         matchTitleEl.textContent = 'Match not found';
         matchMetaEl.textContent = 'Missing matchId parameter in the URL.';
-        pollSubheadEl.textContent = 'Provide a valid match link to vote.';
+        setPollSubheadText('Provide a valid match link to vote.');
         setLoadingState(false);
         pollStatusEl.textContent = 'Unable to load votes.';
         pollOptionsEl.classList.add('pointer-events-none', 'opacity-50');
@@ -387,7 +610,7 @@
         if (!snap.exists()) {
           matchTitleEl.textContent = 'Match not found';
           matchMetaEl.textContent = 'This match could not be located. It may have been removed.';
-          pollSubheadEl.textContent = 'Unable to load teams for this match.';
+          setPollSubheadText('Unable to load teams for this match.');
           setLoadingState(false);
           pollOptionsEl.classList.add('pointer-events-none', 'opacity-50');
           return;
@@ -395,21 +618,65 @@
 
         currentMatch = snap.data();
         const { team1, team2, map, created } = currentMatch;
+        const teamAName = team1 ?? currentMatch.teamA ?? currentMatch.teamAName ?? currentMatch.home ?? currentMatch.blue ?? 'Team A';
+        const teamBName = team2 ?? currentMatch.teamB ?? currentMatch.teamBName ?? currentMatch.away ?? currentMatch.red ?? 'Team B';
 
-        breadcrumbEl.textContent = `Match • ${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
-        matchTitleEl.textContent = `${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
+        breadcrumbEl.textContent = `Match • ${teamAName} vs ${teamBName}`;
+        matchTitleEl.textContent = `${teamAName} vs ${teamBName}`;
         matchMetaEl.textContent = map ? `Map: ${map}` : 'Map not recorded';
 
-        detailMatchupEl.textContent = `${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
+        detailMatchupEl.textContent = `${teamAName} vs ${teamBName}`;
         detailMapEl.textContent = map ?? '—';
         detailCreatedEl.textContent = formatDate(created);
         matchDetailsStatusEl.textContent = 'Stats summary will be available soon.';
 
-        teamNameSpans.A.textContent = team1 ?? 'Team A';
-        teamNameSpans.B.textContent = team2 ?? 'Team B';
-        progressNames.A.textContent = team1 ?? 'Team A';
-        progressNames.B.textContent = team2 ?? 'Team B';
-        pollSubheadEl.textContent = `Vote between ${team1 ?? 'Team A'} and ${team2 ?? 'Team B'}.`;
+        teamNameSpans.A.textContent = teamAName;
+        teamNameSpans.B.textContent = teamBName;
+        progressNames.A.textContent = teamAName;
+        progressNames.B.textContent = teamBName;
+
+        const teamARef = extractTeamReference(currentMatch, 'A');
+        const teamBRef = extractTeamReference(currentMatch, 'B');
+        const [teamAMeta, teamBMeta] = await Promise.all([
+          fetchTeamRecord(teamARef),
+          fetchTeamRecord(teamBRef)
+        ]);
+        const teamASlug = pickSlug(
+          teamAMeta?.slug,
+          currentMatch.teamASlug,
+          currentMatch.teamA_slug,
+          currentMatch.teamATag,
+          currentMatch.team1Tag,
+          currentMatch.team1Slug,
+          currentMatch.homeTag,
+          currentMatch.homeSlug,
+          currentMatch.blueTag,
+          currentMatch.blueSlug,
+          teamAName
+        );
+        const teamBSlug = pickSlug(
+          teamBMeta?.slug,
+          currentMatch.teamBSlug,
+          currentMatch.teamB_slug,
+          currentMatch.teamBTag,
+          currentMatch.team2Tag,
+          currentMatch.team2Slug,
+          currentMatch.awayTag,
+          currentMatch.awaySlug,
+          currentMatch.redTag,
+          currentMatch.redSlug,
+          teamBName
+        );
+        const teamAId = teamAMeta?.id || (typeof teamARef === 'string' ? teamARef : teamARef?.id);
+        const teamBId = teamBMeta?.id || (typeof teamBRef === 'string' ? teamBRef : teamBRef?.id);
+        renderPollSubheadVs({
+          teamAName,
+          teamBName,
+          teamASlug,
+          teamBSlug,
+          teamAId,
+          teamBId
+        });
 
         setLoadingState(false);
         updateVoteUI();
@@ -418,7 +685,7 @@
         console.error('Failed to load match', err);
         matchTitleEl.textContent = 'Match unavailable';
         matchMetaEl.textContent = 'We ran into an error loading this match.';
-        pollSubheadEl.textContent = 'Please refresh and try again.';
+        setPollSubheadText('Please refresh and try again.');
         setLoadingState(false);
         showError('Unable to load match details.');
       }
