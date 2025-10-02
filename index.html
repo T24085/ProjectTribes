@@ -1061,12 +1061,13 @@
 
     /* Live Player Indicators */
     .player-tab.live {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
-      border: 2px solid rgba(34, 197, 94, 0.6);
-      color: #22c55e;
-      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4), 0 0 30px rgba(34, 197, 94, 0.2);
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2)) !important;
+      border: 3px solid rgba(34, 197, 94, 0.8) !important;
+      color: #ffffff !important;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.4) !important;
       animation: livePulse 2s ease-in-out infinite;
       position: relative;
+      font-weight: bold !important;
     }
 
     .player-tab.live:hover {
@@ -1076,10 +1077,12 @@
     }
 
     .player-tab.live::before {
-      content: "🔴";
+      content: "🔴 LIVE";
       margin-right: 0.5rem;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
+      font-weight: bold;
       animation: liveBlink 1.5s ease-in-out infinite;
+      text-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
     }
 
     @keyframes livePulse {
@@ -1484,7 +1487,7 @@
       <!-- Twitch Chat Section -->
       <div class="sidebar-section chat-section">
         <div class="chat-header">
-          <h3>Live Chat</h3>
+        <h3>Live Chat</h3>
           <select id="streamer-select" class="streamer-dropdown">
             <option value="tribesprofessionalleague">TPL Main Chat</option>
           </select>
@@ -1494,8 +1497,8 @@
             <div class="text-center">
               <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
               <div>Connecting to Chat...</div>
-            </div>
-          </div>
+        </div>
+      </div>
           <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 500px; border: none; border-radius: 0.5rem; display: none;"></iframe>
         </div>
       </div>
@@ -3500,6 +3503,7 @@
       
       console.log('Found live streams:', liveStreams.length);
       console.log('Found player tabs:', playerTabs.length);
+      console.log('Live streams data:', liveStreams.map(s => ({ name: s.user_name, login: s.user_login })));
       
       // Clear previous live indicators
       playerTabs.forEach(tab => tab.classList.remove('live'));
@@ -3880,6 +3884,49 @@
     window.showTeamStats = showTeamStats;
     window.hideTeamStats = hideTeamStats;
     window.updateLivePlayerIndicators = updateLivePlayerIndicators;
+    
+    // Debug function for live indicators
+    window.debugLiveIndicators = function() {
+      console.log('=== Live Indicators Debug ===');
+      console.log('Twitch OAuth available:', !!window.twitchOAuth);
+      console.log('Live streams data:', window.twitchOAuth?.liveStreams);
+      console.log('Selected teams:', selectedTeams);
+      console.log('Team rosters:', teamRosters);
+      
+      if (window.twitchOAuth?.liveStreams) {
+        console.log('Live stream details:');
+        window.twitchOAuth.liveStreams.forEach((stream, index) => {
+          console.log(`  ${index + 1}. ${stream.user_name} (${stream.user_login})`);
+        });
+      }
+      
+      const playerTabs = document.querySelectorAll('.player-tab');
+      console.log('Player tabs found:', playerTabs.length);
+      
+      playerTabs.forEach((tab, index) => {
+        const team = tab.dataset.team;
+        const playerIndex = tab.dataset.playerIndex;
+        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+        const roster = teamRosters[teamKey] || [];
+        const player = roster[playerIndex];
+        
+        if (player) {
+          const playerName = player.name || player.displayName;
+          const twitchHandle = getTwitchHandleForPlayer(player);
+          console.log(`  Tab ${index + 1}: ${playerName} (${teamKey}) -> Twitch: ${twitchHandle}`);
+        }
+      });
+      
+      // Force update live indicators
+      console.log('Forcing live indicator update...');
+      updateLivePlayerIndicators();
+    };
+    
+    // Manual trigger for live indicators
+    window.forceUpdateLiveIndicators = function() {
+      console.log('Manually triggering live indicator update...');
+      updateLivePlayerIndicators();
+    };
     // Recent Matches functionality
     async function loadRecentMatches() {
       const recentMatchesGrid = document.getElementById('recent-matches-grid');
