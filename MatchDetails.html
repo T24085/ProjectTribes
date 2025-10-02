@@ -6,6 +6,7 @@
   <title>TPL Match Details</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="oauth.js"></script>
+
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
   <div id="nav-placeholder" data-include="nav.html"></div>
@@ -27,7 +28,9 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <h2 class="text-2xl font-semibold text-white">Who will win?</h2>
+
             <p id="pollSubhead" class="text-sm text-slate-400">Cast your vote to back your team.</p>
+
           </div>
           <p id="pollStatus" class="text-sm text-slate-400">Loading votes…</p>
         </div>
@@ -115,6 +118,8 @@
       setDoc,
       serverTimestamp
     } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+
 
     const firebaseConfig = {
       apiKey: 'AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM',
@@ -371,10 +376,12 @@
     }
 
     async function loadMatch() {
+
       if (!matchId) {
         matchTitleEl.textContent = 'Match not found';
         matchMetaEl.textContent = 'Missing matchId parameter in the URL.';
         pollSubheadEl.textContent = 'Provide a valid match link to vote.';
+
         setLoadingState(false);
         pollStatusEl.textContent = 'Unable to load votes.';
         pollOptionsEl.classList.add('pointer-events-none', 'opacity-50');
@@ -387,7 +394,9 @@
         if (!snap.exists()) {
           matchTitleEl.textContent = 'Match not found';
           matchMetaEl.textContent = 'This match could not be located. It may have been removed.';
+
           pollSubheadEl.textContent = 'Unable to load teams for this match.';
+
           setLoadingState(false);
           pollOptionsEl.classList.add('pointer-events-none', 'opacity-50');
           return;
@@ -396,20 +405,24 @@
         currentMatch = snap.data();
         const { team1, team2, map, created } = currentMatch;
 
+
         breadcrumbEl.textContent = `Match • ${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
         matchTitleEl.textContent = `${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
         matchMetaEl.textContent = map ? `Map: ${map}` : 'Map not recorded';
 
         detailMatchupEl.textContent = `${team1 ?? 'Team A'} vs ${team2 ?? 'Team B'}`;
+
         detailMapEl.textContent = map ?? '—';
         detailCreatedEl.textContent = formatDate(created);
         matchDetailsStatusEl.textContent = 'Stats summary will be available soon.';
+
 
         teamNameSpans.A.textContent = team1 ?? 'Team A';
         teamNameSpans.B.textContent = team2 ?? 'Team B';
         progressNames.A.textContent = team1 ?? 'Team A';
         progressNames.B.textContent = team2 ?? 'Team B';
         pollSubheadEl.textContent = `Vote between ${team1 ?? 'Team A'} and ${team2 ?? 'Team B'}.`;
+
 
         setLoadingState(false);
         updateVoteUI();
@@ -418,7 +431,9 @@
         console.error('Failed to load match', err);
         matchTitleEl.textContent = 'Match unavailable';
         matchMetaEl.textContent = 'We ran into an error loading this match.';
+
         pollSubheadEl.textContent = 'Please refresh and try again.';
+
         setLoadingState(false);
         showError('Unable to load match details.');
       }

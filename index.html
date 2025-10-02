@@ -860,6 +860,7 @@
       font-weight: 700;
       letter-spacing: -0.01em;
     }
+
     .match-poll__subhead,
     .match-poll__meta,
     .match-poll__status {
@@ -869,6 +870,7 @@
       line-height: 1.45;
     }
     .match-poll__status { font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(148, 163, 184, 0.9); }
+
     .match-poll__content { display: grid; gap: 1.25rem; }
     .match-poll__loading {
       display: grid;
@@ -1041,8 +1043,10 @@
           <header class="match-poll__header">
             <div class="match-poll__heading">
               <p class="match-poll__eyebrow">Featured Match</p>
+
               <h2 class="match-poll__title" id="match-poll-title">Who will win?</h2>
               <p class="match-poll__subhead" id="match-poll-subhead">Loading featured matchup…</p>
+
               <p class="match-poll__meta is-hidden" id="match-poll-meta"></p>
             </div>
             <p class="match-poll__status" id="match-poll-status">Loading votes…</p>
@@ -1170,7 +1174,9 @@
   </main>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
     import { getFirestore, collection, getDocs, query, where, limit, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -1248,7 +1254,9 @@
         loading: document.getElementById("match-poll-loading"),
         content: document.getElementById("match-poll-content"),
         status: document.getElementById("match-poll-status"),
+
         title: document.getElementById("match-poll-title"),
+
         subhead: document.getElementById("match-poll-subhead"),
         meta: document.getElementById("match-poll-meta"),
         login: document.getElementById("match-poll-login"),
@@ -1297,6 +1305,699 @@
     };
 
     const teamIndex = new Map();
+    const teamMetaCache = new Map();
+    const slugPersistAttempts = new Set();
+    const missingSlugWarnings = new Set();
+    const VS_IMAGE_BASE_PATH = "TribesLeagueLogo's/TeamMatchUps";
+    const VS_IMAGE_FALLBACK_SRC = "";
+    const MATCH_POLL_LOADING_TEXT = "Loading featured matchup…";
+
+    const pollEls = els.matchPoll || {};
+    const pollState = {
+
+      pollDocId: null,
+
+      matchId: null,
+      matchLoaded: false,
+      teams: { A: "Team A", B: "Team B" },
+      counts: { A: 0, B: 0 },
+      user: null,
+      userVote: null,
+      saving: false,
+      unsubscribe: null,
+
+      voteSubscriptionId: null,
+      activePollUnsubscribe: null,
+
+      hasError: false,
+      cleanupBound: false
+    };
+
+    function sanitizeSlug(value) {
+      if (!value) return "";
+      return String(value)
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^A-Za-z0-9]/g, "")
+        .toUpperCase();
+    }
+
+    function pickSlug(...values) {
+      for (const value of values) {
+        const slug = sanitizeSlug(value);
+        if (slug) return slug;
+      }
+      return "";
+    }
+
+    function toTeamDocRef(value) {
+      if (!value) return null;
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed ? doc(db, "teams", trimmed) : null;
+      }
+      if (typeof value === "object") {
+        if (value?.path && value?.id && typeof value.path === "string") {
+          return value;
+        }
+        if (value?.id && typeof value.id === "string") {
+          return doc(db, "teams", value.id);
+        }
+      }
+      return null;
+    }
+
+    async function fetchTeamRecord(rawValue) {
+      const docRef = toTeamDocRef(rawValue);
+      if (!docRef) return null;
+      const cacheKey = docRef.path || docRef.id;
+      if (teamMetaCache.has(cacheKey)) {
+        return teamMetaCache.get(cacheKey);
+      }
+      try {
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) {
+          teamMetaCache.set(cacheKey, null);
+          return null;
+        }
+        const data = snap.data() || {};
+        const teamName = data.teamName || data.name || data.displayName || data.team || docRef.id;
+        let slug = sanitizeSlug(data.slug);
+        if (!slug) {
+          slug = pickSlug(
+            data.teamTag,
+            data.tag,
+            data.abbreviation,
+            data.abbrev,
+            teamName,
+            docRef.id
+          );
+          if (slug && !data.slug && !slugPersistAttempts.has(cacheKey)) {
+            slugPersistAttempts.add(cacheKey);
+            setDoc(docRef, { slug }, { merge: true }).catch(() => {});
+          }
+        }
+        const record = { id: docRef.id, name: teamName, slug, data };
+        teamMetaCache.set(cacheKey, record);
+        return record;
+      } catch (err) {
+        console.warn("Failed to fetch team metadata", rawValue, err);
+        teamMetaCache.set(cacheKey, null);
+        return null;
+      }
+    }
+
+    function setMatchSubheadContent(content) {
+      if (!pollEls.subhead) return;
+      pollEls.subhead.replaceChildren();
+      if (typeof content === "string") {
+        const span = document.createElement("span");
+        span.className = "match-poll__subhead-text";
+        span.textContent = content;
+        pollEls.subhead.appendChild(span);
+        pollEls.subhead.dataset.state = "text";
+        return;
+      }
+      if (content instanceof Node) {
+        pollEls.subhead.appendChild(content);
+        pollEls.subhead.dataset.state = content.dataset?.state || "custom";
+      }
+    }
+
+    function setMatchSubheadText(message) {
+      setMatchSubheadContent(message);
+    }
+
+    function warnMissingSlug(contextKey, details = {}) {
+      const {
+        teamAName,
+        teamBName,
+        teamASlug,
+        teamBSlug,
+        reason,
+        attemptedSrc,
+        teamAId,
+        teamBId
+      } = details;
+      const key = `${contextKey}:${teamASlug || "?"}-${teamBSlug || "?"}:${reason || "unknown"}`;
+      if (missingSlugWarnings.has(key)) return;
+      missingSlugWarnings.add(key);
+      const payload = {
+        teamA: teamAName || "Team A",
+        teamB: teamBName || "Team B",
+        teamAId: teamAId || null,
+        teamBId: teamBId || null,
+        teamASlug: teamASlug || null,
+        teamBSlug: teamBSlug || null
+      };
+      if (attemptedSrc) {
+        payload.asset = attemptedSrc;
+      }
+      console.warn(`[VSImage] Falling back for ${payload.teamA} vs ${payload.teamB} (${contextKey}) due to ${reason || "unknown"}.`, payload);
+    }
+
+    function renderMatchSubheadVs({ teamAName, teamBName, teamASlug, teamBSlug, teamAId, teamBId }) {
+      if (!pollEls.subhead) return;
+      if (!teamASlug || !teamBSlug) {
+        warnMissingSlug("match-poll", { teamAName, teamBName, teamASlug, teamBSlug, teamAId, teamBId, reason: "missing-slug" });
+      }
+      const element = createVsImage({
+        teamAName,
+        teamBName,
+        teamASlug,
+        teamBSlug,
+        basePath: VS_IMAGE_BASE_PATH,
+        fallbackSrc: VS_IMAGE_FALLBACK_SRC,
+        className: "vs-image",
+        fallbackClass: "match-poll__subhead-text",
+        onImageError: ({ attemptedSrc }) => {
+          warnMissingSlug("match-poll", {
+            teamAName,
+            teamBName,
+            teamASlug,
+            teamBSlug,
+            teamAId,
+            teamBId,
+            reason: "image-error",
+            attemptedSrc
+          });
+        }
+      });
+      setMatchSubheadContent(element);
+    }
+
+    function extractTeamReference(matchData, side) {
+      if (!matchData) return null;
+      const prefix = (side || "A").toUpperCase() === "B" ? "B" : "A";
+      const altKeys = prefix === "A" ? ["home", "blue"] : ["away", "red"];
+      const candidates = [
+        matchData[`team${prefix}Id`],
+        matchData[`team${prefix}ID`],
+        matchData[`team${prefix}`]?.id,
+        matchData[`team${prefix}`]?.teamId,
+        matchData[`team${prefix}`]?.ref,
+        matchData[`team${prefix}`]?.doc,
+        matchData[`team${prefix}Ref`],
+        matchData[`team${prefix}Doc`],
+        matchData[`${prefix.toLowerCase()}TeamId`],
+        matchData[`${altKeys[0]}Id`],
+        matchData[`${altKeys[0]}ID`],
+        matchData[`${altKeys[0]}TeamId`],
+        matchData[`${altKeys[0]}TeamID`],
+        matchData[`${altKeys[0]}Team`]?.id,
+        matchData[`${altKeys[0]}Team`]?.teamId,
+        matchData[`${altKeys[1]}Id`],
+        matchData[`${altKeys[1]}ID`],
+        matchData[`${altKeys[1]}TeamId`],
+        matchData[`${altKeys[1]}Team`]?.id,
+        matchData[`${altKeys[1]}Team`]?.teamId
+      ];
+      for (const candidate of candidates) {
+        if (candidate) return candidate;
+      }
+      return null;
+    }
+
+    function pollEnabled() {
+      return Boolean(pollEls?.container);
+    }
+
+    function setPollStatus(message) {
+      if (pollEls.status) {
+        pollEls.status.textContent = message;
+      }
+    }
+
+    function setPollLoading(isLoading) {
+      if (!pollEnabled()) return;
+      if (pollEls.loading) {
+        pollEls.loading.classList.toggle("is-hidden", !isLoading);
+      }
+      if (pollEls.content) {
+        pollEls.content.classList.toggle("is-hidden", isLoading);
+      }
+    }
+
+    function setPollError(message) {
+      if (!pollEnabled() || !pollEls.error) return;
+      pollState.hasError = Boolean(message);
+      pollEls.error.textContent = message || "";
+      pollEls.error.classList.toggle("is-hidden", !message);
+      updatePollInteractivity();
+    }
+
+    function clearPollError() {
+      setPollError("");
+    }
+
+    function formatVoteCount(value) {
+      const count = Number(value) || 0;
+      return `${count} vote${count === 1 ? "" : "s"}`;
+    }
+
+    function coerceDate(value) {
+      if (!value) return null;
+      if (value instanceof Date) return value;
+      if (typeof value?.toDate === "function") {
+        try {
+          return value.toDate();
+        } catch {
+          return null;
+        }
+      }
+      if (typeof value === "number") {
+        const numericDate = new Date(value);
+        return Number.isNaN(numericDate.getTime()) ? null : numericDate;
+      }
+      if (typeof value === "string") {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+      return null;
+    }
+
+    function formatMatchDate(value) {
+      const date = coerceDate(value);
+      if (!date) return "";
+      try {
+        return date.toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch (err) {
+        console.error("Failed to format match date", err);
+        return "";
+      }
+    }
+
+    function updatePollOptionStyles() {
+      if (!pollEnabled() || !pollEls.optionButtons) return;
+      Object.entries(pollEls.optionButtons).forEach(([teamKey, button]) => {
+        if (!button) return;
+        button.classList.toggle("is-selected", pollState.userVote === teamKey);
+      });
+    }
+
+    function updatePollInteractivity() {
+      if (!pollEnabled()) return;
+      const allowVoting = pollState.matchLoaded && !pollState.hasError && pollState.user && !pollState.saving;
+      if (pollEls.options) {
+        pollEls.options.classList.toggle("is-disabled", !allowVoting);
+      }
+      if (pollEls.optionButtons) {
+        Object.values(pollEls.optionButtons).forEach(button => {
+          if (!button) return;
+          button.disabled = !allowVoting;
+        });
+      }
+    }
+
+    function updatePollUI() {
+      if (!pollEnabled()) return;
+      const totalVotes = (pollState.counts.A || 0) + (pollState.counts.B || 0);
+      const percentA = totalVotes ? Math.round((pollState.counts.A / totalVotes) * 100) : 0;
+      const percentB = totalVotes ? 100 - percentA : 0;
+
+      if (pollEls.percentLabels) {
+        if (pollEls.percentLabels.A) pollEls.percentLabels.A.textContent = `${percentA}%`;
+        if (pollEls.percentLabels.B) pollEls.percentLabels.B.textContent = `${percentB}%`;
+      }
+      if (pollEls.progressBars) {
+        if (pollEls.progressBars.A) pollEls.progressBars.A.style.width = `${percentA}%`;
+        if (pollEls.progressBars.B) pollEls.progressBars.B.style.width = `${percentB}%`;
+      }
+      if (pollEls.teamCounts) {
+        if (pollEls.teamCounts.A) pollEls.teamCounts.A.textContent = formatVoteCount(pollState.counts.A);
+        if (pollEls.teamCounts.B) pollEls.teamCounts.B.textContent = formatVoteCount(pollState.counts.B);
+      }
+      if (pollEls.empty) {
+        pollEls.empty.classList.toggle("is-hidden", totalVotes !== 0);
+      }
+      updatePollOptionStyles();
+
+
+      if (!pollState.matchLoaded) {
+        setPollStatus("No featured poll is active right now.");
+        return;
+      }
+
+
+      let statusText = totalVotes ? `Live votes: ${totalVotes}` : "No votes cast yet.";
+      if (!pollState.user) {
+        statusText = totalVotes
+          ? `Live votes: ${totalVotes} — log in to vote.`
+          : "Log in to vote and be the first!";
+      }
+      setPollStatus(statusText);
+    }
+
+    function setPollAuthUI(isAuthenticated) {
+      if (!pollEnabled()) return;
+      if (pollEls.login) {
+
+        const shouldShowLogin = !isAuthenticated && pollState.matchLoaded;
+        pollEls.login.classList.toggle("is-hidden", !shouldShowLogin);
+
+      }
+      if (!isAuthenticated) {
+        pollState.userVote = null;
+        updatePollOptionStyles();
+      }
+      updatePollInteractivity();
+    }
+
+    function setPollSaving(isSaving) {
+      pollState.saving = Boolean(isSaving);
+      if (pollState.saving) {
+        setPollStatus("Submitting your vote…");
+      }
+      updatePollInteractivity();
+    }
+
+    async function refreshPollUserVote() {
+      if (!pollEnabled() || !pollState.user || !pollState.matchId) return;
+      try {
+        const voteSnap = await getDoc(doc(db, "matchVotes", pollState.matchId, "votes", pollState.user.id));
+        if (voteSnap.exists()) {
+          pollState.userVote = voteSnap.data()?.team ?? null;
+        } else {
+          pollState.userVote = null;
+        }
+        updatePollUI();
+      } catch (err) {
+        console.error("Failed to refresh poll vote", err);
+      }
+    }
+
+    async function ensurePollUser() {
+      if (!pollEnabled()) return null;
+      if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
+        pollState.user = null;
+        setPollAuthUI(false);
+        updatePollUI();
+        return null;
+      }
+
+      try {
+        pollState.user = await window.twitchOAuth.fetchUser();
+      } catch (err) {
+        console.error("Failed to fetch Twitch user", err);
+        pollState.user = null;
+      }
+
+      setPollAuthUI(Boolean(pollState.user));
+      if (pollState.user) {
+        await refreshPollUserVote();
+      }
+      return pollState.user;
+    }
+
+    function subscribeToPollVotes() {
+      if (!pollEnabled() || !pollState.matchId) return;
+
+      if (pollState.unsubscribe && pollState.voteSubscriptionId === pollState.matchId) {
+        return;
+      }
+      if (pollState.unsubscribe) {
+        pollState.unsubscribe();
+        pollState.unsubscribe = null;
+        pollState.voteSubscriptionId = null;
+
+      }
+      const votesRef = collection(db, "matchVotes", pollState.matchId, "votes");
+      pollState.unsubscribe = onSnapshot(votesRef, snapshot => {
+        clearPollError();
+        const counts = { A: 0, B: 0 };
+        let userVote = pollState.userVote;
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data?.team === "A") counts.A += 1;
+          if (data?.team === "B") counts.B += 1;
+          if (pollState.user && docSnap.id === pollState.user.id) {
+            userVote = data?.team ?? null;
+          }
+        });
+        pollState.counts = counts;
+        pollState.userVote = userVote ?? (pollState.user ? null : pollState.userVote);
+        updatePollUI();
+      }, err => {
+        console.error("Failed to subscribe to poll votes", err);
+        setPollError("Live vote updates are unavailable right now.");
+      });
+
+      pollState.voteSubscriptionId = pollState.matchId;
+    }
+
+
+    async function loadPollMatch() {
+      setMatchSubheadText(MATCH_POLL_LOADING_TEXT);
+      if (!pollEnabled() || !pollState.matchId) {
+        setPollLoading(false);
+        setPollStatus("No match selected.");
+        setMatchSubheadText("No match selected.");
+        pollState.matchLoaded = false;
+        updatePollInteractivity();
+        return false;
+      }
+      try {
+        setPollStatus("Loading votes…");
+        setPollLoading(true);
+        clearPollError();
+        const matchRef = doc(db, "matches", pollState.matchId);
+        const snap = await getDoc(matchRef);
+        if (!snap.exists()) {
+          pollState.matchLoaded = false;
+          pollState.counts = { A: 0, B: 0 };
+          updatePollUI();
+          setPollLoading(false);
+          setPollStatus("Match not found.");
+          setMatchSubheadText("Match not found.");
+          setPollError("We couldn't find that match. Update the featured match ID to continue.");
+          if (pollState.unsubscribe) {
+            pollState.unsubscribe();
+            pollState.unsubscribe = null;
+          }
+          updatePollInteractivity();
+          return false;
+        }
+
+
+      const data = docSnap.data() || {};
+      const voteIdCandidate = (data.voteId || docSnap.id || "").trim();
+      const nextVoteId = voteIdCandidate || docSnap.id;
+      const voteIdChanged = pollState.matchId !== nextVoteId;
+
+
+        if (pollEls.teamNames) {
+          if (pollEls.teamNames.A) pollEls.teamNames.A.textContent = pollState.teams.A;
+          if (pollEls.teamNames.B) pollEls.teamNames.B.textContent = pollState.teams.B;
+        }
+        if (pollEls.progressLabels) {
+          if (pollEls.progressLabels.A) pollEls.progressLabels.A.textContent = pollState.teams.A;
+          if (pollEls.progressLabels.B) pollEls.progressLabels.B.textContent = pollState.teams.B;
+        }
+        const teamARef = extractTeamReference(data, "A");
+        const teamBRef = extractTeamReference(data, "B");
+        const [teamAMeta, teamBMeta] = await Promise.all([
+          fetchTeamRecord(teamARef),
+          fetchTeamRecord(teamBRef)
+        ]);
+        const teamASlug = pickSlug(
+          teamAMeta?.slug,
+          data.teamASlug,
+          data.teamA_slug,
+          data.teamATag,
+          data.team1Tag,
+          data.team1Slug,
+          data.homeTag,
+          data.homeSlug,
+          data.blueTag,
+          data.blueSlug,
+          pollState.teams.A
+        );
+        const teamBSlug = pickSlug(
+          teamBMeta?.slug,
+          data.teamBSlug,
+          data.teamB_slug,
+          data.teamBTag,
+          data.team2Tag,
+          data.team2Slug,
+          data.awayTag,
+          data.awaySlug,
+          data.redTag,
+          data.redSlug,
+          pollState.teams.B
+        );
+        const teamAId = teamAMeta?.id || (typeof teamARef === "string" ? teamARef : teamARef?.id);
+        const teamBId = teamBMeta?.id || (typeof teamBRef === "string" ? teamBRef : teamBRef?.id);
+        renderMatchSubheadVs({
+          teamAName: pollState.teams.A,
+          teamBName: pollState.teams.B,
+          teamASlug,
+          teamBSlug,
+          teamAId,
+          teamBId
+        });
+
+
+      if (pollEls.title) {
+        pollEls.title.textContent = (data.title || "Who will win?").trim() || "Who will win?";
+      }
+      if (pollEls.teamNames) {
+        if (pollEls.teamNames.A) pollEls.teamNames.A.textContent = pollState.teams.A;
+        if (pollEls.teamNames.B) pollEls.teamNames.B.textContent = pollState.teams.B;
+      }
+      if (pollEls.progressLabels) {
+        if (pollEls.progressLabels.A) pollEls.progressLabels.A.textContent = pollState.teams.A;
+        if (pollEls.progressLabels.B) pollEls.progressLabels.B.textContent = pollState.teams.B;
+      }
+      if (pollEls.subhead) {
+        pollEls.subhead.textContent = `${pollState.teams.A} vs ${pollState.teams.B}`;
+      }
+
+
+        pollState.matchLoaded = true;
+        setPollLoading(false);
+        updatePollInteractivity();
+        updatePollUI();
+        return true;
+      } catch (err) {
+        console.error("Failed to load featured match", err);
+        pollState.matchLoaded = false;
+        pollState.counts = { A: 0, B: 0 };
+        updatePollUI();
+        setPollLoading(false);
+        setPollStatus("Match unavailable.");
+        setMatchSubheadText("Unable to load matchup.");
+        setPollError("Unable to load match details. Please refresh and try again.");
+        updatePollInteractivity();
+        return false;
+
+      }
+
+      clearPollError();
+      setPollLoading(false);
+      updatePollInteractivity();
+      updatePollUI();
+      setPollAuthUI(Boolean(pollState.user));
+
+      if (voteIdChanged && pollState.unsubscribe) {
+        pollState.unsubscribe();
+        pollState.unsubscribe = null;
+        pollState.voteSubscriptionId = null;
+      }
+      subscribeToPollVotes();
+      if (pollState.user) {
+        refreshPollUserVote();
+      }
+    }
+
+    function subscribeToActivePoll() {
+      if (!pollEnabled()) return;
+      if (pollState.activePollUnsubscribe) {
+        pollState.activePollUnsubscribe();
+        pollState.activePollUnsubscribe = null;
+      }
+      const pollsRef = collection(db, "matchPolls");
+      const activeQuery = query(pollsRef, where("isActive", "==", true), limit(1));
+      pollState.activePollUnsubscribe = onSnapshot(activeQuery, snapshot => {
+        clearPollError();
+        if (snapshot.empty) {
+          applyActivePollDoc(null);
+        } else {
+          applyActivePollDoc(snapshot.docs[0]);
+        }
+      }, err => {
+        console.error("Failed to subscribe to featured poll", err);
+        setPollError("Unable to load the featured poll right now.");
+        applyActivePollDoc(null);
+        setPollLoading(false);
+      });
+
+    }
+
+    async function submitPollVote(teamKey) {
+      if (!pollEnabled() || !pollState.matchLoaded || !pollState.matchId) return;
+      if (!pollState.user) {
+        setPollAuthUI(false);
+        return;
+      }
+      if (pollState.saving || teamKey === pollState.userVote) {
+        return;
+      }
+
+      clearPollError();
+      setPollSaving(true);
+      try {
+        const voteRef = doc(db, "matchVotes", pollState.matchId, "votes", pollState.user.id);
+        const payload = { team: teamKey };
+        if (pollState.userVote) {
+          payload.updatedAt = serverTimestamp();
+        } else {
+          payload.createdAt = serverTimestamp();
+        }
+        await setDoc(voteRef, payload, { merge: true });
+        pollState.userVote = teamKey;
+        updatePollOptionStyles();
+        setPollStatus("Vote saved!");
+      } catch (err) {
+        console.error("Failed to submit poll vote", err);
+        setPollError("Unable to save your vote. Please try again.");
+      } finally {
+        setPollSaving(false);
+      }
+    }
+
+    function bindPollEvents() {
+      if (!pollEnabled()) return;
+      if (pollEls.optionButtons?.A) {
+        pollEls.optionButtons.A.addEventListener("click", () => submitPollVote("A"));
+      }
+      if (pollEls.optionButtons?.B) {
+        pollEls.optionButtons.B.addEventListener("click", () => submitPollVote("B"));
+      }
+      if (pollEls.loginBtn) {
+        pollEls.loginBtn.addEventListener("click", () => {
+          if (window.twitchOAuth) {
+            window.twitchOAuth.login();
+          }
+        });
+      }
+      if (!pollState.cleanupBound) {
+        window.addEventListener("beforeunload", () => {
+          if (pollState.unsubscribe) {
+            pollState.unsubscribe();
+            pollState.unsubscribe = null;
+          }
+
+          if (pollState.activePollUnsubscribe) {
+            pollState.activePollUnsubscribe();
+            pollState.activePollUnsubscribe = null;
+          }
+
+        });
+        pollState.cleanupBound = true;
+      }
+    }
+
+    async function initializeMatchPoll() {
+      if (!pollEnabled()) return;
+
+      bindPollEvents();
+      setPollLoading(true);
+      setPollStatus("Loading featured poll…");
+      await ensurePollUser();
+      subscribeToActivePoll();
+
+      window.addEventListener("storage", event => {
+        if (event.key === "twitch_token") {
+          ensurePollUser();
+        }
+      });
+    }
 
     const pollEls = els.matchPoll || {};
     const pollState = {
