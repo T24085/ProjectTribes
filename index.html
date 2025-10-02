@@ -828,6 +828,45 @@
       color: var(--danger);
     }
 
+    /* Admin Login Form Styles */
+    .login-form {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input[type="email"],
+    .form-group input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 0.875rem;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .error-message {
+      text-align: center;
+      font-size: 0.875rem;
+    }
+
     /* Admin Panel Styles */
     .modal {
       position: fixed;
@@ -1050,6 +1089,7 @@
       <div class="auth-buttons">
         <button id="admin-login-btn" class="btn btn-secondary" style="display: none;">Admin Login</button>
         <button id="admin-panel-btn" class="btn btn-secondary" style="display: none;">Admin Panel</button>
+        <button id="admin-logout-btn" class="btn btn-danger" style="display: none;">Logout</button>
         <button id="twitch-login-btn" class="btn btn-primary">Sign in with Twitch</button>
         <span id="twitch-user" style="display: none; color: var(--text-muted); font-size: 0.9rem;"></span>
       </div>
@@ -1137,6 +1177,35 @@
           </div>
           <div id="team-stats-content">
             <div class="stats-loading">Loading team statistics...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Login Modal -->
+      <div id="admin-login-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Admin Login</h2>
+            <button id="close-admin-login-modal" class="btn btn-secondary">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="admin-section">
+              <div class="login-form">
+                <div class="form-group">
+                  <label for="admin-email">Email:</label>
+                  <input id="admin-email" type="email" class="form-select" placeholder="Enter admin email">
+                </div>
+                <div class="form-group">
+                  <label for="admin-password">Password:</label>
+                  <input id="admin-password" type="password" class="form-select" placeholder="Enter password">
+                </div>
+                <div class="admin-actions">
+                  <button id="admin-login-submit" class="btn btn-primary">Login</button>
+                  <button id="cancel-admin-login" class="btn btn-secondary">Cancel</button>
+                </div>
+                <div id="admin-login-error" class="error-message" style="display: none; color: var(--danger); margin-top: 1rem;"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1239,7 +1308,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -1252,6 +1322,13 @@
 
     const firebaseApp = initializeApp(firebaseConfig);
     const db = getFirestore(firebaseApp);
+    const auth = getAuth();
+    
+    // Admin UIDs from LeagueManager.html
+    const ADMIN_UIDS = [
+      'DkBHsCzLK5a9KiX50g0pHJrEqGq2',
+      'A2ZV8vziNsXqZkyqHzAB266B9pP2'
+    ];
 
     const TEAM_DATA = {
       'Avalanche': { logo: 'https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true', name: 'Avalanche', folder: 'AV!' },
@@ -1295,8 +1372,20 @@
       // Set up admin system
       setupAdminSystem();
       
-      // Check admin status
-      checkAdminStatus();
+      // Set up Firebase Auth state listener
+      onAuthStateChanged(auth, (user) => {
+        if (user && ADMIN_UIDS.includes(user.uid)) {
+          isAdmin = true;
+          console.log('Admin user logged in:', user.email);
+        } else {
+          isAdmin = false;
+          if (user) {
+            console.log('Non-admin user logged in:', user.email);
+            signOut(auth); // Sign out non-admin users
+          }
+        }
+        checkAdminStatus();
+      });
       
       // Set up periodic live player checks
       setInterval(() => {
@@ -1307,24 +1396,81 @@
     // Set up admin system event listeners
     function setupAdminSystem() {
       // Admin login button
-      document.getElementById('admin-login-btn').addEventListener('click', () => {
-        if (window.twitchOAuth) {
-          window.twitchOAuth.login();
-        }
-      });
+      document.getElementById('admin-login-btn').addEventListener('click', showAdminLogin);
 
       // Admin panel button
       document.getElementById('admin-panel-btn').addEventListener('click', showAdminPanel);
 
-      // Close admin modal
+      // Admin logout button
+      document.getElementById('admin-logout-btn').addEventListener('click', () => {
+        signOut(auth);
+      });
+
+      // Admin login form
+      document.getElementById('admin-login-submit').addEventListener('click', handleAdminLogin);
+      document.getElementById('cancel-admin-login').addEventListener('click', hideAdminLogin);
+
+      // Close admin login modal
+      document.getElementById('close-admin-login-modal').addEventListener('click', hideAdminLogin);
+
+      // Close admin panel modal
       document.getElementById('close-admin-modal').addEventListener('click', hideAdminPanel);
 
-      // Close modal when clicking outside
+      // Close modals when clicking outside
+      document.getElementById('admin-login-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'admin-login-modal') {
+          hideAdminLogin();
+        }
+      });
+
       document.getElementById('admin-modal').addEventListener('click', (e) => {
         if (e.target.id === 'admin-modal') {
           hideAdminPanel();
         }
       });
+
+      // Handle Enter key in login form
+      document.getElementById('admin-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          handleAdminLogin();
+        }
+      });
+    }
+
+    // Show admin login modal
+    function showAdminLogin() {
+      document.getElementById('admin-login-modal').style.display = 'flex';
+      document.getElementById('admin-email').focus();
+    }
+
+    // Hide admin login modal
+    function hideAdminLogin() {
+      document.getElementById('admin-login-modal').style.display = 'none';
+      document.getElementById('admin-email').value = '';
+      document.getElementById('admin-password').value = '';
+      document.getElementById('admin-login-error').style.display = 'none';
+    }
+
+    // Handle admin login
+    async function handleAdminLogin() {
+      const email = document.getElementById('admin-email').value;
+      const password = document.getElementById('admin-password').value;
+      const errorDiv = document.getElementById('admin-login-error');
+
+      if (!email || !password) {
+        errorDiv.textContent = 'Please enter both email and password';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        hideAdminLogin();
+      } catch (error) {
+        console.error('Admin login error:', error);
+        errorDiv.textContent = error.message;
+        errorDiv.style.display = 'block';
+      }
     }
 
     async function loadTeamRosters() {
@@ -2278,26 +2424,17 @@
     let isAdmin = false;
     let livePlayers = new Set();
 
-    // Check if user is admin (simple check for now - can be enhanced)
+    // Check if user is admin using Firebase Auth
     function checkAdminStatus() {
-      // For now, check if user is logged in with Twitch
-      // In production, you'd check against a list of admin Twitch IDs
-      const twitchUser = document.getElementById('twitch-user');
-      if (twitchUser && twitchUser.style.display !== 'none') {
-        const adminTwitchIds = ['tribesprofessionalleague', 'your_admin_twitch_id']; // Add admin Twitch IDs here
-        const currentUser = twitchUser.textContent;
-        isAdmin = adminTwitchIds.some(id => currentUser.toLowerCase().includes(id.toLowerCase()));
-        
-        if (isAdmin) {
-          document.getElementById('admin-login-btn').style.display = 'none';
-          document.getElementById('admin-panel-btn').style.display = 'inline-block';
-        } else {
-          document.getElementById('admin-login-btn').style.display = 'inline-block';
-          document.getElementById('admin-panel-btn').style.display = 'none';
-        }
+      // This will be called by onAuthStateChanged
+      if (isAdmin) {
+        document.getElementById('admin-login-btn').style.display = 'none';
+        document.getElementById('admin-panel-btn').style.display = 'inline-block';
+        document.getElementById('admin-logout-btn').style.display = 'inline-block';
       } else {
         document.getElementById('admin-login-btn').style.display = 'inline-block';
         document.getElementById('admin-panel-btn').style.display = 'none';
+        document.getElementById('admin-logout-btn').style.display = 'none';
       }
     }
 
