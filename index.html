@@ -2207,7 +2207,7 @@
 
     // Name mapping for players where database name doesn't match oauth.js name
     const PLAYER_NAME_MAPPING = {
-      'Panda': 'Pandora',
+      'Panda': 'pandoracast',
       'Glem': 'Glem',
       'CheezeCaek': 'CheezeCaek',
       'Nemesis': 'Nemesis',
@@ -2227,17 +2227,24 @@
       if (!twitchHandle && player.name) {
         const mappedName = PLAYER_NAME_MAPPING[player.name] || player.name;
         
-        // Look up in oauth.js TEAM_STREAMS data
-        if (window.twitchOAuth && window.twitchOAuth.TEAM_STREAMS) {
-          for (const [teamName, streams] of Object.entries(window.twitchOAuth.TEAM_STREAMS)) {
-            const streamer = streams.find(s => s.name === mappedName);
-            if (streamer) {
-              // Extract Twitch handle from URL
-              const match = streamer.url.match(/twitch\.tv\/([^/?]+)/i);
-              if (match) {
-                twitchHandle = match[1];
-                console.log(`Found Twitch handle for ${player.name} (mapped to ${mappedName}): ${twitchHandle}`);
-                break;
+        // Check if the mapped name is already a Twitch handle (contains lowercase letters/numbers)
+        // This handles cases like 'Panda' -> 'pandoracast' where the mapping is direct
+        if (mappedName && mappedName !== player.name && /^[a-z0-9_]+$/.test(mappedName)) {
+          twitchHandle = mappedName;
+          console.log(`Direct Twitch handle mapping for ${player.name}: ${twitchHandle}`);
+        } else {
+          // Look up in oauth.js TEAM_STREAMS data
+          if (window.twitchOAuth && window.twitchOAuth.TEAM_STREAMS) {
+            for (const [teamName, streams] of Object.entries(window.twitchOAuth.TEAM_STREAMS)) {
+              const streamer = streams.find(s => s.name === mappedName);
+              if (streamer) {
+                // Extract Twitch handle from URL
+                const match = streamer.url.match(/twitch\.tv\/([^/?]+)/i);
+                if (match) {
+                  twitchHandle = match[1];
+                  console.log(`Found Twitch handle for ${player.name} (mapped to ${mappedName}): ${twitchHandle}`);
+                  break;
+                }
               }
             }
           }
