@@ -631,25 +631,67 @@
     }
 
     /* Match Cards */
-    .match-cards {
+    .recent-matches-section {
+      margin-top: 2rem;
+    }
+
+    .section-title {
+      color: var(--accent);
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .recent-matches-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 1rem;
-      margin-top: 1.5rem;
     }
 
-    .match-card {
+    .recent-match-card {
       background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid rgba(148, 163, 184, 0.1);
     }
 
-    .match-card h4 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
+    .match-teams {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .team-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .team-logo-small {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .team-name {
+      font-weight: bold;
       color: var(--text-primary);
+    }
+
+    .match-score {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .match-date {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
     }
 
     /* Player Stats Styles */
@@ -1408,15 +1450,11 @@
         </div>
       </div>
 
-      <!-- Match Cards -->
-      <div class="match-cards">
-        <div class="match-card">
-          <h4>Match Statistics</h4>
-          <p>Live match statistics will appear here</p>
-        </div>
-        <div class="match-card">
-          <h4>Recent Matches</h4>
-          <p>Recent match results will appear here</p>
+      <!-- Recent Matches -->
+      <div class="recent-matches-section">
+        <h3 class="section-title">Recent Matches</h3>
+        <div class="recent-matches-grid" id="recent-matches-grid">
+          <!-- Recent matches will be populated here -->
         </div>
       </div>
     </div>
@@ -1461,7 +1499,11 @@
             </p>
           </div>
           <div class="streamer-chat-iframe-container" id="streamer-chat-iframe-container" style="display: none;">
-            <iframe id="streamer-chat-iframe" src="about:blank" style="width: 100%; height: 300px; border: none; border-radius: 0.5rem;"></iframe>
+            <iframe id="streamer-chat-iframe" src="about:blank" style="width: 100%; height: 250px; border: none; border-radius: 0.5rem;"></iframe>
+            <div class="chat-input-container" style="margin-top: 0.5rem;">
+              <input type="text" class="chat-input" id="streamer-chat-input" placeholder="Type a message for the streamer...">
+              <button class="chat-send" id="streamer-chat-send">Send</button>
+            </div>
           </div>
           <div class="streamer-chat-fallback" id="streamer-chat-fallback">
             <p style="color: var(--text-muted); text-align: center;">Streamer chat will appear here when live</p>
@@ -1547,6 +1589,7 @@
       initializeTwitchPlayer();
       initializePlayerStats();
       initializeTeamStats();
+      loadRecentMatches();
       
       // Initialize Twitch OAuth functionality
       if (window.twitchOAuth) {
@@ -2124,16 +2167,7 @@
       statsHeader.textContent = 'Match Information';
       statsSection.appendChild(statsHeader);
       
-      const statsTabs = document.createElement('div');
-      statsTabs.className = 'team-roster-tabs';
-      
-      const statsTab = document.createElement('button');
-      statsTab.className = 'player-tab';
-      statsTab.textContent = 'Match Stats';
-      statsTabs.appendChild(statsTab);
-      
-      statsSection.appendChild(statsTabs);
-      playerTabs.appendChild(statsSection);
+      // Match Stats button removed as requested
       
       // Re-initialize tab functionality
       initializePlayerTabs();
@@ -2323,6 +2357,30 @@
           chatSend.click();
         }
       });
+
+      // Streamer chat functionality
+      const streamerChatInput = document.getElementById('streamer-chat-input');
+      const streamerChatSend = document.getElementById('streamer-chat-send');
+      
+      if (streamerChatSend) {
+        streamerChatSend.addEventListener('click', () => {
+          const message = streamerChatInput.value.trim();
+          if (message) {
+            // In a real implementation, this would send the message to Twitch chat
+            // For now, we'll just show a confirmation
+            alert(`Message sent to streamer chat: "${message}"`);
+            streamerChatInput.value = '';
+          }
+        });
+      }
+
+      if (streamerChatInput) {
+        streamerChatInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            streamerChatSend.click();
+          }
+        });
+      }
 
       // Simulate some initial messages
       setTimeout(() => {
@@ -3710,12 +3768,82 @@
     window.showTeamStats = showTeamStats;
     window.hideTeamStats = hideTeamStats;
     window.updateLivePlayerIndicators = updateLivePlayerIndicators;
+    // Recent Matches functionality
+    function loadRecentMatches() {
+      const recentMatchesGrid = document.getElementById('recent-matches-grid');
+      if (!recentMatchesGrid) return;
+
+      // Sample recent matches data - in a real app, this would come from Firebase
+      const recentMatches = [
+        {
+          teamA: 'DPRK',
+          teamB: 'Zen',
+          scoreA: 3,
+          scoreB: 1,
+          date: '2024-01-15',
+          winner: 'DPRK'
+        },
+        {
+          teamA: 'Avalanche',
+          teamB: 'Magic',
+          scoreA: 2,
+          scoreB: 3,
+          date: '2024-01-14',
+          winner: 'Magic'
+        },
+        {
+          teamA: 'FPS',
+          teamB: 'Toxic Aimers',
+          scoreA: 3,
+          scoreB: 0,
+          date: '2024-01-13',
+          winner: 'FPS'
+        },
+        {
+          teamA: 'HoE',
+          teamB: 'TXM',
+          scoreA: 1,
+          scoreB: 3,
+          date: '2024-01-12',
+          winner: 'TXM'
+        }
+      ];
+
+      recentMatchesGrid.innerHTML = '';
+
+      recentMatches.forEach(match => {
+        const matchCard = document.createElement('div');
+        matchCard.className = 'recent-match-card';
+
+        const teamA = TEAM_DATA[match.teamA];
+        const teamB = TEAM_DATA[match.teamB];
+
+        matchCard.innerHTML = `
+          <div class="match-teams">
+            <div class="team-info">
+              <img src="${teamA?.logo || ''}" alt="${match.teamA}" class="team-logo-small" onerror="this.style.display='none'">
+              <span class="team-name ${match.winner === match.teamA ? 'winner' : ''}">${match.teamA}</span>
+            </div>
+            <span class="match-score">${match.scoreA} - ${match.scoreB}</span>
+            <div class="team-info">
+              <span class="team-name ${match.winner === match.teamB ? 'winner' : ''}">${match.teamB}</span>
+              <img src="${teamB?.logo || ''}" alt="${match.teamB}" class="team-logo-small" onerror="this.style.display='none'">
+            </div>
+          </div>
+          <div class="match-date">${new Date(match.date).toLocaleDateString()}</div>
+        `;
+
+        recentMatchesGrid.appendChild(matchCard);
+      });
+    }
+
     window.showGuestExperience = showGuestExperience;
     window.restoreAuthenticatedExperience = restoreAuthenticatedExperience;
     window.showContentBlockedFallback = showContentBlockedFallback;
     window.showAlternativeContent = showAlternativeContent;
     window.restoreStreamFrame = restoreStreamFrame;
     window.updateStreamerChat = updateStreamerChat;
+    window.loadRecentMatches = loadRecentMatches;
     window.testLiveIndicators = function() {
       console.log('=== Live Indicators Test ===');
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
