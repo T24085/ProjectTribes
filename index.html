@@ -1455,13 +1455,16 @@
         
         <!-- Streamer Chat -->
         <div class="chat-container" id="streamer-chat">
-          <div class="chat-messages" id="streamer-chat-messages">
-            <p style="color: var(--text-muted); text-align: center;">Streamer chat will appear here when live</p>
-          </div>
           <div class="streamer-info" id="streamer-info" style="display: none;">
             <p style="color: var(--accent); font-size: 0.875rem; text-align: center; margin: 0.5rem 0;">
               Currently viewing: <span id="current-streamer">No streamer</span>
             </p>
+          </div>
+          <div class="streamer-chat-iframe-container" id="streamer-chat-iframe-container" style="display: none;">
+            <iframe id="streamer-chat-iframe" src="about:blank" style="width: 100%; height: 300px; border: none; border-radius: 0.5rem;"></iframe>
+          </div>
+          <div class="streamer-chat-fallback" id="streamer-chat-fallback">
+            <p style="color: var(--text-muted); text-align: center;">Streamer chat will appear here when live</p>
           </div>
         </div>
       </div>
@@ -2257,9 +2260,10 @@
         }
       }
 
-      // Update live indicators after a short delay to allow Twitch data to load
+      // Update live indicators and streamer chat after a short delay to allow Twitch data to load
       setTimeout(() => {
         updateLivePlayerIndicators();
+        updateStreamerChat();
       }, 1000);
     }
 
@@ -2267,7 +2271,7 @@
       const chatInput = document.querySelector('.chat-input');
       const chatSend = document.querySelector('.chat-send');
       const chatMessages = document.querySelector('.chat-messages');
-      const streamerChatMessages = document.querySelector('#streamer-chat-messages');
+      // Note: streamer chat now uses iframe instead of messages div
       const chatTabs = document.querySelectorAll('.chat-tab');
       const chatContainers = document.querySelectorAll('.chat-container');
 
@@ -2287,15 +2291,17 @@
       });
 
       function addMessage(message, isUser = false, chatType = 'main') {
-        const targetMessages = chatType === 'main' ? chatMessages : streamerChatMessages;
-        const messageDiv = document.createElement('div');
-        messageDiv.style.marginBottom = '0.5rem';
-        messageDiv.style.padding = '0.5rem';
-        messageDiv.style.borderRadius = '4px';
-        messageDiv.style.backgroundColor = isUser ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)';
-        messageDiv.textContent = message;
-        targetMessages.appendChild(messageDiv);
-        targetMessages.scrollTop = targetMessages.scrollHeight;
+        // Only handle main chat messages, streamer chat uses iframe
+        if (chatType === 'main') {
+          const messageDiv = document.createElement('div');
+          messageDiv.style.marginBottom = '0.5rem';
+          messageDiv.style.padding = '0.5rem';
+          messageDiv.style.borderRadius = '4px';
+          messageDiv.style.backgroundColor = isUser ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+          messageDiv.textContent = message;
+          chatMessages.appendChild(messageDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
       }
 
       // Main chat functionality
@@ -2334,11 +2340,27 @@
             document.getElementById('current-streamer').textContent = currentStreamer;
             document.getElementById('streamer-info').style.display = 'block';
             
-            // Simulate streamer chat messages
-            setTimeout(() => {
-              addMessage(`${currentStreamer}: Thanks for watching!`, false, 'streamer');
-            }, 2000);
+            // Show the chat iframe and hide fallback
+            document.getElementById('streamer-chat-iframe-container').style.display = 'block';
+            document.getElementById('streamer-chat-fallback').style.display = 'none';
+            
+            // Load the actual Twitch chat
+            const chatIframe = document.getElementById('streamer-chat-iframe');
+            const parentDomain = window.location.hostname;
+            chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(currentStreamer)}/chat?parent=${parentDomain}`;
+            
+            console.log(`Loading Twitch chat for: ${currentStreamer}`);
+          } else {
+            // No live streams, show fallback
+            document.getElementById('streamer-chat-iframe-container').style.display = 'none';
+            document.getElementById('streamer-chat-fallback').style.display = 'block';
+            document.getElementById('streamer-info').style.display = 'none';
           }
+        } else {
+          // No Twitch OAuth data, show fallback
+          document.getElementById('streamer-chat-iframe-container').style.display = 'none';
+          document.getElementById('streamer-chat-fallback').style.display = 'block';
+          document.getElementById('streamer-info').style.display = 'none';
         }
       }
 
@@ -3669,6 +3691,7 @@
     window.showContentBlockedFallback = showContentBlockedFallback;
     window.showAlternativeContent = showAlternativeContent;
     window.restoreStreamFrame = restoreStreamFrame;
+    window.updateStreamerChat = updateStreamerChat;
     window.testLiveIndicators = function() {
       console.log('=== Live Indicators Test ===');
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
