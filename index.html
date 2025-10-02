@@ -608,6 +608,80 @@
       color: var(--text-primary);
     }
 
+    /* Player Stats Styles */
+    .player-stats-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .player-stats-display {
+      padding: 1rem;
+    }
+
+    .player-stats-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--surface-glass);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      transition: all var(--transition-snappy);
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-rate {
+      font-size: 0.9rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .stats-chart-container {
+      background: var(--surface-glass);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .stats-chart-container canvas {
+      max-height: 300px;
+    }
+
+    .stats-loading {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+    }
+
     /* Footer */
     footer {
       background: var(--card-bg);
@@ -740,6 +814,19 @@
         <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=tribesprofessionalleague&autoplay=false" allowfullscreen></iframe>
       </div>
 
+      <!-- Player Stats Section -->
+      <div class="player-stats-section" id="player-stats-section" style="display: none;">
+        <div class="spectating-section">
+          <div class="spectating-header">
+            <div class="spectating-label">Player Statistics</div>
+            <button class="team-select-btn" id="close-stats-btn">Close Stats</button>
+          </div>
+          <div id="player-stats-content">
+            <div class="stats-loading">Loading player statistics...</div>
+          </div>
+        </div>
+      </div>
+
       <!-- Match Cards -->
       <div class="match-cards">
         <div class="match-card">
@@ -785,7 +872,9 @@
 
   <!-- Load OAuth functionality -->
   <script src="oauth.js"></script>
-  
+  <!-- Load Chart.js for player stats -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -828,6 +917,7 @@
       initializeVoting();
       loadTeamRosters();
       initializeTwitchPlayer();
+      initializePlayerStats();
       
       // Initialize Twitch OAuth functionality
       if (window.twitchOAuth) {
@@ -973,10 +1063,10 @@
       if (teamA && teamB) {
         loadMatchupImageWithFallbacks(teamA.folder, teamB.folder, matchDisplay);
         
-      // Set team logo background pattern like in ScrimWatcher
+        // Set team logo background pattern like in ScrimWatcher
       console.log('Setting background images:', teamA.logo, teamB.logo);
-      document.getElementById('bg-left').style.backgroundImage = `url(${teamA.logo})`;
-      document.getElementById('bg-right').style.backgroundImage = `url(${teamB.logo})`;
+        document.getElementById('bg-left').style.backgroundImage = `url(${teamA.logo})`;
+        document.getElementById('bg-right').style.backgroundImage = `url(${teamB.logo})`;
       console.log('Background images set successfully');
       } else {
         // Clear background patterns if no teams selected
@@ -1154,6 +1244,24 @@
           // Update stream if it's a player tab
           if (this.dataset.team && this.dataset.playerIndex !== undefined) {
             updateStreamForPlayer(this);
+          }
+        });
+
+        // Add double-click to show stats
+        tab.addEventListener('dblclick', function() {
+          if (this.dataset.team && this.dataset.playerIndex !== undefined) {
+            const team = this.dataset.team;
+            const playerIndex = this.dataset.playerIndex;
+            const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+            const roster = teamRosters[teamKey] || [];
+            const player = roster[playerIndex];
+            
+            if (player) {
+              const playerName = player.name || player.displayName;
+              if (playerName) {
+                showPlayerStats(playerName);
+              }
+            }
           }
         });
       });
@@ -1451,7 +1559,232 @@
         console.log(`Background opacity set to ${opacity}`);
       }
     }
+
+    // Player Stats functionality
+    let playerStatsData = null;
+    let currentStatsChart = null;
+
+    async function loadPlayerStats() {
+      try {
+        const docRef = doc(db, 'publicStats', 'aggregates');
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          console.log('No published stats found');
+          return null;
+        }
+
+        const data = docSnap.data() || {};
+        playerStatsData = {
+          playerTotals: new Map(data.playerTotals || []),
+          playerMapStats: new Map(data.playerMapStats || []),
+          teamTotals: new Map(data.teamTotals || []),
+          totalMatches: data.totalMatches || 0,
+          generatedAt: data.generatedAt
+        };
+
+        console.log('Player stats loaded:', playerStatsData);
+        return playerStatsData;
+      } catch (error) {
+        console.error('Error loading player stats:', error);
+        return null;
+      }
+    }
+
+    function showPlayerStats(playerName) {
+      const statsSection = document.getElementById('player-stats-section');
+      const statsContent = document.getElementById('player-stats-content');
+      
+      if (!statsSection || !statsContent) return;
+
+      if (!playerStatsData) {
+        statsContent.innerHTML = '<div class="text-center text-gray-400">No player statistics available</div>';
+        statsSection.style.display = 'block';
+        return;
+      }
+
+      const player = playerStatsData.playerTotals.get(playerName);
+      if (!player) {
+        statsContent.innerHTML = `<div class="text-center text-gray-400">No statistics found for ${playerName}</div>`;
+        statsSection.style.display = 'block';
+        return;
+      }
+
+      // Calculate player metrics
+      const time = parseFloat(player.time) || 0;
+      const kills = parseFloat(player.kills) || 0;
+      const assists = parseFloat(player.assists) || 0;
+      const score = parseFloat(player.score) || 0;
+      const captures = parseFloat(player.captures) || 0;
+      const returns = parseFloat(player.returns) || 0;
+      const matches = parseFloat(player.matches) || 0;
+
+      const kpm = time > 0 ? kills / time : 0;
+      const apm = time > 0 ? assists / time : 0;
+      const spm = time > 0 ? score / time : 0;
+      const cpm = time > 0 ? captures / time : 0;
+      const rpm = time > 0 ? returns / time : 0;
+
+      const teams = Array.from(player.teams || []).join(', ') || 'Unknown';
+
+      // Create stats display
+      statsContent.innerHTML = `
+        <div class="player-stats-display">
+          <div class="player-stats-header">
+            <h3 class="text-2xl font-bold text-white mb-2">${playerName}</h3>
+            <p class="text-gray-300 mb-4">Teams: ${teams} | Matches: ${matches} | Playtime: ${time.toFixed(1)} min</p>
+          </div>
+          
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Kills</div>
+              <div class="stat-value">${kills.toFixed(0)}</div>
+              <div class="stat-rate">${kpm.toFixed(2)}/min</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Assists</div>
+              <div class="stat-value">${assists.toFixed(0)}</div>
+              <div class="stat-rate">${apm.toFixed(2)}/min</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Score</div>
+              <div class="stat-value">${score.toFixed(0)}</div>
+              <div class="stat-rate">${spm.toFixed(2)}/min</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Captures</div>
+              <div class="stat-value">${captures.toFixed(0)}</div>
+              <div class="stat-rate">${cpm.toFixed(2)}/min</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Returns</div>
+              <div class="stat-value">${returns.toFixed(0)}</div>
+              <div class="stat-rate">${rpm.toFixed(2)}/min</div>
+            </div>
+          </div>
+
+          <div class="stats-chart-container">
+            <h4 class="text-lg font-semibold text-white mb-4">Performance Metrics</h4>
+            <canvas id="player-stats-chart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      `;
+
+      // Create performance chart
+      setTimeout(() => {
+        createPlayerStatsChart(playerName, { kpm, apm, spm, cpm, rpm });
+      }, 100);
+
+      statsSection.style.display = 'block';
+    }
+
+    function createPlayerStatsChart(playerName, metrics) {
+      const canvas = document.getElementById('player-stats-chart');
+      if (!canvas) return;
+
+      // Destroy existing chart
+      if (currentStatsChart) {
+        currentStatsChart.destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      currentStatsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Kills/min', 'Assists/min', 'Score/min', 'Captures/min', 'Returns/min'],
+          datasets: [{
+            label: `${playerName} Performance`,
+            data: [metrics.kpm, metrics.apm, metrics.spm, metrics.cpm, metrics.rpm],
+            backgroundColor: [
+              'rgba(239, 68, 68, 0.8)',   // Red for kills
+              'rgba(59, 130, 246, 0.8)',  // Blue for assists
+              'rgba(16, 185, 129, 0.8)',  // Green for score
+              'rgba(245, 158, 11, 0.8)',  // Yellow for captures
+              'rgba(139, 92, 246, 0.8)'   // Purple for returns
+            ],
+            borderColor: [
+              'rgba(239, 68, 68, 1)',
+              'rgba(59, 130, 246, 1)',
+              'rgba(16, 185, 129, 1)',
+              'rgba(245, 158, 11, 1)',
+              'rgba(139, 92, 246, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#e2e8f0'
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: '#94a3b8'
+              },
+              grid: {
+                color: 'rgba(148, 163, 184, 0.1)'
+              }
+            },
+            x: {
+              ticks: {
+                color: '#94a3b8'
+              },
+              grid: {
+                color: 'rgba(148, 163, 184, 0.1)'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function hidePlayerStats() {
+      const statsSection = document.getElementById('player-stats-section');
+      if (statsSection) {
+        statsSection.style.display = 'none';
+      }
+      if (currentStatsChart) {
+        currentStatsChart.destroy();
+        currentStatsChart = null;
+      }
+    }
+
+    function initializePlayerStats() {
+      // Load player stats data
+      loadPlayerStats();
+      
+      // Add close button functionality
+      const closeStatsBtn = document.getElementById('close-stats-btn');
+      if (closeStatsBtn) {
+        closeStatsBtn.addEventListener('click', hidePlayerStats);
+      }
+    }
     
+    // Test function for player stats
+    function testPlayerStats() {
+      console.log('Testing player stats functionality...');
+      if (playerStatsData) {
+        console.log('Player stats data loaded:', playerStatsData);
+        const playerNames = Array.from(playerStatsData.playerTotals.keys());
+        console.log('Available players:', playerNames);
+        if (playerNames.length > 0) {
+          showPlayerStats(playerNames[0]);
+        }
+      } else {
+        console.log('No player stats data available');
+        loadPlayerStats().then(() => {
+          console.log('Player stats loaded, try testPlayerStats() again');
+        });
+      }
+    }
+
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
@@ -1459,6 +1792,9 @@
     window.testTwitchPlayerFormat = testTwitchPlayerFormat;
     window.testTeamLogos = testTeamLogos;
     window.adjustBackgroundOpacity = adjustBackgroundOpacity;
+    window.testPlayerStats = testPlayerStats;
+    window.showPlayerStats = showPlayerStats;
+    window.hidePlayerStats = hidePlayerStats;
   </script>
 </body>
 </html>
