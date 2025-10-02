@@ -2232,13 +2232,24 @@
           
           if (twitchHandle) {
             const streamFrame = document.getElementById('stream-frame');
-            if (streamFrame) {
+            if (streamFrame && streamFrame.tagName === 'IFRAME') {
               const parentDomain = window.location.hostname;
               // Use the same format as TribesScrimWatcher
               streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
               console.log(`Loading stream for ${player.name}: ${twitchHandle}`);
             } else {
-              console.error('Stream frame element not found!');
+              console.error('Stream frame element not found or was replaced! Attempting to restore...');
+              // Try to restore the iframe if it was replaced
+              restoreStreamFrame();
+              // Try again after a short delay
+              setTimeout(() => {
+                const newStreamFrame = document.getElementById('stream-frame');
+                if (newStreamFrame && newStreamFrame.tagName === 'IFRAME') {
+                  const parentDomain = window.location.hostname;
+                  newStreamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
+                  console.log(`Loading stream for ${player.name} after restore: ${twitchHandle}`);
+                }
+              }, 200);
             }
           } else {
             console.log('No Twitch handle found for player:', player);
@@ -2481,9 +2492,8 @@
         const originalConsoleError = console.error;
         console.error = function(...args) {
           const message = args.join(' ');
-          if (message.includes('PlaybackAccessToken') || 
-              message.includes('content classification') ||
-              message.includes('GraphQL') && message.includes('server error')) {
+          if (message.includes('PlaybackAccessToken') && message.includes('server error') ||
+              message.includes('Failed to determine content classification')) {
             console.log('Detected Twitch content blocking error - showing fallback');
             setTimeout(() => showContentBlockedFallback(), 1000);
           }
@@ -2532,6 +2542,7 @@
       const streamFrame = document.getElementById('stream-frame');
       if (streamFrame) {
         const blockedDiv = document.createElement('div');
+        blockedDiv.id = 'content-blocked-fallback';
         blockedDiv.style.cssText = `
           display: flex;
           flex-direction: column;
@@ -2561,9 +2572,19 @@
               padding: 0.75rem 1.5rem;
               border-radius: 0.5rem;
               cursor: pointer;
-              margin-right: 1rem;
+              margin-right: 0.5rem;
               font-size: 1rem;
             ">Refresh Page</button>
+            <button onclick="restoreStreamFrame()" style="
+              background: var(--success);
+              color: white;
+              border: none;
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              cursor: pointer;
+              font-size: 1rem;
+              margin-right: 0.5rem;
+            ">Try Again</button>
             <button onclick="showAlternativeContent()" style="
               background: var(--surface-glass);
               color: var(--text-primary);
@@ -2578,6 +2599,25 @@
         
         // Replace the iframe with the blocked content message
         streamFrame.parentNode.replaceChild(blockedDiv, streamFrame);
+      }
+    }
+
+    function restoreStreamFrame() {
+      const fallbackDiv = document.getElementById('content-blocked-fallback');
+      if (fallbackDiv) {
+        const newIframe = document.createElement('iframe');
+        newIframe.className = 'stream-frame';
+        newIframe.id = 'stream-frame';
+        newIframe.src = 'https://player.twitch.tv/?channel=tribesprofessionalleague&autoplay=false';
+        newIframe.allowFullscreen = true;
+        
+        // Replace the fallback div with the new iframe
+        fallbackDiv.parentNode.replaceChild(newIframe, fallbackDiv);
+        
+        // Re-initialize the Twitch player
+        setTimeout(() => {
+          initializeTwitchPlayer();
+        }, 100);
       }
     }
 
@@ -3641,6 +3681,7 @@
     window.restoreAuthenticatedExperience = restoreAuthenticatedExperience;
     window.showContentBlockedFallback = showContentBlockedFallback;
     window.showAlternativeContent = showAlternativeContent;
+    window.restoreStreamFrame = restoreStreamFrame;
     window.testLiveIndicators = function() {
       console.log('=== Live Indicators Test ===');
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
