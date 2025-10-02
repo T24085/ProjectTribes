@@ -3120,10 +3120,11 @@
       }
 
       const ctx = canvas.getContext('2d');
-      // Normalize data for better visibility - use percentage of max value
+      // Normalize data for better visibility - cap Score at 50% to make other bars more visible
       const maxValue = Math.max(metrics.spm, metrics.kpm, metrics.apm, metrics.cpm, metrics.rpm);
+      const scoreCap = Math.min(metrics.spm, maxValue * 0.5); // Cap score at 50% of max
       const normalizedData = [
-        (metrics.spm / maxValue) * 100,   // Score/min (normalized)
+        (scoreCap / maxValue) * 100,      // Score/min (capped at 50%)
         (metrics.kpm / maxValue) * 100,   // Kills/min (normalized)
         (metrics.apm / maxValue) * 100,   // Assists/min (normalized)
         (metrics.cpm / maxValue) * 100,   // Captures/min (normalized)
