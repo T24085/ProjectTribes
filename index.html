@@ -1039,19 +1039,40 @@
     /* Live Player Indicators */
     .player-tab.live {
       background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.1));
-      border: 1px solid rgba(34, 197, 94, 0.3);
+      border: 2px solid rgba(34, 197, 94, 0.6);
       color: #22c55e;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.4), 0 0 30px rgba(34, 197, 94, 0.2);
+      animation: livePulse 2s ease-in-out infinite;
+      position: relative;
     }
 
     .player-tab.live:hover {
       background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
-      border-color: rgba(34, 197, 94, 0.5);
+      border-color: rgba(34, 197, 94, 0.8);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.4);
     }
 
     .player-tab.live::before {
       content: "🔴";
       margin-right: 0.5rem;
       font-size: 0.75rem;
+      animation: liveBlink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(34, 197, 94, 0.4), 0 0 30px rgba(34, 197, 94, 0.2);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.4);
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes liveBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
 
     .live-indicator {
@@ -1446,7 +1467,13 @@
           </select>
         </div>
         <div class="twitch-chat-container">
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 500px; border: none; border-radius: 0.5rem;"></iframe>
+          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+            <div class="text-center">
+              <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
+              <div>Connecting to Chat...</div>
+            </div>
+          </div>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 500px; border: none; border-radius: 0.5rem; display: none;"></iframe>
         </div>
       </div>
 
@@ -3845,12 +3872,44 @@
 
       // Load the main TPL Twitch chat initially
       const parentDomain = window.location.hostname;
-      twitchChatIframe.src = `https://www.twitch.tv/embed/tribesprofessionalleague/chat?parent=${parentDomain}`;
+      const chatUrl = `https://www.twitch.tv/embed/tribesprofessionalleague/chat?parent=${parentDomain}`;
+      
+      // Add load event listener to handle connection status
+      twitchChatIframe.addEventListener('load', function() {
+        console.log('Twitch chat loaded successfully');
+        // Hide loading indicator and show iframe
+        const loadingIndicator = document.querySelector('.chat-loading');
+        if (loadingIndicator) {
+          loadingIndicator.style.display = 'none';
+        }
+        twitchChatIframe.style.display = 'block';
+      });
+
+      twitchChatIframe.addEventListener('error', function() {
+        console.error('Twitch chat failed to load');
+        // Show error message
+        const chatContainer = document.querySelector('.twitch-chat-container');
+        if (chatContainer) {
+          chatContainer.innerHTML = `
+            <div class="chat-error" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+              <div class="text-center">
+                <div class="text-lg mb-2">⚠️</div>
+                <div>Chat temporarily unavailable</div>
+                <button onclick="initializeTwitchChat()" class="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Retry</button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      // Set the source
+      twitchChatIframe.src = chatUrl;
       
       // Set up dropdown change handler
       streamerSelect.addEventListener('change', function() {
         const selectedStreamer = this.value;
-        twitchChatIframe.src = `https://www.twitch.tv/embed/${selectedStreamer}/chat?parent=${parentDomain}`;
+        const newChatUrl = `https://www.twitch.tv/embed/${selectedStreamer}/chat?parent=${parentDomain}`;
+        twitchChatIframe.src = newChatUrl;
         console.log(`Switched to ${selectedStreamer} chat`);
       });
       
