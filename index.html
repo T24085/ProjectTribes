@@ -1778,6 +1778,11 @@
       
       // Re-initialize tab functionality
       initializePlayerTabs();
+      
+      // Update live indicators after teams are loaded
+      setTimeout(() => {
+        updateLivePlayerIndicators();
+      }, 2000); // Give time for Twitch data to load
     }
 
     function initializePlayerTabs() {
@@ -2127,15 +2132,44 @@
         }
 
         const data = docSnap.data() || {};
+        
+        // Hydrate the data like PlayerStats.html does
+        const hydratePlayers = (entries = []) => {
+          const map = new Map();
+          entries.forEach(entry => {
+            const teams = Array.isArray(entry.teams) ? new Set(entry.teams) : new Set(entry.team ? [entry.team] : []);
+            map.set(entry.name, { ...entry, teams });
+          });
+          return map;
+        };
+
+        const hydratePlayerMaps = (entries = []) => {
+          const map = new Map();
+          entries.forEach(entry => {
+            const teams = Array.isArray(entry.teams) ? new Set(entry.teams) : new Set();
+            map.set(`${entry.player}__${entry.map}`, { ...entry, teams });
+          });
+          return map;
+        };
+
+        const hydrateTeams = (entries = []) => {
+          const map = new Map();
+          entries.forEach(entry => {
+            map.set(entry.name, { ...entry });
+          });
+          return map;
+        };
+
         playerStatsData = {
-          playerTotals: new Map(data.playerTotals || []),
-          playerMapStats: new Map(data.playerMapStats || []),
-          teamTotals: new Map(data.teamTotals || []),
+          playerTotals: hydratePlayers(data.playerTotals || []),
+          playerMapStats: hydratePlayerMaps(data.playerMapStats || []),
+          teamTotals: hydrateTeams(data.teamTotals || []),
           totalMatches: data.totalMatches || 0,
           generatedAt: data.generatedAt
         };
 
         console.log('Player stats loaded:', playerStatsData);
+        console.log('Available players:', Array.from(playerStatsData.playerTotals.keys()));
         return playerStatsData;
       } catch (error) {
         console.error('Error loading player stats:', error);
@@ -2592,12 +2626,23 @@
 
     // Check for live players and update indicators
     function updateLivePlayerIndicators() {
-      if (!window.twitchOAuth || !window.twitchOAuth.liveStreams) {
+      console.log('Checking live player indicators...');
+      
+      if (!window.twitchOAuth) {
+        console.log('Twitch OAuth not available');
+        return;
+      }
+
+      if (!window.twitchOAuth.liveStreams || !Array.isArray(window.twitchOAuth.liveStreams)) {
+        console.log('No live streams data available');
         return;
       }
 
       const liveStreams = window.twitchOAuth.liveStreams;
       const playerTabs = document.querySelectorAll('.player-tab');
+      
+      console.log('Found live streams:', liveStreams.length);
+      console.log('Found player tabs:', playerTabs.length);
       
       // Clear previous live indicators
       playerTabs.forEach(tab => tab.classList.remove('live'));
@@ -2616,18 +2661,29 @@
             const playerName = player.name || player.displayName;
             const twitchHandle = getTwitchHandleForPlayer(player);
             
+            console.log(`Checking player ${playerName} with Twitch handle: ${twitchHandle}`);
+            
             // Check if this player is live
-            const isLive = liveStreams.some(stream => 
-              stream.user_login.toLowerCase() === twitchHandle.toLowerCase()
-            );
+            const isLive = liveStreams.some(stream => {
+              const streamLogin = stream.user_login ? stream.user_login.toLowerCase() : '';
+              const handle = twitchHandle ? twitchHandle.toLowerCase() : '';
+              const match = streamLogin === handle;
+              if (match) {
+                console.log(`Found live stream for ${playerName}: ${stream.user_name}`);
+              }
+              return match;
+            });
             
             if (isLive) {
               tab.classList.add('live');
               livePlayers.add(playerName);
+              console.log(`Marked ${playerName} as live`);
             }
           }
         }
       });
+
+      console.log('Live players found:', Array.from(livePlayers));
 
       // Update admin panel if open
       if (document.getElementById('admin-modal').style.display === 'flex') {
@@ -2847,6 +2903,15 @@
     window.hideAdminPanel = hideAdminPanel;
     window.showTeamStats = showTeamStats;
     window.hideTeamStats = hideTeamStats;
+    window.updateLivePlayerIndicators = updateLivePlayerIndicators;
+    window.testLiveIndicators = function() {
+      console.log('=== Live Indicators Test ===');
+      console.log('Twitch OAuth available:', !!window.twitchOAuth);
+      console.log('Live streams data:', window.twitchOAuth?.liveStreams);
+      console.log('Selected teams:', selectedTeams);
+      console.log('Team rosters:', teamRosters);
+      updateLivePlayerIndicators();
+    };
   </script>
 </body>
 </html>
