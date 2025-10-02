@@ -1041,7 +1041,9 @@
           <header class="match-poll__header">
             <div class="match-poll__heading">
               <p class="match-poll__eyebrow">Featured Match</p>
+
               <h2 class="match-poll__title" id="match-poll-title">Who will win?</h2>
+
               <p class="match-poll__subhead" id="match-poll-subhead">Loading featured matchup…</p>
               <p class="match-poll__meta is-hidden" id="match-poll-meta"></p>
             </div>
@@ -1170,7 +1172,9 @@
   </main>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+
     import { getFirestore, collection, getDocs, query, where, limit, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -1248,7 +1252,9 @@
         loading: document.getElementById("match-poll-loading"),
         content: document.getElementById("match-poll-content"),
         status: document.getElementById("match-poll-status"),
+
         title: document.getElementById("match-poll-title"),
+
         subhead: document.getElementById("match-poll-subhead"),
         meta: document.getElementById("match-poll-meta"),
         login: document.getElementById("match-poll-login"),
@@ -1300,7 +1306,9 @@
 
     const pollEls = els.matchPoll || {};
     const pollState = {
+
       pollDocId: null,
+
       matchId: null,
       matchLoaded: false,
       teams: { A: "Team A", B: "Team B" },
@@ -1309,8 +1317,10 @@
       userVote: null,
       saving: false,
       unsubscribe: null,
+
       voteSubscriptionId: null,
       activePollUnsubscribe: null,
+
       hasError: false,
       cleanupBound: false
     };
@@ -1435,10 +1445,12 @@
       }
       updatePollOptionStyles();
 
+
       if (!pollState.matchLoaded) {
         setPollStatus("No featured poll is active right now.");
         return;
       }
+
 
       let statusText = totalVotes ? `Live votes: ${totalVotes}` : "No votes cast yet.";
       if (!pollState.user) {
@@ -1452,8 +1464,10 @@
     function setPollAuthUI(isAuthenticated) {
       if (!pollEnabled()) return;
       if (pollEls.login) {
+
         const shouldShowLogin = !isAuthenticated && pollState.matchLoaded;
         pollEls.login.classList.toggle("is-hidden", !shouldShowLogin);
+
       }
       if (!isAuthenticated) {
         pollState.userVote = null;
@@ -1510,6 +1524,7 @@
 
     function subscribeToPollVotes() {
       if (!pollEnabled() || !pollState.matchId) return;
+
       if (pollState.unsubscribe && pollState.voteSubscriptionId === pollState.matchId) {
         return;
       }
@@ -1517,6 +1532,7 @@
         pollState.unsubscribe();
         pollState.unsubscribe = null;
         pollState.voteSubscriptionId = null;
+
       }
       const votesRef = collection(db, "matchVotes", pollState.matchId, "votes");
       pollState.unsubscribe = onSnapshot(votesRef, snapshot => {
@@ -1538,6 +1554,7 @@
         console.error("Failed to subscribe to poll votes", err);
         setPollError("Live vote updates are unavailable right now.");
       });
+
       pollState.voteSubscriptionId = pollState.matchId;
     }
 
@@ -1665,6 +1682,7 @@
         applyActivePollDoc(null);
         setPollLoading(false);
       });
+
     }
 
     async function submitPollVote(teamKey) {
@@ -1720,10 +1738,12 @@
             pollState.unsubscribe();
             pollState.unsubscribe = null;
           }
+
           if (pollState.activePollUnsubscribe) {
             pollState.activePollUnsubscribe();
             pollState.activePollUnsubscribe = null;
           }
+
         });
         pollState.cleanupBound = true;
       }
@@ -1731,11 +1751,13 @@
 
     async function initializeMatchPoll() {
       if (!pollEnabled()) return;
+
       bindPollEvents();
       setPollLoading(true);
       setPollStatus("Loading featured poll…");
       await ensurePollUser();
       subscribeToActivePoll();
+
       window.addEventListener("storage", event => {
         if (event.key === "twitch_token") {
           ensurePollUser();
