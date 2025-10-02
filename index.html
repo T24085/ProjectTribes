@@ -551,6 +551,28 @@
       flex-direction: column;
     }
 
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .streamer-dropdown {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.25rem;
+      color: var(--text-primary);
+      padding: 0.5rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .streamer-dropdown:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
 
 
     /* Match Cards */
@@ -1417,11 +1439,16 @@
 
       <!-- Twitch Chat Section -->
       <div class="sidebar-section chat-section">
-        <h3>Live Chat</h3>
+        <div class="chat-header">
+          <h3>Live Chat</h3>
+          <select id="streamer-select" class="streamer-dropdown">
+            <option value="tribesprofessionalleague">TPL Main Chat</option>
+          </select>
+        </div>
         <div class="twitch-chat-container">
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 400px; border: none; border-radius: 0.5rem;"></iframe>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 500px; border: none; border-radius: 0.5rem;"></iframe>
         </div>
-        </div>
+      </div>
 
     </div>
   </div>
@@ -2211,6 +2238,7 @@
       setTimeout(() => {
         updateLivePlayerIndicators();
         updateStreamerChat();
+        updateStreamerDropdown();
       }, 1000);
     }
 
@@ -3033,15 +3061,22 @@
       }
 
       const ctx = canvas.getContext('2d');
-      // Normalize data for better visibility - cap Score at 50% to make other bars more visible
-      const maxValue = Math.max(metrics.spm, metrics.kpm, metrics.apm, metrics.cpm, metrics.rpm);
-      const scoreCap = Math.min(metrics.spm, maxValue * 0.5); // Cap score at 50% of max
+      // Use separate scaling for Score vs other metrics to make all bars visible
+      const combatMax = Math.max(metrics.kpm, metrics.apm, metrics.cpm, metrics.rpm);
+      const scoreMax = metrics.spm;
+      
+      // Scale combat stats to 0-100% based on their max
+      const combatScale = combatMax > 0 ? 100 / combatMax : 1;
+      
+      // Scale score to 0-100% but use a smaller multiplier to make it less dominant
+      const scoreScale = scoreMax > 0 ? 50 / scoreMax : 1; // Score gets 50% max height
+      
       const normalizedData = [
-        (scoreCap / maxValue) * 100,      // Score/min (capped at 50%)
-        (metrics.kpm / maxValue) * 100,   // Kills/min (normalized)
-        (metrics.apm / maxValue) * 100,   // Assists/min (normalized)
-        (metrics.cpm / maxValue) * 100,   // Captures/min (normalized)
-        (metrics.rpm / maxValue) * 100    // Returns/min (normalized)
+        Math.min(metrics.spm * scoreScale, 100),     // Score/min (scaled to max 50% of chart)
+        Math.min(metrics.kpm * combatScale, 100),    // Kills/min (scaled to combat max)
+        Math.min(metrics.apm * combatScale, 100),    // Assists/min (scaled to combat max)
+        Math.min(metrics.cpm * combatScale, 100),    // Captures/min (scaled to combat max)
+        Math.min(metrics.rpm * combatScale, 100)     // Returns/min (scaled to combat max)
       ];
 
       currentStatsChart = new Chart(ctx, {
@@ -3759,17 +3794,63 @@
     window.updateStreamerChat = updateStreamerChat;
     window.loadRecentMatches = loadRecentMatches;
     window.initializeTwitchChat = initializeTwitchChat;
+    window.updateStreamerDropdown = updateStreamerDropdown;
 
     // Twitch Chat functionality
     function initializeTwitchChat() {
       const twitchChatIframe = document.getElementById('twitch-chat-iframe');
-      if (!twitchChatIframe) return;
+      const streamerSelect = document.getElementById('streamer-select');
+      
+      if (!twitchChatIframe || !streamerSelect) return;
 
-      // Load the main TPL Twitch chat
+      // Load the main TPL Twitch chat initially
       const parentDomain = window.location.hostname;
       twitchChatIframe.src = `https://www.twitch.tv/embed/tribesprofessionalleague/chat?parent=${parentDomain}`;
       
-      console.log('Twitch chat initialized in Live Chat section');
+      // Set up dropdown change handler
+      streamerSelect.addEventListener('change', function() {
+        const selectedStreamer = this.value;
+        twitchChatIframe.src = `https://www.twitch.tv/embed/${selectedStreamer}/chat?parent=${parentDomain}`;
+        console.log(`Switched to ${selectedStreamer} chat`);
+      });
+      
+      // Update dropdown with live streamers
+      updateStreamerDropdown();
+      
+      console.log('Twitch chat initialized with dropdown');
+    }
+
+    function updateStreamerDropdown() {
+      const streamerSelect = document.getElementById('streamer-select');
+      if (!streamerSelect) return;
+
+      // Keep the TPL main chat option
+      const tplOption = streamerSelect.querySelector('option[value="tribesprofessionalleague"]');
+      
+      // Clear other options
+      streamerSelect.innerHTML = '';
+      streamerSelect.appendChild(tplOption);
+
+      // Add live streamers if available
+      if (window.twitchOAuth && window.twitchOAuth.liveStreams) {
+        const liveStreams = window.twitchOAuth.liveStreams;
+        
+        if (liveStreams.length > 0) {
+          // Add separator
+          const separator = document.createElement('option');
+          separator.disabled = true;
+          separator.textContent = '── Live Streamers ──';
+          streamerSelect.appendChild(separator);
+          
+          // Add live streamers
+          liveStreams.forEach(stream => {
+            const option = document.createElement('option');
+            option.value = stream.user_name.toLowerCase();
+            option.textContent = `${stream.user_name} (LIVE)`;
+            streamerSelect.appendChild(option);
+          });
+        }
+      }
     }
     window.testLiveIndicators = function() {
       console.log('=== Live Indicators Test ===');
