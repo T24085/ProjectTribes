@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tribes Professional League | Spectating Platform</title>
+  <title>Tribes Professional League | Live Hub</title>
   <meta name="theme-color" content="#0f172a">
   <link rel="icon" href="Tribes Professional League.png" type="image/png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css">
+  <script src="oauth.js"></script>
   <style>
     :root {
       --bg-color: #030712;
@@ -21,23 +23,80 @@
       --danger: #f87171;
       --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
+      --chat-panel-width: 320px;
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    *, *::before, *::after { box-sizing: border-box; }
+    body > *:not(#support-effect-layer):not(#live-team-backdrop) {
+      position: relative;
+      z-index: 2;
     }
-
+    body.has-live-backdrop {
+      background: #030712;
+    }
+    #live-team-backdrop {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: opacity 0.45s ease;
+    }
+    #live-team-backdrop.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    #live-team-backdrop::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(15, 23, 42, 0.75), transparent 65%), radial-gradient(circle at 80% 30%, rgba(15, 23, 42, 0.65), transparent 60%), linear-gradient(220deg, rgba(2, 6, 23, 0.8), rgba(2, 6, 23, 0.7));
+      pointer-events: none;
+      z-index: 1;
+    }
+    .live-team-panel {
+      flex: 1 1 0;
+      position: relative;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: clamp(22rem, 40vw, 48rem) auto;
+      filter: saturate(1.05);
+    }
+    .live-team-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(3, 7, 18, 0.65), rgba(3, 7, 18, 0.35));
+      pointer-events: none;
+      z-index: 1;
+    }
+    #live-team-backdrop[data-count="1"] .live-team-panel {
+      background-size: clamp(32rem, 55vw, 60rem);
+    }
+    #live-team-backdrop[data-count="2"] .live-team-panel {
+      background-size: clamp(24rem, 45vw, 52rem);
+    }
+    #live-team-backdrop[data-count="3"] .live-team-panel {
+      background-size: clamp(20rem, 36vw, 44rem);
+    }
+    #live-team-backdrop[data-count="4"] .live-team-panel {
+      background-size: clamp(18rem, 32vw, 38rem);
+    }
     body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
+      margin: 0;
+
+      min-height: 100vh;
       background: var(--bg-gradient), var(--bg-color);
       color: var(--text-primary);
-      min-height: 100vh;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-
-    /* Header */
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
     nav#global-header {
       position: sticky;
       top: 0;
@@ -45,703 +104,955 @@
       background: rgba(8, 11, 26, 0.85);
       border-bottom: 1px solid rgba(148, 163, 184, 0.16);
       backdrop-filter: blur(16px);
-      padding: 1rem 2rem;
+      padding: 0.95rem 2.25rem;
     }
-
-    .header-container {
-      max-width: 1440px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 2rem;
-    }
-
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .header-brand img {
-      height: 46px;
-      width: auto;
-      border-radius: 0.75rem;
-      background: rgba(30, 41, 59, 0.65);
-      padding: 0.35rem 0.5rem;
-      border: 1px solid rgba(148, 163, 184, 0.18);
-    }
-
-    .brand-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin: 0;
-    }
-
-    .brand-subtitle {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      letter-spacing: 0.24em;
-      text-transform: uppercase;
-      margin: 0;
-    }
-
-    .header-nav {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
-
-    .nav-link {
+    nav#global-header .header-shell { display:flex; align-items:center; justify-content: space-between; gap: 1.5rem; max-width: 1440px; margin: 0 auto; }
+    .header-brand { display:flex; align-items:center; gap: 1rem; }
+    .header-brand img { height: 46px; width:auto; border-radius: 0.75rem; background: rgba(30, 41, 59, 0.65); padding: 0.35rem 0.5rem; border: 1px solid rgba(148, 163, 184, 0.18); }
+    .brand-title { margin: 0; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    .brand-subtitle { margin: 0; font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.24em; text-transform: uppercase; }
+    .header-actions { display:flex; align-items:center; gap: 0.8rem; flex-wrap: wrap; }
+    .hero-link {
+      border-radius: 9999px;
+      padding: 0.55rem 1.15rem;
+      background: rgba(148, 163, 184, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.22);
       color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      transition: background var(--transition-snappy);
-    }
-
-    .nav-link:hover {
-      background: rgba(129, 140, 248, 0.2);
-    }
-
-    .auth-buttons {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      background: rgba(15, 23, 42, 0.6);
-      color: var(--text-primary);
-      text-decoration: none;
-      font-weight: 500;
-      transition: all var(--transition-snappy);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
+      transition: background var(--transition-snappy), border-color var(--transition-snappy);
     }
-
-    .btn:hover {
-      background: rgba(129, 140, 248, 0.3);
-      border-color: rgba(129, 140, 248, 0.5);
+    .hero-link:hover { background: rgba(129, 140, 248, 0.34); border-color: rgba(129, 140, 248, 0.52); }
+    .auth-group { display:flex; align-items:center; gap: 0.65rem; }
+    #twitch-user { font-size: 0.8rem; color: var(--text-muted); display: none; }
+    .hero-cta {
+      border: none;
+      border-radius: 9999px;
+      padding: 0.65rem 1.55rem;
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.95), rgba(56, 189, 248, 0.95));
+      color: #020617;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      box-shadow: 0 16px 45px -18px rgba(56, 189, 248, 0.65);
+      transition: transform 0.2s ease;
     }
-
-    .btn-primary {
-      background: linear-gradient(135deg, rgba(129, 140, 248, 0.9), rgba(56, 189, 248, 0.9));
+    .hero-cta:hover { transform: translateY(-1px); }
+    .live-teams-wrapper { position: relative; }
+    #live-teams-panel {
+      position: absolute;
+      top: calc(100% + 0.75rem);
+      right: 0;
+      min-width: 240px;
+      background: rgba(9, 13, 30, 0.92);
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      border-radius: 0.9rem;
+      box-shadow: var(--shadow-xl);
+      padding: 0.75rem;
+    }
+    #live-teams-panel.hidden { display: none; }
+    #live-teams-panel.visible { display: grid; gap: 0.5rem; }
+    #live-teams-panel .live-box {
+      display:flex;
+      align-items:center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.6rem;
+      border-radius: 0.6rem;
+      background: rgba(129, 140, 248, 0.12);
+      font-size: 0.85rem;
+    }
+    #live-teams-panel .live-dot { color: #34d399; font-size: 0.8rem; }
+    .live-announcement-banner {
+      position: fixed;
+      top: 0.85rem;
+      left: 50%;
+      transform: translate(-50%, -120%) scaleX(0.94);
+      transform-origin: top center;
+      padding: 0.6rem 1.75rem;
+      background: linear-gradient(90deg, rgba(147, 51, 234, 0.95), rgba(59, 130, 246, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(14px);
+      color: #f8fafc;
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      box-shadow: 0 22px 45px rgba(76, 29, 149, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.55s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.35s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      max-width: min(90vw, 44rem);
+      text-align: center;
+      z-index: 60;
+    }
+    .live-announcement-banner::after {
+      content: '';
+      position: absolute;
+      inset: 1px;
+      border-radius: inherit;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0));
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      animation: banner-sheen 3.5s linear infinite;
+      pointer-events: none;
+    }
+    .live-announcement-banner span { position: relative; z-index: 1; white-space: nowrap; }
+    .live-announcement-banner strong { color: #fff; }
+    .live-announcement-banner .banner-icon { position: relative; z-index: 1; display: inline-flex; width: 1.15rem; height: 1.15rem; }
+    .live-announcement-banner .banner-icon svg { width: 100%; height: 100%; }
+    .live-announcement-banner.is-visible { opacity: 1; transform: translate(-50%, 0) scaleX(1); }
+    .live-announcement-banner.is-visible::after { opacity: 1; }
+    @keyframes banner-sheen {
+      0% { transform: translateX(-100%); opacity: 0; }
+      30% { opacity: 0.45; }
+      70% { opacity: 0.15; }
+      100% { transform: translateX(100%); opacity: 0; }
+    }
+    @media (max-width: 640px) {
+      .live-announcement-banner {
+        font-size: 0.85rem;
+        padding: 0.55rem 1.25rem;
+        gap: 0.5rem;
+      }
+      .live-announcement-banner span { white-space: normal; }
+    }
+    main {
+      max-width: calc(1440px + var(--chat-panel-width));
+      margin: 0 auto;
+      padding: 1.75rem 2rem 4rem calc(2rem + var(--chat-panel-width));
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: 2rem;
+      align-items: stretch;
+      margin-top: 0.5rem;
+    }
+    .hero-card {
+      background: var(--surface-glass);
+      border-radius: 1.35rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: 0 24px 60px -28px rgba(14, 116, 144, 0.45);
+      padding: 1.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.18), transparent 60%);
+      pointer-events: none;
+    }
+    .hero-card h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      letter-spacing: -0.02em;
+      z-index: 1;
+    }
+    .hero-card p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.65;
+      z-index: 1;
+    }
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.8rem;
+      z-index: 1;
+    }
+    .hero-metrics .metric {
+      background: rgba(15, 23, 42, 0.58);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    .hero-metrics .metric span {
+      display: block;
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .hero-metrics .metric strong {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 1.55rem;
+      font-weight: 700;
+    }
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      z-index: 1;
+    }
+    .hero-actions button {
+      border-radius: 9999px;
+      padding: 0.65rem 1.2rem;
+      border: 1px solid rgba(129, 140, 248, 0.45);
+      background: rgba(15, 23, 42, 0.65);
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background var(--transition-snappy), border-color var(--transition-snappy);
+    }
+    .hero-actions button:hover { background: rgba(79, 70, 229, 0.45); border-color: rgba(129, 140, 248, 0.7); }
+    .support-card {
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(24, 24, 110, 0.65));
+      border-radius: 1.35rem;
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      padding: 1.85rem;
+      box-shadow: 0 24px 65px -30px rgba(56, 189, 248, 0.52);
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .support-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 15% 25%, rgba(139, 92, 246, 0.22), transparent 60%);
+      pointer-events: none;
+    }
+    .support-card h2 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: -0.01em;
+      z-index: 1;
+    }
+    .support-card p { margin: 0; color: rgba(226, 232, 240, 0.82); line-height: 1.6; z-index: 1; }
+    .support-actions { display: flex; flex-direction: column; gap: 0.75rem; z-index: 1; }
+    .support-actions button,
+    .support-actions a {
+      border-radius: 9999px;
+      padding: 0.72rem 1.2rem;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #e2e8f0;
+      background: rgba(15, 23, 42, 0.55);
+      cursor: pointer;
+      text-align: center;
+      transition: background var(--transition-snappy), border-color var(--transition-snappy);
+    }
+    .support-actions button.primary {
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.95), rgba(56, 189, 248, 0.95));
       border: none;
       color: #020617;
       font-weight: 700;
     }
-
-    /* Main Container */
-    .main-container {
-      max-width: 1440px;
-      margin: 0 auto;
-      padding: 2rem;
-      display: grid;
-      grid-template-columns: 1fr 350px;
-      gap: 2rem;
-      min-height: calc(100vh - 100px);
+    .support-actions button.secondary:hover,
+    .support-actions a:hover {
+      background: rgba(79, 70, 229, 0.4);
+      border-color: rgba(148, 163, 184, 0.4);
     }
-
-    .main-content {
+    .support-note {
+      font-size: 0.75rem;
+      color: rgba(226, 232, 240, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      z-index: 1;
+    }
+    .support-note code {
+      background: rgba(15, 23, 42, 0.65);
+      padding: 0.1rem 0.4rem;
+      border-radius: 0.4rem;
+      font-size: 0.75rem;
+      color: #e2e8f0;
+    }
+    .control-streams {
       display: flex;
       flex-direction: column;
       gap: 1.5rem;
     }
-
-    /* Spectating Section */
-    .spectating-section {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
+    .control-panel {
+      background: rgba(15, 23, 42, 0.72);
+      border-radius: 1.25rem;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 1.1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1rem 1.25rem;
+      position: relative;
+      top: auto;
+      width: 100%;
+      box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.75);
     }
-
-    .spectating-header {
+    .control-panel header {
+      flex: 1 1 100%;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .control-panel header h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: rgba(226, 232, 240, 0.7);
+    }
+    .control-panel header p { display: none; }
+    .control-panel form {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1 1 280px;
+      min-width: 260px;
+    }
+    .control-panel label { display: none; }
+    .control-panel .input-row { display: flex; gap: 0.75rem; flex: 1; }
+    .control-panel input[type="text"] {
+      flex: 1;
+      padding: 0.65rem 0.85rem;
+      border-radius: 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--text-primary);
+    }
+    .control-panel button.submit {
+      border-radius: 0.85rem;
+      border: none;
+      padding: 0.65rem 1.15rem;
+      background: linear-gradient(135deg, rgba(79, 70, 229, 0.9), rgba(99, 102, 241, 0.9));
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #f8fafc;
+      cursor: pointer;
+    }
+    .control-panel .inline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .control-panel .inline-actions button {
+      border-radius: 9999px;
+      padding: 0.45rem 0.95rem;
+      background: rgba(148, 163, 184, 0.12);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: var(--text-primary);
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .control-panel .inline-actions button:hover {
+      background: rgba(129, 140, 248, 0.32);
+      border-color: rgba(129, 140, 248, 0.42);
+    }
+    .channel-manager {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 0.3rem;
+    }
+    .channel-row {
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 1rem;
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .channel-row__top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1rem;
+      gap: 0.5rem;
     }
-
-    .spectating-label {
-      background: var(--danger);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 700;
+    .channel-row__meta { display: flex; flex-direction: column; gap: 0.1rem; }
+    .channel-row__name { font-weight: 600; letter-spacing: -0.01em; }
+    .channel-row__handle { font-size: 0.75rem; color: var(--text-muted); }
+    .channel-row__team { font-size: 0.7rem; color: rgba(129, 140, 248, 0.75); text-transform: uppercase; letter-spacing: 0.12em; }
+    .channel-row__badges { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+    .channel-row__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .pill-btn {
+      border: none;
+      border-radius: 9999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-    }
-
-    .team-select-btn {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
+      background: rgba(79, 70, 229, 0.22);
+      color: #e0e7ff;
       cursor: pointer;
-      transition: all var(--transition-snappy);
+      transition: background var(--transition-snappy);
     }
-
-    .team-select-btn:hover {
-      background: #7c3aed;
-      transform: translateY(-1px);
+    .pill-btn:hover { background: rgba(99, 102, 241, 0.4); }
+    .pill-btn.danger { background: rgba(248, 113, 113, 0.22); color: #fecaca; }
+    .pill-btn.secondary { background: rgba(148, 163, 184, 0.15); color: #cbd5f5; }
+    .badge {
+      font-size: 0.68rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
     }
-
-    /* Team Selection Modal */
-    .team-selection-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(8px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .team-selection-modal.active {
+    .badge-live { background: rgba(34, 197, 94, 0.22); color: #bbf7d0; }
+    .badge-muted { background: rgba(248, 113, 113, 0.2); color: #fecaca; }
+    .streams-area { display: flex; flex-direction: column; gap: 1.35rem; }
+    .section-head { display: flex; flex-direction: column; gap: 0.4rem; }
+    .section-head h2 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
+    .section-head p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+    #live-channel-banner {
       display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      min-height: 1.75rem;
     }
-
-    .modal-content {
+    #live-channel-banner .live-box {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(129, 140, 248, 0.14);
+      border-radius: 9999px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.8rem;
+    }
+    #live-channel-banner .live-dot { color: var(--success); font-size: 0.8rem; }
+    #live-channel-banner .live-name { font-weight: 600; letter-spacing: -0.01em; color: var(--text-primary); }
+    #live-channel-banner .viewers { color: rgba(226, 232, 240, 0.65); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    #stream-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.35rem;
+    }
+    .stream-card {
+      position: relative;
       background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 2rem;
-      max-width: 600px;
-      width: 90%;
-      max-height: 80vh;
-      overflow-y: auto;
+      border-radius: 1.25rem;
+      padding: 1.25rem;
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      overflow: hidden;
+      box-shadow: 0 24px 45px -30px rgba(59, 130, 246, 0.45);
+      transition: transform var(--transition-snappy), box-shadow var(--transition-snappy);
     }
-
-    .modal-header {
+    .stream-card::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(56, 189, 248, 0.9));
+      opacity: 0;
+      transition: opacity var(--transition-snappy);
+      z-index: 0;
+    }
+    .stream-card:hover { transform: translateY(-4px); box-shadow: 0 32px 70px -32px rgba(99, 102, 241, 0.6); }
+    .stream-card:hover::before { opacity: 0.6; }
+    .stream-card.chat-active::before { opacity: 0.85; background: linear-gradient(135deg, rgba(56, 189, 248, 0.9), rgba(129, 140, 248, 0.9)); }
+    .stream-card__head {
+      position: relative;
+      z-index: 1;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      gap: 1rem;
+      margin-bottom: 0.8rem;
     }
-
-    .modal-header h3 {
-      font-size: 1.5rem;
+    .stream-card__identity { display: flex; align-items: center; gap: 0.9rem; cursor: pointer; }
+    .stream-card__avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .stream-card__avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .stream-card__name { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; }
+    .stream-card__team { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.25rem; }
+    .stream-card__status { display: flex; align-items: center; gap: 0.6rem; }
+    .live-pill, .offline-pill {
+      border-radius: 9999px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .live-pill { background: rgba(34, 197, 94, 0.18); color: #bbf7d0; }
+    .offline-pill { background: rgba(148, 163, 184, 0.16); color: rgba(148, 163, 184, 0.9); }
+    .stream-card__player {
+      position: relative;
+      z-index: 1;
+      border-radius: 1rem;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      background: #000;
+    }
+    .player-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 300px; }
+    .player-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+    @supports not (aspect-ratio: 16 / 9) {
+      .player-frame {
+        padding-top: 56.25%;
+      }
+      .player-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    }
+    .stream-card__actions {
+      position: relative;
+      z-index: 1;
+      margin-top: 1.05rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .card-action {
+      flex: 1 1 130px;
+      border-radius: 9999px;
+      padding: 0.55rem 1.1rem;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.55);
+      color: var(--text-primary);
+      text-align: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background var(--transition-snappy), border-color var(--transition-snappy);
+    }
+    .card-action:hover { background: rgba(79, 70, 229, 0.4); border-color: rgba(129, 140, 248, 0.6); }
+    .card-action.support {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(56, 189, 248, 0.85));
+      border: none;
+      color: #020617;
+    }
+    .card-action.link { display: flex; align-items: center; justify-content: center; text-decoration: none; }
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px dashed rgba(148, 163, 184, 0.22);
+      border-radius: 1.25rem;
+      color: var(--text-muted);
+    }
+    .empty-state button {
+      margin-top: 1rem;
+      border-radius: 9999px;
+      padding: 0.55rem 1.2rem;
+      border: none;
+      background: rgba(99, 102, 241, 0.4);
+      color: #e0e7ff;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #chat-panel {
+      position: fixed;
+      right: 1.2rem;
+      top: 6rem;
+      width: 320px;
+      background: rgba(9, 13, 30, 0.95);
+      border: 1px solid rgba(129, 140, 248, 0.22);
+      border-radius: 1.25rem;
+      padding: 0.85rem;
+      box-shadow: 0 24px 60px -20px rgba(99, 102, 241, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      z-index: 50;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    #chat-panel.is-hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .chat-header p {
+      margin: 0;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+    .chat-header button {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    #chat-panel select {
+      width: 100%;
+      border-radius: 0.85rem;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-primary);
+    }
+    #chat-panel iframe {
+      flex: 1;
+      border-radius: 0.9rem;
+      background: #0b1220;
+    }
+    #chat-toggle {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.92), rgba(56, 189, 248, 0.92));
+      color: #020617;
       font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 18px 45px -12px rgba(56, 189, 248, 0.6);
+      z-index: 55;
+      display: none;
     }
-
-    .modal-close {
+    #chat-toggle span {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    #chat-panel.mobile-open {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      top: 0;
+      right: 0;
+      padding: 1rem;
+    }
+    .stats-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 6, 12, 0.6);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 70;
+    }
+    .stats-backdrop.visible { opacity: 1; pointer-events: auto; }
+    .stats-drawer {
+      position: fixed;
+      top: 0;
+      right: -480px;
+      width: min(480px, 100%);
+      height: 100vh;
+      background: rgba(4, 10, 22, 0.97);
+      border-left: 1px solid rgba(129, 140, 248, 0.2);
+      box-shadow: -10px 0 45px -25px rgba(2, 6, 23, 0.9);
+      transition: right 0.35s ease;
+      z-index: 80;
+      display: flex;
+      flex-direction: column;
+    }
+    .stats-drawer.open { right: 0; }
+    .stats-drawer header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stats-drawer header h3 { margin: 0; font-size: 1.35rem; letter-spacing: -0.01em; }
+    .stats-drawer header button {
       background: none;
       border: none;
       color: var(--text-muted);
       font-size: 1.5rem;
       cursor: pointer;
-      padding: 0.25rem;
     }
-
-    .team-selection-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-
-    .team-option {
-      background: var(--surface-glass);
-      border: 2px solid transparent;
-      border-radius: 8px;
-      padding: 1rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all var(--transition-snappy);
-    }
-
-    .team-option:hover {
-      border-color: rgba(129, 140, 248, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .team-option.selected {
-      border-color: var(--accent);
-      background: rgba(139, 92, 246, 0.2);
-    }
-
-    .team-option-logo {
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 0.5rem;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .team-option-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .team-option-name {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: flex-end;
-    }
-
-    .btn-secondary {
-      background: rgba(148, 163, 184, 0.2);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: var(--text-primary);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    /* Match Display */
-    .match-display {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 2rem;
-      margin: 1rem 0;
-      position: relative;
-      min-height: 200px;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    .match-display::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.1);
-      z-index: 1;
-    }
-
-    .match-display.has-background::before {
-      background: rgba(0, 0, 0, 0.3);
-    }
-
-    .match-display > * {
-      position: relative;
-      z-index: 2;
-    }
-
-    .team-score {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .team-logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      overflow: hidden;
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    .team-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .team-name {
-      font-size: 1.4rem;
-      font-weight: 700;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-      text-align: center;
-      color: white;
-    }
-
-    .vs-text {
-      font-size: 2rem;
-      font-weight: 700;
-      color: white;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-      background: rgba(0, 0, 0, 0.3);
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-    }
-
-    /* Player Tabs */
-    .player-tabs {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-    }
-
-    .player-tabs::-webkit-scrollbar {
-      height: 4px;
-    }
-
-    .player-tabs::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 2px;
-    }
-
-    .player-tabs::-webkit-scrollbar-thumb {
-      background: var(--accent);
-      border-radius: 2px;
-    }
-
-    .player-tab {
-      padding: 0.75rem 1rem;
-      background: var(--surface-glass);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all var(--transition-snappy);
-      flex-shrink: 0;
-      white-space: nowrap;
-    }
-
-    .player-tab.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .player-tab:hover:not(.active) {
-      background: rgba(129, 140, 248, 0.2);
-      border-color: rgba(129, 140, 248, 0.3);
-    }
-
-    /* Active Stream */
-    .active-stream {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      overflow: hidden;
-      aspect-ratio: 16/9;
-    }
-
-    .stream-frame {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-
-    .sidebar-section {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+    .stats-drawer header button:hover { color: var(--text-primary); }
+    .stats-body {
       padding: 1.5rem;
-    }
-
-    .sidebar-section h3 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text-primary);
-    }
-
-    /* Voting Section */
-    .voting-section {
-      text-align: center;
-    }
-
-    .vote-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
-
-    .vote-btn {
-      flex: 1;
-      padding: 0.75rem;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      background: var(--surface-glass);
-      color: var(--text-primary);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all var(--transition-snappy);
-    }
-
-    .vote-btn:hover {
-      border-color: var(--accent);
-      background: rgba(139, 92, 246, 0.2);
-    }
-
-    .vote-btn.voted {
-      border-color: var(--success);
-      background: rgba(34, 197, 94, 0.2);
-      color: var(--success);
-    }
-
-    /* Chat Section */
-    .chat-section {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-messages {
-      flex: 1;
-      min-height: 200px;
-      max-height: 300px;
       overflow-y: auto;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .chat-input-container {
       display: flex;
-      gap: 0.5rem;
+      flex-direction: column;
+      gap: 1.35rem;
     }
-
-    .chat-input {
-      flex: 1;
-      padding: 0.5rem;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
-      background: var(--surface-glass);
-      color: var(--text-primary);
-    }
-
-    .chat-send {
-      padding: 0.5rem 1rem;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    /* Match Cards */
-    .match-cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    .stats-body .meta {
+      display: flex;
+      align-items: center;
       gap: 1rem;
-      margin-top: 1.5rem;
     }
-
-    .match-card {
-      background: var(--card-bg);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 1.5rem;
+    .stats-body .meta img {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 2px solid rgba(129, 140, 248, 0.42);
     }
-
-    .match-card h4 {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      color: var(--text-primary);
+    .stats-body .meta .details { flex: 1; }
+    .stats-body .meta .details p { margin: 0.2rem 0; color: var(--text-muted); font-size: 0.9rem; }
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.8rem;
     }
-
-    /* Footer */
-    footer {
-      background: var(--card-bg);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 2rem;
+    .stats-summary .stat {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 0.85rem;
+      padding: 0.85rem;
       text-align: center;
+    }
+    .stats-summary .stat .label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
       color: var(--text-muted);
-      margin-top: 2rem;
     }
-
-    /* Responsive */
+    .stats-summary .stat .value {
+      margin-top: 0.35rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .stats-body .bio {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+    .stats-body .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .stats-body .cta-row a,
+    .stats-body .cta-row button {
+      border-radius: 9999px;
+      padding: 0.6rem 1.1rem;
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      background: rgba(15, 23, 42, 0.75);
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background var(--transition-snappy);
+    }
+    .stats-body .cta-row a:hover,
+    .stats-body .cta-row button:hover {
+      background: rgba(79, 70, 229, 0.4);
+    }
+    #support-effect-layer { position: fixed; inset: 0; pointer-events: none; z-index: 90; overflow: hidden; }
+    #support-effect-layer .support-spark {
+      position: absolute;
+      width: 0.6rem;
+      height: 0.6rem;
+      border-radius: 50%;
+      opacity: 0;
+      animation: spark-pop 1.8s ease-out forwards;
+    }
+    @keyframes spark-pop {
+      0% { transform: translate3d(0, 0, 0) scale(0.4); opacity: 1; }
+      60% { opacity: 1; }
+      100% { transform: translate3d(var(--spark-x), -110vh, 0) scale(0.9) rotate(720deg); opacity: 0; }
+    }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 1.4rem;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #e2e8f0;
+      padding: 0.65rem 1.1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 95;
+    }
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+    @media (max-width: 1280px) {
+      .hero { grid-template-columns: 1fr; }
+      .control-streams { grid-template-columns: 1fr; }
+      nav#global-header { padding: 0.85rem 1.5rem; }
+      #chat-panel { width: 280px; }
+    }
     @media (max-width: 1024px) {
-      .main-container {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
-
-      .sidebar {
-        order: -1;
-      }
+      .control-panel { position: static; }
+      main { padding: 1.5rem 1.35rem 4rem; }
     }
-
-    @media (max-width: 768px) {
-      .main-container {
-        padding: 1rem;
-      }
-
-      .header-container {
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      .header-nav {
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .match-display {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-      }
-
-      .vs-text {
-        order: -1;
-      }
+    @media (max-width: 860px) {
+      nav#global-header .header-shell { flex-direction: column; align-items: flex-start; }
+      .header-actions { width: 100%; justify-content: space-between; }
+      #stream-grid { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+      #chat-panel { display: none; }
+      #chat-toggle { display: flex; align-items: center; justify-content: center; }
+    }
+    @media (max-width: 640px) {
+      .hero-actions button { flex: 1 1 45%; text-align: center; }
+      .control-panel { padding: 1.2rem; }
+      nav#global-header { padding: 0.75rem 1rem; }
+      main { padding: 1.2rem 1rem 4rem; }
+      #chat-toggle { bottom: 1rem; right: 1rem; }
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
+  <div id="support-effect-layer"></div>
+  <div id="live-team-backdrop"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="live-announcement-banner" class="live-announcement-banner" aria-live="polite" role="status"></div>
   <nav id="global-header">
-    <div class="header-container">
+    <div class="header-shell">
       <div class="header-brand">
         <img src="Tribes Professional League.png" alt="Tribes Professional League logo" onerror="this.style.display='none'">
         <div>
-          <h1 class="brand-title">Tribes Professional League</h1>
-          <p class="brand-subtitle">Spectating Platform</p>
+          <p class="brand-title">Tribes Professional League</p>
+          <p class="brand-subtitle">Live Hub</p>
         </div>
       </div>
-      <div class="header-nav">
-        <a href="#" class="nav-link">Main</a>
-        <a href="#" class="nav-link">Matches</a>
-        <a href="#" class="nav-link">Statistics</a>
-        <a href="#" class="nav-link">News</a>
-      </div>
-      <div class="auth-buttons">
-        <a href="#" class="btn">Login / Register</a>
-        <a href="#" class="btn btn-primary">Continue with Twitch</a>
-        <a href="#" class="btn btn-primary">Continue with Discord</a>
+      <div class="header-actions">
+        <button type="button" class="hero-link" data-role="live-only-toggle">Show Only Live</button>
+        <div class="live-teams-wrapper">
+          <button type="button" id="live-teams-toggle" class="hero-link">Team Streams</button>
+          <div id="live-teams-panel" class="hidden"></div>
+        </div>
+        <div class="auth-group">
+          <span id="twitch-user"></span>
+          <button type="button" id="twitch-login-btn" class="hero-cta">Sign in with Twitch</button>
+        </div>
       </div>
     </div>
   </nav>
-
-  <!-- Main Container -->
-  <div class="main-container">
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Spectating Section -->
-      <div class="spectating-section">
-        <div class="spectating-header">
-          <div class="spectating-label">Spectating</div>
-          <button class="team-select-btn" id="team-select-btn">Select Teams</button>
-        </div>
-        
-        <!-- Team Selection Modal -->
-        <div class="team-selection-modal" id="team-selection-modal">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h3>Select Teams</h3>
-              <button class="modal-close" id="modal-close">&times;</button>
-            </div>
-            <div class="team-selection-grid" id="team-selection-grid">
-              <!-- Teams will be populated here -->
-            </div>
-            <div class="modal-actions">
-              <button class="btn btn-secondary" id="cancel-selection">Cancel</button>
-              <button class="btn btn-primary" id="confirm-selection" disabled>Start Match</button>
-            </div>
+  <main>
+    <section class="hero">
+      <article class="hero-card">
+        <h1>All Your Tribes Streams, One Wall.</h1>
+        <p>Build a watch party that rivals Twitch itself. Track every roster, stack chats, and surface stats without leaving this page.</p>
+        <div class="hero-metrics">
+          <div class="metric">
+            <span>Total Streams</span>
+            <strong id="metric-total-streams">0</strong>
+          </div>
+          <div class="metric">
+            <span>Live Right Now</span>
+            <strong id="metric-live-streams">0</strong>
+          </div>
+          <div class="metric">
+            <span>Hidden Slots</span>
+            <strong id="metric-hidden-streams">0</strong>
           </div>
         </div>
+        <div class="hero-actions">
+          <button type="button" id="open-add-streamer">Add Streamer</button>
+          <button type="button" id="open-manager">Manage List</button>
+          <button type="button" id="scroll-to-grid">Jump to Streams</button>
+        </div>
+      </article>
+      <article class="support-card" id="support-card">
+        <h2>Boost the League</h2>
+        <p>Cheer on the players, unlock page-wide hype effects, and keep the Tribes Professional League thriving.</p>
+        <div class="support-actions">
+          <button type="button" class="primary" data-support-type="bits" data-channel="tribesprofessionalleague">Send Bits to the League</button>
+          <a href="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" target="_blank" rel="noopener" data-support-type="paypal" data-url="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA">Donate via PayPal</a>
+          <button type="button" class="secondary" data-support-type="effect" data-effect="donation">I Just Supported!</button>
+        </div>
+        <p class="support-note">Wire up your alert system to call <code>SupportEffects.trigger()</code> for automated hype.</p>
+      </article>
+    </section>
 
-        <div class="match-display" id="match-display">
-          <div class="team-score" id="team-a-display">
-            <div class="team-logo" id="team-a-logo">
-              <img src="images/TeamDPRKLogo3.png" alt="Team A" onerror="this.style.display='none'">
-            </div>
-            <div class="team-name" id="team-a-name">Team A</div>
+    <section class="control-streams">
+      <aside class="control-panel" id="control-panel">
+        <header>
+          <h3>Stream List</h3>
+          <p>Add, hide, or reorder the channels that render in the wall.</p>
+        </header>
+        <form id="add-channel-form">
+          <label for="add-channel-input">Add a Twitch channel</label>
+          <div class="input-row">
+            <input type="text" id="add-channel-input" placeholder="twitch handle" autocomplete="off">
+            <button type="submit" class="submit">Add</button>
           </div>
-          <div class="vs-text">VS</div>
-          <div class="team-score" id="team-b-display">
-            <div class="team-logo" id="team-b-logo">
-              <img src="images/TeamDPRKLogo3.png" alt="Team B" onerror="this.style.display='none'">
-            </div>
-            <div class="team-name" id="team-b-name">Team B</div>
-          </div>
+        </form>
+        <div class="inline-actions">
+          <button type="button" data-role="live-only-toggle">Show Only Live</button>
+          <button type="button" id="show-all-streams">Show All</button>
+          <button type="button" id="reset-defaults">Reset to League Defaults</button>
         </div>
-      </div>
+        <div class="channel-manager" id="channel-manager"></div>
+      </aside>
 
-      <!-- Player Tabs -->
-      <div class="player-tabs" id="player-tabs">
-        <!-- Player tabs will be populated here -->
-      </div>
-
-      <!-- Active Stream -->
-      <div class="active-stream">
-        <iframe class="stream-frame" src="https://player.twitch.tv/?channel=tribesprofessionalleague&parent=localhost&autoplay=false" allowfullscreen></iframe>
-      </div>
-
-      <!-- Match Cards -->
-      <div class="match-cards">
-        <div class="match-card">
-          <h4>Match Statistics</h4>
-          <p>Live match statistics will appear here</p>
+      <div class="streams-area" id="streams-area">
+        <div class="section-head">
+          <h2>Multi-Stream Wall</h2>
+          <p>Spot every base, every chase, every clutch — live and archived.</p>
         </div>
-        <div class="match-card">
-          <h4>Recent Matches</h4>
-          <p>Recent match results will appear here</p>
-        </div>
+        <div id="live-channel-banner"></div>
+        <div id="stream-grid"></div>
       </div>
+    </section>
+  </main>
+  <div id="chat-panel" class="is-hidden" aria-live="polite">
+    <div class="chat-header">
+      <p>Twitch Chat</p>
+      <button type="button" id="close-chat">Close</button>
     </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <!-- Voting Section -->
-      <div class="sidebar-section voting-section">
-        <h3>Vote for Winner</h3>
-        <div class="vote-buttons">
-          <button class="vote-btn" id="vote-team-a">Team A</button>
-          <button class="vote-btn" id="vote-team-b">Team B</button>
-        </div>
-      </div>
-
-      <!-- Chat Section -->
-      <div class="sidebar-section chat-section">
-        <h3>Live Chat</h3>
-        <div class="chat-messages" id="chat-messages">
-          <p style="color: var(--text-muted); text-align: center;">Chat messages will appear here</p>
-        </div>
-        <div class="chat-input-container">
-          <input type="text" class="chat-input" id="chat-input" placeholder="Type a message...">
-          <button class="chat-send" id="chat-send">Send</button>
-        </div>
-      </div>
-    </div>
+    <select id="chat-channel-select">
+      <option value="">Select Channel Chat</option>
+    </select>
+    <iframe id="chat-iframe" src="about:blank" title="Twitch chat" sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-modals"></iframe>
   </div>
-
-  <!-- Footer -->
-  <footer>
-    <p>&copy; 2024 Tribes Professional League. All rights reserved.</p>
-  </footer>
-
+  <button id="chat-toggle"><span>Chat</span></button>
+  <div class="stats-backdrop" id="stats-backdrop"></div>
+  <aside class="stats-drawer" id="stats-drawer">
+    <header>
+      <h3 id="stats-title">Player Stats</h3>
+      <button type="button" id="stats-close" aria-label="Close stats">&times;</button>
+    </header>
+    <div class="stats-body" id="stats-body">
+      <p class="bio">Select a streamer to view their aggregated league stats.</p>
+    </div>
+  </aside>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, query, where, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -755,386 +1066,1012 @@
     const firebaseApp = initializeApp(firebaseConfig);
     const db = getFirestore(firebaseApp);
 
-    const TEAM_DATA = {
-      'Avalanche': { logo: 'TribesLeagueLogo\'s/aV!.png', name: 'Avalanche', folder: 'AV!' },
-      'ePidemic': { logo: 'TribesLeagueLogo\'s/ePi.png', name: 'ePidemic', folder: 'EPI' },
-      'DPRK': { logo: 'TribesLeagueLogo\'s/TeamDPRKLogo3.png', name: 'DPRK', folder: 'DPRK' },
-      'Zen': { logo: 'TribesLeagueLogo\'s/Zenlogo.png', name: 'Zen', folder: 'ZEN' },
-      'TXM': { logo: 'TribesLeagueLogo\'s/TXM.png', name: 'TXM', folder: 'TXM' },
-      'FPS': { logo: 'TribesLeagueLogo\'s/FPSlogo.png', name: 'Flag Pole Smokers', folder: 'FPS' },
-      'FT': { logo: 'TribesLeagueLogo\'s/FTlogo.png', name: 'Flying Tractors', folder: 'FT' },
-      'HoE': { logo: 'TribesLeagueLogo\'s/HoE.png', name: 'Hegemony of Euros', folder: 'HOE' },
-      'Magic': { logo: 'TribesLeagueLogo\'s/Magic.png', name: 'Magic', folder: 'WIZ' },
-      'DeadStop': { logo: 'DeadStopLogo.png', name: 'DeadStop', folder: 'DS' },
-      'UE': { logo: 'TribesLeagueLogo\'s/UE.png', name: 'Unhandled Exception', folder: 'UE' },
-      'KTL': { logo: 'TribesLeagueLogo\'s/KTLlogo.png', name: 'KTL', folder: 'KTL' },
-      'Null': { logo: 'TribesLeagueLogo\'s/NullLogo.png', name: 'null', folder: 'Null' },
-      'ToxicAimers': { logo: 'TribesLeagueLogo\'s/ToxicAimersLogo.png', name: 'Toxic Aimers', folder: 'TA' }
+    const defaultChannels = [
+      "2xevil","apcizzle","bakatoma1","beldarkk","blu2th1000","bschrift","cheezecaek","cloutac","cryofzshooter","dreadtitan","eltimablo",
+      "eviskz0rr","freefoodd","ggglygy","ghost_loot","gnome827","heavenlyjive","howsya","iamyougaming","isoitiro","jpwai","karolk10","kenxai",
+      "lordbuschguy","makasuro","mastinmusic","mikeax2","mikesters17","more_horchata","o0oo_live","oo0oo_live","operationcats","pandoracast",
+      "playb0x","prizzo4real","prj_tv","seansguitarworldbang","shroud","simmons572","skrooner","slowpok3","splitsecondta","storksoofly",
+      "sulliedsoc","ta_vorpalkitty","tritiumjones","twitch","tylermarket","vaxitylol","visisgaming","wholuvsdean","wrigglespk","xry_tv","z4t01"
+    ];
+
+    const supportConfig = {
+      leagueChannel: "tribesprofessionalleague",
+      paypalUrl: "https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA"
     };
 
-    let selectedTeams = { teamA: null, teamB: null };
-    let teamRosters = {};
+    const TEAM_LOGOS = {
+      Avalanche: "TribesLeagueLogo's/aV!.png",
+      ePidemic: "TribesLeagueLogo's/ePi.png",
+      DPRK: "TribesLeagueLogo's/TeamDPRKLogo3.png",
+      Zen: "TribesLeagueLogo's/Zenlogo.png",
+      TXM: "TribesLeagueLogo's/TXM.png",
+      FPS: "TribesLeagueLogo's/FPSlogo.png",
+      FT: "TribesLeagueLogo's/FTlogo.png",
+      HoE: "TribesLeagueLogo's/HoE.png",
+      Magic: "TribesLeagueLogo's/Magic.png",
+      DeadStop: "DeadStopLogo.png",
+      UE: "TribesLeagueLogo's/UE.png",
+      KTL: "TribesLeagueLogo's/KTLlogo.png",
+      Null: "TribesLeagueLogo's/NullLogo.png",
+      ToxicAimers: "TribesLeagueLogo's/ToxicAimersLogo.png"
+    };
 
-    document.addEventListener('DOMContentLoaded', function() {
-      initializeTeamSelection();
-      initializeChat();
-      initializeVoting();
-      loadTeamRosters();
-    });
+    const STORAGE = {
+      CHANNELS: "twitchChannels",
+      HIDDEN: "hiddenChannels",
+      SHOW_LIVE: "showOnlyLive"
+    };
 
-    async function loadTeamRosters() {
+    const els = {
+      streamGrid: document.getElementById("stream-grid"),
+      liveBanner: document.getElementById("live-channel-banner"),
+      channelManager: document.getElementById("channel-manager"),
+      addChannelForm: document.getElementById("add-channel-form"),
+      addChannelInput: document.getElementById("add-channel-input"),
+      liveToggleButtons: Array.from(document.querySelectorAll('[data-role="live-only-toggle"]')),
+      showAllButton: document.getElementById("show-all-streams"),
+      resetButton: document.getElementById("reset-defaults"),
+      chatPanel: document.getElementById("chat-panel"),
+      chatSelect: document.getElementById("chat-channel-select"),
+      chatIframe: document.getElementById("chat-iframe"),
+      chatToggle: document.getElementById("chat-toggle"),
+      chatClose: document.getElementById("close-chat"),
+      statsDrawer: document.getElementById("stats-drawer"),
+      statsBackdrop: document.getElementById("stats-backdrop"),
+      statsTitle: document.getElementById("stats-title"),
+      statsBody: document.getElementById("stats-body"),
+      toast: document.getElementById("toast"),
+      effectLayer: document.getElementById("support-effect-layer"),
+      addOpenBtn: document.getElementById("open-add-streamer"),
+      manageOpenBtn: document.getElementById("open-manager"),
+      scrollToGridBtn: document.getElementById("scroll-to-grid"),
+      controlPanel: document.getElementById("control-panel"),
+      streamsArea: document.getElementById("streams-area"),
+      supportActions: document.querySelector(".support-actions"),
+      heroMetrics: {
+        total: document.getElementById("metric-total-streams"),
+        live: document.getElementById("metric-live-streams"),
+        hidden: document.getElementById("metric-hidden-streams")
+      }
+    };
+
+    const state = {
+      channels: [],
+      hiddenChannels: [],
+      showOnlyLive: false,
+      liveSet: new Set(),
+      lastLiveStreams: [],
+      currentChatChannel: "",
+      streamerDirectory: new Map(),
+      liveInterval: null
+    };
+
+    const teamIndex = new Map();
+
+    const parentHosts = new Set([
+      window.location.hostname,
+      "www.tribesprofessionalleague.online",
+      "tribesprofessionalleague.online",
+      "t24085.github.io",
+      "localhost",
+      "127.0.0.1"
+    ].filter(Boolean));
+    if (!parentHosts.size) {
+      parentHosts.add("www.tribesprofessionalleague.online");
+    }
+    const parentQuery = Array.from(parentHosts).map(host => `parent=${encodeURIComponent(host)}`).join("&");
+    function normalizeChannel(value = "") {
+      return String(value || "").trim().toLowerCase();
+    }
+    function sortAndDedup(list = []) {
+      return Array.from(new Set(list.map(normalizeChannel))).sort((a, b) => a.localeCompare(b));
+    }
+    function isValidChannel(channel) {
+      return /^[a-z0-9_]{4,25}$/.test(channel);
+    }
+    function escapeHtml(value = "") {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[ch] || ch);
+    }
+    function formatNumber(value, decimals = 0) {
+      const num = Number(value);
+      if (!Number.isFinite(num)) {
+        return (0).toFixed(decimals);
+      }
+      return num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+function toNumber(value, fallback = 0) {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : fallback;
+    }
+        function buildPlayerUrl(channel) {
+      return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&${parentQuery}&autoplay=false`;
+    }
+    function buildChatUrl(channel) {
+      return `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?${parentQuery}`;
+    }
+    function buildBitsUrl(channel) {
+      return `https://www.twitch.tv/products/${encodeURIComponent(channel)}/bits?ref=tpl_hub`;
+    }
+    function persistChannels() {
+      localStorage.setItem(STORAGE.CHANNELS, JSON.stringify(state.channels));
+    }
+    function persistHidden() {
+      localStorage.setItem(STORAGE.HIDDEN, JSON.stringify(state.hiddenChannels));
+    }
+    function persistShowOnlyLive() {
+      localStorage.setItem(STORAGE.SHOW_LIVE, JSON.stringify(state.showOnlyLive));
+    }
+    function loadList(key, fallback = []) {
       try {
-        const teamsRef = collection(db, 'teams');
-        const teamsSnapshot = await getDocs(teamsRef);
-        
-        teamsSnapshot.forEach(doc => {
-          const teamData = doc.data();
-          if (teamData.teamName) {
-            // Load complete roster including all players and bench players
-            const completeRoster = [];
-            
-            // Add main roster players
-            if (teamData.players && Array.isArray(teamData.players)) {
-              completeRoster.push(...teamData.players);
-            }
-            
-            // Add bench players if they exist
-            if (teamData.benchPlayers && Array.isArray(teamData.benchPlayers)) {
-              completeRoster.push(...teamData.benchPlayers);
-            }
-            
-            // Add any additional roster data
-            if (teamData.roster && Array.isArray(teamData.roster)) {
-              completeRoster.push(...teamData.roster);
-            }
-            
-            teamRosters[teamData.teamName] = completeRoster;
-          }
-        });
-        
-        console.log('Loaded complete team rosters:', teamRosters);
-      } catch (error) {
-        console.error('Error loading team rosters:', error);
+        const raw = localStorage.getItem(key);
+        if (!raw) return [...fallback];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [...fallback];
+        return parsed.map(normalizeChannel);
+      } catch {
+        return [...fallback];
       }
     }
+    function loadBool(key, fallback = false) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw === null) return fallback;
+        return Boolean(JSON.parse(raw));
+      } catch {
+        return fallback;
+      }
+    }
+    function initializeState() {
+      state.channels = sortAndDedup(loadList(STORAGE.CHANNELS, defaultChannels));
+      state.hiddenChannels = sortAndDedup(loadList(STORAGE.HIDDEN, [])).filter(channel => state.channels.includes(channel));
+      state.showOnlyLive = loadBool(STORAGE.SHOW_LIVE, false);
+      state.currentChatChannel = state.channels.find(channel => !state.hiddenChannels.includes(channel)) || state.channels[0] || "";
+    }
+    function hydrateTeamIndex() {
+      teamIndex.clear();
+      const roster = window.twitchOAuth?.TEAM_STREAMS || {};
+      Object.entries(roster).forEach(([teamName, players]) => {
+        (players || []).forEach(player => {
+          if (!player?.url) return;
+          const match = player.url.match(/twitch\.tv\/([^/?]+)/i);
+          if (!match) return;
+          const handle = normalizeChannel(match[1]);
+          teamIndex.set(handle, {
+            team: teamName,
+            displayName: player.name || handle
+          });
+        });
+      });
+    }
+    function getStreamerMeta(channel) {
+      const key = normalizeChannel(channel);
+      const directoryEntry = state.streamerDirectory.get(key);
+      const teamEntry = teamIndex.get(key);
+      const displayName = directoryEntry?.displayName || teamEntry?.displayName || key;
+      const teamName = directoryEntry?.team || teamEntry?.team || "";
+      const avatar = directoryEntry?.avatar && directoryEntry.avatar.trim()
+        ? directoryEntry.avatar.trim()
+        : `https://decapi.me/twitch/avatar/${encodeURIComponent(key)}`;
+      const bio = directoryEntry?.bio || "";
+      return { channel: key, displayName, team: teamName, avatar, bio };
+    }
+    function computeVisibleChannels() {
+      return state.channels.filter(channel => !state.hiddenChannels.includes(channel) && (!state.showOnlyLive || state.liveSet.has(channel)));
+    }
+    function updateMetrics() {
+      if (els.heroMetrics.total) {
+        els.heroMetrics.total.textContent = state.channels.length;
+      }
+      if (els.heroMetrics.live) {
+        const liveCount = state.channels.filter(channel => state.liveSet.has(channel)).length;
+        els.heroMetrics.live.textContent = liveCount;
+      }
+      if (els.heroMetrics.hidden) {
+        els.heroMetrics.hidden.textContent = state.hiddenChannels.length;
+      }
+    }
+    function updateLiveToggleButtons() {
+      const label = state.showOnlyLive ? "Show All Streams" : "Show Only Live";
+      els.liveToggleButtons.forEach(btn => {
+        if (!btn) return;
+        btn.textContent = label;
+        btn.dataset.mode = state.showOnlyLive ? "live" : "all";
+      });
+    }
+    function renderLiveBanner() {
+      if (!els.liveBanner) return;
+      els.liveBanner.innerHTML = "";
+      if (!state.lastLiveStreams.length) {
+        if (window.twitchOAuth?.getToken()) {
+          const span = document.createElement("span");
+          span.style.fontSize = "0.8rem";
+          span.style.color = "rgba(226,232,240,0.66)";
+          span.textContent = "No tracked channels live right now.";
+          els.liveBanner.appendChild(span);
+        }
+        return;
+      }
+      state.lastLiveStreams.forEach(stream => {
+        const div = document.createElement("div");
+        div.className = "live-box";
+        const viewers = stream.viewer_count ? `<span class="viewers">${stream.viewer_count.toLocaleString()} viewers</span>` : "";
+        div.innerHTML =
+          `<span class="live-dot">●</span>` +
+          `<span class="live-name">${escapeHtml(stream.user_name)}</span>` +
+          viewers;
+        els.liveBanner.appendChild(div);
+      });
+    }
+    function updateLiveBackdrop() {
+      const container = document.getElementById("live-team-backdrop");
+      if (!container) return;
+      const teams = [];
+      (state.lastLiveStreams || []).forEach(stream => {
+        const login = (stream?.user_login || stream?.user_name || "").toLowerCase();
+        if (!login) return;
+        const mapping = teamIndex.get(login);
+        const teamName = mapping?.team;
+        if (teamName && !teams.includes(teamName)) {
+          teams.push(teamName);
+        }
+      });
+      if (!teams.length) {
+        container.innerHTML = "";
+        container.classList.remove("is-visible");
+        container.dataset.count = "0";
+        document.body.classList.remove("has-live-backdrop");
+        return;
+      }
+      const limited = teams.slice(0, 4);
+      const fragment = document.createDocumentFragment();
+      limited.forEach(teamName => {
+        const panel = document.createElement("div");
+        panel.className = "live-team-panel";
+        const logoCandidate = TEAM_LOGOS[teamName] || TEAM_LOGOS[teamName?.replace(/\s+/g, "")] || "Tribes Professional League.png";
+        let logoUrl = logoCandidate;
+        if (!/^https?:/i.test(logoCandidate)) {
+          logoUrl = encodeURI(logoCandidate).replace(/'/g, '%27');
+        }
+        panel.style.backgroundImage = `url(${logoUrl})`;
+        panel.dataset.team = teamName;
+        fragment.appendChild(panel);
+      });
+      container.innerHTML = "";
+      container.dataset.count = String(limited.length);
+      container.appendChild(fragment);
+      document.body.classList.add("has-live-backdrop");
+      container.classList.add("is-visible");
+    }
 
-    function initializeTeamSelection() {
-      const teamSelectBtn = document.getElementById('team-select-btn');
-      const modal = document.getElementById('team-selection-modal');
-      const modalClose = document.getElementById('modal-close');
-      const cancelBtn = document.getElementById('cancel-selection');
-      const confirmBtn = document.getElementById('confirm-selection');
-      const teamGrid = document.getElementById('team-selection-grid');
-
-      // Populate team grid
-      Object.entries(TEAM_DATA).forEach(([teamKey, teamInfo]) => {
-        const teamOption = document.createElement('div');
-        teamOption.className = 'team-option';
-        teamOption.dataset.teamKey = teamKey;
-        teamOption.innerHTML = `
-          <div class="team-option-logo">
-            <img src="${teamInfo.logo}" alt="${teamInfo.name}" onerror="this.style.display='none'">
+    function renderStreamGrid() {
+      if (!els.streamGrid) return;
+      const visibleChannels = computeVisibleChannels();
+      if (!visibleChannels.length) {
+        els.streamGrid.innerHTML = "";
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.innerHTML = "No streams to display right now.<br>Use the controls to add streamers or show hidden entries." +
+          (state.hiddenChannels.length ? '<br><button type="button" id="empty-show-all">Show Hidden Streams</button>' : "");
+        els.streamGrid.appendChild(empty);
+        const showAllBtn = document.getElementById("empty-show-all");
+        if (showAllBtn) {
+          showAllBtn.addEventListener("click", showAllChannels);
+        }
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      visibleChannels.forEach(channel => {
+        const meta = getStreamerMeta(channel);
+        const isLive = state.liveSet.has(channel);
+        const card = document.createElement("article");
+        card.className = "stream-card";
+        card.dataset.channel = channel;
+        card.innerHTML = `
+          <div class="stream-card__head">
+            <div class="stream-card__identity">
+              <span class="stream-card__avatar">
+                <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
+              </span>
+              <div>
+                <p class="stream-card__name">${escapeHtml(meta.displayName)}</p>
+                ${meta.team ? `<p class="stream-card__team">${escapeHtml(meta.team)}</p>` : `<p class="stream-card__team">@${escapeHtml(meta.channel)}</p>`}
+              </div>
+            </div>
+            <div class="stream-card__status">
+              ${isLive ? '<span class="live-pill">Live</span>' : '<span class="offline-pill">Offline</span>'}
+            </div>
           </div>
-          <div class="team-option-name">${teamInfo.name}</div>
+          <div class="stream-card__player">
+            <div class="player-frame">
+              <iframe src="${buildPlayerUrl(channel)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy" title="${escapeHtml(meta.displayName)} stream"></iframe>
+            </div>
+          </div>
+          <div class="stream-card__actions">
+            <button type="button" class="card-action" data-action="stats">View Stats</button>
+            <button type="button" class="card-action" data-action="chat">Set Chat</button>
+            <button type="button" class="card-action support" data-action="support">Send Bits</button>
+          </div>
         `;
-        
-        teamOption.addEventListener('click', function() {
-          const teamKey = this.dataset.teamKey;
-          
-          // Check if this team is already selected
-          if (selectedTeams.teamA === teamKey || selectedTeams.teamB === teamKey) {
-            // Deselect if already selected
-            if (selectedTeams.teamA === teamKey) selectedTeams.teamA = null;
-            if (selectedTeams.teamB === teamKey) selectedTeams.teamB = null;
-            this.classList.remove('selected');
-          } else {
-            // Select team if we have space
-            if (!selectedTeams.teamA) {
-              selectedTeams.teamA = teamKey;
-              this.classList.add('selected');
-            } else if (!selectedTeams.teamB) {
-              selectedTeams.teamB = teamKey;
-              this.classList.add('selected');
-            } else {
-              // Both slots full, replace team A
-              const oldTeamA = document.querySelector(`[data-team-key="${selectedTeams.teamA}"]`);
-              if (oldTeamA) oldTeamA.classList.remove('selected');
-              selectedTeams.teamA = teamKey;
-              this.classList.add('selected');
-            }
-          }
-          
-          // Update confirm button state
-          confirmBtn.disabled = !selectedTeams.teamA || !selectedTeams.teamB;
-        });
-        
-        teamGrid.appendChild(teamOption);
+        fragment.appendChild(card);
       });
-
-      // Open modal
-      teamSelectBtn.addEventListener('click', () => {
-        modal.classList.add('active');
+      els.streamGrid.innerHTML = "";
+      els.streamGrid.appendChild(fragment);
+      highlightChatCard();
+    }
+    function renderChannelManager() {
+      if (!els.channelManager) return;
+      const fragment = document.createDocumentFragment();
+      state.channels.forEach(channel => {
+        const meta = getStreamerMeta(channel);
+        const isHidden = state.hiddenChannels.includes(channel);
+        const isLive = state.liveSet.has(channel);
+        const row = document.createElement("div");
+        row.className = "channel-row";
+        row.dataset.channel = channel;
+        row.innerHTML = `
+          <div class="channel-row__top">
+            <div class="channel-row__meta">
+              <span class="channel-row__name">${escapeHtml(meta.displayName)}</span>
+              <span class="channel-row__handle">@${escapeHtml(meta.channel)}</span>
+              ${meta.team ? `<span class="channel-row__team">${escapeHtml(meta.team)}</span>` : ""}
+            </div>
+            <div class="channel-row__badges">
+              ${isLive ? '<span class="badge badge-live">Live</span>' : ""}
+              ${isHidden ? '<span class="badge badge-muted">Hidden</span>' : ""}
+            </div>
+          </div>
+          <div class="channel-row__actions">
+            <button type="button" class="pill-btn secondary" data-action="stats">Stats</button>
+            <button type="button" class="pill-btn secondary" data-action="chat">Chat</button>
+            <button type="button" class="pill-btn" data-action="toggle-hidden">${isHidden ? "Show" : "Hide"}</button>
+            <button type="button" class="pill-btn danger" data-action="remove">Remove</button>
+          </div>
+        `;
+        fragment.appendChild(row);
       });
-
-      // Close modal functions
-      function closeModal() {
-        modal.classList.remove('active');
+      els.channelManager.innerHTML = "";
+      els.channelManager.appendChild(fragment);
+    }
+    function renderAll() {
+      renderStreamGrid();
+      renderChannelManager();
+      updateLiveToggleButtons();
+      updateChatOptions();
+      renderLiveBanner();
+      updateMetrics();
+      updateLiveBackdrop();
+      syncChatPanelOffset();
+    }
+    function highlightChatCard() {
+      if (!els.streamGrid) return;
+      els.streamGrid.querySelectorAll(".stream-card.chat-active").forEach(card => card.classList.remove("chat-active"));
+      if (!state.currentChatChannel) return;
+      const card = els.streamGrid.querySelector('[data-channel="' + state.currentChatChannel + '"]');
+      if (card) card.classList.add("chat-active");
+    }
+    function updateChatOptions() {
+      if (!els.chatSelect) return;
+      const visibleChannels = computeVisibleChannels();
+      const fragment = document.createDocumentFragment();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select Channel Chat";
+      fragment.appendChild(placeholder);
+      visibleChannels.sort((a, b) => a.localeCompare(b)).forEach((channel, index) => {
+        const option = document.createElement("option");
+        option.value = channel;
+        const meta = getStreamerMeta(channel);
+        option.textContent = `${index + 1}. ${meta.displayName || channel}`;
+        fragment.appendChild(option);
+      });
+      els.chatSelect.innerHTML = "";
+      els.chatSelect.appendChild(fragment);
+      if (!state.currentChatChannel || !visibleChannels.includes(state.currentChatChannel)) {
+        state.currentChatChannel = visibleChannels[0] || "";
       }
-
-      modalClose.addEventListener('click', closeModal);
-      cancelBtn.addEventListener('click', closeModal);
-
-      // Confirm selection
-      confirmBtn.addEventListener('click', () => {
-        if (selectedTeams.teamA && selectedTeams.teamB) {
-          updateMatchDisplay();
-          updatePlayerTabs();
-          closeModal();
+      els.chatSelect.value = state.currentChatChannel || "";
+      updateChatFrame();
+    }
+    function updateChatFrame() {
+      if (!els.chatIframe) return;
+      if (state.currentChatChannel) {
+        const src = buildChatUrl(state.currentChatChannel);
+        if (els.chatIframe.dataset.src !== src) {
+          els.chatIframe.dataset.src = src;
+          els.chatIframe.src = src;
         }
-      });
-
-      // Close modal on backdrop click
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          closeModal();
-        }
-      });
-    }
-
-    function updateMatchDisplay() {
-      const teamA = TEAM_DATA[selectedTeams.teamA];
-      const teamB = TEAM_DATA[selectedTeams.teamB];
-      const matchDisplay = document.getElementById('match-display');
-      
-      if (teamA) {
-        document.getElementById('team-a-name').textContent = teamA.name;
-        document.getElementById('team-a-logo').innerHTML = `<img src="${teamA.logo}" alt="${teamA.name}" onerror="this.style.display='none'">`;
+      } else {
+        els.chatIframe.dataset.src = "about:blank";
+        els.chatIframe.src = "about:blank";
       }
-      
-      if (teamB) {
-        document.getElementById('team-b-name').textContent = teamB.name;
-        document.getElementById('team-b-logo').innerHTML = `<img src="${teamB.logo}" alt="${teamB.name}" onerror="this.style.display='none'">`;
+      highlightChatCard();
+    }
+    function setChatChannel(channel, options = {}) {
+      const normalized = normalizeChannel(channel);
+      if (!state.channels.includes(normalized)) {
+        showToast(`Add ${normalized} to the grid first.`);
+        return;
       }
-      
-      // Set background image based on team matchup
-      if (teamA && teamB) {
-        loadMatchupImageWithFallbacks(teamA.folder, teamB.folder, matchDisplay);
-      }
-    }
-    
-    function loadMatchupImageWithFallbacks(teamAFolder, teamBFolder, matchDisplay) {
-      console.log('Loading matchup image for:', teamAFolder, 'vs', teamBFolder);
-      
-      // Try different naming conventions
-      const possiblePaths = [
-        `TribesLeagueLogo's/TeamMatchUps/${teamAFolder}/${teamAFolder}vs${teamBFolder}.png`,
-        `TribesLeagueLogo's/TeamMatchUps/${teamBFolder}/${teamBFolder}vs${teamAFolder}.png`,
-        `TribesLeagueLogo's/TeamMatchUps/${teamAFolder}/${teamAFolder}Vs${teamBFolder}.png`,
-        `TribesLeagueLogo's/TeamMatchUps/${teamBFolder}/${teamBFolder}Vs${teamAFolder}.png`,
-        `TribesLeagueLogo's/TeamMatchUps/${teamAFolder}/${teamAFolder}VS${teamBFolder}.png`,
-        `TribesLeagueLogo's/TeamMatchUps/${teamBFolder}/${teamBFolder}VS${teamAFolder}.png`,
-        // Try with exact case matching for known files
-        `TribesLeagueLogo's/TeamMatchUps/DPRK/DPRKvsZen.png`,
-        `TribesLeagueLogo's/TeamMatchUps/ZEN/DPRKvsZen.png`
-      ];
-      
-      console.log('All possible paths:', possiblePaths);
-      
-      let currentIndex = 0;
-      
-      function tryNextPath() {
-        if (currentIndex >= possiblePaths.length) {
-          console.log('All matchup image paths failed, removing background');
-          matchDisplay.style.backgroundImage = 'none';
-          return;
-        }
-        
-        const currentPath = possiblePaths[currentIndex];
-        console.log(`Trying matchup image path ${currentIndex + 1}/${possiblePaths.length}:`, currentPath);
-        
-        const testImage = new Image();
-        
-        testImage.onload = function() {
-          console.log('✅ Matchup image loaded successfully:', currentPath);
-          matchDisplay.style.backgroundImage = `url(${currentPath})`;
-          matchDisplay.style.backgroundSize = 'cover';
-          matchDisplay.style.backgroundPosition = 'center';
-          matchDisplay.style.backgroundRepeat = 'no-repeat';
-          matchDisplay.classList.add('has-background');
-        };
-        
-        testImage.onerror = function() {
-          console.log('❌ Failed to load:', currentPath);
-          currentIndex++;
-          tryNextPath();
-        };
-        
-        testImage.src = currentPath;
-      }
-      
-      tryNextPath();
-    }
-
-    function updatePlayerTabs() {
-      const playerTabs = document.querySelector('.player-tabs');
-      const teamA = selectedTeams.teamA;
-      const teamB = selectedTeams.teamB;
-      
-      if (!teamA || !teamB) return;
-      
-      const teamARoster = teamRosters[teamA] || [];
-      const teamBRoster = teamRosters[teamB] || [];
-      
-      // Clear existing tabs
-      playerTabs.innerHTML = '';
-      
-      // Add team A players (all roster players)
-      teamARoster.forEach((player, index) => {
-        const tab = document.createElement('button');
-        tab.className = `player-tab ${index === 0 ? 'active' : ''}`;
-        tab.textContent = player.name || player.displayName || `Player ${index + 1}`;
-        tab.dataset.team = 'A';
-        tab.dataset.playerIndex = index;
-        playerTabs.appendChild(tab);
-      });
-      
-      // Add team B players (all roster players)
-      teamBRoster.forEach((player, index) => {
-        const tab = document.createElement('button');
-        tab.className = 'player-tab';
-        tab.textContent = player.name || player.displayName || `Player ${index + 1}`;
-        tab.dataset.team = 'B';
-        tab.dataset.playerIndex = index;
-        playerTabs.appendChild(tab);
-      });
-      
-      // Add match stats tab
-      const statsTab = document.createElement('button');
-      statsTab.className = 'player-tab';
-      statsTab.textContent = 'Match Stats';
-      playerTabs.appendChild(statsTab);
-      
-      // Re-initialize tab functionality
-      initializePlayerTabs();
-    }
-
-    function initializePlayerTabs() {
-      const playerTabs = document.querySelectorAll('.player-tab');
-      playerTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-          // Remove active class from all tabs
-          playerTabs.forEach(t => t.classList.remove('active'));
-          // Add active class to clicked tab
-          this.classList.add('active');
-          
-          // Update stream if it's a player tab
-          if (this.dataset.team && this.dataset.playerIndex !== undefined) {
-            updateStreamForPlayer(this);
-          }
-        });
-      });
-    }
-
-    function updateStreamForPlayer(selectedTab) {
-      const team = selectedTab.dataset.team;
-      const playerIndex = selectedTab.dataset.playerIndex;
-      
-      if (team && playerIndex !== undefined) {
-        const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
-        const roster = teamRosters[teamKey] || [];
-        const player = roster[playerIndex];
-        
-        if (player) {
-          // Try different possible field names for Twitch handle
-          const twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
-          
-          if (twitchHandle) {
-            const streamFrame = document.querySelector('.stream-frame');
-            const parentQuery = `parent=${encodeURIComponent(window.location.hostname)}`;
-            streamFrame.src = `https://player.twitch.tv/?channel=${twitchHandle}&${parentQuery}&autoplay=false`;
-          } else {
-            console.log('No Twitch handle found for player:', player);
-          }
+      state.currentChatChannel = normalized;
+      updateChatOptions();
+      if (options.scrollIntoView && els.streamGrid) {
+        const card = els.streamGrid.querySelector('[data-channel=' + normalized + ']');
+        if (card) {
+          card.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }
+      showToast(`Chat pinned to ${normalized}`);
     }
-
-    function initializeChat() {
-      const chatInput = document.querySelector('.chat-input');
-      const chatSend = document.querySelector('.chat-send');
-      const chatMessages = document.querySelector('.chat-messages');
-
-      function addMessage(message, isUser = false) {
-        const messageDiv = document.createElement('div');
-        messageDiv.style.marginBottom = '0.5rem';
-        messageDiv.style.padding = '0.5rem';
-        messageDiv.style.borderRadius = '4px';
-        messageDiv.style.backgroundColor = isUser ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)';
-        messageDiv.textContent = message;
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    function toggleLiveMode() {
+      state.showOnlyLive = !state.showOnlyLive;
+      persistShowOnlyLive();
+      updateLiveToggleButtons();
+      renderStreamGrid();
+      updateChatOptions();
+      showToast(state.showOnlyLive ? "Showing live channels only" : "Showing all channels");
+    }
+    function showAllChannels() {
+      state.hiddenChannels = [];
+      persistHidden();
+      renderStreamGrid();
+      renderChannelManager();
+      updateChatOptions();
+      showToast("All streams visible");
+    }
+    function resetToDefaults() {
+      if (!window.confirm("Reset the stream list to the league defaults?")) {
+        return;
       }
-
-      chatSend.addEventListener('click', () => {
-        const message = chatInput.value.trim();
-        if (message) {
-          addMessage(`You: ${message}`, true);
-          chatInput.value = '';
-          
-          // Simulate response
-          setTimeout(() => {
-            addMessage('ChatBot: Thanks for the message!');
-          }, 1000);
-        }
-      });
-
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          chatSend.click();
-        }
-      });
+      state.channels = sortAndDedup(defaultChannels);
+      state.hiddenChannels = [];
+      state.currentChatChannel = state.channels[0] || "";
+      persistChannels();
+      persistHidden();
+      renderAll();
+      showToast("Stream roster reset to defaults");
     }
-
-    function initializeVoting() {
-      const voteButtons = document.querySelectorAll('.vote-btn');
-      
-      voteButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          // Remove voted class from all buttons
-          voteButtons.forEach(btn => btn.classList.remove('voted'));
-          // Add voted class to clicked button
-          this.classList.add('voted');
-          
-          // Show confirmation
-          const teamName = this.textContent;
-          alert(`You voted for ${teamName}!`);
-        });
-      });
+    function syncChatPanelOffset() {
+      if (!els.chatPanel) return;
+      const nav = document.getElementById("global-header");
+      const banner = document.getElementById("live-announcement-banner");
+      let offset = nav ? nav.getBoundingClientRect().height + 24 : 72;
+      if (banner && banner.classList.contains("is-visible")) {
+        offset += banner.getBoundingClientRect().height + 14;
+      }
+      els.chatPanel.style.top = `${offset}px`;
+      els.chatPanel.style.height = `calc(100vh - ${offset + 32}px)`;
     }
-
-    // Test function to manually load DPRK vs Zen image
-    function testDPRKvsZen() {
-      const matchDisplay = document.getElementById('match-display');
-      const testPath = "TribesLeagueLogo's/TeamMatchUps/DPRK/DPRKvsZen.png";
-      console.log('Testing direct path:', testPath);
-      
-      const testImage = new Image();
-      testImage.onload = function() {
-        console.log('✅ Direct test successful!');
-        matchDisplay.style.backgroundImage = `url(${testPath})`;
-        matchDisplay.style.backgroundSize = 'cover';
-        matchDisplay.style.backgroundPosition = 'center';
-        matchDisplay.style.backgroundRepeat = 'no-repeat';
-        matchDisplay.classList.add('has-background');
+    function toggleChatVisibilityForViewport() {
+      if (!els.chatPanel) return;
+      if (window.matchMedia("(max-width: 860px)").matches) {
+        els.chatPanel.classList.add("is-hidden");
+        els.chatPanel.classList.remove("mobile-open");
+      } else {
+        els.chatPanel.classList.remove("is-hidden");
+        els.chatPanel.classList.remove("mobile-open");
+      }
+    }
+    function toggleChatMobile() {
+      if (!els.chatPanel) return;
+      els.chatPanel.classList.toggle("mobile-open");
+      if (els.chatPanel.classList.contains("mobile-open")) {
+        els.chatPanel.classList.remove("is-hidden");
+      }
+    }
+    function closeChatMobile() {
+      if (!els.chatPanel) return;
+      els.chatPanel.classList.remove("mobile-open");
+      if (window.matchMedia("(max-width: 860px)").matches) {
+        els.chatPanel.classList.add("is-hidden");
+      }
+    }
+    function isChatMobileOpen() {
+      return !!els.chatPanel && els.chatPanel.classList.contains("mobile-open");
+    }
+    function handleAddChannel(event) {
+      event.preventDefault();
+      const value = normalizeChannel(els.addChannelInput?.value);
+      if (!value) {
+        showToast("Enter a Twitch channel name");
+        return;
+      }
+      if (!isValidChannel(value)) {
+        showToast("Channel names use 4-25 letters, numbers, or underscores.");
+        return;
+      }
+      if (state.channels.includes(value)) {
+        showToast(`${value} is already tracked`);
+        return;
+      }
+      state.channels.push(value);
+      state.channels = sortAndDedup(state.channels);
+      state.hiddenChannels = state.hiddenChannels.filter(channel => channel !== value);
+      persistChannels();
+      persistHidden();
+      if (els.addChannelInput) {
+        els.addChannelInput.value = "";
+      }
+      renderAll();
+      showToast(`Added ${value} to the wall`);
+    }
+    function toggleChannelHidden(channel) {
+      const normalized = normalizeChannel(channel);
+      const index = state.hiddenChannels.indexOf(normalized);
+      if (index >= 0) {
+        state.hiddenChannels.splice(index, 1);
+        showToast(`Showing ${normalized}`);
+      } else {
+        state.hiddenChannels.push(normalized);
+        showToast(`Hiding ${normalized}`);
+      }
+      persistHidden();
+      renderStreamGrid();
+      renderChannelManager();
+      updateChatOptions();
+    }
+    function removeChannel(channel) {
+      const normalized = normalizeChannel(channel);
+      const index = state.channels.indexOf(normalized);
+      if (index === -1) return;
+      state.channels.splice(index, 1);
+      state.hiddenChannels = state.hiddenChannels.filter(value => value !== normalized);
+      if (state.currentChatChannel === normalized) {
+        state.currentChatChannel = state.channels[0] || "";
+      }
+      persistChannels();
+      persistHidden();
+      renderAll();
+      showToast(`Removed ${normalized}`);
+    }
+    function handleStreamGridClick(event) {
+      const card = event.target.closest(".stream-card");
+      if (!card) return;
+      const channel = card.dataset.channel;
+      const actionBtn = event.target.closest("[data-action]");
+      if (actionBtn) {
+        const action = actionBtn.dataset.action;
+        if (action === "stats") {
+          openStatsDrawer(channel);
+        } else if (action === "chat") {
+          setChatChannel(channel, { scrollIntoView: true });
+        } else if (action === "support") {
+          handleSupportForChannel(channel);
+        }
+        return;
+      }
+      if (event.target.closest(".stream-card__identity")) {
+        openStatsDrawer(channel);
+      }
+    }
+    function handleManagerClick(event) {
+      const row = event.target.closest(".channel-row");
+      if (!row) return;
+      const channel = row.dataset.channel;
+      const actionBtn = event.target.closest("[data-action]");
+      if (!actionBtn) return;
+      const action = actionBtn.dataset.action;
+      if (action === "toggle-hidden") {
+        toggleChannelHidden(channel);
+      } else if (action === "remove") {
+        removeChannel(channel);
+      } else if (action === "chat") {
+        setChatChannel(channel, { scrollIntoView: true });
+      } else if (action === "stats") {
+        openStatsDrawer(channel);
+      }
+    }
+    let toastTimer = null;
+    function triggerSupportEffect(type = "bits", channel) {
+      if (!els.effectLayer) return;
+      const palette = {
+        bits: ["#a855f7", "#6366f1", "#22d3ee"],
+        donation: ["#fb7185", "#facc15", "#34d399"],
+        follow: ["#38bdf8", "#8b5cf6", "#f472b6"]
       };
-      testImage.onerror = function() {
-        console.log('❌ Direct test failed!');
+      const colors = palette[type] || palette.bits;
+      const sparks = type === "donation" ? 45 : 32;
+      for (let i = 0; i < sparks; i += 1) {
+        const spark = document.createElement("span");
+        spark.className = "support-spark";
+        spark.style.background = colors[i % colors.length];
+        const left = Math.random() * 100;
+        const horizontal = (Math.random() * 2 - 1) * 22;
+        spark.style.left = left + "vw";
+        spark.style.bottom = "-12vh";
+        spark.style.setProperty("--spark-x", horizontal + "vw");
+        spark.style.animationDelay = (Math.random() * 0.35) + "s";
+        els.effectLayer.appendChild(spark);
+        spark.addEventListener("animationend", () => spark.remove());
+      }
+      const messageMap = {
+        bits: channel ? `Bits sent to ${channel}!` : "Bits hype activated!",
+        donation: "Donation hype deployed!",
+        follow: "New follower! Welcome aboard!"
       };
-      testImage.src = testPath;
+      showToast(messageMap[type] || "Support hype!");
     }
-    
-    // Make test function available globally for debugging
-    window.testDPRKvsZen = testDPRKvsZen;
+    function showToast(message) {
+      if (!els.toast) return;
+      els.toast.textContent = message;
+      els.toast.classList.add("visible");
+      clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => {
+        els.toast.classList.remove("visible");
+      }, 3200);
+    }
+    function handleSupportAction(event) {
+      const target = event.target.closest("[data-support-type]");
+      if (!target) return;
+      event.preventDefault();
+      const type = target.dataset.supportType;
+      if (type === "bits") {
+        const channel = normalizeChannel(target.dataset.channel) || state.currentChatChannel || supportConfig.leagueChannel;
+        handleSupportForChannel(channel);
+      } else if (type === "paypal") {
+        const url = target.dataset.url || supportConfig.paypalUrl;
+        triggerSupportEffect("donation");
+        window.open(url, "_blank", "noopener");
+      } else if (type === "effect") {
+        triggerSupportEffect(target.dataset.effect || "bits");
+      }
+    }
+    function handleSupportForChannel(channel) {
+      const normalized = normalizeChannel(channel);
+      triggerSupportEffect("bits", normalized);
+      window.open(buildBitsUrl(normalized), "_blank", "noopener");
+    }
+    async function loadStreamerDirectory() {
+      try {
+        const q = query(collection(db, "streamers"), where("approved", "==", true));
+        const snap = await getDocs(q);
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          if (!data || !data.twitchHandle) return;
+          const handle = normalizeChannel(data.twitchHandle);
+          state.streamerDirectory.set(handle, {
+            displayName: data.displayName || data.twitchHandle,
+            team: data.team || "",
+            bio: data.bio || "",
+            avatar: data.avatarUrl && data.avatarUrl.trim() ? data.avatarUrl.trim() : ""
+          });
+        });
+        renderStreamGrid();
+        renderChannelManager();
+      } catch (err) {
+        console.error("Unable to load approved streamers", err);
+      }
+    }
+    let playerStatsPromise = null;
+    async function loadPlayerStats() {
+      if (!playerStatsPromise) {
+        playerStatsPromise = (async () => {
+          try {
+            const ref = doc(db, "publicStats", "aggregates");
+            const snap = await getDoc(ref);
+            if (!snap.exists()) return null;
+            const data = snap.data() || {};
+            const map = new Map();
+            (data.playerTotals || []).forEach(entry => {
+              if (!entry || !entry.name) return;
+              map.set(String(entry.name).toLowerCase(), entry);
+              map.set(String(entry.name).replace(/\s+/g, "").toLowerCase(), entry);
+            });
+            return { map, raw: data };
+          } catch (err) {
+            console.error("Failed to load player stats", err);
+            return null;
+          }
+        })();
+      }
+      return playerStatsPromise;
+    }
+    function resolvePlayerStats(bundle, meta) {
+      if (!bundle?.map) return null;
+      const candidates = new Set();
+      if (meta.displayName) {
+        candidates.add(meta.displayName.toLowerCase());
+        candidates.add(meta.displayName.replace(/\s+/g, "").toLowerCase());
+      }
+      candidates.add(meta.channel);
+      const teamEntry = teamIndex.get(meta.channel);
+      if (teamEntry?.displayName) {
+        candidates.add(teamEntry.displayName.toLowerCase());
+        candidates.add(teamEntry.displayName.replace(/\s+/g, "").toLowerCase());
+      }
+      for (const key of candidates) {
+        if (bundle.map.has(key)) {
+          return bundle.map.get(key);
+        }
+      }
+      return null;
+    }
+    function renderStatsBody(meta, stats) {
+      if (!els.statsBody) return;
+      const fragments = [];
+      fragments.push(`
+        <div class="meta">
+          <img src="${escapeHtml(meta.avatar)}" alt="${escapeHtml(meta.displayName)} avatar" onerror="this.src='https://static-cdn.jtvnw.net/jtv_user_pictures/xarth/404_user_70x70.png'">
+          <div class="details">
+            <strong>${escapeHtml(meta.displayName)}</strong>
+            <p>@${escapeHtml(meta.channel)}</p>
+            ${meta.team ? `<p>Team: ${escapeHtml(meta.team)}</p>` : ""}
+          </div>
+        </div>
+      `);
+      if (meta.bio) {
+        fragments.push(`<p class="bio">${escapeHtml(meta.bio)}</p>`);
+      }
+      if (stats) {
+        const totalsConfig = [
+          { label: "Matches", key: "matches", decimals: 0 },
+          { label: "Minutes Played", key: "time", decimals: 2 },
+          { label: "Kills", key: "kills", decimals: 0 },
+          { label: "Assists", key: "assists", decimals: 0 },
+          { label: "Score", key: "score", decimals: 0 },
+          { label: "Captures", key: "captures", decimals: 0 },
+          { label: "Returns", key: "returns", decimals: 0 }
+        ];
+        const totalsValues = {
+          matches: toNumber(stats.matches),
+          time: toNumber(stats.time),
+          kills: toNumber(stats.kills),
+          assists: toNumber(stats.assists),
+          score: toNumber(stats.score),
+          captures: toNumber(stats.captures),
+          returns: toNumber(stats.returns)
+        };
+        const minutesPlayed = totalsValues.time > 0 ? totalsValues.time : 0;
+        const perMinuteValues = {
+          kpm: minutesPlayed > 0 ? totalsValues.kills / minutesPlayed : 0,
+          apm: minutesPlayed > 0 ? totalsValues.assists / minutesPlayed : 0,
+          spm: minutesPlayed > 0 ? totalsValues.score / minutesPlayed : 0,
+          cpm: minutesPlayed > 0 ? totalsValues.captures / minutesPlayed : 0,
+          rpm: minutesPlayed > 0 ? totalsValues.returns / minutesPlayed : 0
+        };
+        fragments.push('<div class="stats-summary">');
+        totalsConfig.forEach(metric => {
+          const value = formatNumber(totalsValues[metric.key] ?? 0, metric.decimals);
+          fragments.push(`
+            <div class="stat">
+              <span class="label">${metric.label}</span>
+              <span class="value">${value}</span>
+            </div>
+          `);
+        });
+        fragments.push('</div>');
+        const perMinuteConfig = [
+          { label: "Kills / min", key: "kpm" },
+          { label: "Assists / min", key: "apm" },
+          { label: "Score / min", key: "spm" },
+          { label: "Caps / min", key: "cpm" },
+          { label: "Returns / min", key: "rpm" }
+        ];
+        fragments.push('<div class="stats-summary">');
+        perMinuteConfig.forEach(metric => {
+          const value = formatNumber(perMinuteValues[metric.key] ?? 0, 2);
+          fragments.push(`
+            <div class="stat">
+              <span class="label">${metric.label}</span>
+              <span class="value">${value}</span>
+            </div>
+          `);
+        });
+        fragments.push('</div>');
+      } else {
+        fragments.push('<p class="bio">No aggregated stats published for this player yet. Check back after match data is saved.</p>');
+      }
+      fragments.push(`
+        <div class="cta-row">
+          <button type="button" data-stats-action="focus">Focus Stream</button>
+          <button type="button" data-stats-action="support">Send Support</button>
+          <a href="PlayerStats.html" target="_blank" rel="noopener">Full Stats Dashboard</a>
+        </div>
+      `);
+      els.statsBody.innerHTML = fragments.join("");
+      const supportButton = els.statsBody.querySelector('[data-stats-action="support"]');
+      if (supportButton) {
+        supportButton.addEventListener("click", () => handleSupportForChannel(meta.channel));
+      }
+      const focusButton = els.statsBody.querySelector('[data-stats-action="focus"]');
+      if (focusButton) {
+        focusButton.addEventListener("click", () => {
+          setChatChannel(meta.channel, { scrollIntoView: true });
+          closeStatsDrawer();
+        });
+      }
+    }
+    async function openStatsDrawer(channel) {
+      const meta = getStreamerMeta(channel);
+      if (els.statsDrawer) {
+        els.statsDrawer.classList.add("open");
+      }
+      if (els.statsBackdrop) {
+        els.statsBackdrop.classList.add("visible");
+      }
+      if (els.statsTitle) {
+        els.statsTitle.textContent = meta.displayName || meta.channel;
+      }
+      if (els.statsBody) {
+        els.statsBody.innerHTML = '<p class="bio">Loading stats…</p>';
+      }
+      try {
+        const bundle = await loadPlayerStats();
+        const stats = resolvePlayerStats(bundle, meta);
+        renderStatsBody(meta, stats);
+      } catch (err) {
+        console.error("Stats drawer error", err);
+        if (els.statsBody) {
+          els.statsBody.innerHTML = '<p class="bio">Unable to load stats right now.</p>';
+        }
+      }
+    }
+    function closeStatsDrawer() {
+      if (els.statsDrawer) {
+        els.statsDrawer.classList.remove("open");
+      }
+      if (els.statsBackdrop) {
+        els.statsBackdrop.classList.remove("visible");
+      }
+    }
+    function scheduleLiveRefresh() {
+      if (state.liveInterval) {
+        clearInterval(state.liveInterval);
+      }
+      state.liveInterval = window.setInterval(() => {
+        updateLiveChannels();
+      }, 60 * 1000);
+    }
+    async function updateLiveChannels() {
+      if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
+        state.liveSet = new Set();
+        state.lastLiveStreams = [];
+        renderAll();
+        return;
+      }
+      try {
+        const streams = await window.twitchOAuth.fetchLiveStreams(state.channels);
+        state.lastLiveStreams = streams || [];
+        state.liveSet = new Set((streams || []).map(stream => stream.user_login.toLowerCase()));
+        state.channels.sort((a, b) => {
+          const aLive = state.liveSet.has(a);
+          const bLive = state.liveSet.has(b);
+          if (aLive === bLive) return a.localeCompare(b);
+          return aLive ? -1 : 1;
+        });
+        persistChannels();
+      } catch (err) {
+        console.error("Unable to fetch live stream data", err);
+      }
+      renderAll();
+    }
+    function bindEvents() {
+      if (els.addChannelForm) {
+        els.addChannelForm.addEventListener("submit", handleAddChannel);
+      }
+      if (els.streamGrid) {
+        els.streamGrid.addEventListener("click", handleStreamGridClick);
+      }
+      if (els.channelManager) {
+        els.channelManager.addEventListener("click", handleManagerClick);
+      }
+      els.liveToggleButtons.forEach(btn => {
+        btn.addEventListener("click", toggleLiveMode);
+      });
+      if (els.showAllButton) {
+        els.showAllButton.addEventListener("click", showAllChannels);
+      }
+      if (els.resetButton) {
+        els.resetButton.addEventListener("click", resetToDefaults);
+      }
+      if (els.chatSelect) {
+        els.chatSelect.addEventListener("change", event => {
+          state.currentChatChannel = normalizeChannel(event.target.value);
+          updateChatFrame();
+        });
+      }
+      if (els.chatToggle) {
+        els.chatToggle.addEventListener("click", toggleChatMobile);
+      }
+      if (els.chatClose) {
+        els.chatClose.addEventListener("click", closeChatMobile);
+      }
+      if (els.addOpenBtn) {
+        els.addOpenBtn.addEventListener("click", () => {
+          if (els.addChannelInput) {
+            els.addChannelInput.focus({ preventScroll: false });
+          }
+          if (els.controlPanel) {
+            els.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+      if (els.manageOpenBtn) {
+        els.manageOpenBtn.addEventListener("click", () => {
+          if (els.controlPanel) {
+            els.controlPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+      if (els.scrollToGridBtn) {
+        els.scrollToGridBtn.addEventListener("click", () => {
+          if (els.streamsArea) {
+            els.streamsArea.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      }
+      if (els.supportActions) {
+        els.supportActions.addEventListener("click", handleSupportAction);
+      }
+      if (els.statsBackdrop) {
+        els.statsBackdrop.addEventListener("click", closeStatsDrawer);
+      }
+      const statsClose = document.getElementById("stats-close");
+      if (statsClose) {
+        statsClose.addEventListener("click", closeStatsDrawer);
+      }
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+          if (els.statsDrawer?.classList.contains("open")) {
+            closeStatsDrawer();
+          } else if (isChatMobileOpen()) {
+            closeChatMobile();
+          }
+        }
+      });
+      window.addEventListener("resize", () => {
+        syncChatPanelOffset();
+        toggleChatVisibilityForViewport();
+      });
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          updateLiveChannels();
+        }
+      });
+    }
+    async function init() {
+      hydrateTeamIndex();
+      initializeState();
+      bindEvents();
+      toggleChatVisibilityForViewport();
+      renderAll();
+      loadStreamerDirectory();
+      updateLiveChannels();
+      scheduleLiveRefresh();
+      const banner = document.getElementById("live-announcement-banner");
+      if (banner) {
+        const observer = new MutationObserver(syncChatPanelOffset);
+        observer.observe(banner, { attributes: true, attributeFilter: ["class", "style"] });
+      }
+      if (window.twitchOAuth) {
+        window.twitchOAuth.updateNav();
+        if (window.twitchOAuth.initLiveTeamsMenu) {
+          window.twitchOAuth.initLiveTeamsMenu();
+        }
+        if (window.twitchOAuth.initLiveAnnouncementBanner) {
+          window.twitchOAuth.initLiveAnnouncementBanner();
+        }
+      }
+    }
+    init();
+
+    window.SupportEffects = {
+      trigger(type, detail = {}) {
+        triggerSupportEffect(type, detail.channel);
+        if (detail.message) {
+          showToast(detail.message);
+        }
+      }
+    };
+    window.addEventListener("tpl:support", event => {
+      const detail = event.detail || {};
+      triggerSupportEffect(detail.type || "bits", detail.channel);
+    });
   </script>
 </body>
 </html>
