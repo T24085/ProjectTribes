@@ -682,6 +682,152 @@
       padding: 2rem;
     }
 
+    /* Team Stats Styles */
+    .team-stats-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .team-stats-display {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .team-stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .team-stats-card {
+      background: var(--surface-glass);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .team-stats-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .team-stats-header img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+    }
+
+    .team-stats-header h3 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .team-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+    }
+
+    .team-metric {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(148, 163, 184, 0.05);
+      border-radius: 0.5rem;
+    }
+
+    .team-metric-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent-strong);
+      margin-bottom: 0.25rem;
+    }
+
+    .team-metric-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .team-comparison {
+      background: var(--surface-glass);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      margin-top: 1.5rem;
+    }
+
+    .comparison-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .comparison-team {
+      text-align: center;
+    }
+
+    .comparison-vs {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+
+    .comparison-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .comparison-metric:last-child {
+      border-bottom: none;
+    }
+
+    .comparison-metric-label {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .comparison-metric-values {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .comparison-value {
+      font-weight: 600;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .comparison-value.winner {
+      color: var(--success);
+    }
+
+    .comparison-value.loser {
+      color: var(--danger);
+    }
+
     /* Admin Panel Styles */
     .modal {
       position: fixed;
@@ -953,6 +1099,10 @@
             <div class="team-name" id="team-b-name">Team B</div>
           </div>
         </div>
+        
+        <div class="match-actions" style="text-align: center; margin-top: 1rem;">
+          <button id="show-team-stats-btn" class="btn btn-secondary">View Team Stats</button>
+        </div>
       </div>
 
       <!-- Player Tabs -->
@@ -974,6 +1124,19 @@
           </div>
           <div id="player-stats-content">
             <div class="stats-loading">Loading player statistics...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Stats Section -->
+      <div class="team-stats-section" id="team-stats-section" style="display: none;">
+        <div class="spectating-section">
+          <div class="spectating-header">
+            <div class="spectating-label">Team Statistics</div>
+            <button class="team-select-btn" id="close-team-stats-btn">Close Stats</button>
+          </div>
+          <div id="team-stats-content">
+            <div class="stats-loading">Loading team statistics...</div>
           </div>
         </div>
       </div>
@@ -1122,6 +1285,7 @@
       
       initializeTwitchPlayer();
       initializePlayerStats();
+      initializeTeamStats();
       
       // Initialize Twitch OAuth functionality
       if (window.twitchOAuth) {
@@ -1852,10 +2016,10 @@
       let player = playerStatsData.playerTotals.get(playerName);
       
       // If no exact match, try case-insensitive search
-      if (!player) {
+      if (!player && playerName) {
         const playerNames = Array.from(playerStatsData.playerTotals.keys());
         const foundName = playerNames.find(name => 
-          name.toLowerCase() === playerName.toLowerCase()
+          name && name.toLowerCase() === playerName.toLowerCase()
         );
         if (foundName) {
           player = playerStatsData.playerTotals.get(foundName);
@@ -1864,11 +2028,13 @@
       }
 
       // If still no match, try partial matching
-      if (!player) {
+      if (!player && playerName) {
         const playerNames = Array.from(playerStatsData.playerTotals.keys());
         const foundName = playerNames.find(name => 
-          name.toLowerCase().includes(playerName.toLowerCase()) ||
-          playerName.toLowerCase().includes(name.toLowerCase())
+          name && (
+            name.toLowerCase().includes(playerName.toLowerCase()) ||
+            playerName.toLowerCase().includes(name.toLowerCase())
+          )
         );
         if (foundName) {
           player = playerStatsData.playerTotals.get(foundName);
@@ -2330,6 +2496,203 @@
       }
     }
 
+    // Team Stats functionality
+    function showTeamStats() {
+      const statsSection = document.getElementById('team-stats-section');
+      const statsContent = document.getElementById('team-stats-content');
+      
+      if (!statsSection || !statsContent) return;
+
+      if (!playerStatsData || !selectedTeams.teamA || !selectedTeams.teamB) {
+        statsContent.innerHTML = '<div class="text-center text-gray-400">No team statistics available</div>';
+        statsSection.style.display = 'block';
+        return;
+      }
+
+      const teamAData = TEAM_DATA[selectedTeams.teamA];
+      const teamBData = TEAM_DATA[selectedTeams.teamB];
+      const teamARoster = teamRosters[selectedTeams.teamA] || [];
+      const teamBRoster = teamRosters[selectedTeams.teamB] || [];
+
+      // Calculate team stats
+      const teamAStats = calculateTeamStats(teamARoster);
+      const teamBStats = calculateTeamStats(teamBRoster);
+
+      // Generate HTML
+      statsContent.innerHTML = `
+        <div class="team-stats-grid">
+          <div class="team-stats-card">
+            <div class="team-stats-header">
+              <img src="${teamAData.logo}" alt="${teamAData.name}">
+              <h3>${teamAData.name}</h3>
+            </div>
+            <div class="team-metrics-grid">
+              <div class="team-metric">
+                <div class="team-metric-value">${teamAStats.totalKills}</div>
+                <div class="team-metric-label">Total Kills</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamAStats.totalAssists}</div>
+                <div class="team-metric-label">Total Assists</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamAStats.totalDeaths}</div>
+                <div class="team-metric-label">Total Deaths</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamAStats.kdRatio.toFixed(2)}</div>
+                <div class="team-metric-label">K/D Ratio</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamAStats.avgKillsPerMinute.toFixed(2)}</div>
+                <div class="team-metric-label">Kills/Min</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamAStats.totalTime.toFixed(1)}h</div>
+                <div class="team-metric-label">Play Time</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="team-stats-card">
+            <div class="team-stats-header">
+              <img src="${teamBData.logo}" alt="${teamBData.name}">
+              <h3>${teamBData.name}</h3>
+            </div>
+            <div class="team-metrics-grid">
+              <div class="team-metric">
+                <div class="team-metric-value">${teamBStats.totalKills}</div>
+                <div class="team-metric-label">Total Kills</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamBStats.totalAssists}</div>
+                <div class="team-metric-label">Total Assists</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamBStats.totalDeaths}</div>
+                <div class="team-metric-label">Total Deaths</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamBStats.kdRatio.toFixed(2)}</div>
+                <div class="team-metric-label">K/D Ratio</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamBStats.avgKillsPerMinute.toFixed(2)}</div>
+                <div class="team-metric-label">Kills/Min</div>
+              </div>
+              <div class="team-metric">
+                <div class="team-metric-value">${teamBStats.totalTime.toFixed(1)}h</div>
+                <div class="team-metric-label">Play Time</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="team-comparison">
+          <div class="comparison-header">Team Comparison</div>
+          <div class="comparison-grid">
+            <div class="comparison-team">
+              <div style="font-weight: 600; margin-bottom: 1rem;">${teamAData.name}</div>
+            </div>
+            <div class="comparison-vs">VS</div>
+            <div class="comparison-team">
+              <div style="font-weight: 600; margin-bottom: 1rem;">${teamBData.name}</div>
+            </div>
+          </div>
+          
+          <div class="comparison-metric">
+            <div class="comparison-metric-label">Total Kills</div>
+            <div class="comparison-metric-values">
+              <div class="comparison-value ${teamAStats.totalKills > teamBStats.totalKills ? 'winner' : teamAStats.totalKills < teamBStats.totalKills ? 'loser' : ''}">${teamAStats.totalKills}</div>
+              <div class="comparison-value ${teamBStats.totalKills > teamAStats.totalKills ? 'winner' : teamBStats.totalKills < teamAStats.totalKills ? 'loser' : ''}">${teamBStats.totalKills}</div>
+            </div>
+          </div>
+          
+          <div class="comparison-metric">
+            <div class="comparison-metric-label">K/D Ratio</div>
+            <div class="comparison-metric-values">
+              <div class="comparison-value ${teamAStats.kdRatio > teamBStats.kdRatio ? 'winner' : teamAStats.kdRatio < teamBStats.kdRatio ? 'loser' : ''}">${teamAStats.kdRatio.toFixed(2)}</div>
+              <div class="comparison-value ${teamBStats.kdRatio > teamAStats.kdRatio ? 'winner' : teamBStats.kdRatio < teamAStats.kdRatio ? 'loser' : ''}">${teamBStats.kdRatio.toFixed(2)}</div>
+            </div>
+          </div>
+          
+          <div class="comparison-metric">
+            <div class="comparison-metric-label">Kills/Min</div>
+            <div class="comparison-metric-values">
+              <div class="comparison-value ${teamAStats.avgKillsPerMinute > teamBStats.avgKillsPerMinute ? 'winner' : teamAStats.avgKillsPerMinute < teamBStats.avgKillsPerMinute ? 'loser' : ''}">${teamAStats.avgKillsPerMinute.toFixed(2)}</div>
+              <div class="comparison-value ${teamBStats.avgKillsPerMinute > teamAStats.avgKillsPerMinute ? 'winner' : teamBStats.avgKillsPerMinute < teamAStats.avgKillsPerMinute ? 'loser' : ''}">${teamBStats.avgKillsPerMinute.toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      statsSection.style.display = 'block';
+    }
+
+    function calculateTeamStats(roster) {
+      let totalKills = 0;
+      let totalAssists = 0;
+      let totalDeaths = 0;
+      let totalTime = 0;
+
+      roster.forEach(player => {
+        const playerName = player.name || player.displayName;
+        if (playerName && playerStatsData && playerStatsData.playerTotals) {
+          // Try to find player stats with name matching
+          let playerStats = playerStatsData.playerTotals.get(playerName);
+          
+          if (!playerStats) {
+            // Try case-insensitive search
+            const playerNames = Array.from(playerStatsData.playerTotals.keys());
+            const foundName = playerNames.find(name => 
+              name && name.toLowerCase() === playerName.toLowerCase()
+            );
+            if (foundName) {
+              playerStats = playerStatsData.playerTotals.get(foundName);
+            }
+          }
+
+          if (playerStats) {
+            totalKills += parseFloat(playerStats.kills) || 0;
+            totalAssists += parseFloat(playerStats.assists) || 0;
+            totalDeaths += parseFloat(playerStats.deaths) || 0;
+            totalTime += parseFloat(playerStats.time) || 0;
+          }
+        }
+      });
+
+      const kdRatio = totalDeaths > 0 ? totalKills / totalDeaths : totalKills;
+      const avgKillsPerMinute = totalTime > 0 ? (totalKills / (totalTime * 60)) : 0;
+
+      return {
+        totalKills,
+        totalAssists,
+        totalDeaths,
+        totalTime,
+        kdRatio,
+        avgKillsPerMinute
+      };
+    }
+
+    function hideTeamStats() {
+      const statsSection = document.getElementById('team-stats-section');
+      if (statsSection) {
+        statsSection.style.display = 'none';
+      }
+    }
+
+    function initializeTeamStats() {
+      const closeBtn = document.getElementById('close-team-stats-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', hideTeamStats);
+      }
+
+      const showBtn = document.getElementById('show-team-stats-btn');
+      if (showBtn) {
+        showBtn.addEventListener('click', showTeamStats);
+      }
+    }
+
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
@@ -2343,6 +2706,8 @@
     window.debugPlayerNames = debugPlayerNames;
     window.showAdminPanel = showAdminPanel;
     window.hideAdminPanel = hideAdminPanel;
+    window.showTeamStats = showTeamStats;
+    window.hideTeamStats = hideTeamStats;
   </script>
 </body>
 </html>
