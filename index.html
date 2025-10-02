@@ -550,6 +550,50 @@
       display: flex;
       flex-direction: column;
     }
+    
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .chat-tabs {
+      display: flex;
+      gap: 0.25rem;
+    }
+    
+    .chat-tab {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: var(--text-muted);
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s ease;
+    }
+    
+    .chat-tab:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+    
+    .chat-tab.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    
+    .chat-container {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+    
+    .chat-container.active {
+      display: flex;
+    }
 
     .chat-messages {
       flex: 1;
@@ -1388,15 +1432,37 @@
         </div>
       </div>
 
-      <!-- Chat Section -->
+      <!-- Split Chat Section -->
       <div class="sidebar-section chat-section">
+        <div class="chat-header">
         <h3>Live Chat</h3>
+          <div class="chat-tabs">
+            <button class="chat-tab active" data-tab="main">Main Chat</button>
+            <button class="chat-tab" data-tab="streamer">Streamer Chat</button>
+          </div>
+        </div>
+        
+        <!-- Main Chat -->
+        <div class="chat-container active" id="main-chat">
         <div class="chat-messages" id="chat-messages">
           <p style="color: var(--text-muted); text-align: center;">Chat messages will appear here</p>
         </div>
         <div class="chat-input-container">
           <input type="text" class="chat-input" id="chat-input" placeholder="Type a message...">
           <button class="chat-send" id="chat-send">Send</button>
+        </div>
+      </div>
+        
+        <!-- Streamer Chat -->
+        <div class="chat-container" id="streamer-chat">
+          <div class="chat-messages" id="streamer-chat-messages">
+            <p style="color: var(--text-muted); text-align: center;">Streamer chat will appear here when live</p>
+          </div>
+          <div class="streamer-info" id="streamer-info" style="display: none;">
+            <p style="color: var(--accent); font-size: 0.875rem; text-align: center; margin: 0.5rem 0;">
+              Currently viewing: <span id="current-streamer">No streamer</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -1411,6 +1477,9 @@
   <script src="oauth.js"></script>
   <!-- Load Chart.js for player stats -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  
+  <!-- Confetti.js for vote celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1803,10 +1872,22 @@
         const votes = pollData.votes || {};
         const totalVotes = Object.keys(votes).length;
 
+        console.log('Poll data:', pollData);
+        console.log('Votes object:', votes);
+        console.log('Total votes:', totalVotes);
+
         pollData.options.forEach((option, index) => {
           if (voteButtons[index]) {
-            const optionVotes = Object.values(votes).filter(vote => vote === index).length;
+            // Count votes for this option - votes object has userId as key, optionIndex as value
+            const optionVotes = Object.values(votes).filter(vote => {
+              // Handle both string and number vote values
+              const voteValue = typeof vote === 'string' ? parseInt(vote) : vote;
+              return voteValue === index;
+            }).length;
+            
             const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
+            
+            console.log(`Option ${index} (${option}): ${optionVotes} votes (${percentage}%)`);
             
             voteButtons[index].textContent = `${option} (${optionVotes} votes - ${percentage}%)`;
             voteButtons[index].style.display = 'block';
@@ -2163,27 +2244,47 @@
       const chatInput = document.querySelector('.chat-input');
       const chatSend = document.querySelector('.chat-send');
       const chatMessages = document.querySelector('.chat-messages');
+      const streamerChatMessages = document.querySelector('#streamer-chat-messages');
+      const chatTabs = document.querySelectorAll('.chat-tab');
+      const chatContainers = document.querySelectorAll('.chat-container');
 
-      function addMessage(message, isUser = false) {
+      // Chat tab switching
+      chatTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabType = tab.dataset.tab;
+          
+          // Update active tab
+          chatTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // Update active container
+          chatContainers.forEach(container => container.classList.remove('active'));
+          document.getElementById(`${tabType}-chat`).classList.add('active');
+        });
+      });
+
+      function addMessage(message, isUser = false, chatType = 'main') {
+        const targetMessages = chatType === 'main' ? chatMessages : streamerChatMessages;
         const messageDiv = document.createElement('div');
         messageDiv.style.marginBottom = '0.5rem';
         messageDiv.style.padding = '0.5rem';
         messageDiv.style.borderRadius = '4px';
         messageDiv.style.backgroundColor = isUser ? 'rgba(139, 92, 246, 0.2)' : 'rgba(255, 255, 255, 0.05)';
         messageDiv.textContent = message;
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        targetMessages.appendChild(messageDiv);
+        targetMessages.scrollTop = targetMessages.scrollHeight;
       }
 
+      // Main chat functionality
       chatSend.addEventListener('click', () => {
         const message = chatInput.value.trim();
         if (message) {
-          addMessage(`You: ${message}`, true);
+          addMessage(`You: ${message}`, true, 'main');
           chatInput.value = '';
           
           // Simulate response
           setTimeout(() => {
-            addMessage('ChatBot: Thanks for the message!');
+            addMessage('ChatBot: Thanks for the message!', false, 'main');
           }, 1000);
         }
       });
@@ -2193,6 +2294,34 @@
           chatSend.click();
         }
       });
+
+      // Simulate some initial messages
+      setTimeout(() => {
+        addMessage('Welcome to the chat!', false, 'main');
+        addMessage('Match starting soon!', false, 'main');
+      }, 1000);
+
+      // Streamer chat functionality
+      function updateStreamerChat() {
+        // Check if any players are live and update streamer chat
+        if (window.twitchOAuth && window.twitchOAuth.liveStreams) {
+          const liveStreams = window.twitchOAuth.liveStreams;
+          if (liveStreams.length > 0) {
+            const currentStreamer = liveStreams[0].user_name;
+            document.getElementById('current-streamer').textContent = currentStreamer;
+            document.getElementById('streamer-info').style.display = 'block';
+            
+            // Simulate streamer chat messages
+            setTimeout(() => {
+              addMessage(`${currentStreamer}: Thanks for watching!`, false, 'streamer');
+            }, 2000);
+          }
+        }
+      }
+
+      // Update streamer chat periodically
+      setInterval(updateStreamerChat, 10000);
+      updateStreamerChat();
     }
 
     function initializeVoting() {
@@ -2205,11 +2334,49 @@
           // Add voted class to clicked button
           this.classList.add('voted');
           
+          // Trigger confetti celebration
+          triggerVoteCelebration();
+          
           // Show confirmation
           const teamName = this.textContent;
           alert(`You voted for ${teamName}!`);
         });
       });
+    }
+
+    function triggerVoteCelebration() {
+      // Create multiple confetti bursts
+      const duration = 3000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        
+        // Fire from left edge
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        
+        // Fire from right edge
+        confetti({
+          ...defaults,
+          particleCount,
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+      }, 250);
     }
 
     function initializeTwitchPlayer() {
@@ -2379,31 +2546,16 @@
           padding: 2rem;
         `;
         altDiv.innerHTML = `
-          <h3>📺 Alternative Viewing Options</h3>
-          <p>Since Twitch is blocked, here are other ways to watch:</p>
-          <div style="margin: 1rem 0;">
-            <a href="https://www.twitch.tv/tribesprofessionalleague" target="_blank" style="
-              display: inline-block;
-              background: var(--accent);
-              color: white;
-              text-decoration: none;
-              padding: 0.75rem 1.5rem;
-              border-radius: 0.5rem;
-              margin: 0.5rem;
-              font-size: 1rem;
-            ">Watch on Twitch.tv</a>
-            <a href="https://www.youtube.com/@tribesprofessionalleague" target="_blank" style="
-              display: inline-block;
-              background: #ff0000;
-              color: white;
-              text-decoration: none;
-              padding: 0.75rem 1.5rem;
-              border-radius: 0.5rem;
-              margin: 0.5rem;
-              font-size: 1rem;
-            ">Watch on YouTube</a>
-          </div>
-          <p>You can still view match information, team stats, and vote in polls below!</p>
+          <h3>📺 Content Temporarily Unavailable</h3>
+          <p>Twitch streaming is currently blocked by your browser settings.</p>
+          <p>You can still enjoy all other features:</p>
+          <ul style="text-align: left; margin: 1rem 0;">
+            <li>View match information and team statistics</li>
+            <li>Vote in polls and see real-time results</li>
+            <li>Chat with other viewers</li>
+            <li>Access player information and stats</li>
+          </ul>
+          <p>To enable streaming, please adjust your browser's privacy settings.</p>
           <button onclick="showContentBlockedFallback()" style="
             background: var(--surface-glass);
             color: var(--text-primary);
