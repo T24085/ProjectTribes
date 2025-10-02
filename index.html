@@ -2238,6 +2238,38 @@
         streamFrame.onload = function() {
           console.log('Twitch player loaded successfully');
         };
+
+        // Add timeout to detect content classification errors
+        setTimeout(() => {
+          const iframe = document.getElementById('stream-frame');
+          if (iframe) {
+            try {
+              // Check if iframe content is accessible (will throw error if blocked)
+              const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+              if (!iframeDoc || iframeDoc.body.innerHTML.includes('Failed to determine content classification')) {
+                console.log('Content classification error detected - showing fallback');
+                showContentBlockedFallback();
+              }
+            } catch (error) {
+              // Cross-origin error means content is blocked
+              console.log('Cross-origin content blocked - showing fallback');
+              showContentBlockedFallback();
+            }
+          }
+        }, 3000);
+
+        // Also listen for console errors that might indicate content blocking
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+          const message = args.join(' ');
+          if (message.includes('PlaybackAccessToken') || 
+              message.includes('content classification') ||
+              message.includes('GraphQL') && message.includes('server error')) {
+            console.log('Detected Twitch content blocking error - showing fallback');
+            setTimeout(() => showContentBlockedFallback(), 1000);
+          }
+          originalConsoleError.apply(console, args);
+        };
       }
     }
 
@@ -2273,6 +2305,119 @@
         
         // Replace the iframe with fallback content
         streamFrame.parentNode.replaceChild(fallbackDiv, streamFrame);
+      }
+    }
+
+    // Handle content blocked by browser (like Brave's privacy features)
+    function showContentBlockedFallback() {
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        const blockedDiv = document.createElement('div');
+        blockedDiv.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          background: var(--card-bg);
+          color: var(--text-primary);
+          text-align: center;
+          padding: 2rem;
+        `;
+        blockedDiv.innerHTML = `
+          <h3>🚫 Content Blocked by Browser</h3>
+          <p>Your browser's privacy settings are blocking Twitch content.</p>
+          <p><strong>To fix this:</strong></p>
+          <ul style="text-align: left; margin: 1rem 0;">
+            <li><strong>Brave:</strong> Click the shield icon → Turn off "Trackers & ads blocked" for this site</li>
+            <li><strong>Chrome:</strong> Click the shield icon → Allow "Insecure content"</li>
+            <li><strong>Firefox:</strong> Click the shield icon → Turn off "Enhanced Tracking Protection"</li>
+          </ul>
+          <p>Or try refreshing the page after adjusting settings.</p>
+          <div style="margin-top: 1rem;">
+            <button onclick="location.reload()" style="
+              background: var(--accent);
+              color: white;
+              border: none;
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              cursor: pointer;
+              margin-right: 1rem;
+              font-size: 1rem;
+            ">Refresh Page</button>
+            <button onclick="showAlternativeContent()" style="
+              background: var(--surface-glass);
+              color: var(--text-primary);
+              border: 1px solid var(--accent);
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              cursor: pointer;
+              font-size: 1rem;
+            ">Show Alternative Content</button>
+          </div>
+        `;
+        
+        // Replace the iframe with the blocked content message
+        streamFrame.parentNode.replaceChild(blockedDiv, streamFrame);
+      }
+    }
+
+    // Show alternative content when Twitch is blocked
+    function showAlternativeContent() {
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        const altDiv = document.createElement('div');
+        altDiv.style.cssText = `
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          background: var(--card-bg);
+          color: var(--text-primary);
+          text-align: center;
+          padding: 2rem;
+        `;
+        altDiv.innerHTML = `
+          <h3>📺 Alternative Viewing Options</h3>
+          <p>Since Twitch is blocked, here are other ways to watch:</p>
+          <div style="margin: 1rem 0;">
+            <a href="https://www.twitch.tv/tribesprofessionalleague" target="_blank" style="
+              display: inline-block;
+              background: var(--accent);
+              color: white;
+              text-decoration: none;
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              margin: 0.5rem;
+              font-size: 1rem;
+            ">Watch on Twitch.tv</a>
+            <a href="https://www.youtube.com/@tribesprofessionalleague" target="_blank" style="
+              display: inline-block;
+              background: #ff0000;
+              color: white;
+              text-decoration: none;
+              padding: 0.75rem 1.5rem;
+              border-radius: 0.5rem;
+              margin: 0.5rem;
+              font-size: 1rem;
+            ">Watch on YouTube</a>
+          </div>
+          <p>You can still view match information, team stats, and vote in polls below!</p>
+          <button onclick="showContentBlockedFallback()" style="
+            background: var(--surface-glass);
+            color: var(--text-primary);
+            border: 1px solid var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+          ">Back to Fix Instructions</button>
+        `;
+        
+        // Replace the current content with alternative options
+        streamFrame.parentNode.replaceChild(altDiv, streamFrame);
       }
     }
 
@@ -3290,6 +3435,8 @@
     window.updateLivePlayerIndicators = updateLivePlayerIndicators;
     window.showGuestExperience = showGuestExperience;
     window.restoreAuthenticatedExperience = restoreAuthenticatedExperience;
+    window.showContentBlockedFallback = showContentBlockedFallback;
+    window.showAlternativeContent = showAlternativeContent;
     window.testLiveIndicators = function() {
       console.log('=== Live Indicators Test ===');
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
