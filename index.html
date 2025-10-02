@@ -860,19 +860,8 @@
       font-weight: 700;
       letter-spacing: -0.01em;
     }
-    .match-poll__subhead {
-      margin: 0;
-      color: rgba(226, 232, 240, 0.72);
-      font-size: 0.9rem;
-      line-height: 1.45;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 3rem;
-    }
-    .match-poll__subhead > * {
-      flex: 1 1 auto;
-    }
+
+    .match-poll__subhead,
     .match-poll__meta,
     .match-poll__status {
       margin: 0;
@@ -881,40 +870,7 @@
       line-height: 1.45;
     }
     .match-poll__status { font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(148, 163, 184, 0.9); }
-    .match-poll__subhead-text {
-      display: inline-block;
-    }
-    .vs-image {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      max-width: 100%;
-    }
-    .vs-image img {
-      display: block;
-      max-width: min(100%, 420px);
-      height: auto;
-      filter: drop-shadow(0 24px 36px -20px rgba(15, 23, 42, 0.65));
-    }
-    .vs-image[data-state="text"] {
-      width: 100%;
-    }
-    .vs-image__fallback {
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(226, 232, 240, 0.82);
-    }
-    .match-poll__subhead .vs-image {
-      justify-content: flex-start;
-    }
-    .match-poll__subhead .vs-image__fallback {
-      color: rgba(226, 232, 240, 0.72);
-      font-size: 0.9rem;
-      letter-spacing: 0.04em;
-      line-height: 1.45;
-    }
+
     .match-poll__content { display: grid; gap: 1.25rem; }
     .match-poll__loading {
       display: grid;
@@ -1088,10 +1044,8 @@
             <div class="match-poll__heading">
               <p class="match-poll__eyebrow">Featured Match</p>
 
-              <h2 class="match-poll__title">Who will win?</h2>
-              <div class="match-poll__subhead" id="match-poll-subhead">
-                <span class="match-poll__subhead-text">Loading featured matchup…</span>
-              </div>
+              <h2 class="match-poll__title" id="match-poll-title">Who will win?</h2>
+              <p class="match-poll__subhead" id="match-poll-subhead">Loading featured matchup…</p>
 
               <p class="match-poll__meta is-hidden" id="match-poll-meta"></p>
             </div>
@@ -1221,8 +1175,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-    import { getFirestore, collection, getDocs, query, where, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { createVsImage } from "./src/components/VsImage.js";
+    import { getFirestore, collection, getDocs, query, where, limit, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 
     const firebaseConfig = {
@@ -2039,6 +1992,451 @@
       await ensurePollUser();
       subscribeToActivePoll();
 
+      window.addEventListener("storage", event => {
+        if (event.key === "twitch_token") {
+          ensurePollUser();
+        }
+      });
+    }
+
+    const pollEls = els.matchPoll || {};
+    const pollState = {
+      pollDocId: null,
+      matchId: null,
+      matchLoaded: false,
+      teams: { A: "Team A", B: "Team B" },
+      counts: { A: 0, B: 0 },
+      user: null,
+      userVote: null,
+      saving: false,
+      unsubscribe: null,
+      voteSubscriptionId: null,
+      activePollUnsubscribe: null,
+      hasError: false,
+      cleanupBound: false
+    };
+
+    function pollEnabled() {
+      return Boolean(pollEls?.container);
+    }
+
+    function setPollStatus(message) {
+      if (pollEls.status) {
+        pollEls.status.textContent = message;
+      }
+    }
+
+    function setPollLoading(isLoading) {
+      if (!pollEnabled()) return;
+      if (pollEls.loading) {
+        pollEls.loading.classList.toggle("is-hidden", !isLoading);
+      }
+      if (pollEls.content) {
+        pollEls.content.classList.toggle("is-hidden", isLoading);
+      }
+    }
+
+    function setPollError(message) {
+      if (!pollEnabled() || !pollEls.error) return;
+      pollState.hasError = Boolean(message);
+      pollEls.error.textContent = message || "";
+      pollEls.error.classList.toggle("is-hidden", !message);
+      updatePollInteractivity();
+    }
+
+    function clearPollError() {
+      setPollError("");
+    }
+
+    function formatVoteCount(value) {
+      const count = Number(value) || 0;
+      return `${count} vote${count === 1 ? "" : "s"}`;
+    }
+
+    function coerceDate(value) {
+      if (!value) return null;
+      if (value instanceof Date) return value;
+      if (typeof value?.toDate === "function") {
+        try {
+          return value.toDate();
+        } catch {
+          return null;
+        }
+      }
+      if (typeof value === "number") {
+        const numericDate = new Date(value);
+        return Number.isNaN(numericDate.getTime()) ? null : numericDate;
+      }
+      if (typeof value === "string") {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+      }
+      return null;
+    }
+
+    function formatMatchDate(value) {
+      const date = coerceDate(value);
+      if (!date) return "";
+      try {
+        return date.toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch (err) {
+        console.error("Failed to format match date", err);
+        return "";
+      }
+    }
+
+    function updatePollOptionStyles() {
+      if (!pollEnabled() || !pollEls.optionButtons) return;
+      Object.entries(pollEls.optionButtons).forEach(([teamKey, button]) => {
+        if (!button) return;
+        button.classList.toggle("is-selected", pollState.userVote === teamKey);
+      });
+    }
+
+    function updatePollInteractivity() {
+      if (!pollEnabled()) return;
+      const allowVoting = pollState.matchLoaded && !pollState.hasError && pollState.user && !pollState.saving;
+      if (pollEls.options) {
+        pollEls.options.classList.toggle("is-disabled", !allowVoting);
+      }
+      if (pollEls.optionButtons) {
+        Object.values(pollEls.optionButtons).forEach(button => {
+          if (!button) return;
+          button.disabled = !allowVoting;
+        });
+      }
+    }
+
+    function updatePollUI() {
+      if (!pollEnabled()) return;
+      const totalVotes = (pollState.counts.A || 0) + (pollState.counts.B || 0);
+      const percentA = totalVotes ? Math.round((pollState.counts.A / totalVotes) * 100) : 0;
+      const percentB = totalVotes ? 100 - percentA : 0;
+
+      if (pollEls.percentLabels) {
+        if (pollEls.percentLabels.A) pollEls.percentLabels.A.textContent = `${percentA}%`;
+        if (pollEls.percentLabels.B) pollEls.percentLabels.B.textContent = `${percentB}%`;
+      }
+      if (pollEls.progressBars) {
+        if (pollEls.progressBars.A) pollEls.progressBars.A.style.width = `${percentA}%`;
+        if (pollEls.progressBars.B) pollEls.progressBars.B.style.width = `${percentB}%`;
+      }
+      if (pollEls.teamCounts) {
+        if (pollEls.teamCounts.A) pollEls.teamCounts.A.textContent = formatVoteCount(pollState.counts.A);
+        if (pollEls.teamCounts.B) pollEls.teamCounts.B.textContent = formatVoteCount(pollState.counts.B);
+      }
+      if (pollEls.empty) {
+        pollEls.empty.classList.toggle("is-hidden", totalVotes !== 0);
+      }
+      updatePollOptionStyles();
+
+      if (!pollState.matchLoaded) {
+        setPollStatus("No featured poll is active right now.");
+        return;
+      }
+
+      let statusText = totalVotes ? `Live votes: ${totalVotes}` : "No votes cast yet.";
+      if (!pollState.user) {
+        statusText = totalVotes
+          ? `Live votes: ${totalVotes} — log in to vote.`
+          : "Log in to vote and be the first!";
+      }
+      setPollStatus(statusText);
+    }
+
+    function setPollAuthUI(isAuthenticated) {
+      if (!pollEnabled()) return;
+      if (pollEls.login) {
+        const shouldShowLogin = !isAuthenticated && pollState.matchLoaded;
+        pollEls.login.classList.toggle("is-hidden", !shouldShowLogin);
+      }
+      if (!isAuthenticated) {
+        pollState.userVote = null;
+        updatePollOptionStyles();
+      }
+      updatePollInteractivity();
+    }
+
+    function setPollSaving(isSaving) {
+      pollState.saving = Boolean(isSaving);
+      if (pollState.saving) {
+        setPollStatus("Submitting your vote…");
+      }
+      updatePollInteractivity();
+    }
+
+    async function refreshPollUserVote() {
+      if (!pollEnabled() || !pollState.user || !pollState.matchId) return;
+      try {
+        const voteSnap = await getDoc(doc(db, "matchVotes", pollState.matchId, "votes", pollState.user.id));
+        if (voteSnap.exists()) {
+          pollState.userVote = voteSnap.data()?.team ?? null;
+        } else {
+          pollState.userVote = null;
+        }
+        updatePollUI();
+      } catch (err) {
+        console.error("Failed to refresh poll vote", err);
+      }
+    }
+
+    async function ensurePollUser() {
+      if (!pollEnabled()) return null;
+      if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
+        pollState.user = null;
+        setPollAuthUI(false);
+        updatePollUI();
+        return null;
+      }
+
+      try {
+        pollState.user = await window.twitchOAuth.fetchUser();
+      } catch (err) {
+        console.error("Failed to fetch Twitch user", err);
+        pollState.user = null;
+      }
+
+      setPollAuthUI(Boolean(pollState.user));
+      if (pollState.user) {
+        await refreshPollUserVote();
+      }
+      return pollState.user;
+    }
+
+    function subscribeToPollVotes() {
+      if (!pollEnabled() || !pollState.matchId) return;
+      if (pollState.unsubscribe && pollState.voteSubscriptionId === pollState.matchId) {
+        return;
+      }
+      if (pollState.unsubscribe) {
+        pollState.unsubscribe();
+        pollState.unsubscribe = null;
+        pollState.voteSubscriptionId = null;
+      }
+      const votesRef = collection(db, "matchVotes", pollState.matchId, "votes");
+      pollState.unsubscribe = onSnapshot(votesRef, snapshot => {
+        clearPollError();
+        const counts = { A: 0, B: 0 };
+        let userVote = pollState.userVote;
+        snapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          if (data?.team === "A") counts.A += 1;
+          if (data?.team === "B") counts.B += 1;
+          if (pollState.user && docSnap.id === pollState.user.id) {
+            userVote = data?.team ?? null;
+          }
+        });
+        pollState.counts = counts;
+        pollState.userVote = userVote ?? (pollState.user ? null : pollState.userVote);
+        updatePollUI();
+      }, err => {
+        console.error("Failed to subscribe to poll votes", err);
+        setPollError("Live vote updates are unavailable right now.");
+      });
+      pollState.voteSubscriptionId = pollState.matchId;
+    }
+
+    function clearActivePoll() {
+      pollState.pollDocId = null;
+      pollState.matchId = null;
+      pollState.matchLoaded = false;
+      pollState.counts = { A: 0, B: 0 };
+      pollState.teams = { A: "Team A", B: "Team B" };
+      pollState.userVote = null;
+      if (pollEls.title) {
+        pollEls.title.textContent = "Who will win?";
+      }
+      if (pollEls.teamNames) {
+        if (pollEls.teamNames.A) pollEls.teamNames.A.textContent = pollState.teams.A;
+        if (pollEls.teamNames.B) pollEls.teamNames.B.textContent = pollState.teams.B;
+      }
+      if (pollEls.progressLabels) {
+        if (pollEls.progressLabels.A) pollEls.progressLabels.A.textContent = pollState.teams.A;
+        if (pollEls.progressLabels.B) pollEls.progressLabels.B.textContent = pollState.teams.B;
+      }
+      if (pollEls.subhead) {
+        pollEls.subhead.textContent = "Awaiting the next matchup.";
+      }
+      if (pollEls.meta) {
+        pollEls.meta.textContent = "";
+        pollEls.meta.classList.add("is-hidden");
+      }
+      if (pollEls.empty) {
+        pollEls.empty.classList.add("is-hidden");
+      }
+      if (pollState.unsubscribe) {
+        pollState.unsubscribe();
+        pollState.unsubscribe = null;
+      }
+      pollState.voteSubscriptionId = null;
+      updatePollInteractivity();
+      updatePollUI();
+      setPollAuthUI(Boolean(pollState.user));
+    }
+
+    function applyActivePollDoc(docSnap) {
+      if (!pollEnabled()) return;
+      if (!docSnap) {
+        clearActivePoll();
+        setPollLoading(false);
+        return;
+      }
+
+      const data = docSnap.data() || {};
+      const voteIdCandidate = (data.voteId || docSnap.id || "").trim();
+      const nextVoteId = voteIdCandidate || docSnap.id;
+      const voteIdChanged = pollState.matchId !== nextVoteId;
+
+      pollState.pollDocId = docSnap.id;
+      pollState.matchId = nextVoteId;
+      pollState.matchLoaded = true;
+      pollState.teams = {
+        A: data.teamAName || data.teamA || data.team1 || "Team A",
+        B: data.teamBName || data.teamB || data.team2 || "Team B"
+      };
+      pollState.counts = { A: 0, B: 0 };
+      pollState.userVote = null;
+
+      if (pollEls.title) {
+        pollEls.title.textContent = (data.title || "Who will win?").trim() || "Who will win?";
+      }
+      if (pollEls.teamNames) {
+        if (pollEls.teamNames.A) pollEls.teamNames.A.textContent = pollState.teams.A;
+        if (pollEls.teamNames.B) pollEls.teamNames.B.textContent = pollState.teams.B;
+      }
+      if (pollEls.progressLabels) {
+        if (pollEls.progressLabels.A) pollEls.progressLabels.A.textContent = pollState.teams.A;
+        if (pollEls.progressLabels.B) pollEls.progressLabels.B.textContent = pollState.teams.B;
+      }
+      if (pollEls.subhead) {
+        pollEls.subhead.textContent = `${pollState.teams.A} vs ${pollState.teams.B}`;
+      }
+
+      const metaParts = [];
+      const scheduledAt = formatMatchDate(data.scheduledAt ?? data.scheduled ?? data.startTime ?? data.matchTime ?? "");
+      if (scheduledAt) metaParts.push(scheduledAt);
+      if (data.matchId) metaParts.push(`Match ID: ${data.matchId}`);
+      if (data.voteId && data.voteId !== docSnap.id) metaParts.push(`Vote Key: ${data.voteId}`);
+      if (pollEls.meta) {
+        pollEls.meta.textContent = metaParts.join(" • ");
+        pollEls.meta.classList.toggle("is-hidden", metaParts.length === 0);
+      }
+
+      clearPollError();
+      setPollLoading(false);
+      updatePollInteractivity();
+      updatePollUI();
+      setPollAuthUI(Boolean(pollState.user));
+
+      if (voteIdChanged && pollState.unsubscribe) {
+        pollState.unsubscribe();
+        pollState.unsubscribe = null;
+        pollState.voteSubscriptionId = null;
+      }
+      subscribeToPollVotes();
+      if (pollState.user) {
+        refreshPollUserVote();
+      }
+    }
+
+    function subscribeToActivePoll() {
+      if (!pollEnabled()) return;
+      if (pollState.activePollUnsubscribe) {
+        pollState.activePollUnsubscribe();
+        pollState.activePollUnsubscribe = null;
+      }
+      const pollsRef = collection(db, "matchPolls");
+      const activeQuery = query(pollsRef, where("isActive", "==", true), limit(1));
+      pollState.activePollUnsubscribe = onSnapshot(activeQuery, snapshot => {
+        clearPollError();
+        if (snapshot.empty) {
+          applyActivePollDoc(null);
+        } else {
+          applyActivePollDoc(snapshot.docs[0]);
+        }
+      }, err => {
+        console.error("Failed to subscribe to featured poll", err);
+        setPollError("Unable to load the featured poll right now.");
+        applyActivePollDoc(null);
+        setPollLoading(false);
+      });
+    }
+
+    async function submitPollVote(teamKey) {
+      if (!pollEnabled() || !pollState.matchLoaded || !pollState.matchId) return;
+      if (!pollState.user) {
+        setPollAuthUI(false);
+        return;
+      }
+      if (pollState.saving || teamKey === pollState.userVote) {
+        return;
+      }
+
+      clearPollError();
+      setPollSaving(true);
+      try {
+        const voteRef = doc(db, "matchVotes", pollState.matchId, "votes", pollState.user.id);
+        const payload = { team: teamKey };
+        if (pollState.userVote) {
+          payload.updatedAt = serverTimestamp();
+        } else {
+          payload.createdAt = serverTimestamp();
+        }
+        await setDoc(voteRef, payload, { merge: true });
+        pollState.userVote = teamKey;
+        updatePollOptionStyles();
+        setPollStatus("Vote saved!");
+      } catch (err) {
+        console.error("Failed to submit poll vote", err);
+        setPollError("Unable to save your vote. Please try again.");
+      } finally {
+        setPollSaving(false);
+      }
+    }
+
+    function bindPollEvents() {
+      if (!pollEnabled()) return;
+      if (pollEls.optionButtons?.A) {
+        pollEls.optionButtons.A.addEventListener("click", () => submitPollVote("A"));
+      }
+      if (pollEls.optionButtons?.B) {
+        pollEls.optionButtons.B.addEventListener("click", () => submitPollVote("B"));
+      }
+      if (pollEls.loginBtn) {
+        pollEls.loginBtn.addEventListener("click", () => {
+          if (window.twitchOAuth) {
+            window.twitchOAuth.login();
+          }
+        });
+      }
+      if (!pollState.cleanupBound) {
+        window.addEventListener("beforeunload", () => {
+          if (pollState.unsubscribe) {
+            pollState.unsubscribe();
+            pollState.unsubscribe = null;
+          }
+          if (pollState.activePollUnsubscribe) {
+            pollState.activePollUnsubscribe();
+            pollState.activePollUnsubscribe = null;
+          }
+        });
+        pollState.cleanupBound = true;
+      }
+    }
+
+    async function initializeMatchPoll() {
+      if (!pollEnabled()) return;
+      bindPollEvents();
+      setPollLoading(true);
+      setPollStatus("Loading featured poll…");
+      await ensurePollUser();
+      subscribeToActivePoll();
       window.addEventListener("storage", event => {
         if (event.key === "twitch_token") {
           ensurePollUser();
