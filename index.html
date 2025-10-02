@@ -43,7 +43,7 @@
       top: 0;
       bottom: 0;
       width: 50%;
-      opacity: 0.2;
+      opacity: 0.08;
       background-size: 150px;
       background-repeat: repeat;
       pointer-events: none;
@@ -1439,6 +1439,18 @@
       };
       testImage2.src = zenLogo;
     }
+
+    // Function to adjust background logo opacity for better readability
+    function adjustBackgroundOpacity(opacity) {
+      const bgLeft = document.getElementById('bg-left');
+      const bgRight = document.getElementById('bg-right');
+      
+      if (bgLeft && bgRight) {
+        bgLeft.style.opacity = opacity;
+        bgRight.style.opacity = opacity;
+        console.log(`Background opacity set to ${opacity}`);
+      }
+    }
     
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
@@ -1446,6 +1458,7 @@
     window.testPlayerMapping = testPlayerMapping;
     window.testTwitchPlayerFormat = testTwitchPlayerFormat;
     window.testTeamLogos = testTeamLogos;
+    window.adjustBackgroundOpacity = adjustBackgroundOpacity;
   </script>
 </body>
 </html>
