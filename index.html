@@ -1463,8 +1463,11 @@
       
       // Load active match first, then team rosters
       loadActiveMatch().then(() => {
-      loadTeamRosters();
-    });
+        loadTeamRosters();
+      });
+      
+      // Load current poll for main page
+      loadCurrentPollForMainPage();
       
       initializeTwitchPlayer();
       initializePlayerStats();
@@ -1702,6 +1705,8 @@
         
         currentPoll = pollData;
         updateCurrentPollDisplay();
+        // Also update the main page poll display
+        updateMainPagePollDisplay(pollData);
         alert('Poll saved successfully!');
       } catch (error) {
         console.error('Error saving poll:', error);
@@ -1716,6 +1721,8 @@
         await setDoc(doc(db, 'admin', 'currentPoll'), {});
         currentPoll = null;
         updateCurrentPollDisplay();
+        // Also update the main page poll display
+        updateMainPagePollDisplay(null);
         
         // Clear form
         document.getElementById('poll-question').value = '';
@@ -1745,6 +1752,75 @@
 
       if (clearBtn) {
         clearBtn.addEventListener('click', clearPoll);
+      }
+    }
+
+    // Load current poll for main page display
+    async function loadCurrentPollForMainPage() {
+      try {
+        const docRef = doc(db, 'admin', 'currentPoll');
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const pollData = docSnap.data();
+          updateMainPagePollDisplay(pollData);
+        } else {
+          updateMainPagePollDisplay(null);
+        }
+      } catch (error) {
+        console.error('Error loading current poll for main page:', error);
+        updateMainPagePollDisplay(null);
+      }
+    }
+
+    // Update the main page poll display
+    function updateMainPagePollDisplay(pollData) {
+      const pollSection = document.querySelector('.voting-section');
+      if (!pollSection) return;
+
+      if (pollData && pollData.question && pollData.options) {
+        // Update the poll question
+        const pollTitle = pollSection.querySelector('h3');
+        if (pollTitle) {
+          pollTitle.textContent = pollData.question;
+        }
+
+        // Update the voting buttons
+        const voteButtons = pollSection.querySelectorAll('.vote-btn');
+        pollData.options.forEach((option, index) => {
+          if (voteButtons[index]) {
+            voteButtons[index].textContent = option;
+            voteButtons[index].style.display = 'block';
+          }
+        });
+
+        // Hide unused buttons
+        for (let i = pollData.options.length; i < voteButtons.length; i++) {
+          if (voteButtons[i]) {
+            voteButtons[i].style.display = 'none';
+          }
+        }
+
+        console.log('Updated main page poll display:', pollData);
+      } else {
+        // Show default voting
+        const pollTitle = pollSection.querySelector('h3');
+        if (pollTitle) {
+          pollTitle.textContent = 'Vote for Winner';
+        }
+
+        const voteButtons = pollSection.querySelectorAll('.vote-btn');
+        if (voteButtons[0]) voteButtons[0].textContent = 'Team A';
+        if (voteButtons[1]) voteButtons[1].textContent = 'Team B';
+        if (voteButtons[0]) voteButtons[0].style.display = 'block';
+        if (voteButtons[1]) voteButtons[1].style.display = 'block';
+
+        // Hide additional buttons
+        for (let i = 2; i < voteButtons.length; i++) {
+          if (voteButtons[i]) {
+            voteButtons[i].style.display = 'none';
+          }
+        }
       }
     }
 
@@ -2639,6 +2715,9 @@
           if (activeMatch.teamA && activeMatch.teamB) {
             selectedTeams.teamA = activeMatch.teamA;
             selectedTeams.teamB = activeMatch.teamB;
+            console.log('Loaded active match:', selectedTeams);
+            // Update the main page display
+            updateMatchDisplay();
             loadTeamRosters();
           }
         } else {
@@ -2678,6 +2757,13 @@
         await setDoc(docRef, matchData);
         activeMatch = { teamA, teamB };
         updateCurrentMatchDisplay();
+        
+        // Update the main page display
+        selectedTeams.teamA = teamA;
+        selectedTeams.teamB = teamB;
+        updateMatchDisplay();
+        loadTeamRosters();
+        
         console.log('Active match saved:', teamA, 'vs', teamB);
       } catch (error) {
         console.error('Error saving active match:', error);
