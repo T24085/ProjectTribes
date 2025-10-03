@@ -2000,9 +2000,17 @@
         // Fill in missing teams with default data from TEAM_DATA
         Object.keys(TEAM_DATA).forEach(teamKey => {
           const teamName = TEAM_DATA[teamKey].name;
+          const defaultRoster = parseRosterText(TEAM_DATA[teamKey].roster);
+          
+          // Store roster data under both the key and the name for compatibility
+          if (!teamRosters[teamKey] || teamRosters[teamKey].length === 0) {
+            console.log('Using default roster for team key', teamKey);
+            teamRosters[teamKey] = defaultRoster;
+            console.log('Default roster for', teamKey, ':', defaultRoster);
+          }
+          
           if (!teamRosters[teamName] || teamRosters[teamName].length === 0) {
-            console.log('Using default roster for', teamName);
-            const defaultRoster = parseRosterText(TEAM_DATA[teamKey].roster);
+            console.log('Using default roster for team name', teamName);
             teamRosters[teamName] = defaultRoster;
             console.log('Default roster for', teamName, ':', defaultRoster);
           }
@@ -2023,6 +2031,9 @@
         Object.keys(TEAM_DATA).forEach(teamKey => {
           const teamName = TEAM_DATA[teamKey].name;
           const defaultRoster = parseRosterText(TEAM_DATA[teamKey].roster);
+          
+          // Store roster data under both the key and the name for compatibility
+          teamRosters[teamKey] = defaultRoster;
           teamRosters[teamName] = defaultRoster;
         });
         
@@ -2581,10 +2592,15 @@
           if (twitchHandle) {
             const streamFrame = document.getElementById('stream-frame');
             if (streamFrame && streamFrame.tagName === 'IFRAME') {
-              const parentDomain = window.location.hostname;
+              // Use a more permissive parent domain for local development
+              let parentDomain = window.location.hostname;
+              if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+                parentDomain = 'tribesprofessionalleague.com'; // Use the production domain
+              }
+              
               // Use the same format as TribesScrimWatcher
               streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
-              console.log(`Loading stream for ${player.name}: ${twitchHandle}`);
+              console.log(`Loading stream for ${player.name}: ${twitchHandle} with parent: ${parentDomain}`);
             } else {
               console.error('Stream frame element not found or was replaced! Attempting to restore...');
               // Try to restore the iframe if it was replaced
@@ -2593,9 +2609,12 @@
               setTimeout(() => {
                 const newStreamFrame = document.getElementById('stream-frame');
                 if (newStreamFrame && newStreamFrame.tagName === 'IFRAME') {
-                  const parentDomain = window.location.hostname;
+                  let parentDomain = window.location.hostname;
+                  if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+                    parentDomain = 'tribesprofessionalleague.com';
+                  }
                   newStreamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(twitchHandle)}&parent=${parentDomain}&autoplay=false`;
-                  console.log(`Loading stream for ${player.name} after restore: ${twitchHandle}`);
+                  console.log(`Loading stream for ${player.name} after restore: ${twitchHandle} with parent: ${parentDomain}`);
                 }
               }, 200);
             }
@@ -4537,9 +4556,12 @@
           // Load the actual Twitch chat
           const chatIframe = document.getElementById('streamer-chat-iframe');
           if (chatIframe) {
-            const parentDomain = window.location.hostname;
+            let parentDomain = window.location.hostname;
+            if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+              parentDomain = 'tribesprofessionalleague.com';
+            }
             chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(currentStreamer)}/chat?parent=${parentDomain}`;
-            console.log(`Loading Twitch chat for: ${currentStreamer}`);
+            console.log(`Loading Twitch chat for: ${currentStreamer} with parent: ${parentDomain}`);
           }
         } else {
           // No live streams, show fallback
@@ -4821,7 +4843,10 @@
       if (!twitchChatIframe || !streamerSelect) return;
 
       // Load the main TPL Twitch chat initially
-      const parentDomain = window.location.hostname;
+      let parentDomain = window.location.hostname;
+      if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+        parentDomain = 'tribesprofessionalleague.com';
+      }
       const chatUrl = `https://www.twitch.tv/embed/tribesprofessionalleague/chat?parent=${parentDomain}`;
       
       // Add load event listener to handle connection status
@@ -4858,9 +4883,13 @@
       // Set up dropdown change handler
       streamerSelect.addEventListener('change', function() {
         const selectedStreamer = this.value;
+        let parentDomain = window.location.hostname;
+        if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+          parentDomain = 'tribesprofessionalleague.com';
+        }
         const newChatUrl = `https://www.twitch.tv/embed/${selectedStreamer}/chat?parent=${parentDomain}`;
         twitchChatIframe.src = newChatUrl;
-        console.log(`Switched to ${selectedStreamer} chat`);
+        console.log(`Switched to ${selectedStreamer} chat with parent: ${parentDomain}`);
       });
       
       // Update dropdown with live streamers
