@@ -4345,6 +4345,130 @@
       }
     }
 
+    // Load recent matches from Firebase
+    async function loadRecentMatches() {
+      try {
+        console.log('Loading recent matches...');
+        const matchesRef = collection(db, 'matches');
+        const q = query(matchesRef, orderBy('created', 'desc'), limit(5));
+        const querySnapshot = await getDocs(q);
+        
+        const matches = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          matches.push({
+            id: doc.id,
+            ...data
+          });
+        });
+        
+        console.log('Recent matches loaded:', matches);
+        displayRecentMatches(matches);
+      } catch (error) {
+        console.error('Error loading recent matches:', error);
+        // Show placeholder if no matches found
+        displayRecentMatches([]);
+      }
+    }
+
+    // Display recent matches in the UI
+    function displayRecentMatches(matches) {
+      const grid = document.getElementById('recent-matches-grid');
+      if (!grid) {
+        console.error('Recent matches grid not found');
+        return;
+      }
+      
+      if (matches.length === 0) {
+        grid.innerHTML = '<div class="recent-match-card"><div class="match-teams"><span class="team-name">No recent matches found</span></div></div>';
+        return;
+      }
+      
+      grid.innerHTML = matches.map(match => {
+        const teamA = match.teamA || 'Team A';
+        const teamB = match.teamB || 'Team B';
+        const scoreA = match.scoreA || 0;
+        const scoreB = match.scoreB || 0;
+        const date = match.created ? (match.created.toDate ? match.created.toDate() : new Date(match.created)) : new Date();
+        const dateStr = date.toLocaleDateString();
+        
+        return `
+          <div class="recent-match-card">
+            <div class="match-teams">
+              <div class="team-info">
+                <span class="team-name">${teamA}</span>
+              </div>
+              <div class="match-score">${scoreA} - ${scoreB}</div>
+              <div class="team-info">
+                <span class="team-name">${teamB}</span>
+              </div>
+            </div>
+            <div class="match-date">${dateStr}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Initialize Twitch chat functionality
+    function initializeTwitchChat() {
+      console.log('Initializing Twitch chat...');
+      
+      const streamerSelect = document.getElementById('streamer-select');
+      const chatIframe = document.getElementById('twitch-chat-iframe');
+      const chatLoading = document.querySelector('.chat-loading');
+      
+      if (!streamerSelect || !chatIframe) {
+        console.error('Twitch chat elements not found');
+        return;
+      }
+      
+      // Set up streamer dropdown change handler
+      streamerSelect.addEventListener('change', function() {
+        const selectedChannel = this.value;
+        updateStreamerChat(selectedChannel);
+      });
+      
+      // Initialize with default chat
+      updateStreamerChat('tribesprofessionalleague');
+    }
+
+    // Update streamer chat iframe
+    function updateStreamerChat(channel = 'tribesprofessionalleague') {
+      const chatIframe = document.getElementById('twitch-chat-iframe');
+      const chatLoading = document.querySelector('.chat-loading');
+      
+      if (!chatIframe) {
+        console.error('Chat iframe not found');
+        return;
+      }
+      
+      // Show loading state
+      if (chatLoading) {
+        chatLoading.style.display = 'flex';
+      }
+      chatIframe.style.display = 'none';
+      
+      // Determine parent domain for Twitch embed
+      let parentDomain = window.location.hostname;
+      if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+        parentDomain = 'tribesprofessionalleague.com';
+      }
+      
+      // Update iframe source
+      const chatUrl = `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?parent=${parentDomain}`;
+      chatIframe.src = chatUrl;
+      
+      // Hide loading and show chat after a short delay
+      setTimeout(() => {
+        if (chatLoading) {
+          chatLoading.style.display = 'none';
+        }
+        chatIframe.style.display = 'block';
+      }, 1000);
+      
+      console.log(`Updated Twitch chat to channel: ${channel} with parent: ${parentDomain}`);
+    }
+
     // Make test functions available globally for debugging
     window.testDPRKvsZen = testDPRKvsZen;
     window.testBackgroundImages = testBackgroundImages;
@@ -4361,6 +4485,9 @@
     window.showTeamStats = showTeamStats;
     window.hideTeamStats = hideTeamStats;
     window.debugStatsSystem = debugStatsSystem;
+    window.loadRecentMatches = loadRecentMatches;
+    window.initializeTwitchChat = initializeTwitchChat;
+    window.updateStreamerChat = updateStreamerChat;
 
     // Initialize everything when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
