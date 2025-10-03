@@ -2527,12 +2527,15 @@
     };
 
     function getTwitchHandleForPlayer(player) {
+      console.log(`Getting Twitch handle for player:`, player);
+      
       // First try to get the handle from the player object
       let twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
       
       // If no handle found, try to map the name and look it up in oauth.js
       if (!twitchHandle && player.name) {
         const mappedName = PLAYER_NAME_MAPPING[player.name] || player.name;
+        console.log(`Player ${player.name} mapped to: ${mappedName}`);
         
         // Check if the mapped name is already a Twitch handle (contains lowercase letters/numbers)
         // This handles cases like 'Panda' -> 'pandoracast' where the mapping is direct
@@ -2542,6 +2545,7 @@
         } else {
           // Look up in oauth.js TEAM_STREAMS data
           if (window.twitchOAuth && window.twitchOAuth.TEAM_STREAMS) {
+            console.log(`Looking in oauth.js TEAM_STREAMS for ${mappedName}`);
             for (const [teamName, streams] of Object.entries(window.twitchOAuth.TEAM_STREAMS)) {
               const streamer = streams.find(s => s.name === mappedName);
               if (streamer) {
@@ -2558,6 +2562,7 @@
           
           // If still no handle found, check default TEAM_DATA streams
           if (!twitchHandle) {
+            console.log(`Looking in default TEAM_DATA streams for ${mappedName} or ${player.name}`);
             for (const [teamKey, teamData] of Object.entries(TEAM_DATA)) {
               if (teamData.streams && Array.isArray(teamData.streams)) {
                 const streamer = teamData.streams.find(s => s.name === mappedName || s.name === player.name);
@@ -2576,6 +2581,7 @@
         }
       }
       
+      console.log(`Final Twitch handle for ${player.name}: ${twitchHandle}`);
       return twitchHandle;
     }
 
