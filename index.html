@@ -3021,7 +3021,7 @@
           return map;
         };
 
-        playerStatsData = {
+        window.playerStatsData = {
           playerTotals: hydratePlayers(data.playerTotals || []),
           playerMapStats: hydratePlayerMaps(data.playerMapStats || []),
           teamTotals: hydrateTeams(data.teamTotals || []),
@@ -3029,9 +3029,9 @@
           generatedAt: data.generatedAt
         };
 
-        console.log('Player stats loaded:', playerStatsData);
-        console.log('Available players:', Array.from(playerStatsData.playerTotals.keys()));
-        return playerStatsData;
+        console.log('Player stats loaded:', window.playerStatsData);
+        console.log('Available players:', Array.from(window.playerStatsData.playerTotals.keys()));
+        return window.playerStatsData;
       } catch (error) {
         console.error('Error loading player stats:', error);
         return null;
@@ -3712,18 +3712,21 @@
 
       statsSection.style.display = 'block';
       
-      // Create the line chart after a short delay to ensure DOM is ready and data is loaded
-      setTimeout(() => {
+      // Create the line chart after ensuring data is loaded
+      const createChart = async () => {
         // Make sure player stats are loaded first
-        if (!window.playerStatsData) {
-          console.log('Player stats not loaded, loading now...');
-          loadPlayerStats().then(() => {
-            createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
-          });
-        } else {
-          createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
+        if (!window.playerStatsData || !window.playerStatsData.playerTotals || window.playerStatsData.playerTotals.size === 0) {
+          console.log('Player stats not loaded or empty, loading now...');
+          await loadPlayerStats();
         }
-      }, 500);
+        
+        // Wait a bit more for data to be processed
+        setTimeout(() => {
+          createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
+        }, 200);
+      };
+      
+      createChart();
     }
 
     function calculateTeamStats(roster) {
@@ -3801,6 +3804,24 @@
       
       console.log('Player stats data:', playerStatsData);
       console.log('Player totals:', playerTotals);
+      console.log('Team A roster:', teamARoster);
+      console.log('Team B roster:', teamBRoster);
+      
+      // Debug: Check if we have any player stats at all
+      if (playerTotals.size === 0) {
+        console.error('No player stats found! Player totals is empty.');
+        console.log('Available player stats data keys:', Object.keys(playerStatsData));
+      } else {
+        console.log('Found', playerTotals.size, 'players with stats');
+        // Log first few players for debugging
+        let count = 0;
+        for (const [name, stats] of playerTotals) {
+          if (count < 3) {
+            console.log(`Player: ${name}`, stats);
+            count++;
+          }
+        }
+      }
       
       // Prepare data for each stat category and team
       const statCategories = ['Score', 'Kills', 'Assists', 'Captures', 'Returns'];
@@ -4144,6 +4165,41 @@
       } else {
         console.log('Panda tab not found');
       }
+    };
+
+    // Debug function to check player stats data
+    window.debugPlayerStats = function() {
+      console.log('=== PLAYER STATS DEBUG ===');
+      console.log('window.playerStatsData:', window.playerStatsData);
+      
+      if (window.playerStatsData && window.playerStatsData.playerTotals) {
+        console.log('Player totals size:', window.playerStatsData.playerTotals.size);
+        console.log('First 5 players:');
+        let count = 0;
+        for (const [name, stats] of window.playerStatsData.playerTotals) {
+          if (count < 5) {
+            console.log(`${name}:`, stats);
+            count++;
+          }
+        }
+      } else {
+        console.log('No player stats data found!');
+      }
+      
+      console.log('Current team rosters:');
+      console.log('Team A:', teamRosters[selectedTeams.teamA]);
+      console.log('Team B:', teamRosters[selectedTeams.teamB]);
+    };
+
+    // Debug function to force reload player stats
+    window.reloadPlayerStats = function() {
+      console.log('Reloading player stats...');
+      loadPlayerStats().then(() => {
+        console.log('Player stats reloaded');
+        window.debugPlayerStats();
+      }).catch(err => {
+        console.error('Error reloading player stats:', err);
+      });
     };
     
     // Comprehensive live indicators debug
