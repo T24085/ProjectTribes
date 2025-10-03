@@ -2519,7 +2519,9 @@
       'Howsya': 'Howsya',
       'Prizzo': 'Prizzo',
       'Rhino': 'Rhino',
-      'LightningMcMeme': 'LightningMcMeme',
+      'LightningMcMeme': 'playb0x',
+      'playb0x': 'playb0x',
+      'Mikeax2': 'Mikeax2',
       'Radishblue': 'Radishblue'
     };
 
@@ -4531,6 +4533,33 @@
         window.debugTeamRosters();
       } catch (error) {
         console.error('Error reloading team rosters:', error);
+      }
+    };
+
+    // Debug function to test playb0x specifically
+    window.testPlayb0x = function() {
+      console.log('=== Testing playb0x Stream Link ===');
+      
+      // Test the name mapping
+      const testPlayer = { name: 'LightningMcMeme' };
+      const twitchHandle = getTwitchHandleForPlayer(testPlayer);
+      console.log('LightningMcMeme -> Twitch handle:', twitchHandle);
+      
+      // Test direct playb0x
+      const testPlayer2 = { name: 'playb0x' };
+      const twitchHandle2 = getTwitchHandleForPlayer(testPlayer2);
+      console.log('playb0x -> Twitch handle:', twitchHandle2);
+      
+      // Check Flying Tractors roster
+      const ftRoster = teamRosters['FT'] || teamRosters['Flying Tractors'];
+      console.log('Flying Tractors roster:', ftRoster);
+      
+      if (ftRoster) {
+        const lightningPlayer = ftRoster.find(p => p.name === 'LightningMcMeme');
+        if (lightningPlayer) {
+          const handle = getTwitchHandleForPlayer(lightningPlayer);
+          console.log('LightningMcMeme player object -> Twitch handle:', handle);
+        }
       }
     };
 
