@@ -3712,10 +3712,18 @@
 
       statsSection.style.display = 'block';
       
-      // Create the line chart after a short delay to ensure DOM is ready
+      // Create the line chart after a short delay to ensure DOM is ready and data is loaded
       setTimeout(() => {
-        createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
-      }, 100);
+        // Make sure player stats are loaded first
+        if (!window.playerStatsData) {
+          console.log('Player stats not loaded, loading now...');
+          loadPlayerStats().then(() => {
+            createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
+          });
+        } else {
+          createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
+        }
+      }, 500);
     }
 
     function calculateTeamStats(roster) {
@@ -3783,36 +3791,36 @@
 
       const ctx = canvas.getContext('2d');
       
-      // Get all players from both teams
+      // Get players from each team separately
       const teamARoster = teamRosters[selectedTeams.teamA] || [];
       const teamBRoster = teamRosters[selectedTeams.teamB] || [];
-      const allPlayers = [...teamARoster, ...teamBRoster];
       
       // Get player stats for all players
       const playerStatsData = window.playerStatsData || {};
       const playerTotals = playerStatsData.playerTotals || new Map();
       
-      // Prepare data for each stat category
+      console.log('Player stats data:', playerStatsData);
+      console.log('Player totals:', playerTotals);
+      
+      // Prepare data for each stat category and team
       const statCategories = ['Score', 'Kills', 'Assists', 'Captures', 'Returns'];
       const datasets = [];
       
-      // Color palette for different stat lines
+      // Color palette - solid colors for team A, dashed for team B
       const colors = [
-        { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }, // Blue - Score
-        { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }, // Red - Kills
-        { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' }, // Green - Assists
-        { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' }, // Orange - Captures
-        { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' }  // Purple - Returns
+        { solid: '#3b82f6', dashed: '#60a5fa' }, // Blue - Score
+        { solid: '#ef4444', dashed: '#f87171' }, // Red - Kills
+        { solid: '#10b981', dashed: '#34d399' }, // Green - Assists
+        { solid: '#f59e0b', dashed: '#fbbf24' }, // Orange - Captures
+        { solid: '#8b5cf6', dashed: '#a78bfa' }  // Purple - Returns
       ];
       
-      // Create a dataset for each stat category
+      // Create datasets for each stat category and team combination
       statCategories.forEach((statName, statIndex) => {
-        const statData = [];
-        const playerNames = [];
-        
-        allPlayers.forEach(player => {
+        // Team A data
+        const teamAData = [];
+        teamARoster.forEach(player => {
           const playerName = player.name || player.displayName;
-          playerNames.push(playerName);
           
           // Find player stats
           let playerStats = null;
@@ -3845,32 +3853,95 @@
             }
           }
           
-          statData.push(statValue);
+          teamAData.push(statValue);
+        });
+        
+        // Team B data
+        const teamBData = [];
+        teamBRoster.forEach(player => {
+          const playerName = player.name || player.displayName;
+          
+          // Find player stats
+          let playerStats = null;
+          for (const [name, stats] of playerTotals) {
+            if (name && playerName && name.toLowerCase() === playerName.toLowerCase()) {
+              playerStats = stats;
+              break;
+            }
+          }
+          
+          // Get the stat value (per minute)
+          let statValue = 0;
+          if (playerStats) {
+            switch (statName) {
+              case 'Score':
+                statValue = parseFloat(playerStats.spm) || 0;
+                break;
+              case 'Kills':
+                statValue = parseFloat(playerStats.kpm) || 0;
+                break;
+              case 'Assists':
+                statValue = parseFloat(playerStats.apm) || 0;
+                break;
+              case 'Captures':
+                statValue = parseFloat(playerStats.cpm) || 0;
+                break;
+              case 'Returns':
+                statValue = parseFloat(playerStats.rpm) || 0;
+                break;
+            }
+          }
+          
+          teamBData.push(statValue);
         });
         
         // Normalize data to 0-100 scale for better visualization
-        const maxValue = Math.max(...statData);
-        const normalizedData = maxValue > 0 ? statData.map(value => (value / maxValue) * 100) : statData;
+        const allValues = [...teamAData, ...teamBData];
+        const maxValue = Math.max(...allValues);
+        const normalizedTeamAData = maxValue > 0 ? teamAData.map(value => (value / maxValue) * 100) : teamAData;
+        const normalizedTeamBData = maxValue > 0 ? teamBData.map(value => (value / maxValue) * 100) : teamBData;
         
+        // Add Team A dataset
         datasets.push({
-          label: statName,
-          data: normalizedData,
-          borderColor: colors[statIndex].border,
-          backgroundColor: colors[statIndex].bg,
-          borderWidth: 2,
+          label: `${teamAName} ${statName}`,
+          data: normalizedTeamAData,
+          borderColor: colors[statIndex].solid,
+          backgroundColor: colors[statIndex].solid + '20',
+          borderWidth: 3,
           fill: false,
           tension: 0.4,
-          pointBackgroundColor: colors[statIndex].border,
+          pointBackgroundColor: colors[statIndex].solid,
           pointBorderColor: '#ffffff',
-          pointBorderWidth: 1,
-          pointRadius: 4
+          pointBorderWidth: 2,
+          pointRadius: 5
+        });
+        
+        // Add Team B dataset
+        datasets.push({
+          label: `${teamBName} ${statName}`,
+          data: normalizedTeamBData,
+          borderColor: colors[statIndex].dashed,
+          backgroundColor: colors[statIndex].dashed + '20',
+          borderWidth: 3,
+          borderDash: [5, 5],
+          fill: false,
+          tension: 0.4,
+          pointBackgroundColor: colors[statIndex].dashed,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 5
         });
       });
+
+      // Create labels for both teams
+      const teamALabels = teamARoster.map(player => player.name || player.displayName);
+      const teamBLabels = teamBRoster.map(player => player.name || player.displayName);
+      const allLabels = [...teamALabels, ...teamBLabels];
 
       window.teamStatsChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: allPlayers.map(player => player.name || player.displayName),
+          labels: allLabels,
           datasets: datasets
         },
         options: {
@@ -3881,7 +3952,7 @@
               labels: {
                 color: '#e2e8f0',
                 font: {
-                  size: 12,
+                  size: 11,
                   weight: 'bold'
                 }
               }
@@ -3894,18 +3965,21 @@
               borderWidth: 1,
               callbacks: {
                 label: function(context) {
-                  const statName = context.dataset.label;
+                  const label = context.dataset.label;
                   const playerName = context.label;
                   const normalizedValue = context.parsed.y;
                   
                   // Find original value for tooltip
-                  const playerIndex = context.dataIndex;
-                  const player = allPlayers[playerIndex];
-                  const playerName2 = player.name || player.displayName;
+                  const isTeamA = label.includes(teamAName);
+                  const roster = isTeamA ? teamARoster : teamBRoster;
+                  const playerIndex = isTeamA ? context.dataIndex : context.dataIndex - teamARoster.length;
+                  const player = roster[playerIndex];
+                  const playerName2 = player ? (player.name || player.displayName) : '';
                   
                   let originalValue = 0;
                   for (const [name, stats] of playerTotals) {
                     if (name && playerName2 && name.toLowerCase() === playerName2.toLowerCase()) {
+                      const statName = label.split(' ')[1]; // Extract stat name from label
                       switch (statName) {
                         case 'Score':
                           originalValue = parseFloat(stats.spm) || 0;
@@ -3927,7 +4001,7 @@
                     }
                   }
                   
-                  return `${statName}: ${originalValue.toFixed(2)}/min`;
+                  return `${label}: ${originalValue.toFixed(2)}/min`;
                 }
               }
             }
@@ -3937,7 +4011,7 @@
               ticks: {
                 color: '#94a3b8',
                 font: {
-                  size: 10
+                  size: 9
                 },
                 maxRotation: 45
               },
