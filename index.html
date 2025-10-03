@@ -2440,39 +2440,7 @@
         addMessage('Match starting soon!', false, 'main');
       }, 1000);
 
-      // Streamer chat functionality
-      function updateStreamerChat() {
-        // Check if any players are live and update streamer chat
-        if (window.twitchOAuth && window.twitchOAuth.liveStreams) {
-          const liveStreams = window.twitchOAuth.liveStreams;
-          if (liveStreams.length > 0) {
-            const currentStreamer = liveStreams[0].user_name;
-            document.getElementById('current-streamer').textContent = currentStreamer;
-            document.getElementById('streamer-info').style.display = 'block';
-            
-            // Show the chat iframe and hide fallback
-            document.getElementById('streamer-chat-iframe-container').style.display = 'block';
-            document.getElementById('streamer-chat-fallback').style.display = 'none';
-            
-            // Load the actual Twitch chat
-            const chatIframe = document.getElementById('streamer-chat-iframe');
-            const parentDomain = window.location.hostname;
-            chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(currentStreamer)}/chat?parent=${parentDomain}`;
-            
-            console.log(`Loading Twitch chat for: ${currentStreamer}`);
-          } else {
-            // No live streams, show fallback
-            document.getElementById('streamer-chat-iframe-container').style.display = 'none';
-            document.getElementById('streamer-chat-fallback').style.display = 'block';
-            document.getElementById('streamer-info').style.display = 'none';
-          }
-        } else {
-          // No Twitch OAuth data, show fallback
-          document.getElementById('streamer-chat-iframe-container').style.display = 'none';
-          document.getElementById('streamer-chat-fallback').style.display = 'block';
-          document.getElementById('streamer-info').style.display = 'none';
-        }
-      }
+      // Streamer chat functionality will be defined globally below
 
       // Update streamer chat periodically
       setInterval(updateStreamerChat, 10000);
@@ -2984,11 +2952,14 @@
 
     async function loadPlayerStats() {
       try {
+        console.log('Starting to load player stats...');
         const docRef = doc(db, 'publicStats', 'aggregates');
+        console.log('Document reference created:', docRef);
         const docSnap = await getDoc(docRef);
+        console.log('Document snapshot received:', docSnap);
 
         if (!docSnap.exists()) {
-          console.log('No published stats found');
+          console.log('No published stats found - document does not exist');
           return null;
         }
 
@@ -3031,6 +3002,13 @@
 
         console.log('Player stats loaded:', window.playerStatsData);
         console.log('Available players:', Array.from(window.playerStatsData.playerTotals.keys()));
+        
+        // Check if stats are empty
+        if (window.playerStatsData.playerTotals.size === 0) {
+          console.log('Published stats are empty - no player data found');
+          return null;
+        }
+        
         return window.playerStatsData;
       } catch (error) {
         console.error('Error loading player stats:', error);
@@ -3273,8 +3251,13 @@
     }
 
     function initializePlayerStats() {
+      console.log('Initializing player stats...');
       // Load player stats data
-      loadPlayerStats();
+      loadPlayerStats().then((result) => {
+        console.log('Player stats loading completed:', result);
+      }).catch((error) => {
+        console.error('Player stats loading failed:', error);
+      });
       
       // Add close button functionality
       const closeStatsBtn = document.getElementById('close-stats-btn');
@@ -4201,6 +4184,93 @@
         console.error('Error reloading player stats:', err);
       });
     };
+
+    // Debug function to test stats loading
+    window.testStatsLoading = function() {
+      console.log('=== Testing Stats Loading ===');
+      console.log('Firebase app:', firebaseApp);
+      console.log('Database:', db);
+      console.log('Current playerStatsData:', window.playerStatsData);
+      
+      loadPlayerStats().then((result) => {
+        console.log('Stats loading result:', result);
+        console.log('Updated playerStatsData:', window.playerStatsData);
+      }).catch((error) => {
+        console.error('Stats loading error:', error);
+      });
+    };
+
+    // Debug function to check Firestore document directly
+    window.checkStatsDocument = async function() {
+      console.log('=== Checking Stats Document ===');
+      try {
+        const docRef = doc(db, 'publicStats', 'aggregates');
+        console.log('Document reference:', docRef);
+        
+        const docSnap = await getDoc(docRef);
+        console.log('Document exists:', docSnap.exists());
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          console.log('Document data:', data);
+          console.log('Player totals length:', data.playerTotals ? data.playerTotals.length : 'undefined');
+          console.log('Team totals length:', data.teamTotals ? data.teamTotals.length : 'undefined');
+          console.log('Total matches:', data.totalMatches);
+        } else {
+          console.log('Document does not exist in Firestore');
+        }
+      } catch (error) {
+        console.error('Error checking document:', error);
+      }
+    };
+
+    // Streamer chat functionality
+    function updateStreamerChat() {
+      // Check if any players are live and update streamer chat
+      if (window.twitchOAuth && window.twitchOAuth.liveStreams) {
+        const liveStreams = window.twitchOAuth.liveStreams;
+        if (liveStreams.length > 0) {
+          const currentStreamer = liveStreams[0].user_name;
+          const currentStreamerEl = document.getElementById('current-streamer');
+          const streamerInfoEl = document.getElementById('streamer-info');
+          const chatIframeContainer = document.getElementById('streamer-chat-iframe-container');
+          const chatFallback = document.getElementById('streamer-chat-fallback');
+          
+          if (currentStreamerEl) currentStreamerEl.textContent = currentStreamer;
+          if (streamerInfoEl) streamerInfoEl.style.display = 'block';
+          
+          // Show the chat iframe and hide fallback
+          if (chatIframeContainer) chatIframeContainer.style.display = 'block';
+          if (chatFallback) chatFallback.style.display = 'none';
+          
+          // Load the actual Twitch chat
+          const chatIframe = document.getElementById('streamer-chat-iframe');
+          if (chatIframe) {
+            const parentDomain = window.location.hostname;
+            chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(currentStreamer)}/chat?parent=${parentDomain}`;
+            console.log(`Loading Twitch chat for: ${currentStreamer}`);
+          }
+        } else {
+          // No live streams, show fallback
+          const chatIframeContainer = document.getElementById('streamer-chat-iframe-container');
+          const chatFallback = document.getElementById('streamer-chat-fallback');
+          const streamerInfoEl = document.getElementById('streamer-info');
+          
+          if (chatIframeContainer) chatIframeContainer.style.display = 'none';
+          if (chatFallback) chatFallback.style.display = 'block';
+          if (streamerInfoEl) streamerInfoEl.style.display = 'none';
+        }
+      } else {
+        // No Twitch OAuth data, show fallback
+        const chatIframeContainer = document.getElementById('streamer-chat-iframe-container');
+        const chatFallback = document.getElementById('streamer-chat-fallback');
+        const streamerInfoEl = document.getElementById('streamer-info');
+        
+        if (chatIframeContainer) chatIframeContainer.style.display = 'none';
+        if (chatFallback) chatFallback.style.display = 'block';
+        if (streamerInfoEl) streamerInfoEl.style.display = 'none';
+      }
+    }
     
     // Comprehensive live indicators debug
     window.debugLiveIndicatorsSystem = function() {
@@ -4448,7 +4518,6 @@
     window.showContentBlockedFallback = showContentBlockedFallback;
     window.showAlternativeContent = showAlternativeContent;
     window.restoreStreamFrame = restoreStreamFrame;
-    window.updateStreamerChat = updateStreamerChat;
     window.loadRecentMatches = loadRecentMatches;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerDropdown = updateStreamerDropdown;
