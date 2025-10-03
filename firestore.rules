@@ -49,6 +49,11 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /matchPolls/{pollId} {
       allow read: if true;
       allow create, update, delete: if isAdmin();
