@@ -1287,6 +1287,7 @@
       <div class="spectating-section">
         <div class="spectating-header">
           <div class="spectating-label">Spectating</div>
+          <button class="team-select-btn" id="caster-btn" style="background: #f59e0b;">Load Caster (0o0o0)</button>
         </div>
         
 
@@ -1318,7 +1319,7 @@
 
       <!-- Active Stream -->
       <div class="active-stream">
-        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=tribesprofessionalleague&autoplay=false" allowfullscreen></iframe>
+        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=oo0oo_live&autoplay=false" allowfullscreen></iframe>
       </div>
 
       <!-- Player Stats Section -->
@@ -1489,6 +1490,7 @@
         <div class="chat-header">
         <h3>Live Chat</h3>
           <select id="streamer-select" class="streamer-dropdown">
+            <option value="oo0oo_live">0o0o0 (Caster)</option>
             <option value="tribesprofessionalleague">TPL Main Chat</option>
           </select>
         </div>
@@ -2433,6 +2435,13 @@
           tab.textContent = player.name || player.displayName;
           tab.dataset.team = 'A';
           tab.dataset.playerIndex = teamARoster.indexOf(player);
+          
+          // Check if player has a Twitch link
+          const twitchHandle = getTwitchHandleForPlayer(player);
+          if (!twitchHandle) {
+            tab.style.color = '#ef4444'; // Red for no Twitch link
+          }
+          
           teamATabs.appendChild(tab);
         });
         
@@ -2459,6 +2468,13 @@
           tab.textContent = player.name || player.displayName;
           tab.dataset.team = 'B';
           tab.dataset.playerIndex = teamBRoster.indexOf(player);
+          
+          // Check if player has a Twitch link
+          const twitchHandle = getTwitchHandleForPlayer(player);
+          if (!twitchHandle) {
+            tab.style.color = '#ef4444'; // Red for no Twitch link
+          }
+          
           teamBTabs.appendChild(tab);
         });
         
@@ -2550,6 +2566,7 @@
       // Zen team mappings
       'Mikesters': 'mikesters17',
       'Nikebeamz': 'nikebeamz',
+      'Beamz': 'nikebeamz',  // Roster shows "Beamz", stream is "Nikebeamz"
       'Gnome': 'gnome827',
       
       // TXM team mappings
@@ -3925,8 +3942,26 @@
       console.log('Found player tabs:', playerTabs.length);
       console.log('Live streams data:', liveStreams.map(s => ({ name: s.user_name, login: s.user_login })));
       
-      // Clear previous live indicators
-      playerTabs.forEach(tab => tab.classList.remove('live'));
+      // Clear previous live indicators and reset colors
+      playerTabs.forEach(tab => {
+        tab.classList.remove('live');
+        // Reset to default or red if no twitch
+        if (tab.dataset.team && tab.dataset.playerIndex !== undefined) {
+          const team = tab.dataset.team;
+          const playerIndex = tab.dataset.playerIndex;
+          const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+          const roster = teamRosters[teamKey] || [];
+          const player = roster[playerIndex];
+          if (player) {
+            const twitchHandle = getTwitchHandleForPlayer(player);
+            if (!twitchHandle) {
+              tab.style.color = '#ef4444'; // Red for no Twitch link
+            } else {
+              tab.style.color = ''; // Reset to default
+            }
+          }
+        }
+      });
       livePlayers.clear();
 
       // Check each player tab
@@ -3957,6 +3992,7 @@
             
             if (isLive) {
               tab.classList.add('live');
+              tab.style.color = '#22c55e'; // Green for live players
               livePlayers.add(playerName);
               console.log(`Marked ${playerName} as live`);
             }
@@ -4343,6 +4379,29 @@
       if (showBtn) {
         showBtn.addEventListener('click', showTeamStats);
       }
+      
+      // Add caster button functionality
+      const casterBtn = document.getElementById('caster-btn');
+      if (casterBtn) {
+        casterBtn.addEventListener('click', () => {
+          const streamFrame = document.getElementById('stream-frame');
+          if (streamFrame) {
+            let parentDomain = window.location.hostname;
+            if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+              parentDomain = 'tribesprofessionalleague.com';
+            }
+            streamFrame.src = `https://player.twitch.tv/?channel=oo0oo_live&parent=${parentDomain}&autoplay=false`;
+            console.log('Loaded caster stream: oo0oo_live');
+          }
+          
+          // Also update chat to caster
+          updateStreamerChat('oo0oo_live');
+          const streamerSelect = document.getElementById('streamer-select');
+          if (streamerSelect) {
+            streamerSelect.value = 'oo0oo_live';
+          }
+        });
+      }
     }
 
     // Load recent matches from Firebase
@@ -4384,9 +4443,22 @@
         return;
       }
       
+      // Function to get team abbreviation from full name
+      const getTeamAbbr = (teamName) => {
+        // Find the team key by matching the full name
+        for (const [key, data] of Object.entries(TEAM_DATA)) {
+          if (data.name === teamName || key === teamName) {
+            return key;
+          }
+        }
+        return teamName; // Return original if no match found
+      };
+      
       grid.innerHTML = matches.map(match => {
         const teamA = match.teamA || 'Team A';
         const teamB = match.teamB || 'Team B';
+        const teamAbbr = getTeamAbbr(teamA);
+        const teamBAbbr = getTeamAbbr(teamB);
         const scoreA = match.scoreA || 0;
         const scoreB = match.scoreB || 0;
         const date = match.created ? (match.created.toDate ? match.created.toDate() : new Date(match.created)) : new Date();
@@ -4396,11 +4468,11 @@
           <div class="recent-match-card">
             <div class="match-teams">
               <div class="team-info">
-                <span class="team-name">${teamA}</span>
+                <span class="team-name">${teamAbbr}</span>
               </div>
               <div class="match-score">${scoreA} - ${scoreB}</div>
               <div class="team-info">
-                <span class="team-name">${teamB}</span>
+                <span class="team-name">${teamBAbbr}</span>
               </div>
             </div>
             <div class="match-date">${dateStr}</div>
@@ -4428,12 +4500,12 @@
         updateStreamerChat(selectedChannel);
       });
       
-      // Initialize with default chat
-      updateStreamerChat('tribesprofessionalleague');
+      // Initialize with default chat (caster)
+      updateStreamerChat('oo0oo_live');
     }
 
     // Update streamer chat iframe
-    function updateStreamerChat(channel = 'tribesprofessionalleague') {
+    function updateStreamerChat(channel = 'oo0oo_live') {
       const chatIframe = document.getElementById('twitch-chat-iframe');
       const chatLoading = document.querySelector('.chat-loading');
       

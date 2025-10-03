@@ -12,6 +12,9 @@
   const STORAGE_KEY = 'twitch_token';
 
   const TEAM_STREAMS = {
+    'Casters': [
+      { name: '0o0o0', url: 'https://www.twitch.tv/oo0oo_live' }
+    ],
     'Avalanche': [
       { name: 'Wriggles', url: 'https://www.twitch.tv/wrigglespk' },
       { name: 'TritiumJones', url: 'https://www.twitch.tv/tritiumjones' },
