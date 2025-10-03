@@ -2521,6 +2521,7 @@
       'Rhino': 'Rhino',
       'LightningMcMeme': 'playb0x',
       'playb0x': 'playb0x',
+      'Mikesters': 'mikesters17',
       'Mikeax2': 'Mikeax2',
       'Radishblue': 'Radishblue'
     };
@@ -4561,6 +4562,22 @@
           console.log('LightningMcMeme player object -> Twitch handle:', handle);
         }
       }
+      
+      // Test Gnome for comparison
+      const zenRoster = teamRosters['Zen'] || teamRosters['ZEN'];
+      console.log('Zen roster:', zenRoster);
+      
+      if (zenRoster) {
+        const gnomePlayer = zenRoster.find(p => p.name === 'Gnome');
+        if (gnomePlayer) {
+          const gnomeHandle = getTwitchHandleForPlayer(gnomePlayer);
+          console.log('Gnome player object -> Twitch handle:', gnomeHandle);
+        }
+      }
+      
+      // Test the mapping directly
+      console.log('PLAYER_NAME_MAPPING:', PLAYER_NAME_MAPPING);
+      console.log('LightningMcMeme mapping:', PLAYER_NAME_MAPPING['LightningMcMeme']);
     };
 
     // Streamer chat functionality
