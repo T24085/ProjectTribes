@@ -4712,6 +4712,29 @@
       console.log('Mikesters mapping:', PLAYER_NAME_MAPPING['Mikesters']);
     };
 
+    // Debug function to check stats system
+    window.debugStatsSystem = function() {
+      console.log('=== Stats System Debug ===');
+      console.log('playerStatsData:', window.playerStatsData);
+      console.log('selectedTeams:', selectedTeams);
+      console.log('teamRosters:', teamRosters);
+      
+      // Test stats loading
+      console.log('Testing stats loading...');
+      loadPlayerStats().then((result) => {
+        console.log('Stats loading result:', result);
+        console.log('Updated playerStatsData:', window.playerStatsData);
+        
+        if (window.playerStatsData) {
+          console.log('Player totals size:', window.playerStatsData.playerTotals?.size || 0);
+          console.log('Team totals size:', window.playerStatsData.teamTotals?.size || 0);
+          console.log('Total matches:', window.playerStatsData.totalMatches);
+        }
+      }).catch((error) => {
+        console.error('Stats loading error:', error);
+      });
+    };
+
     // Streamer chat functionality
     function updateStreamerChat() {
       // Check if any players are live and update streamer chat
