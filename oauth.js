@@ -66,7 +66,16 @@
     'HoE': [
       { name: 'Katar', url: 'https://www.twitch.tv/karolk10' },
       { name: 'gwej', url: 'https://www.twitch.tv/gwej' },
-      { name: 'cym3', url: 'https://www.twitch.tv/cymm3' }
+      { name: 'cym3', url: 'https://www.twitch.tv/cymm3' },
+      { name: 'LordBuschguy', url: 'https://www.twitch.tv/lordbuschguy' },
+      { name: 'Gotlub', url: 'https://www.twitch.tv/gotlub' },
+      { name: 'Mansku', url: 'https://www.twitch.tv/mansku' },
+      { name: 'björnbär', url: 'https://www.twitch.tv/bjornbar' },
+      { name: 'Waffleking', url: 'https://www.twitch.tv/waffleking' },
+      { name: 'TribalChief', url: 'https://www.twitch.tv/tribalchief' },
+      { name: 'tumi', url: 'https://www.twitch.tv/tumi' },
+      { name: 'ThermoFlux', url: 'https://www.twitch.tv/thermoflux' },
+      { name: 'unam', url: 'https://www.twitch.tv/unam' }
     ],
     'Magic': [
       { name: 'XRY', url: 'https://www.twitch.tv/xry_tv' },
