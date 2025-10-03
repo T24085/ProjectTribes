@@ -3783,62 +3783,95 @@
 
       const ctx = canvas.getContext('2d');
       
-      // Prepare data for the line chart
-      const stats = [
-        { label: 'Kills', teamA: teamAStats.totalKills, teamB: teamBStats.totalKills },
-        { label: 'Assists', teamA: teamAStats.totalAssists, teamB: teamBStats.totalAssists },
-        { label: 'Score', teamA: teamAStats.totalScore, teamB: teamBStats.totalScore },
-        { label: 'Captures', teamA: teamAStats.totalCaptures, teamB: teamBStats.totalCaptures },
-        { label: 'Returns', teamA: teamAStats.totalReturns, teamB: teamBStats.totalReturns }
+      // Get all players from both teams
+      const teamARoster = teamRosters[selectedTeams.teamA] || [];
+      const teamBRoster = teamRosters[selectedTeams.teamB] || [];
+      const allPlayers = [...teamARoster, ...teamBRoster];
+      
+      // Get player stats for all players
+      const playerStatsData = window.playerStatsData || {};
+      const playerTotals = playerStatsData.playerTotals || new Map();
+      
+      // Prepare data for each stat category
+      const statCategories = ['Score', 'Kills', 'Assists', 'Captures', 'Returns'];
+      const datasets = [];
+      
+      // Color palette for different stat lines
+      const colors = [
+        { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }, // Blue - Score
+        { border: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }, // Red - Kills
+        { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' }, // Green - Assists
+        { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' }, // Orange - Captures
+        { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' }  // Purple - Returns
       ];
-
-      // Normalize data for better visualization (use percentages of max values)
-      const maxValues = stats.reduce((max, stat) => ({
-        kills: Math.max(max.kills, stat.teamA, stat.teamB),
-        assists: Math.max(max.assists, stat.teamA, stat.teamB),
-        score: Math.max(max.score, stat.teamA, stat.teamB),
-        captures: Math.max(max.captures, stat.teamA, stat.teamB),
-        returns: Math.max(max.returns, stat.teamA, stat.teamB)
-      }), { kills: 0, assists: 0, score: 0, captures: 0, returns: 0 });
-
-      const normalizedStats = stats.map(stat => ({
-        label: stat.label,
-        teamA: maxValues[stat.label.toLowerCase()] > 0 ? (stat.teamA / maxValues[stat.label.toLowerCase()]) * 100 : 0,
-        teamB: maxValues[stat.label.toLowerCase()] > 0 ? (stat.teamB / maxValues[stat.label.toLowerCase()]) * 100 : 0
-      }));
+      
+      // Create a dataset for each stat category
+      statCategories.forEach((statName, statIndex) => {
+        const statData = [];
+        const playerNames = [];
+        
+        allPlayers.forEach(player => {
+          const playerName = player.name || player.displayName;
+          playerNames.push(playerName);
+          
+          // Find player stats
+          let playerStats = null;
+          for (const [name, stats] of playerTotals) {
+            if (name && playerName && name.toLowerCase() === playerName.toLowerCase()) {
+              playerStats = stats;
+              break;
+            }
+          }
+          
+          // Get the stat value (per minute)
+          let statValue = 0;
+          if (playerStats) {
+            switch (statName) {
+              case 'Score':
+                statValue = parseFloat(playerStats.spm) || 0;
+                break;
+              case 'Kills':
+                statValue = parseFloat(playerStats.kpm) || 0;
+                break;
+              case 'Assists':
+                statValue = parseFloat(playerStats.apm) || 0;
+                break;
+              case 'Captures':
+                statValue = parseFloat(playerStats.cpm) || 0;
+                break;
+              case 'Returns':
+                statValue = parseFloat(playerStats.rpm) || 0;
+                break;
+            }
+          }
+          
+          statData.push(statValue);
+        });
+        
+        // Normalize data to 0-100 scale for better visualization
+        const maxValue = Math.max(...statData);
+        const normalizedData = maxValue > 0 ? statData.map(value => (value / maxValue) * 100) : statData;
+        
+        datasets.push({
+          label: statName,
+          data: normalizedData,
+          borderColor: colors[statIndex].border,
+          backgroundColor: colors[statIndex].bg,
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+          pointBackgroundColor: colors[statIndex].border,
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1,
+          pointRadius: 4
+        });
+      });
 
       window.teamStatsChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: normalizedStats.map(stat => stat.label),
-          datasets: [
-            {
-              label: teamAName,
-              data: normalizedStats.map(stat => stat.teamA),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              borderWidth: 3,
-              fill: false,
-              tension: 0.4,
-              pointBackgroundColor: '#3b82f6',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2,
-              pointRadius: 6
-            },
-            {
-              label: teamBName,
-              data: normalizedStats.map(stat => stat.teamB),
-              borderColor: '#ef4444',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              borderWidth: 3,
-              fill: false,
-              tension: 0.4,
-              pointBackgroundColor: '#ef4444',
-              pointBorderColor: '#ffffff',
-              pointBorderWidth: 2,
-              pointRadius: 6
-            }
-          ]
+          labels: allPlayers.map(player => player.name || player.displayName),
+          datasets: datasets
         },
         options: {
           responsive: true,
@@ -3848,7 +3881,7 @@
               labels: {
                 color: '#e2e8f0',
                 font: {
-                  size: 14,
+                  size: 12,
                   weight: 'bold'
                 }
               }
@@ -3861,9 +3894,40 @@
               borderWidth: 1,
               callbacks: {
                 label: function(context) {
-                  const statIndex = context.dataIndex;
-                  const originalValue = stats[statIndex][context.dataset.label === teamAName ? 'teamA' : 'teamB'];
-                  return `${context.dataset.label}: ${originalValue.toLocaleString()}`;
+                  const statName = context.dataset.label;
+                  const playerName = context.label;
+                  const normalizedValue = context.parsed.y;
+                  
+                  // Find original value for tooltip
+                  const playerIndex = context.dataIndex;
+                  const player = allPlayers[playerIndex];
+                  const playerName2 = player.name || player.displayName;
+                  
+                  let originalValue = 0;
+                  for (const [name, stats] of playerTotals) {
+                    if (name && playerName2 && name.toLowerCase() === playerName2.toLowerCase()) {
+                      switch (statName) {
+                        case 'Score':
+                          originalValue = parseFloat(stats.spm) || 0;
+                          break;
+                        case 'Kills':
+                          originalValue = parseFloat(stats.kpm) || 0;
+                          break;
+                        case 'Assists':
+                          originalValue = parseFloat(stats.apm) || 0;
+                          break;
+                        case 'Captures':
+                          originalValue = parseFloat(stats.cpm) || 0;
+                          break;
+                        case 'Returns':
+                          originalValue = parseFloat(stats.rpm) || 0;
+                          break;
+                      }
+                      break;
+                    }
+                  }
+                  
+                  return `${statName}: ${originalValue.toFixed(2)}/min`;
                 }
               }
             }
@@ -3873,8 +3937,9 @@
               ticks: {
                 color: '#94a3b8',
                 font: {
-                  size: 12
-                }
+                  size: 10
+                },
+                maxRotation: 45
               },
               grid: {
                 color: 'rgba(148, 163, 184, 0.1)'
@@ -3886,7 +3951,7 @@
               ticks: {
                 color: '#94a3b8',
                 font: {
-                  size: 12
+                  size: 10
                 },
                 callback: function(value) {
                   return value + '%';
