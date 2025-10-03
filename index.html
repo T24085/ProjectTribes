@@ -3902,6 +3902,10 @@
         selectedTeams.teamA = teamA;
         selectedTeams.teamB = teamB;
         loadTeamRosters();
+        // Auto-load team statistics
+        setTimeout(() => {
+          showTeamStats();
+        }, 1000); // Small delay to ensure rosters are loaded
         hideAdminPanel();
       });
 
@@ -3910,6 +3914,33 @@
           saveActiveMatch('', '');
           setDefaultMatch();
           hideAdminPanel();
+        }
+      });
+
+      // Auto-load team stats when teams are selected in admin panel
+      teamASelect.addEventListener('change', () => {
+        const teamA = teamASelect.value;
+        const teamB = teamBSelect.value;
+        if (teamA && teamB && teamA !== teamB) {
+          selectedTeams.teamA = teamA;
+          selectedTeams.teamB = teamB;
+          loadTeamRosters();
+          setTimeout(() => {
+            showTeamStats();
+          }, 1000);
+        }
+      });
+
+      teamBSelect.addEventListener('change', () => {
+        const teamA = teamASelect.value;
+        const teamB = teamBSelect.value;
+        if (teamA && teamB && teamA !== teamB) {
+          selectedTeams.teamA = teamA;
+          selectedTeams.teamB = teamB;
+          loadTeamRosters();
+          setTimeout(() => {
+            showTeamStats();
+          }, 1000);
         }
       });
 
@@ -4505,6 +4536,17 @@
         return teamName; // Return original if no match found
       };
       
+      // Function to get team logo from team name
+      const getTeamLogo = (teamName) => {
+        // Find the team data by matching the full name
+        for (const [key, data] of Object.entries(TEAM_DATA)) {
+          if (data.name === teamName || key === teamName) {
+            return data.logo;
+          }
+        }
+        return null; // Return null if no match found
+      };
+      
       grid.innerHTML = matches.map(match => {
         const teamA = match.teamA || 'Team A';
         const teamB = match.teamB || 'Team B';
@@ -4515,14 +4557,20 @@
         const date = match.date ? new Date(match.date) : new Date();
         const dateStr = date.toLocaleDateString();
         
+        // Get team logos
+        const teamALogo = getTeamLogo(teamA);
+        const teamBLogo = getTeamLogo(teamB);
+        
         return `
           <div class="recent-match-card">
             <div class="match-teams">
               <div class="team-info">
+                ${teamALogo ? `<img src="${teamALogo}" alt="${teamA} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
                 <span class="team-name">${teamAbbr}</span>
               </div>
               <div class="match-score">${scoreA} - ${scoreB}</div>
               <div class="team-info">
+                ${teamBLogo ? `<img src="${teamBLogo}" alt="${teamB} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
                 <span class="team-name">${teamBAbbr}</span>
               </div>
             </div>
