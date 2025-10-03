@@ -3380,10 +3380,10 @@
         };
 
         console.log('Player stats loaded:', window.playerStatsData);
-        console.log('Available players:', Array.from(window.playerStatsData.playerTotals.keys()));
+        console.log('Available players:', Array.from(window.window.playerStatsData.playerTotals.keys()));
         
         // Check if stats are empty
-        if (window.playerStatsData.playerTotals.size === 0) {
+        if (window.window.playerStatsData.playerTotals.size === 0) {
           console.log('Published stats are empty - no player data found');
           return null;
         }
@@ -3401,33 +3401,33 @@
       
       if (!statsSection || !statsContent) return;
 
-      if (!playerStatsData) {
+      if (!window.playerStatsData) {
         statsContent.innerHTML = '<div class="text-center text-gray-400">No player statistics available</div>';
         statsSection.style.display = 'block';
         return;
       }
 
       console.log('Looking for player stats:', playerName);
-      console.log('Available players in stats:', Array.from(playerStatsData.playerTotals.keys()));
+      console.log('Available players in stats:', Array.from(window.window.playerStatsData.playerTotals.keys()));
 
       // Try exact match first
-      let player = playerStatsData.playerTotals.get(playerName);
+      let player = window.window.playerStatsData.playerTotals.get(playerName);
       
       // If no exact match, try case-insensitive search
       if (!player && playerName) {
-        const playerNames = Array.from(playerStatsData.playerTotals.keys());
+        const playerNames = Array.from(window.playerStatsData.playerTotals.keys());
         const foundName = playerNames.find(name => 
           name && name.toLowerCase() === playerName.toLowerCase()
         );
         if (foundName) {
-          player = playerStatsData.playerTotals.get(foundName);
+          player = window.playerStatsData.playerTotals.get(foundName);
           console.log('Found case-insensitive match:', foundName);
         }
       }
 
       // If still no match, try partial matching
       if (!player && playerName) {
-        const playerNames = Array.from(playerStatsData.playerTotals.keys());
+        const playerNames = Array.from(window.playerStatsData.playerTotals.keys());
         const foundName = playerNames.find(name => 
           name && (
             name.toLowerCase().includes(playerName.toLowerCase()) ||
@@ -3435,7 +3435,7 @@
           )
         );
         if (foundName) {
-          player = playerStatsData.playerTotals.get(foundName);
+          player = window.playerStatsData.playerTotals.get(foundName);
           console.log('Found partial match:', foundName);
         }
       }
@@ -3444,7 +3444,7 @@
         statsContent.innerHTML = `
           <div class="text-center text-gray-400">
             <p>No statistics found for "${playerName}"</p>
-            <p class="text-sm mt-2">Available players: ${Array.from(playerStatsData.playerTotals.keys()).slice(0, 10).join(', ')}${playerStatsData.playerTotals.size > 10 ? '...' : ''}</p>
+            <p class="text-sm mt-2">Available players: ${Array.from(window.playerStatsData.playerTotals.keys()).slice(0, 10).join(', ')}${window.playerStatsData.playerTotals.size > 10 ? '...' : ''}</p>
           </div>
         `;
         statsSection.style.display = 'block';
@@ -3648,9 +3648,9 @@
     // Test function for player stats
     function testPlayerStats() {
       console.log('Testing player stats functionality...');
-      if (playerStatsData) {
-        console.log('Player stats data loaded:', playerStatsData);
-        const playerNames = Array.from(playerStatsData.playerTotals.keys());
+      if (window.playerStatsData) {
+        console.log('Player stats data loaded:', window.playerStatsData);
+        const playerNames = Array.from(window.playerStatsData.playerTotals.keys());
         console.log('Available players:', playerNames);
         if (playerNames.length > 0) {
           showPlayerStats(playerNames[0]);
@@ -3676,8 +3676,8 @@
         console.log('Team B roster names:', teamBRoster.map(p => p.name || p.displayName));
       }
       
-      if (playerStatsData) {
-        const statsNames = Array.from(playerStatsData.playerTotals.keys());
+      if (window.playerStatsData) {
+        const statsNames = Array.from(window.playerStatsData.playerTotals.keys());
         console.log('Stats database names:', statsNames);
         
         // Check for matches
@@ -3979,7 +3979,7 @@
       
       if (!statsSection || !statsContent) return;
 
-      if (!playerStatsData || !selectedTeams.teamA || !selectedTeams.teamB) {
+      if (!window.playerStatsData || !selectedTeams.teamA || !selectedTeams.teamB) {
         statsContent.innerHTML = '<div class="text-center text-gray-400">No team statistics available</div>';
         statsSection.style.display = 'block';
         return;
@@ -4077,7 +4077,7 @@
       // Create the line chart after ensuring data is loaded
       const createChart = async () => {
         // Make sure player stats are loaded first
-        if (!window.playerStatsData || !window.playerStatsData.playerTotals || window.playerStatsData.playerTotals.size === 0) {
+        if (!window.playerStatsData || !window.window.playerStatsData.playerTotals || window.window.playerStatsData.playerTotals.size === 0) {
           console.log('Player stats not loaded or empty, loading now...');
           await loadPlayerStats();
         }
@@ -4101,18 +4101,18 @@
 
       roster.forEach(player => {
         const playerName = player.name || player.displayName;
-        if (playerName && playerStatsData && playerStatsData.playerTotals) {
+        if (playerName && playerStatsData && window.playerStatsData.playerTotals) {
           // Try to find player stats with name matching
-          let playerStats = playerStatsData.playerTotals.get(playerName);
+          let playerStats = window.playerStatsData.playerTotals.get(playerName);
           
           if (!playerStats) {
             // Try case-insensitive search
-            const playerNames = Array.from(playerStatsData.playerTotals.keys());
+            const playerNames = Array.from(window.playerStatsData.playerTotals.keys());
             const foundName = playerNames.find(name => 
               name && name.toLowerCase() === playerName.toLowerCase()
             );
             if (foundName) {
-              playerStats = playerStatsData.playerTotals.get(foundName);
+              playerStats = window.playerStatsData.playerTotals.get(foundName);
             }
           }
 
@@ -4162,7 +4162,7 @@
       
       // Get player stats for all players
       const playerStatsData = window.playerStatsData || {};
-      const playerTotals = playerStatsData.playerTotals || new Map();
+      const playerTotals = window.playerStatsData.playerTotals || new Map();
       
       console.log('Player stats data:', playerStatsData);
       console.log('Player totals:', playerTotals);
@@ -4534,11 +4534,11 @@
       console.log('=== PLAYER STATS DEBUG ===');
       console.log('window.playerStatsData:', window.playerStatsData);
       
-      if (window.playerStatsData && window.playerStatsData.playerTotals) {
-        console.log('Player totals size:', window.playerStatsData.playerTotals.size);
+      if (window.playerStatsData && window.window.playerStatsData.playerTotals) {
+        console.log('Player totals size:', window.window.playerStatsData.playerTotals.size);
         console.log('First 5 players:');
         let count = 0;
-        for (const [name, stats] of window.playerStatsData.playerTotals) {
+        for (const [name, stats] of window.window.playerStatsData.playerTotals) {
           if (count < 5) {
             console.log(`${name}:`, stats);
             count++;
@@ -4726,8 +4726,8 @@
         console.log('Updated playerStatsData:', window.playerStatsData);
         
         if (window.playerStatsData) {
-          console.log('Player totals size:', window.playerStatsData.playerTotals?.size || 0);
-          console.log('Team totals size:', window.playerStatsData.teamTotals?.size || 0);
+          console.log('Player totals size:', window.window.playerStatsData.playerTotals?.size || 0);
+          console.log('Team totals size:', window.window.playerStatsData.teamTotals?.size || 0);
           console.log('Total matches:', window.playerStatsData.totalMatches);
         }
       }).catch((error) => {
