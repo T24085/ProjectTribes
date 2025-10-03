@@ -1628,7 +1628,12 @@
         folder: 'FT',
         roster: "Players: playb0x, Bizow, Zao, nato, LightningMcMeme, Bazz-B, didjital\nBench: bgkillas, Dreadtitan, Orvid",
         streams: [
-          { name: 'Mikeax2', url: 'https://www.twitch.tv/mikeax2' },
+          { name: 'Bizow', url: 'https://www.twitch.tv/bizow' },
+          { name: 'Zao', url: 'https://www.twitch.tv/zao' },
+          { name: 'Bazz-B', url: 'https://www.twitch.tv/bazzb' },
+          { name: 'didjital', url: 'https://www.twitch.tv/didjital' },
+          { name: 'bgkillas', url: 'https://www.twitch.tv/bgkillas' },
+          { name: 'Orvid', url: 'https://www.twitch.tv/orvid' },
           { name: 'nato', url: 'https://www.twitch.tv/natopotato262' },
           { name: 'playb0x', url: 'https://www.twitch.tv/playb0x' },
           { name: 'Dreadtitan', url: 'https://www.twitch.tv/dreadtitan' }
@@ -1675,14 +1680,21 @@
         logo: 'https://github.com/T24085/Team-UE/blob/main/UE.png?raw=true', 
         name: 'Unhandled Exception', 
         folder: 'UE',
-        roster: "DeadManWalking, Pablo, TTVfoenixx, Loot, Nykie4life, Stimzees, The Quacken .",
+        roster: "Captain: @[-UE-] - Season 1 TPL-O\nPlayers: Loot, DeadManwalking, Pablo, ContingencyPlan\nBench: kilshot, Caricature, Stimula, Demontoe, Expungebob, Shadowwalker140i, hawxter, Anni, guruizzy",
         streams: [
-          { name: 'PabloSexcrobar', url: 'https://www.twitch.tv/eltimablo' },
-          { name: 'RoamenCota', url: 'https://www.twitch.tv/roamencota' },
-          { name: 'Simmons', url: 'https://www.twitch.tv/simmons572' },
-          { name: 'Def_Monk (YT)', url: 'https://www.youtube.com/@defmonk0/streams' },
-          { name: 'Deadmanwalking (YT)', url: 'https://www.youtube.com/@DeadManWalking-UF-/streams' },
-          { name: 'Ghost_Loot', url: 'https://www.twitch.tv/ghost_loot' }
+          { name: 'Loot', url: 'https://www.twitch.tv/ghost_loot' },
+          { name: 'DeadManwalking', url: 'https://www.youtube.com/@DeadManWalking-UF-/streams' },
+          { name: 'Pablo', url: 'https://www.twitch.tv/eltimablo' },
+          { name: 'ContingencyPlan', url: 'https://www.twitch.tv/contingencyplan' },
+          { name: 'kilshot', url: 'https://www.twitch.tv/kilshot' },
+          { name: 'Caricature', url: 'https://www.twitch.tv/caricature' },
+          { name: 'Stimula', url: 'https://www.twitch.tv/stimula' },
+          { name: 'Demontoe', url: 'https://www.twitch.tv/demontoe' },
+          { name: 'Expungebob', url: 'https://www.twitch.tv/expungebob' },
+          { name: 'Shadowwalker140i', url: 'https://www.twitch.tv/shadowwalker140i' },
+          { name: 'hawxter', url: 'https://www.twitch.tv/hawxter' },
+          { name: 'Anni', url: 'https://www.twitch.tv/anni' },
+          { name: 'guruizzy', url: 'https://www.twitch.tv/guruizzy' }
         ]
       },
       'KTL': { 
@@ -1691,7 +1703,15 @@
         folder: 'KTL',
         roster: "Captain: @n0xide\nCore: =ACE=, Navy, ctrl, kwago, Paragon, SecondSight, Torment, Alphakrab",
         streams: [
-          { name: 'isoitiro', url: 'https://www.twitch.tv/isoitiro' }
+          { name: 'n0xide', url: 'https://www.twitch.tv/n0xide' },
+          { name: 'isoitiro', url: 'https://www.twitch.tv/isoitiro' },
+          { name: 'Navy', url: 'https://www.twitch.tv/navy' },
+          { name: 'ctrl', url: 'https://www.twitch.tv/ctrl' },
+          { name: 'kwago', url: 'https://www.twitch.tv/kwago' },
+          { name: 'Paragon', url: 'https://www.twitch.tv/paragon' },
+          { name: 'SecondSight', url: 'https://www.twitch.tv/secondsight' },
+          { name: 'Torment', url: 'https://www.twitch.tv/torment' },
+          { name: 'Alphakrab', url: 'https://www.twitch.tv/alphakrab' }
         ]
       },
       'Null': { 
@@ -1700,6 +1720,7 @@
         folder: 'Null',
         roster: "Captain: @_...\nCore: Blaspheme, Annaberries, xQ, muuki, exhumaxer, corbeling, mikeax2\nBench: ryan",
         streams: [
+          { name: 'mikeax2', url: 'https://www.twitch.tv/mikeax2' },
           { name: 'z4t01', url: 'https://www.twitch.tv/z4t01' }
         ]
       },
@@ -3843,6 +3864,10 @@
       const teamASelect = document.getElementById('admin-team-a');
       const teamBSelect = document.getElementById('admin-team-b');
       
+      // Clear existing options first (except the first default option)
+      teamASelect.innerHTML = '<option value="">Select Team A</option>';
+      teamBSelect.innerHTML = '<option value="">Select Team B</option>';
+      
       Object.keys(TEAM_DATA).forEach(teamKey => {
         const team = TEAM_DATA[teamKey];
         const optionA = new Option(team.name, teamKey);
@@ -4539,6 +4564,30 @@
       }, 1000);
       
       console.log(`Updated Twitch chat to channel: ${channel} with parent: ${parentDomain}`);
+    }
+
+    // Update streamer dropdown with available streams
+    function updateStreamerDropdown() {
+      const streamerSelect = document.getElementById('streamer-select');
+      if (!streamerSelect) return;
+      
+      // Clear existing options except the first two (caster and main chat)
+      streamerSelect.innerHTML = `
+        <option value="oo0oo_live">0o0o0 (Caster)</option>
+        <option value="tribesprofessionalleague">TPL Main Chat</option>
+      `;
+      
+      // Add all team streams
+      Object.values(TEAM_DATA).forEach(team => {
+        if (team.streams && Array.isArray(team.streams)) {
+          team.streams.forEach(streamer => {
+            const option = document.createElement('option');
+            option.value = streamer.url.match(/twitch\.tv\/([^/?]+)/i)?.[1] || streamer.name.toLowerCase();
+            option.textContent = `${streamer.name} (${team.name})`;
+            streamerSelect.appendChild(option);
+          });
+        }
+      });
     }
 
     // Make test functions available globally for debugging

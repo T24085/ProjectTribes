@@ -53,9 +53,15 @@
       { name: 'Beldark', url: 'https://www.twitch.tv/beldarkk' }
     ],
     'FT': [
-      { name: 'Mikeax2', url: 'https://www.twitch.tv/mikeax2' },
+      { name: 'Bizow', url: 'https://www.twitch.tv/bizow' },
+      { name: 'Zao', url: 'https://www.twitch.tv/zao' },
+      { name: 'Bazz-B', url: 'https://www.twitch.tv/bazzb' },
+      { name: 'didjital', url: 'https://www.twitch.tv/didjital' },
+      { name: 'bgkillas', url: 'https://www.twitch.tv/bgkillas' },
+      { name: 'Orvid', url: 'https://www.twitch.tv/orvid' },
       { name: 'nato', url: 'https://www.twitch.tv/natopotato262' },
-      { name: 'playb0x', url: 'https://www.twitch.tv/playb0x' }
+      { name: 'playb0x', url: 'https://www.twitch.tv/playb0x' },
+      { name: 'Dreadtitan', url: 'https://www.twitch.tv/dreadtitan' }
     ],
     'HoE': [
       { name: 'Katar', url: 'https://www.twitch.tv/karolk10' },
@@ -74,10 +80,34 @@
       { name: 'Makasuro', url: 'https://www.twitch.tv/makasuro' }
     ],
     'UE': [
-      { name: 'PabloSexcrobar', url: 'https://www.twitch.tv/eltimablo' },
-      { name: 'RoamenCota', url: 'https://www.twitch.tv/roamencota' },
-      { name: 'Simmons', url: 'https://www.twitch.tv/simmons572' },
-      { name: 'Ghost_Loot', url: 'https://www.twitch.tv/ghost_loot' }
+      { name: 'Loot', url: 'https://www.twitch.tv/ghost_loot' },
+      { name: 'DeadManwalking', url: 'https://www.youtube.com/@DeadManWalking-UF-/streams' },
+      { name: 'Pablo', url: 'https://www.twitch.tv/eltimablo' },
+      { name: 'ContingencyPlan', url: 'https://www.twitch.tv/contingencyplan' },
+      { name: 'kilshot', url: 'https://www.twitch.tv/kilshot' },
+      { name: 'Caricature', url: 'https://www.twitch.tv/caricature' },
+      { name: 'Stimula', url: 'https://www.twitch.tv/stimula' },
+      { name: 'Demontoe', url: 'https://www.twitch.tv/demontoe' },
+      { name: 'Expungebob', url: 'https://www.twitch.tv/expungebob' },
+      { name: 'Shadowwalker140i', url: 'https://www.twitch.tv/shadowwalker140i' },
+      { name: 'hawxter', url: 'https://www.twitch.tv/hawxter' },
+      { name: 'Anni', url: 'https://www.twitch.tv/anni' },
+      { name: 'guruizzy', url: 'https://www.twitch.tv/guruizzy' }
+    ],
+    'KTL': [
+      { name: 'n0xide', url: 'https://www.twitch.tv/n0xide' },
+      { name: 'isoitiro', url: 'https://www.twitch.tv/isoitiro' },
+      { name: 'Navy', url: 'https://www.twitch.tv/navy' },
+      { name: 'ctrl', url: 'https://www.twitch.tv/ctrl' },
+      { name: 'kwago', url: 'https://www.twitch.tv/kwago' },
+      { name: 'Paragon', url: 'https://www.twitch.tv/paragon' },
+      { name: 'SecondSight', url: 'https://www.twitch.tv/secondsight' },
+      { name: 'Torment', url: 'https://www.twitch.tv/torment' },
+      { name: 'Alphakrab', url: 'https://www.twitch.tv/alphakrab' }
+    ],
+    'Null': [
+      { name: 'mikeax2', url: 'https://www.twitch.tv/mikeax2' },
+      { name: 'z4t01', url: 'https://www.twitch.tv/z4t01' }
     ]
   };
 
