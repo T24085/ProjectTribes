@@ -1624,7 +1624,7 @@
         logo: 'https://github.com/T24085/Team-FT/blob/main/FTlogo.png?raw=true', 
         name: 'Flying Tractors', 
         folder: 'FT',
-        roster: "Captain: @p...\nCore: Bizow, Zao, Dreadtitan, nato, LightningMcMeme, Orvid, Bazz-B",
+        roster: "Players: playb0x, Bizow, Zao, nato, LightningMcMeme, Bazz-B, didjital\nBench: bgkillas, Dreadtitan, Orvid",
         streams: [
           { name: 'Mikeax2', url: 'https://www.twitch.tv/mikeax2' },
           { name: 'nato', url: 'https://www.twitch.tv/natopotato262' },
@@ -1911,7 +1911,18 @@
       const lines = rosterText.split('\n');
       
       lines.forEach(line => {
-        if (line.includes('Core:')) {
+        if (line.includes('Players:')) {
+          const mainPlayers = line.split('Players:')[1].split(',').map(p => p.trim());
+          mainPlayers.forEach(playerName => {
+            if (playerName && playerName !== '') {
+              players.push({
+                name: playerName,
+                role: 'Player',
+                displayName: playerName
+              });
+            }
+          });
+        } else if (line.includes('Core:')) {
           const corePlayers = line.split('Core:')[1].split(',').map(p => p.trim());
           corePlayers.forEach(playerName => {
             if (playerName && playerName !== '') {
@@ -2553,11 +2564,16 @@
       'Simmons': 'simmons572',
       
       // Flying Tractors team mappings
-      'Mikeax2': 'mikeax2',
-      'nato': 'natopotato262',
       'playb0x': 'playb0x',
-      'LightningMcMeme': 'playb0x',
+      'Bizow': 'mikeax2',  // Bizow streams as Mikeax2
+      'Zao': 'mikeax2',    // or Zao streams as Mikeax2
+      'nato': 'natopotato262',
+      'LightningMcMeme': 'lightningmcmeme',  // LightningMcMeme has their own stream
+      'Bazz-B': 'mikeax2', // or Bazz-B streams as Mikeax2
+      'didjital': 'mikeax2', // or didjital streams as Mikeax2
+      'bgkillas': 'mikeax2', // bench player
       'Dreadtitan': 'dreadtitan',
+      'Orvid': 'mikeax2',   // bench player
       
       // HoE team mappings
       'Katar': 'karolk10',
