@@ -4580,6 +4580,41 @@
       console.log('LightningMcMeme mapping:', PLAYER_NAME_MAPPING['LightningMcMeme']);
     };
 
+    // Debug function to test Mikesters specifically
+    window.testMikesters = function() {
+      console.log('=== Testing Mikesters Stream Link ===');
+      
+      // Test the name mapping
+      const testPlayer = { name: 'Mikesters' };
+      const twitchHandle = getTwitchHandleForPlayer(testPlayer);
+      console.log('Mikesters -> Twitch handle:', twitchHandle);
+      
+      // Check Zen roster
+      const zenRoster = teamRosters['Zen'] || teamRosters['ZEN'];
+      console.log('Zen roster:', zenRoster);
+      
+      if (zenRoster) {
+        const mikestersPlayer = zenRoster.find(p => p.name === 'Mikesters');
+        if (mikestersPlayer) {
+          const handle = getTwitchHandleForPlayer(mikestersPlayer);
+          console.log('Mikesters player object -> Twitch handle:', handle);
+          
+          // Test the stream URL
+          if (handle) {
+            let parentDomain = window.location.hostname;
+            if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+              parentDomain = 'tribesprofessionalleague.com';
+            }
+            const streamUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&parent=${parentDomain}&autoplay=false`;
+            console.log('Mikesters stream URL:', streamUrl);
+          }
+        }
+      }
+      
+      // Test the mapping directly
+      console.log('Mikesters mapping:', PLAYER_NAME_MAPPING['Mikesters']);
+    };
+
     // Streamer chat functionality
     function updateStreamerChat() {
       // Check if any players are live and update streamer chat
