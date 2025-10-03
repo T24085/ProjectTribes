@@ -4077,14 +4077,14 @@
       // Create the line chart after ensuring data is loaded
       const createChart = async () => {
         // Make sure player stats are loaded first
-        if (!window.playerStatsData || !window.window.playerStatsData.playerTotals || window.window.playerStatsData.playerTotals.size === 0) {
+        if (!window.playerStatsData || !window.playerStatsData.playerTotals || window.playerStatsData.playerTotals.size === 0) {
           console.log('Player stats not loaded or empty, loading now...');
           await loadPlayerStats();
         }
         
         // Wait a bit more for data to be processed
         setTimeout(() => {
-          createTeamStatsLineChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
+          createTeamStatsRadarChart(teamAStats, teamBStats, teamAData.name, teamBData.name);
         }, 200);
       };
       
@@ -4101,7 +4101,7 @@
 
       roster.forEach(player => {
         const playerName = player.name || player.displayName;
-        if (playerName && playerStatsData && window.playerStatsData.playerTotals) {
+        if (playerName && window.playerStatsData && window.playerStatsData.playerTotals) {
           // Try to find player stats with name matching
           let playerStats = window.playerStatsData.playerTotals.get(playerName);
           
@@ -4142,7 +4142,7 @@
       };
     }
 
-    function createTeamStatsLineChart(teamAStats, teamBStats, teamAName, teamBName) {
+    function createTeamStatsRadarChart(teamAStats, teamBStats, teamAName, teamBName) {
       const canvas = document.getElementById('team-stats-chart');
       if (!canvas) {
         console.error('Team stats chart canvas not found');
@@ -4185,18 +4185,6 @@
         }
       }
       
-      // Prepare data for each stat category and team
-      const statCategories = ['Score', 'Kills', 'Assists', 'Captures', 'Returns'];
-      const datasets = [];
-      
-      // Color palette - solid colors for team A, dashed for team B
-      const colors = [
-        { solid: '#3b82f6', dashed: '#60a5fa' }, // Blue - Score
-        { solid: '#ef4444', dashed: '#f87171' }, // Red - Kills
-        { solid: '#10b981', dashed: '#34d399' }, // Green - Assists
-        { solid: '#f59e0b', dashed: '#fbbf24' }, // Orange - Captures
-        { solid: '#8b5cf6', dashed: '#a78bfa' }  // Purple - Returns
-      ];
       
       // Create datasets for each stat category and team combination
       statCategories.forEach((statName, statIndex) => {
@@ -4316,16 +4304,81 @@
         });
       });
 
-      // Create labels for both teams
-      const teamALabels = teamARoster.map(player => player.name || player.displayName);
-      const teamBLabels = teamBRoster.map(player => player.name || player.displayName);
-      const allLabels = [...teamALabels, ...teamBLabels];
+      // Calculate normalized values for radar chart (0-100 scale)
+      const normalizeValue = (value, maxValue) => {
+        if (maxValue === 0) return 0;
+        return Math.min(100, (value / maxValue) * 100);
+      };
+      
+      // Calculate per-minute rates for better comparison
+      const teamAKPM = teamAStats.totalTime > 0 ? teamAStats.totalKills / teamAStats.totalTime : 0;
+      const teamBKPM = teamBStats.totalTime > 0 ? teamBStats.totalKills / teamBStats.totalTime : 0;
+      const teamAAPM = teamAStats.totalTime > 0 ? teamAStats.totalAssists / teamAStats.totalTime : 0;
+      const teamBAPM = teamBStats.totalTime > 0 ? teamBStats.totalAssists / teamBStats.totalTime : 0;
+      const teamASPM = teamAStats.totalTime > 0 ? teamAStats.totalScore / teamAStats.totalTime : 0;
+      const teamBSPM = teamBStats.totalTime > 0 ? teamBStats.totalScore / teamBStats.totalTime : 0;
+      const teamACPM = teamAStats.totalTime > 0 ? teamAStats.totalCaptures / teamAStats.totalTime : 0;
+      const teamBCPM = teamBStats.totalTime > 0 ? teamBStats.totalCaptures / teamBStats.totalTime : 0;
+      const teamARPM = teamAStats.totalTime > 0 ? teamAStats.totalReturns / teamAStats.totalTime : 0;
+      const teamBRPM = teamBStats.totalTime > 0 ? teamBStats.totalReturns / teamBStats.totalTime : 0;
+      
+      // Find max per-minute values for normalization
+      const maxKPM = Math.max(teamAKPM, teamBKPM);
+      const maxAPM = Math.max(teamAAPM, teamBAPM);
+      const maxSPM = Math.max(teamASPM, teamBSPM);
+      const maxCPM = Math.max(teamACPM, teamBCPM);
+      const maxRPM = Math.max(teamARPM, teamBRPM);
+      
+      // Prepare radar chart data
+      const labels = ['Kills/min', 'Assists/min', 'Score/min', 'Captures/min', 'Returns/min'];
+      
+      const teamAData = [
+        normalizeValue(teamAKPM, maxKPM),
+        normalizeValue(teamAAPM, maxAPM),
+        normalizeValue(teamASPM, maxSPM),
+        normalizeValue(teamACPM, maxCPM),
+        normalizeValue(teamARPM, maxRPM)
+      ];
+      
+      const teamBData = [
+        normalizeValue(teamBKPM, maxKPM),
+        normalizeValue(teamBAPM, maxAPM),
+        normalizeValue(teamBSPM, maxSPM),
+        normalizeValue(teamBCPM, maxCPM),
+        normalizeValue(teamBRPM, maxRPM)
+      ];
+      
+      console.log('Team A normalized data:', teamAData);
+      console.log('Team B normalized data:', teamBData);
 
       window.teamStatsChart = new Chart(ctx, {
-        type: 'line',
+        type: 'radar',
         data: {
-          labels: allLabels,
-          datasets: datasets
+          labels: labels,
+          datasets: [
+            {
+              label: teamAName,
+              data: teamAData,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.2)',
+              borderWidth: 3,
+              pointBackgroundColor: '#3b82f6',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 6
+            },
+            {
+              label: teamBName,
+              data: teamBData,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              borderWidth: 3,
+              pointBackgroundColor: '#ef4444',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 2,
+              pointRadius: 6
+            }
+          ]
         },
         options: {
           responsive: true,
@@ -4348,61 +4401,37 @@
               borderWidth: 1,
               callbacks: {
                 label: function(context) {
-                  const label = context.dataset.label;
-                  const playerName = context.label;
-                  const normalizedValue = context.parsed.y;
+                  const teamName = context.dataset.label;
+                  const statName = context.label;
+                  const normalizedValue = context.parsed.r;
                   
-                  // Find original value for tooltip
-                  const isTeamA = label.includes(teamAName);
-                  const roster = isTeamA ? teamARoster : teamBRoster;
-                  const playerIndex = isTeamA ? context.dataIndex : context.dataIndex - teamARoster.length;
-                  const player = roster[playerIndex];
-                  const playerName2 = player ? (player.name || player.displayName) : '';
-                  
-                  let originalValue = 0;
-                  for (const [name, stats] of playerTotals) {
-                    if (name && playerName2 && name.toLowerCase() === playerName2.toLowerCase()) {
-                      const statName = label.split(' ')[1]; // Extract stat name from label
-                      switch (statName) {
-                        case 'Score':
-                          originalValue = parseFloat(stats.spm) || 0;
-                          break;
-                        case 'Kills':
-                          originalValue = parseFloat(stats.kpm) || 0;
-                          break;
-                        case 'Assists':
-                          originalValue = parseFloat(stats.apm) || 0;
-                          break;
-                        case 'Captures':
-                          originalValue = parseFloat(stats.cpm) || 0;
-                          break;
-                        case 'Returns':
-                          originalValue = parseFloat(stats.rpm) || 0;
-                          break;
-                      }
-                      break;
+                  // Get actual values for tooltip
+                  let actualValue = 0;
+                  if (teamName === teamAName) {
+                    switch (statName) {
+                      case 'Kills/min': actualValue = teamAKPM; break;
+                      case 'Assists/min': actualValue = teamAAPM; break;
+                      case 'Score/min': actualValue = teamASPM; break;
+                      case 'Captures/min': actualValue = teamACPM; break;
+                      case 'Returns/min': actualValue = teamARPM; break;
+                    }
+                  } else {
+                    switch (statName) {
+                      case 'Kills/min': actualValue = teamBKPM; break;
+                      case 'Assists/min': actualValue = teamBAPM; break;
+                      case 'Score/min': actualValue = teamBSPM; break;
+                      case 'Captures/min': actualValue = teamBCPM; break;
+                      case 'Returns/min': actualValue = teamBRPM; break;
                     }
                   }
                   
-                  return `${label}: ${originalValue.toFixed(2)}/min`;
+                  return `${statName}: ${actualValue.toFixed(2)}`;
                 }
               }
             }
           },
           scales: {
-            x: {
-              ticks: {
-                color: '#94a3b8',
-                font: {
-                  size: 9
-                },
-                maxRotation: 45
-              },
-              grid: {
-                color: 'rgba(148, 163, 184, 0.1)'
-              }
-            },
-            y: {
+            r: {
               beginAtZero: true,
               max: 100,
               ticks: {
@@ -4415,7 +4444,17 @@
                 }
               },
               grid: {
-                color: 'rgba(148, 163, 184, 0.1)'
+                color: 'rgba(148, 163, 184, 0.2)'
+              },
+              angleLines: {
+                color: 'rgba(148, 163, 184, 0.2)'
+              },
+              pointLabels: {
+                color: '#e2e8f0',
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
               }
             }
           }
