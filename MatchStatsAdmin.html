@@ -179,17 +179,17 @@
     }
 
     async function loadMatches() {
-      const snap = await getDocs(collection(db, 'matches'));
-      const listDiv = document.getElementById('matchesList');
-      listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2>';
-      if (snap.empty) {
-        listDiv.innerHTML += '<p>No matches saved.</p>';
-        if (!editingMatchId) {
-          resetOutput();
+      try {
+        const snap = await getDocs(collection(db, 'matches'));
+        const listDiv = document.getElementById('matchesList');
+        listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2>';
+        if (snap.empty) {
+          listDiv.innerHTML += '<p>No matches saved.</p>';
+          if (!editingMatchId) {
+            resetOutput();
+          }
+          return;
         }
-
-        return;
-      }
       const table = document.createElement('table');
       table.className = 'min-w-full text-left border border-gray-700';
       table.innerHTML = `
@@ -205,11 +205,18 @@
       `;
       const tbody = table.querySelector('tbody');
       const matches = [];
+      console.log('Loading matches, total documents:', snap.size);
       snap.forEach(docSnap => {
         const data = docSnap.data();
         matches.push({ id: docSnap.id, data });
         let dateStr = '';
-        try { dateStr = data.created.toDate().toLocaleString(); } catch(e) { dateStr = ''; }
+        try { 
+          dateStr = data.created.toDate().toLocaleString(); 
+          console.log('Match found:', data.team1, 'vs', data.team2, 'on', dateStr);
+        } catch(e) { 
+          console.error('Error parsing date for match:', data, e);
+          dateStr = ''; 
+        }
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="px-2">${dateStr}</td>
@@ -237,7 +244,11 @@
         const matchMeta = formatMatchMeta(latest.data);
         renderRunningTotals(latest.data.stats || {}, matchMeta);
       }
-
+      } catch (error) {
+        console.error('Error loading matches:', error);
+        const listDiv = document.getElementById('matchesList');
+        listDiv.innerHTML = '<h2 class="text-2xl font-bold mb-4">Saved Matches</h2><p class="text-red-500">Error loading matches. Please refresh the page.</p>';
+      }
     }
 
     async function deleteMatch(id) {
@@ -792,7 +803,11 @@
       editingMatchId = null;
       currentMatchCreated = null;
       document.getElementById('saveMatch').textContent = 'Save Match';
-      loadMatches();
+      
+      // Add a small delay to ensure Firestore consistency
+      setTimeout(() => {
+        loadMatches();
+      }, 500);
 
       if (rebuildError) {
         alert(`${actionMessage} However, updating the public stats snapshot failed. Please try saving again to refresh the stats.`);
