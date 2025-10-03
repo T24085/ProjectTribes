@@ -1751,31 +1751,40 @@
 
     async function loadTeamRosters() {
       try {
+        console.log('Loading team rosters...');
         const teamsRef = collection(db, 'teams');
         const teamsSnapshot = await getDocs(teamsRef);
         
+        console.log('Teams snapshot size:', teamsSnapshot.size);
+        
         teamsSnapshot.forEach(doc => {
           const teamData = doc.data();
+          console.log('Processing team:', teamData.teamName, teamData);
+          
           if (teamData.teamName) {
             // Load complete roster including all players and bench players
             const completeRoster = [];
             
             // Add main roster players
             if (teamData.players && Array.isArray(teamData.players)) {
+              console.log('Adding main players for', teamData.teamName, ':', teamData.players);
               completeRoster.push(...teamData.players);
             }
             
             // Add bench players if they exist
             if (teamData.benchPlayers && Array.isArray(teamData.benchPlayers)) {
+              console.log('Adding bench players for', teamData.teamName, ':', teamData.benchPlayers);
               completeRoster.push(...teamData.benchPlayers);
             }
             
             // Add any additional roster data
             if (teamData.roster && Array.isArray(teamData.roster)) {
+              console.log('Adding roster data for', teamData.teamName, ':', teamData.roster);
               completeRoster.push(...teamData.roster);
             }
             
             teamRosters[teamData.teamName] = completeRoster;
+            console.log('Final roster for', teamData.teamName, ':', completeRoster);
           }
         });
         
@@ -1783,6 +1792,7 @@
         
         // Update player tabs if teams are selected
         if (selectedTeams.teamA && selectedTeams.teamB) {
+          console.log('Updating player tabs for teams:', selectedTeams.teamA, selectedTeams.teamB);
           updatePlayerTabs();
         }
       } catch (error) {
@@ -4221,6 +4231,37 @@
         }
       } catch (error) {
         console.error('Error checking document:', error);
+      }
+    };
+
+    // Debug function to check team rosters
+    window.debugTeamRosters = function() {
+      console.log('=== Team Rosters Debug ===');
+      console.log('Selected teams:', selectedTeams);
+      console.log('Team rosters object:', teamRosters);
+      console.log('Team A roster:', teamRosters[selectedTeams.teamA]);
+      console.log('Team B roster:', teamRosters[selectedTeams.teamB]);
+      
+      if (selectedTeams.teamA) {
+        console.log('Team A name:', TEAM_DATA[selectedTeams.teamA]?.name);
+        console.log('Team A roster length:', teamRosters[selectedTeams.teamA]?.length || 0);
+      }
+      
+      if (selectedTeams.teamB) {
+        console.log('Team B name:', TEAM_DATA[selectedTeams.teamB]?.name);
+        console.log('Team B roster length:', teamRosters[selectedTeams.teamB]?.length || 0);
+      }
+    };
+
+    // Debug function to reload team rosters
+    window.reloadTeamRosters = async function() {
+      console.log('=== Reloading Team Rosters ===');
+      try {
+        await loadTeamRosters();
+        console.log('Team rosters reloaded successfully');
+        window.debugTeamRosters();
+      } catch (error) {
+        console.error('Error reloading team rosters:', error);
       }
     };
 
