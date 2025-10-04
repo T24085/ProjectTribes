@@ -115,5 +115,10 @@ service cloud.firestore {
         isAdmin();
       allow delete: if isAdmin();
     }
+
+    match /playerTwitchHandles/{handleId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
