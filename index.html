@@ -1568,20 +1568,37 @@
       <!-- Twitch Chat Section -->
       <div class="sidebar-section chat-section">
         <div class="chat-header">
-        <h3>Live Chat</h3>
+          <h3>Live Chat</h3>
           <select id="streamer-select" class="streamer-dropdown">
             <option value="oo0oo_live">0o0o0 (Caster)</option>
             <option value="tribesprofessionalleague">TPL Main Chat</option>
           </select>
         </div>
         <div class="twitch-chat-container">
-          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 240px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
             <div class="text-center">
               <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
               <div>Connecting to Chat...</div>
+            </div>
+          </div>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 240px; border: none; border-radius: 0.5rem; display: none;"></iframe>
         </div>
-      </div>
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 500px; border: none; border-radius: 0.5rem; display: none;"></iframe>
+        
+        <!-- Player Chat Section -->
+        <div class="player-chat-section" style="margin-top: 1rem;">
+          <div class="chat-header">
+            <h3>Player Chat</h3>
+            <div id="selected-player-name" class="selected-player-display" style="color: var(--text-muted); font-size: 0.9rem;">Select a player</div>
+          </div>
+          <div class="twitch-chat-container">
+            <div class="player-chat-loading" style="display: flex; align-items: center; justify-content: center; height: 240px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+              <div class="text-center">
+                <div class="text-gray-400 mb-2">👤</div>
+                <div>Select a player to view their chat</div>
+              </div>
+            </div>
+            <iframe id="player-chat-iframe" src="about:blank" style="width: 100%; height: 240px; border: none; border-radius: 0.5rem; display: none;"></iframe>
+          </div>
         </div>
       </div>
 
@@ -2625,6 +2642,7 @@
           if (this.dataset.team && this.dataset.playerIndex !== undefined) {
             updateStreamForPlayer(this);
             showPlayerStatsForTab(this);
+            updatePlayerChat(this);
           }
         });
       });
@@ -4775,6 +4793,81 @@
       console.log(`Updated Twitch chat to channel: ${channel} with parent: ${parentDomain}`);
     }
 
+    // Update player chat iframe
+    function updatePlayerChat(tab) {
+      const team = tab.dataset.team;
+      const playerIndex = tab.dataset.playerIndex;
+      const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+      const roster = teamRosters[teamKey] || [];
+      const player = roster[playerIndex];
+      
+      const playerChatIframe = document.getElementById('player-chat-iframe');
+      const playerChatLoading = document.querySelector('.player-chat-loading');
+      const selectedPlayerName = document.getElementById('selected-player-name');
+      
+      if (!playerChatIframe || !playerChatLoading || !selectedPlayerName) {
+        console.error('Player chat elements not found');
+        return;
+      }
+      
+      if (!player) {
+        // Reset to default state
+        selectedPlayerName.textContent = 'Select a player';
+        playerChatLoading.style.display = 'flex';
+        playerChatIframe.style.display = 'none';
+        return;
+      }
+      
+      const playerName = player.name || player.displayName;
+      const twitchHandle = getTwitchHandleForPlayer(player);
+      
+      // Update selected player display
+      selectedPlayerName.textContent = playerName || 'Unknown Player';
+      
+      if (!twitchHandle) {
+        // Show no Twitch link message
+        playerChatLoading.innerHTML = `
+          <div class="text-center">
+            <div class="text-red-400 mb-2">⚠️</div>
+            <div>No Twitch channel found for ${playerName}</div>
+          </div>
+        `;
+        playerChatLoading.style.display = 'flex';
+        playerChatIframe.style.display = 'none';
+        return;
+      }
+      
+      // Show loading state
+      playerChatLoading.innerHTML = `
+        <div class="text-center">
+          <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
+          <div>Loading ${playerName}'s chat...</div>
+        </div>
+      `;
+      playerChatLoading.style.display = 'flex';
+      playerChatIframe.style.display = 'none';
+      
+      // Get parent domain for Twitch embed
+      let parentDomain = window.location.hostname;
+      if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+        parentDomain = 'tribesprofessionalleague.com';
+      }
+      
+      // Build Twitch chat embed URL
+      const chatUrl = `https://www.twitch.tv/embed/${encodeURIComponent(twitchHandle)}/chat?parent=${parentDomain}`;
+      
+      console.log('Loading player chat for:', playerName, 'with Twitch handle:', twitchHandle, 'URL:', chatUrl);
+      
+      // Set iframe source
+      playerChatIframe.src = chatUrl;
+      
+      // Hide loading and show chat after a short delay
+      setTimeout(() => {
+        playerChatLoading.style.display = 'none';
+        playerChatIframe.style.display = 'block';
+      }, 1000);
+    }
+
     // Update streamer dropdown with available streams
     function updateStreamerDropdown() {
       const streamerSelect = document.getElementById('streamer-select');
@@ -4818,6 +4911,7 @@
     window.loadRecentMatches = loadRecentMatches;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
+    window.updatePlayerChat = updatePlayerChat;
 
     // Initialize everything when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
