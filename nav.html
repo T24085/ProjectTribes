@@ -1,194 +1,506 @@
 <!-- nav.html — Navbar + Script in one file -->
+<style>
+  :root {
+    --bg-color: #030712;
+    --bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 55%), radial-gradient(circle at 80% 30%, rgba(129, 140, 248, 0.12), transparent 60%), linear-gradient(220deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.94));
+    --panel-bg: rgba(15, 23, 42, 0.82);
+    --surface-glass: rgba(17, 24, 39, 0.65);
+    --card-bg: rgba(13, 19, 33, 0.84);
+    --text-primary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #8b5cf6;
+    --accent-strong: #38bdf8;
+    --success: #22c55e;
+    --danger: #f87171;
+    --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  /* Header */
+  nav#global-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(8, 11, 26, 0.85);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    backdrop-filter: blur(16px);
+    padding: 1rem 2rem;
+  }
+
+  .header-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-brand img {
+    height: 46px;
+    width: auto;
+    border-radius: 0.75rem;
+    background: rgba(30, 41, 59, 0.65);
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .brand-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .brand-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .header-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .nav-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background var(--transition-snappy);
+  }
+
+  .nav-link:hover {
+    background: rgba(129, 140, 248, 0.2);
+  }
+
+  /* Dropdown styles */
+  .nav-dropdown {
+    position: relative;
+  }
+
+  .nav-dropdown button {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background var(--transition-snappy);
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .nav-dropdown button:hover {
+    background: rgba(129, 140, 248, 0.2);
+  }
+
+  .nav-dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 12rem;
+    background: var(--card-bg);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    padding: 0.5rem;
+    z-index: 50;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+  }
+
+  .nav-dropdown:hover .nav-dropdown-content {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .nav-dropdown-content a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    transition: background var(--transition-snappy);
+    font-size: 0.9rem;
+  }
+
+  .nav-dropdown-content a:hover {
+    background: rgba(129, 140, 248, 0.2);
+  }
+
+  .auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(15, 23, 42, 0.6);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all var(--transition-snappy);
+    cursor: pointer;
+  }
+
+  .btn:hover {
+    background: rgba(129, 140, 248, 0.3);
+    border-color: rgba(129, 140, 248, 0.5);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, rgba(129, 140, 248, 0.9), rgba(56, 189, 248, 0.9));
+    border: none;
+    color: #020617;
+    font-weight: 700;
+  }
+
+  .btn-secondary {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: var(--text-primary);
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .header-container {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .header-nav {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .header-nav {
+      display: none;
+    }
+
+    .auth-buttons {
+      display: none;
+    }
+  }
+
+  /* Mobile menu styles */
+  #mobile-menu {
+    display: none;
+    background: var(--card-bg);
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+    padding: 1rem;
+  }
+
+  #mobile-menu.show {
+    display: block;
+  }
+
+  .mobile-nav-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    transition: background var(--transition-snappy);
+  }
+
+  .mobile-nav-link:hover {
+    background: rgba(129, 140, 248, 0.2);
+  }
+
+  .mobile-dropdown {
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-dropdown summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: background var(--transition-snappy);
+    list-style: none;
+  }
+
+  .mobile-dropdown summary:hover {
+    background: rgba(129, 140, 248, 0.2);
+  }
+
+  .mobile-dropdown summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile-dropdown-content {
+    padding-left: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .mobile-dropdown-content a {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    transition: background var(--transition-snappy);
+  }
+
+  .mobile-dropdown-content a:hover {
+    background: rgba(129, 140, 248, 0.2);
+  }
+
+  .mobile-auth-buttons {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+  }
+
+  .mobile-auth-buttons .btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    text-align: center;
+  }
+
+  /* Mobile hamburger button */
+  .mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 2rem;
+    height: 2rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+  }
+
+  .mobile-menu-toggle span {
+    width: 2rem;
+    height: 0.25rem;
+    background: var(--text-primary);
+    border-radius: 10px;
+    transition: all 0.3s linear;
+    position: relative;
+    transform-origin: 1px;
+  }
+
+  @media (max-width: 768px) {
+    .mobile-menu-toggle {
+      display: flex;
+    }
+  }
+</style>
+
 <div id="live-announcement-banner" class="live-announcement-banner" aria-live="polite" role="status"></div>
-<nav class="bg-gray-900/90 backdrop-blur supports-[backdrop-filter]:bg-gray-900/70 sticky top-0 z-50 border-b border-gray-800">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex h-16 items-center justify-between">
-      <!-- Left: Brand -->
-      <div class="flex items-center gap-3">
-        <a href="TPLTeamsDashboard.html" class="flex items-center gap-2">
-          <img src="Tribes Professional League.png" alt="TPL Logo" class="h-8 w-auto" onerror="this.style.display='none'">
-          <span class="text-white font-semibold tracking-wide">Tribes Professional League</span>
-        </a>
-      </div>
-
-      <!-- Desktop Nav -->
-      <div class="hidden md:flex items-center gap-6">
-        <a href="TPLTeamsDashboard.html" class="nav-link text-gray-200 hover:text-white">Home</a>
-        <div class="relative group">
-          <button class="text-gray-200 hover:text-white flex items-center gap-1" aria-haspopup="true" aria-expanded="false">
-            Teams
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-150 absolute mt-2 min-w-48 rounded-xl border border-gray-800 bg-gray-900 shadow-xl p-2 z-50">
-            <a href="TPLTeamsDashboard.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Teams Dashboard</a>
-            <div class="my-2 h-px bg-gray-800"></div>
-            <a href="https://www.team-avalanche.online/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Avalanche [aV!]</a>
-            <a href="https://t24085.github.io/Team-DeadStop/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">DeadStop [DS]</a>
-            <a href="https://t24085.github.io/TeamDPRK/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">[DPRK] Team</a>
-            <a href="https://t24085.github.io/Team-ePi/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">ePidemic [ePi]</a>
-            <a href="https://t24085.github.io/Team-FPS/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Flag Pole Smokers [FPS]</a>
-            <a href="https://t24085.github.io/Team-FT/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Flying Tractors [^T^]</a>
-            <a href="https://t24085.github.io/Team-HOE/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Hegemony of Euros [HoE]</a>
-            <a href="https://t24085.github.io/Team-KTL/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">KTL [KTL]</a>
-            <a href="https://t24085.github.io/Team-Magic/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Magic [Wiz]</a>
-            <a href="https://t24085.github.io/Team-Null/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">null [null]</a>
-            <a href="https://t24085.github.io/Team-TXM/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Texas Militia [TXM]</a>
-            <a href="https://t24085.github.io/Team-Toxic-Aimers/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Toxic Aimers</a>
-            <a href="https://t24085.github.io/Team-UE/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Unhandled Exception [UE]</a>
-            <a href="https://t24085.github.io/Team-Zen/" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Zen [ℨ]</a>
-          </div>
-        </div>
-        <div class="relative group">
-          <button class="text-gray-200 hover:text-white flex items-center gap-1" aria-haspopup="true" aria-expanded="false">
-            TPL Hub
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-150 absolute mt-2 min-w-48 rounded-xl border border-gray-800 bg-gray-900 shadow-xl p-2 z-50">
-            <a href="StandingsAndMatches.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Schedule &amp; Standings</a>
-            <a href="PlayerStats.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Player Stats</a>
-            <a href="News.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">News</a>
-            <div class="my-2 h-px bg-gray-800"></div>
-            <a href="UpcomingEvents.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Upcoming Events</a>
-            <a href="TeamSignUp.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Team Sign Up</a>
-          </div>
-        </div>
-        <div class="relative group">
-          <button class="text-gray-200 hover:text-white flex items-center gap-1" aria-haspopup="true" aria-expanded="false">
-            Streams
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-150 absolute mt-2 min-w-48 rounded-xl border border-gray-800 bg-gray-900 shadow-xl p-2 z-50">
-            <a href="Streamers.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Streamers</a>
-            <a href="StreamerKits.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Streamer Kits</a>
-            <div class="my-2 h-px bg-gray-800"></div>
-            <a href="index.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Twitch Feed Displays</a>
-            <a href="TwitchFeedMobile.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Twitch Feed Mobile</a>
-            <a href="TribesScrimWatcher.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">TPL Scrim Watcher</a>
-            <div class="my-2 h-px bg-gray-800"></div>
-            <a href="StreamersSubmit.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Streamers Submit</a>
-          </div>
-        </div>
-        <div class="relative group">
-          <button class="text-gray-200 hover:text-white flex items-center gap-1" aria-haspopup="true" aria-expanded="false">
-            Admin
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all duration-150 absolute mt-2 min-w-48 rounded-xl border border-gray-800 bg-gray-900 shadow-xl p-2 z-50">
-            <a href="LeagueManager.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">League Manager</a>
-            <a href="TournamentManager.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Tournament Manager</a>
-            <a href="MatchStatsAdmin.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Match Stats Admin</a>
-            <a href="NewsAdmin.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">News Admin</a>
-            <a href="StreamersAdmin.html" class="nav-link block px-3 py-2 rounded-lg text-gray-200 hover:bg-gray-800">Streamers Admin</a>
-          </div>
-        </div>
-      </div>
-      <!-- Right: CTA -->
-      <div class="hidden md:flex items-center gap-3">
-        <span id="twitch-user" class="text-sm text-purple-300" aria-live="polite" role="status"></span>
-        <button id="twitch-login-btn" class="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-sm">Sign in with Twitch</button>
-        <a href="DraftSignUp.html" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium">Draft Sign-Up</a>
-        <a href="LeagueManager.html" class="px-3 py-1.5 rounded-lg border border-gray-800 text-gray-200 hover:bg-gray-800 text-sm">Admin</a>
-      </div>
-
-      <!-- Mobile hamburger -->
-      <div class="md:hidden">
-        <button id="nav-toggle" aria-controls="mobile-menu" aria-expanded="false" class="p-2 rounded-lg border border-gray-800 text-gray-200 hover:bg-gray-800">
-          <span class="sr-only">Open menu</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" stroke="currentColor" fill="none">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
+<nav id="global-header">
+  <div class="header-container">
+    <div class="header-brand">
+      <img src="Tribes Professional League.png" alt="Tribes Professional League logo" onerror="this.style.display='none'">
+      <div>
+        <h1 class="brand-title">Tribes Professional League</h1>
+        <p class="brand-subtitle">Spectating Platform</p>
       </div>
     </div>
+
+    <div class="header-nav">
+      <a href="TPLTeamsDashboard.html" class="nav-link">Home</a>
+      <div class="nav-dropdown">
+        <button>
+          Teams
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div class="nav-dropdown-content">
+          <a href="TPLTeamsDashboard.html">Teams Dashboard</a>
+          <a href="https://www.team-avalanche.online/">Avalanche [aV!]</a>
+          <a href="https://t24085.github.io/Team-DeadStop/">DeadStop [DS]</a>
+          <a href="https://t24085.github.io/TeamDPRK/">[DPRK] Team</a>
+          <a href="https://t24085.github.io/Team-ePi/">ePidemic [ePi]</a>
+          <a href="https://t24085.github.io/Team-FPS/">Flag Pole Smokers [FPS]</a>
+          <a href="https://t24085.github.io/Team-FT/">Flying Tractors [^T^]</a>
+          <a href="https://t24085.github.io/Team-HOE/">Hegemony of Euros [HoE]</a>
+          <a href="https://t24085.github.io/Team-KTL/">KTL [KTL]</a>
+          <a href="https://t24085.github.io/Team-Magic/">Magic [Wiz]</a>
+          <a href="https://t24085.github.io/Team-Null/">null [null]</a>
+          <a href="https://t24085.github.io/Team-TXM/">Texas Militia [TXM]</a>
+          <a href="https://t24085.github.io/Team-Toxic-Aimers/">Toxic Aimers</a>
+          <a href="https://t24085.github.io/Team-UE/">Unhandled Exception [UE]</a>
+          <a href="https://t24085.github.io/Team-Zen/">Zen [ℨ]</a>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button>
+          TPL Hub
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div class="nav-dropdown-content">
+          <a href="StandingsAndMatches.html">Schedule &amp; Standings</a>
+          <a href="PlayerStats.html">Player Stats</a>
+          <a href="News.html">News</a>
+          <a href="UpcomingEvents.html">Upcoming Events</a>
+          <a href="TeamSignUp.html">Team Sign Up</a>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button>
+          Streams
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div class="nav-dropdown-content">
+          <a href="Streamers.html">Streamers</a>
+          <a href="StreamerKits.html">Streamer Kits</a>
+          <a href="index.html">Twitch Feed Displays</a>
+          <a href="TwitchFeedMobile.html">Twitch Feed Mobile</a>
+          <a href="TribesScrimWatcher.html">TPL Scrim Watcher</a>
+          <a href="StreamersSubmit.html">Streamers Submit</a>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button>
+          Admin
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div class="nav-dropdown-content">
+          <a href="LeagueManager.html">League Manager</a>
+          <a href="TournamentManager.html">Tournament Manager</a>
+          <a href="MatchStatsAdmin.html">Match Stats Admin</a>
+          <a href="NewsAdmin.html">News Admin</a>
+          <a href="StreamersAdmin.html">Streamers Admin</a>
+        </div>
+      </div>
+    </div>
+    <div class="auth-buttons">
+      <span id="twitch-user" style="display: none; color: var(--text-muted); font-size: 0.9rem;"></span>
+      <button id="twitch-login-btn" class="btn btn-primary">Sign in with Twitch</button>
+      <a href="DraftSignUp.html" class="btn btn-primary">Draft Sign-Up</a>
+      <a href="LeagueManager.html" class="btn btn-secondary">Admin</a>
+    </div>
+    
+    <!-- Mobile hamburger -->
+    <button id="mobile-menu-toggle" class="mobile-menu-toggle">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
 
   <!-- Mobile panel -->
-  <div id="mobile-menu" class="md:hidden hidden border-t border-gray-800">
-    <div class="space-y-1 px-4 py-3">
-      <a href="TPLTeamsDashboard.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Home</a>
-      <details class="group">
-        <summary class="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">
-          <span>Teams</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-open:rotate-180 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </summary>
-        <div class="mt-1 pl-3 space-y-1">
-          <a href="TPLTeamsDashboard.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Teams Dashboard</a>
-          <a href="https://www.team-avalanche.online/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Avalanche [aV!]</a>
-          <a href="https://t24085.github.io/Team-DeadStop/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">DeadStop [DS]</a>
-          <a href="https://t24085.github.io/TeamDPRK/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">[DPRK] Team</a>
-          <a href="https://t24085.github.io/Team-ePi/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">ePidemic [ePi]</a>
-          <a href="https://t24085.github.io/Team-FPS/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Flag Pole Smokers [FPS]</a>
-          <a href="https://t24085.github.io/Team-FT/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Flying Tractors [^T^]</a>
-          <a href="https://t24085.github.io/Team-HOE/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Hegemony of Euros [HoE]</a>
-          <a href="https://t24085.github.io/Team-KTL/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">KTL [KTL]</a>
-          <a href="https://t24085.github.io/Team-Magic/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Magic [Wiz]</a>
-          <a href="https://t24085.github.io/Team-Null/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">null [null]</a>
-          <a href="https://t24085.github.io/Team-TXM/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Texas Militia [TXM]</a>
-          <a href="https://t24085.github.io/Team-Toxic-Aimers/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Toxic Aimers</a>
-          <a href="https://t24085.github.io/Team-UE/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Unhandled Exception [UE]</a>
-          <a href="https://t24085.github.io/Team-Zen/" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Zen [ℨ]</a>
-        </div>
-      </details>
-      <details class="group">
-        <summary class="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">
-          <span>TPL Hub</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-open:rotate-180 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </summary>
-        <div class="mt-1 pl-3 space-y-1">
-          <a href="StandingsAndMatches.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Schedule &amp; Standings</a>
-          <a href="PlayerStats.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Player Stats</a>
-          <a href="News.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">News</a>
-          <a href="UpcomingEvents.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Upcoming Events</a>
-          <a href="TeamSignUp.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Team Sign Up</a>
-        </div>
-      </details>
-      <details class="group">
-        <summary class="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">
-          <span>Streams</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-open:rotate-180 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </summary>
-        <div class="mt-1 pl-3 space-y-1">
-          <a href="Streamers.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Streamers</a>
-          <a href="index.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Twitch Feed Displays</a>
-          <a href="TwitchFeedMobile.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Twitch Feed Mobile</a>
-          <a href="TribesScrimWatcher.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">TPL Scrim Watcher</a>
-          <a href="StreamerKits.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Streamer Kits</a>
-          <a href="StreamersSubmit.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Streamers Submit</a>
-        </div>
-      </details>
-      <details class="group">
-        <summary class="flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">
-          <span>Admin</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 group-open:rotate-180 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </summary>
-        <div class="mt-1 pl-3 space-y-1">
-          <a href="LeagueManager.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">League Manager</a>
-          <a href="TournamentManager.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Tournament Manager</a>
-          <a href="MatchStatsAdmin.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Match Stats Admin</a>
-          <a href="NewsAdmin.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">News Admin</a>
-          <a href="StreamersAdmin.html" class="block rounded-lg px-3 py-2 text-gray-200 hover:bg-gray-800">Streamers Admin</a>
-        </div>
-      </details>
-      <div class="pt-2">
-        <a href="DraftSignUp.html" class="block rounded-lg px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white">Draft Sign-Up</a>
-        <a href="LeagueManager.html" class="block rounded-lg mt-1 px-3 py-2 border border-gray-800 text-gray-200 hover:bg-gray-800">Admin</a>
+  <div id="mobile-menu">
+    <a href="TPLTeamsDashboard.html" class="mobile-nav-link">Home</a>
+    <details class="mobile-dropdown">
+      <summary>
+        <span>Teams</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="mobile-dropdown-content">
+        <a href="TPLTeamsDashboard.html">Teams Dashboard</a>
+        <a href="https://www.team-avalanche.online/">Avalanche [aV!]</a>
+        <a href="https://t24085.github.io/Team-DeadStop/">DeadStop [DS]</a>
+        <a href="https://t24085.github.io/TeamDPRK/">[DPRK] Team</a>
+        <a href="https://t24085.github.io/Team-ePi/">ePidemic [ePi]</a>
+        <a href="https://t24085.github.io/Team-FPS/">Flag Pole Smokers [FPS]</a>
+        <a href="https://t24085.github.io/Team-FT/">Flying Tractors [^T^]</a>
+        <a href="https://t24085.github.io/Team-HOE/">Hegemony of Euros [HoE]</a>
+        <a href="https://t24085.github.io/Team-KTL/">KTL [KTL]</a>
+        <a href="https://t24085.github.io/Team-Magic/">Magic [Wiz]</a>
+        <a href="https://t24085.github.io/Team-Null/">null [null]</a>
+        <a href="https://t24085.github.io/Team-TXM/">Texas Militia [TXM]</a>
+        <a href="https://t24085.github.io/Team-Toxic-Aimers/">Toxic Aimers</a>
+        <a href="https://t24085.github.io/Team-UE/">Unhandled Exception [UE]</a>
+        <a href="https://t24085.github.io/Team-Zen/">Zen [ℨ]</a>
       </div>
+    </details>
+    <details class="mobile-dropdown">
+      <summary>
+        <span>TPL Hub</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="mobile-dropdown-content">
+        <a href="StandingsAndMatches.html">Schedule &amp; Standings</a>
+        <a href="PlayerStats.html">Player Stats</a>
+        <a href="News.html">News</a>
+        <a href="UpcomingEvents.html">Upcoming Events</a>
+        <a href="TeamSignUp.html">Team Sign Up</a>
+      </div>
+    </details>
+    <details class="mobile-dropdown">
+      <summary>
+        <span>Streams</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="mobile-dropdown-content">
+        <a href="Streamers.html">Streamers</a>
+        <a href="index.html">Twitch Feed Displays</a>
+        <a href="TwitchFeedMobile.html">Twitch Feed Mobile</a>
+        <a href="TribesScrimWatcher.html">TPL Scrim Watcher</a>
+        <a href="StreamerKits.html">Streamer Kits</a>
+        <a href="StreamersSubmit.html">Streamers Submit</a>
+      </div>
+    </details>
+    <details class="mobile-dropdown">
+      <summary>
+        <span>Admin</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+      <div class="mobile-dropdown-content">
+        <a href="LeagueManager.html">League Manager</a>
+        <a href="TournamentManager.html">Tournament Manager</a>
+        <a href="MatchStatsAdmin.html">Match Stats Admin</a>
+        <a href="NewsAdmin.html">News Admin</a>
+        <a href="StreamersAdmin.html">Streamers Admin</a>
+      </div>
+    </details>
+    <div class="mobile-auth-buttons">
+      <button id="mobile-twitch-login-btn" class="btn btn-primary">Sign in with Twitch</button>
+      <a href="DraftSignUp.html" class="btn btn-primary">Draft Sign-Up</a>
+      <a href="LeagueManager.html" class="btn btn-secondary">Admin</a>
     </div>
   </div>
 </nav>
@@ -298,12 +610,12 @@
 <script>
   function initNav() {
     // Mobile toggle
-    const toggle = document.getElementById('nav-toggle');
+    const toggle = document.getElementById('mobile-menu-toggle');
     const menu = document.getElementById('mobile-menu');
     if (toggle && menu) {
       toggle.addEventListener('click', () => {
-        const isOpen = !menu.classList.contains('hidden');
-        menu.classList.toggle('hidden', isOpen);
+        const isOpen = menu.classList.contains('show');
+        menu.classList.toggle('show', !isOpen);
         toggle.setAttribute('aria-expanded', String(!isOpen));
       });
     }
