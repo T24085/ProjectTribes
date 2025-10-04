@@ -1271,6 +1271,11 @@
         <a href="Standings.html" class="nav-link">Standings</a>
         <a href="Streamers.html" class="nav-link">Streamers</a>
         <a href="TournamentBrackets.html" class="nav-link">Tournaments</a>
+        <a href="UpcomingEvents.html" class="nav-link">Events</a>
+        <a href="TribesScrimWatcher.html" class="nav-link">Scrim Watcher</a>
+        <a href="StreamerKits.html" class="nav-link">Streamer Kits</a>
+        <a href="TeamSignUp.html" class="nav-link">Team Sign Up</a>
+        <a href="DraftSignUp.html" class="nav-link">Draft Sign Up</a>
       </div>
       <div class="auth-buttons">
         <button id="admin-login-btn" class="btn btn-secondary" style="display: none;">Admin Login</button>
@@ -1602,7 +1607,7 @@
         logo: 'https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true', 
         name: 'Texas Militia', 
         folder: 'TXM',
-        roster: "Captain: @OperationCats (LO/LD)\nCore: Prizzo, Cryof, Amyou, Thatguy, Visis, Jive, Freefood, Howsya\nBench: Txredneck",
+        roster: "Captain: @OperationCats (LO/LD)\nCore: Prizzo, Cryof, Amyou, Thatguy, Visis, Jive, freefood, Howsya\nBench: Txredneck",
         streams: [
           { name: 'Prizzo', url: 'https://www.twitch.tv/prizzo4real' },
           { name: 'OperationCats', url: 'https://www.twitch.tv/operationcats' },
@@ -4212,8 +4217,13 @@
       let totalReturns = 0;
       let totalTime = 0;
 
+      console.log('Calculating team stats for roster:', roster);
+      console.log('Available player stats data:', window.playerStatsData?.playerTotals?.size || 0, 'players');
+
       roster.forEach(player => {
         const playerName = player.name || player.displayName;
+        console.log('Looking for player:', playerName);
+        
         if (playerName && window.playerStatsData && window.playerStatsData.playerTotals) {
           // Try to find player stats with name matching
           let playerStats = window.playerStatsData.playerTotals.get(playerName);
@@ -4225,11 +4235,17 @@
               name && name.toLowerCase() === playerName.toLowerCase()
             );
             if (foundName) {
+              console.log('Found case-insensitive match:', foundName, 'for', playerName);
               playerStats = window.playerStatsData.playerTotals.get(foundName);
+            } else {
+              console.log('No stats found for player:', playerName);
             }
+          } else {
+            console.log('Found direct match for player:', playerName);
           }
 
           if (playerStats) {
+            console.log('Player stats for', playerName, ':', playerStats);
             totalKills += parseFloat(playerStats.kills) || 0;
             totalAssists += parseFloat(playerStats.assists) || 0;
             totalScore += parseFloat(playerStats.score) || 0;
@@ -4239,6 +4255,8 @@
           }
         }
       });
+
+      console.log('Final team stats - Kills:', totalKills, 'Assists:', totalAssists, 'Score:', totalScore);
 
       const avgKillsPerMinute = totalTime > 0 ? (totalKills / (totalTime * 60)) : 0;
       const avgScorePerMinute = totalTime > 0 ? (totalScore / (totalTime * 60)) : 0;
@@ -4559,12 +4577,36 @@
       
       // Function to get team logo from team name
       const getTeamLogo = (teamName) => {
-        // Find the team data by matching the full name
+        // First try direct match
         for (const [key, data] of Object.entries(TEAM_DATA)) {
           if (data.name === teamName || key === teamName) {
             return data.logo;
           }
         }
+        
+        // Try variations mapping
+        const variations = {
+          'Avalanche!': 'AV!',
+          'Avalanche': 'AV!',
+          'ePidemic': 'EPI',
+          'Hegemony of Euros': 'HoE',
+          'Flying Tractors': 'FT',
+          'Flag Pole Smokers': 'FPS',
+          'Toxic Aimers': 'TA',
+          'Texas Militia': 'TXM',
+          'Kicked to Lobby': 'KTL',
+          'Unhandled Exception': 'UE',
+          'Magic': 'WIZ',
+          'DeadStop': 'DS',
+          'null': 'Null',
+          'Zen': 'Zen'
+        };
+        
+        const teamKey = variations[teamName];
+        if (teamKey && TEAM_DATA[teamKey]) {
+          return TEAM_DATA[teamKey].logo;
+        }
+        
         return null; // Return null if no match found
       };
       
