@@ -2171,8 +2171,13 @@
       
       // Load active match first, then team rosters
       loadActiveMatch().then(() => {
-      loadTeamRosters();
-    });
+        loadTeamRosters().then(() => {
+          // Update live indicators after teams are loaded
+          setTimeout(async () => {
+            await updateLivePlayerIndicators();
+          }, 2000); // Wait 2 seconds for everything to settle
+        });
+      });
       
       // Load current poll for main page
       loadCurrentPollForMainPage();
@@ -2215,14 +2220,14 @@
       });
       
       // Set up periodic live player checks
-      setInterval(() => {
-        updateLivePlayerIndicators();
+      setInterval(async () => {
+        await updateLivePlayerIndicators();
       }, 10000); // Check every 10 seconds
       
       // Also check more frequently for the first few minutes
       let quickChecks = 0;
-      const quickInterval = setInterval(() => {
-        updateLivePlayerIndicators();
+      const quickInterval = setInterval(async () => {
+        await updateLivePlayerIndicators();
         quickChecks++;
         if (quickChecks >= 12) { // Stop after 2 minutes (12 * 10 seconds)
           clearInterval(quickInterval);
@@ -4374,7 +4379,7 @@
     }
 
     // Check for live players and update indicators
-    function updateLivePlayerIndicators() {
+    async function updateLivePlayerIndicators() {
       console.log('Checking live player indicators...');
       
       if (!window.twitchOAuth) {
@@ -4382,12 +4387,33 @@
         return;
       }
 
-      if (!window.twitchOAuth.liveStreams || !Array.isArray(window.twitchOAuth.liveStreams)) {
-        console.log('No live streams data available');
+      // Get all player logins from the current teams
+      const allPlayerLogins = [];
+      Object.values(teamRosters).forEach(roster => {
+        roster.forEach(player => {
+          const twitchHandle = getTwitchHandleForPlayer(player);
+          if (twitchHandle) {
+            allPlayerLogins.push(twitchHandle);
+          }
+        });
+      });
+
+      if (allPlayerLogins.length === 0) {
+        console.log('No player logins found for live stream checking');
         return;
       }
 
-      const liveStreams = window.twitchOAuth.liveStreams;
+      console.log('Checking live status for players:', allPlayerLogins);
+
+      // Fetch current live streams
+      let liveStreams = [];
+      try {
+        liveStreams = await window.twitchOAuth.fetchLiveStreams(allPlayerLogins);
+        console.log('Fetched live streams:', liveStreams.length);
+      } catch (error) {
+        console.error('Error fetching live streams:', error);
+        return;
+      }
       const playerTabs = document.querySelectorAll('.player-tab');
       
       console.log('Found live streams:', liveStreams.length);
@@ -5646,6 +5672,16 @@
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
       console.log('Twitch token available:', !!window.twitchOAuth?.getToken());
       updateViewerCounts();
+    };
+    
+    // Test function for debugging live indicators
+    window.testLiveIndicators = async function() {
+      console.log('Testing live indicators...');
+      console.log('Team rosters:', teamRosters);
+      console.log('Selected teams:', selectedTeams);
+      console.log('Twitch OAuth available:', !!window.twitchOAuth);
+      console.log('Twitch token available:', !!window.twitchOAuth?.getToken());
+      await updateLivePlayerIndicators();
     };
     
     // Function to get app access token for server-to-server requests
