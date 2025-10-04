@@ -294,6 +294,11 @@
       color: var(--danger);
     }
 
+    .status-bye {
+      background: rgba(148, 163, 184, 0.3);
+      color: var(--text-muted);
+    }
+
     /* Match Cards */
     .matches-grid {
       display: grid;
@@ -832,7 +837,7 @@
       }
 
       async loadData() {
-        // Load teams data - All 13 teams
+        // Load teams data - 12 teams (DeadStop removed)
         this.teams = [
           { id: 'av', name: 'Avalanche', tag: 'AV!', logo: 'images/aV!.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
           { id: 'epi', name: 'ePidemic', tag: 'EPI', logo: 'images/ePi.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
@@ -844,7 +849,6 @@
           { id: 'txm', name: 'Texas Militia', tag: 'TXM', logo: 'images/TXM.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
           { id: 'ue', name: 'Unhandled Exception', tag: 'UE', logo: 'images/UE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
           { id: 'wiz', name: 'Magic', tag: 'WIZ', logo: 'images/Magic.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
-          { id: 'ds', name: 'DeadStop', tag: 'DS', logo: 'DeadStopLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
           { id: 'ktl', name: 'Kicked to Lobby', tag: 'KTL', logo: 'images/KTLlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
           { id: 'null', name: 'null', tag: 'Null', logo: 'images/NullLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
           { id: 'ta', name: 'Toxic Aimers', tag: 'TA', logo: 'images/ToxicAimersLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' }
@@ -958,8 +962,12 @@
         this.matches = [];
         const teamIds = this.teams.map(t => t.id);
         
-        // Round-robin pairing with proper algorithm
+        // Round-robin pairing with bye handling
         const shuffled = [...teamIds].sort(() => 0.5 - Math.random());
+        
+        // If odd number of teams, one team gets a bye
+        const hasBye = shuffled.length % 2 === 1;
+        const byeTeam = hasBye ? shuffled.pop() : null;
         
         for (let i = 0; i < shuffled.length; i += 2) {
           if (i + 1 < shuffled.length) {
@@ -980,6 +988,24 @@
               reportId: null
             });
           }
+        }
+        
+        // Add bye match if needed
+        if (hasBye && byeTeam) {
+          const byeTeamData = this.teams.find(t => t.id === byeTeam);
+          this.matches.push({
+            id: `bye-${this.currentWeek}-${byeTeam}`,
+            weekNumber: this.currentWeek,
+            homeTeamId: byeTeam,
+            awayTeamId: 'BYE',
+            homeTeam: byeTeamData,
+            awayTeam: { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+            status: 'BYE',
+            mapSet: [],
+            scheduledAt: new Date(),
+            report: null,
+            reportId: null
+          });
         }
         
         // Save to Firebase
@@ -1181,46 +1207,66 @@
           card.className = 'match-card';
 
           const statusClass = `status-${match.status.toLowerCase()}`;
-          const mapListHtml = match.mapSet.map(map => `<div class="map-item"><span class="map-name">${map}</span><span class="map-score">-</span></div>`).join('');
-
-          card.innerHTML = `
-            <div class="match-header">
-              <div class="match-teams">
-                <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
-                <span class="vs-text">vs</span>
-                <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
-              </div>
-              <span class="status-badge ${statusClass}">${match.status}</span>
-            </div>
-            <div style="margin-bottom: 1rem;">
-              <strong>${match.homeTeam.name} [${match.homeTeam.tag}]</strong> vs <strong>${match.awayTeam.name} [${match.awayTeam.tag}]</strong>
-            </div>
-            <div class="match-maps">
-              <h4 style="margin-bottom: 0.5rem; color: var(--text-muted);">Maps:</h4>
-              ${mapListHtml}
-            </div>
-            ${match.status === 'PENDING' ? `
-              <div style="margin-top: 1rem;">
-                <button class="btn btn-primary" onclick="ladderBoard.reportMatch('${match.id}')">Report Result</button>
-              </div>
-            ` : match.status === 'REPORTED' && match.report ? `
-              <div style="margin-top: 1rem;">
-                <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
-                  Reported by: ${match.report.submittedBy}<br>
-                  Home: ${match.report.homeTeamConfirm} | Away: ${match.report.awayTeamConfirm}
+          
+          // Handle bye matches differently
+          if (match.status === 'BYE') {
+            card.innerHTML = `
+              <div class="match-header">
+                <div class="match-teams">
+                  <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+                  <span class="vs-text">BYE</span>
                 </div>
-                <button class="btn btn-success" onclick="ladderBoard.openConfirmModal('${match.report.id}')">Confirm/Dispute</button>
+                <span class="status-badge status-bye">BYE</span>
               </div>
-            ` : match.status === 'FINAL' ? `
-              <div style="margin-top: 1rem; padding: 0.5rem; background: var(--success); color: white; border-radius: 0.25rem; text-align: center;">
-                <strong>Match Finalized</strong>
+              <div style="margin-bottom: 1rem;">
+                <strong>${match.homeTeam.name} [${match.homeTeam.tag}]</strong> has a bye this week
               </div>
-            ` : match.status === 'CONTESTED' ? `
-              <div style="margin-top: 1rem; padding: 0.5rem; background: var(--danger); color: white; border-radius: 0.25rem; text-align: center;">
-                <strong>Match Disputed</strong>
+              <div style="margin-top: 1rem; padding: 0.5rem; background: var(--text-muted); color: white; border-radius: 0.25rem; text-align: center;">
+                <strong>No Match This Week</strong>
               </div>
-            ` : ''}
-          `;
+            `;
+          } else {
+            const mapListHtml = match.mapSet.map(map => `<div class="map-item"><span class="map-name">${map}</span><span class="map-score">-</span></div>`).join('');
+
+            card.innerHTML = `
+              <div class="match-header">
+                <div class="match-teams">
+                  <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+                  <span class="vs-text">vs</span>
+                  <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+                </div>
+                <span class="status-badge ${statusClass}">${match.status}</span>
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <strong>${match.homeTeam.name} [${match.homeTeam.tag}]</strong> vs <strong>${match.awayTeam.name} [${match.awayTeam.tag}]</strong>
+              </div>
+              <div class="match-maps">
+                <h4 style="margin-bottom: 0.5rem; color: var(--text-muted);">Maps:</h4>
+                ${mapListHtml}
+              </div>
+              ${match.status === 'PENDING' ? `
+                <div style="margin-top: 1rem;">
+                  <button class="btn btn-primary" onclick="ladderBoard.reportMatch('${match.id}')">Report Result</button>
+                </div>
+              ` : match.status === 'REPORTED' && match.report ? `
+                <div style="margin-top: 1rem;">
+                  <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                    Reported by: ${match.report.submittedBy}<br>
+                    Home: ${match.report.homeTeamConfirm} | Away: ${match.report.awayTeamConfirm}
+                  </div>
+                  <button class="btn btn-success" onclick="ladderBoard.openConfirmModal('${match.report.id}')">Confirm/Dispute</button>
+                </div>
+              ` : match.status === 'FINAL' ? `
+                <div style="margin-top: 1rem; padding: 0.5rem; background: var(--success); color: white; border-radius: 0.25rem; text-align: center;">
+                  <strong>Match Finalized</strong>
+                </div>
+              ` : match.status === 'CONTESTED' ? `
+                <div style="margin-top: 1rem; padding: 0.5rem; background: var(--danger); color: white; border-radius: 0.25rem; text-align: center;">
+                  <strong>Match Disputed</strong>
+                </div>
+              ` : ''}
+            `;
+          }
           grid.appendChild(card);
         });
       }
