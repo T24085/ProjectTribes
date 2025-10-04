@@ -1916,6 +1916,12 @@
     const db = getFirestore(firebaseApp);
     const auth = getAuth();
     
+    // Make Firebase available globally for Twitch handle loading
+    window.firebase = {
+      firestore: () => db,
+      auth: auth
+    };
+    
     // Admin UIDs from LeagueManager.html
     const ADMIN_UIDS = [
       'DkBHsCzLK5a9KiX50g0pHJrEqGq2',
@@ -3056,10 +3062,45 @@
       'Radishblue': 'Radishblue'
     };
 
+    // Global variable to store Firebase Twitch handles
+    let firebaseTwitchHandles = {};
+
+    // Load Twitch handles from Firebase
+    async function loadFirebaseTwitchHandles() {
+      try {
+        if (!window.firebase || !window.firebase.firestore) {
+          console.log('Firebase not available, skipping Twitch handle loading');
+          return;
+        }
+
+        const db = window.firebase.firestore();
+        const handlesSnapshot = await db.collection('playerTwitchHandles').get();
+        
+        firebaseTwitchHandles = {};
+        handlesSnapshot.forEach(doc => {
+          const data = doc.data();
+          firebaseTwitchHandles[data.playerName] = data.twitchHandle;
+        });
+        
+        console.log('Loaded Firebase Twitch handles:', firebaseTwitchHandles);
+      } catch (error) {
+        console.error('Error loading Firebase Twitch handles:', error);
+      }
+    }
+
     function getTwitchHandleForPlayer(player) {
       console.log(`Getting Twitch handle for player:`, player);
       
-      // First try to get the handle from the player object
+      const playerName = player.name || player.displayName;
+      
+      // First priority: Check Firebase handles (admin-managed)
+      if (playerName && firebaseTwitchHandles[playerName]) {
+        const handle = firebaseTwitchHandles[playerName];
+        console.log(`Found Firebase Twitch handle for ${playerName}: ${handle}`);
+        return validateTwitchHandle(handle, playerName);
+      }
+      
+      // Second priority: Check player object properties
       let twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
       
       // If we got a full URL, extract just the handle
@@ -3071,7 +3112,7 @@
         }
       }
       
-      // If no handle found, try to map the name and look it up in oauth.js
+      // Third priority: Use hardcoded mappings
       if (!twitchHandle && player.name) {
         const mappedName = PLAYER_NAME_MAPPING[player.name] || player.name;
         console.log(`Player ${player.name} mapped to: ${mappedName}`);
@@ -3120,20 +3161,26 @@
         }
       }
       
-      // Validate the final handle
-      if (twitchHandle) {
-        // Ensure it's not too long and contains only valid characters
-        if (twitchHandle.length > 100) {
-          console.warn(`Twitch handle too long for ${player.name}: ${twitchHandle} (${twitchHandle.length} chars)`);
-          return null;
-        }
-        if (!/^[a-zA-Z0-9_]+$/.test(twitchHandle)) {
-          console.warn(`Invalid Twitch handle format for ${player.name}: ${twitchHandle}`);
-          return null;
-        }
+      console.log(`Final Twitch handle for ${playerName}: ${twitchHandle}`);
+      return validateTwitchHandle(twitchHandle, playerName);
+    }
+
+    // Validate Twitch handle format and length
+    function validateTwitchHandle(twitchHandle, playerName) {
+      if (!twitchHandle) {
+        return null;
       }
       
-      console.log(`Final Twitch handle for ${player.name}: ${twitchHandle}`);
+      // Ensure it's not too long and contains only valid characters
+      if (twitchHandle.length > 100) {
+        console.warn(`Twitch handle too long for ${playerName}: ${twitchHandle} (${twitchHandle.length} chars)`);
+        return null;
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(twitchHandle)) {
+        console.warn(`Invalid Twitch handle format for ${playerName}: ${twitchHandle}`);
+        return null;
+      }
+      
       return twitchHandle;
     }
 
@@ -5748,6 +5795,9 @@
       loadTeamRosters();
       loadCurrentPoll();
       setInterval(loadCurrentPollForMainPage, 5000); // Update every 5 seconds
+      
+      // Load Firebase Twitch handles
+      loadFirebaseTwitchHandles();
       
       initializeTwitchPlayer();
       initializePlayerStats();

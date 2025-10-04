@@ -44,6 +44,78 @@
 
     <ul id="streamerList" class="space-y-2"></ul>
 
+    <!-- Player Twitch Handle Management Section -->
+    <div class="mt-12 border-t border-gray-700 pt-8">
+      <h2 class="text-2xl font-bold mb-6">Manage Player Twitch Handles</h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Player Selector -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold">Select Player</h3>
+          
+          <div>
+            <label class="block text-sm mb-2">Team</label>
+            <select id="playerTeamSelect" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700">
+              <option value="">Select a team...</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm mb-2">Player</label>
+            <select id="playerSelect" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" disabled>
+              <option value="">Select a team first...</option>
+            </select>
+          </div>
+          
+          <div id="selectedPlayerInfo" class="hidden p-4 bg-gray-800 rounded border border-gray-700">
+            <h4 class="font-semibold mb-2">Selected Player Info</h4>
+            <div id="playerInfoContent"></div>
+          </div>
+        </div>
+        
+        <!-- Twitch Handle Editor -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold">Update Twitch Handle</h3>
+          
+          <div>
+            <label class="block text-sm mb-2">Current Twitch Handle</label>
+            <input id="currentTwitchHandle" type="text" readonly class="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600 text-gray-300" placeholder="No handle set" />
+          </div>
+          
+          <div>
+            <label class="block text-sm mb-2">New Twitch Handle</label>
+            <input id="newTwitchHandle" type="text" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" placeholder="Enter Twitch username (without @)" />
+            <p class="text-xs text-gray-400 mt-1">Enter just the username, e.g., "username" not "@username" or full URL</p>
+          </div>
+          
+          <div class="flex gap-2">
+            <button id="updateTwitchHandle" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>
+              Update Handle
+            </button>
+            <button id="clearTwitchHandle" class="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>
+              Clear Handle
+            </button>
+          </div>
+          
+          <div id="updateStatus" class="hidden p-3 rounded text-sm"></div>
+        </div>
+      </div>
+      
+      <!-- Bulk Import Section -->
+      <div class="mt-8 border-t border-gray-700 pt-6">
+        <h3 class="text-lg font-semibold mb-4">Bulk Import Twitch Handles</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm mb-2">CSV Format: PlayerName,TwitchHandle</label>
+            <textarea id="bulkImportText" rows="6" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" placeholder="PlayerName,TwitchHandle&#10;John,username1&#10;Jane,username2&#10;..."></textarea>
+          </div>
+          <button id="bulkImportBtn" class="py-2 px-4 bg-green-600 hover:bg-green-700 rounded">
+            Import Handles
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script type="module">
@@ -140,6 +212,317 @@
         loadStreamers();
       }));
     }
+
+    // Player Twitch Handle Management
+    let teamRosters = {};
+    let playerTwitchHandles = {};
+
+    // Load team rosters and populate team selector
+    async function loadTeamRosters() {
+      try {
+        const teamsSnapshot = await getDocs(collection(db, 'teams'));
+        teamRosters = {};
+        
+        teamsSnapshot.forEach(doc => {
+          const teamData = doc.data();
+          if (teamData.roster && Array.isArray(teamData.roster)) {
+            teamRosters[teamData.name] = teamData.roster;
+          }
+        });
+        
+        // Populate team selector
+        const teamSelect = document.getElementById('playerTeamSelect');
+        teamSelect.innerHTML = '<option value="">Select a team...</option>';
+        
+        Object.keys(teamRosters).sort().forEach(teamName => {
+          const option = document.createElement('option');
+          option.value = teamName;
+          option.textContent = teamName;
+          teamSelect.appendChild(option);
+        });
+        
+        console.log('Loaded team rosters:', teamRosters);
+      } catch (error) {
+        console.error('Error loading team rosters:', error);
+        showStatus('Error loading team rosters', 'error');
+      }
+    }
+
+    // Load player Twitch handles from Firebase
+    async function loadPlayerTwitchHandles() {
+      try {
+        const handlesSnapshot = await getDocs(collection(db, 'playerTwitchHandles'));
+        playerTwitchHandles = {};
+        
+        handlesSnapshot.forEach(doc => {
+          const data = doc.data();
+          playerTwitchHandles[data.playerName] = data.twitchHandle;
+        });
+        
+        console.log('Loaded player Twitch handles:', playerTwitchHandles);
+      } catch (error) {
+        console.error('Error loading player Twitch handles:', error);
+        showStatus('Error loading player Twitch handles', 'error');
+      }
+    }
+
+    // Populate player selector when team is selected
+    document.getElementById('playerTeamSelect').addEventListener('change', (e) => {
+      const teamName = e.target.value;
+      const playerSelect = document.getElementById('playerSelect');
+      
+      if (!teamName) {
+        playerSelect.innerHTML = '<option value="">Select a team first...</option>';
+        playerSelect.disabled = true;
+        document.getElementById('selectedPlayerInfo').classList.add('hidden');
+        return;
+      }
+      
+      const roster = teamRosters[teamName] || [];
+      playerSelect.innerHTML = '<option value="">Select a player...</option>';
+      
+      roster.forEach((player, index) => {
+        const option = document.createElement('option');
+        option.value = `${teamName}_${index}`;
+        option.textContent = player.name || player.displayName || `Player ${index + 1}`;
+        playerSelect.appendChild(option);
+      });
+      
+      playerSelect.disabled = false;
+    });
+
+    // Handle player selection
+    document.getElementById('playerSelect').addEventListener('change', (e) => {
+      const value = e.target.value;
+      const selectedPlayerInfo = document.getElementById('selectedPlayerInfo');
+      const playerInfoContent = document.getElementById('playerInfoContent');
+      const currentHandleInput = document.getElementById('currentTwitchHandle');
+      const updateBtn = document.getElementById('updateTwitchHandle');
+      const clearBtn = document.getElementById('clearTwitchHandle');
+      
+      if (!value) {
+        selectedPlayerInfo.classList.add('hidden');
+        updateBtn.disabled = true;
+        clearBtn.disabled = true;
+        return;
+      }
+      
+      const [teamName, playerIndex] = value.split('_');
+      const player = teamRosters[teamName][parseInt(playerIndex)];
+      const playerName = player.name || player.displayName;
+      const currentHandle = playerTwitchHandles[playerName] || '';
+      
+      // Show player info
+      playerInfoContent.innerHTML = `
+        <div><strong>Name:</strong> ${playerName}</div>
+        <div><strong>Team:</strong> ${teamName}</div>
+        <div><strong>Current Handle:</strong> ${currentHandle || 'None'}</div>
+      `;
+      
+      currentHandleInput.value = currentHandle;
+      selectedPlayerInfo.classList.remove('hidden');
+      updateBtn.disabled = false;
+      clearBtn.disabled = false;
+    });
+
+    // Update Twitch handle
+    document.getElementById('updateTwitchHandle').addEventListener('click', async () => {
+      const value = document.getElementById('playerSelect').value;
+      const newHandle = document.getElementById('newTwitchHandle').value.trim();
+      
+      if (!value || !newHandle) {
+        showStatus('Please select a player and enter a Twitch handle', 'error');
+        return;
+      }
+      
+      const [teamName, playerIndex] = value.split('_');
+      const player = teamRosters[teamName][parseInt(playerIndex)];
+      const playerName = player.name || player.displayName;
+      
+      try {
+        // Clean the handle (remove @ and URLs)
+        const cleanHandle = newHandle.replace(/^@/, '').replace(/^https?:\/\/(www\.)?twitch\.tv\//, '');
+        
+        // Store in Firebase
+        const handleDoc = {
+          playerName: playerName,
+          teamName: teamName,
+          twitchHandle: cleanHandle,
+          updatedAt: new Date().toISOString(),
+          updatedBy: auth.currentUser?.email || 'unknown'
+        };
+        
+        // Check if handle already exists for this player
+        const existingHandles = await getDocs(collection(db, 'playerTwitchHandles'));
+        let docId = null;
+        
+        existingHandles.forEach(doc => {
+          if (doc.data().playerName === playerName) {
+            docId = doc.id;
+          }
+        });
+        
+        if (docId) {
+          await updateDoc(doc(db, 'playerTwitchHandles', docId), handleDoc);
+        } else {
+          await addDoc(collection(db, 'playerTwitchHandles'), handleDoc);
+        }
+        
+        // Update local cache
+        playerTwitchHandles[playerName] = cleanHandle;
+        
+        // Update UI
+        document.getElementById('currentTwitchHandle').value = cleanHandle;
+        document.getElementById('newTwitchHandle').value = '';
+        document.getElementById('playerInfoContent').innerHTML = `
+          <div><strong>Name:</strong> ${playerName}</div>
+          <div><strong>Team:</strong> ${teamName}</div>
+          <div><strong>Current Handle:</strong> ${cleanHandle}</div>
+        `;
+        
+        showStatus(`Updated Twitch handle for ${playerName} to ${cleanHandle}`, 'success');
+        
+      } catch (error) {
+        console.error('Error updating Twitch handle:', error);
+        showStatus('Error updating Twitch handle', 'error');
+      }
+    });
+
+    // Clear Twitch handle
+    document.getElementById('clearTwitchHandle').addEventListener('click', async () => {
+      const value = document.getElementById('playerSelect').value;
+      
+      if (!value) {
+        showStatus('Please select a player', 'error');
+        return;
+      }
+      
+      const [teamName, playerIndex] = value.split('_');
+      const player = teamRosters[teamName][parseInt(playerIndex)];
+      const playerName = player.name || player.displayName;
+      
+      try {
+        // Find and delete the handle document
+        const existingHandles = await getDocs(collection(db, 'playerTwitchHandles'));
+        
+        existingHandles.forEach(async (doc) => {
+          if (doc.data().playerName === playerName) {
+            await deleteDoc(doc.ref);
+          }
+        });
+        
+        // Update local cache
+        delete playerTwitchHandles[playerName];
+        
+        // Update UI
+        document.getElementById('currentTwitchHandle').value = '';
+        document.getElementById('newTwitchHandle').value = '';
+        document.getElementById('playerInfoContent').innerHTML = `
+          <div><strong>Name:</strong> ${playerName}</div>
+          <div><strong>Team:</strong> ${teamName}</div>
+          <div><strong>Current Handle:</strong> None</div>
+        `;
+        
+        showStatus(`Cleared Twitch handle for ${playerName}`, 'success');
+        
+      } catch (error) {
+        console.error('Error clearing Twitch handle:', error);
+        showStatus('Error clearing Twitch handle', 'error');
+      }
+    });
+
+    // Bulk import Twitch handles
+    document.getElementById('bulkImportBtn').addEventListener('click', async () => {
+      const csvText = document.getElementById('bulkImportText').value.trim();
+      
+      if (!csvText) {
+        showStatus('Please enter CSV data', 'error');
+        return;
+      }
+      
+      try {
+        const lines = csvText.split('\n');
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (const line of lines) {
+          const [playerName, twitchHandle] = line.split(',').map(s => s.trim());
+          
+          if (!playerName || !twitchHandle) {
+            errorCount++;
+            continue;
+          }
+          
+          try {
+            const cleanHandle = twitchHandle.replace(/^@/, '').replace(/^https?:\/\/(www\.)?twitch\.tv\//, '');
+            
+            const handleDoc = {
+              playerName: playerName,
+              twitchHandle: cleanHandle,
+              updatedAt: new Date().toISOString(),
+              updatedBy: auth.currentUser?.email || 'unknown',
+              imported: true
+            };
+            
+            // Check if handle already exists
+            const existingHandles = await getDocs(collection(db, 'playerTwitchHandles'));
+            let docId = null;
+            
+            existingHandles.forEach(doc => {
+              if (doc.data().playerName === playerName) {
+                docId = doc.id;
+              }
+            });
+            
+            if (docId) {
+              await updateDoc(doc(db, 'playerTwitchHandles', docId), handleDoc);
+            } else {
+              await addDoc(collection(db, 'playerTwitchHandles'), handleDoc);
+            }
+            
+            playerTwitchHandles[playerName] = cleanHandle;
+            successCount++;
+            
+          } catch (error) {
+            console.error(`Error importing handle for ${playerName}:`, error);
+            errorCount++;
+          }
+        }
+        
+        showStatus(`Bulk import complete: ${successCount} successful, ${errorCount} errors`, successCount > 0 ? 'success' : 'error');
+        document.getElementById('bulkImportText').value = '';
+        
+      } catch (error) {
+        console.error('Error during bulk import:', error);
+        showStatus('Error during bulk import', 'error');
+      }
+    });
+
+    // Show status message
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('updateStatus');
+      statusDiv.textContent = message;
+      statusDiv.className = `p-3 rounded text-sm ${type === 'success' ? 'bg-green-800 text-green-200' : 'bg-red-800 text-red-200'}`;
+      statusDiv.classList.remove('hidden');
+      
+      setTimeout(() => {
+        statusDiv.classList.add('hidden');
+      }, 5000);
+    }
+
+    // Initialize player handle management when admin panel loads
+    onAuthStateChanged(auth, (user) => {
+      if (user && ADMIN_UIDS.includes(user.uid)) {
+        loginDiv.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loadStreamers();
+        loadTeamRosters();
+        loadPlayerTwitchHandles();
+      } else {
+        loginDiv.classList.remove('hidden');
+        adminPanel.classList.add('hidden');
+      }
+    });
 
   </script>
     <script src="./assets/include.js" defer></script>
