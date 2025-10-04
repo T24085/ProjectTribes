@@ -962,58 +962,108 @@
         this.matches = [];
         const teamIds = this.teams.map(t => t.id);
         
-        // Round-robin pairing with bye handling
-        const shuffled = [...teamIds].sort(() => 0.5 - Math.random());
+        // Use deterministic round-robin pairing based on week number
+        const matches = this.generateRoundRobinPairings(teamIds, this.currentWeek);
         
-        // If odd number of teams, one team gets a bye
-        const hasBye = shuffled.length % 2 === 1;
-        const byeTeam = hasBye ? shuffled.pop() : null;
-        
-        for (let i = 0; i < shuffled.length; i += 2) {
-          if (i + 1 < shuffled.length) {
-            const homeTeam = this.teams.find(t => t.id === shuffled[i]);
-            const awayTeam = this.teams.find(t => t.id === shuffled[i + 1]);
-            
+        matches.forEach((match, index) => {
+          if (match.awayTeamId === 'BYE') {
+            // Bye match
+            const byeTeamData = this.teams.find(t => t.id === match.homeTeamId);
             this.matches.push({
-              id: `match-${this.currentWeek}-${i/2 + 1}`,
+              id: `bye-${this.currentWeek}-${match.homeTeamId}`,
               weekNumber: this.currentWeek,
-              homeTeamId: shuffled[i],
-              awayTeamId: shuffled[i + 1],
+              homeTeamId: match.homeTeamId,
+              awayTeamId: 'BYE',
+              homeTeam: byeTeamData,
+              awayTeam: { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              status: 'BYE',
+              mapSet: [],
+              scheduledAt: new Date(),
+              report: null,
+              reportId: null
+            });
+          } else {
+            // Regular match
+            const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
+            const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+            
+            const matchId = `match-${this.currentWeek}-${index + 1}`;
+            this.matches.push({
+              id: matchId,
+              weekNumber: this.currentWeek,
+              homeTeamId: match.homeTeamId,
+              awayTeamId: match.awayTeamId,
               homeTeam: homeTeam,
               awayTeam: awayTeam,
               status: 'PENDING',
-              mapSet: this.generateMapSet(),
+              mapSet: this.generateMapSet(matchId),
               scheduledAt: new Date(),
               report: null,
               reportId: null
             });
           }
-        }
-        
-        // Add bye match if needed
-        if (hasBye && byeTeam) {
-          const byeTeamData = this.teams.find(t => t.id === byeTeam);
-          this.matches.push({
-            id: `bye-${this.currentWeek}-${byeTeam}`,
-            weekNumber: this.currentWeek,
-            homeTeamId: byeTeam,
-            awayTeamId: 'BYE',
-            homeTeam: byeTeamData,
-            awayTeam: { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
-            status: 'BYE',
-            mapSet: [],
-            scheduledAt: new Date(),
-            report: null,
-            reportId: null
-          });
-        }
+        });
         
         // Save to Firebase
         this.saveToFirebase();
       }
 
-      generateMapSet() {
-        const shuffled = [...this.mapPool].sort(() => 0.5 - Math.random());
+      generateRoundRobinPairings(teamIds, weekNumber) {
+        const teams = [...teamIds];
+        const numTeams = teams.length;
+        const isOdd = numTeams % 2 === 1;
+        
+        // If odd number of teams, add a bye
+        if (isOdd) {
+          teams.push('BYE');
+        }
+        
+        const numRounds = teams.length - 1;
+        const currentRound = (weekNumber - 1) % numRounds;
+        
+        // Create fixed pairings for this round
+        const pairings = [];
+        
+        // Rotate teams for this round (round-robin algorithm)
+        const rotatedTeams = [...teams];
+        for (let i = 0; i < currentRound; i++) {
+          // Move the last team to position 1, shift others right
+          const lastTeam = rotatedTeams.pop();
+          rotatedTeams.splice(1, 0, lastTeam);
+        }
+        
+        // Create pairs
+        for (let i = 0; i < rotatedTeams.length / 2; i++) {
+          const homeTeam = rotatedTeams[i];
+          const awayTeam = rotatedTeams[rotatedTeams.length - 1 - i];
+          
+          if (homeTeam !== 'BYE' && awayTeam !== 'BYE') {
+            pairings.push({
+              homeTeamId: homeTeam,
+              awayTeamId: awayTeam
+            });
+          } else if (homeTeam !== 'BYE') {
+            pairings.push({
+              homeTeamId: homeTeam,
+              awayTeamId: 'BYE'
+            });
+          }
+        }
+        
+        return pairings;
+      }
+
+      generateMapSet(matchId) {
+        // Use match ID to generate deterministic map selection
+        const seed = matchId.split('-').join('').length + matchId.charCodeAt(0);
+        const shuffled = [...this.mapPool];
+        
+        // Simple deterministic shuffle based on seed
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = (seed + i) % (i + 1);
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        
         return shuffled.slice(0, 3); // Best of 3
       }
 
