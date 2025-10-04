@@ -208,6 +208,15 @@
           throw new Error('Rate limited: 429 Too Many Requests');
         } else {
           console.log(`Twitch API error: ${res.status} ${res.statusText}`);
+          console.log('API URL that failed:', apiUrl);
+          console.log('Response headers:', res.headers);
+          // Try to get response text for more details
+          try {
+            const errorText = await res.text();
+            console.log('Error response body:', errorText);
+          } catch (e) {
+            console.log('Could not read error response body');
+          }
         }
         return [];
       }

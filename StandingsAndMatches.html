@@ -5,32 +5,98 @@
   <title>TPL Standings and Matches</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="oauth.js"></script>
+  <style>
+    .gradient-bg {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #1d4ed8 100%);
+    }
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    }
+    .standings-row {
+      transition: all 0.2s ease;
+    }
+    .standings-row:hover {
+      background-color: rgba(59, 130, 246, 0.1);
+    }
+    .playoff-glow {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+    }
+    .match-item {
+      transition: all 0.2s ease;
+    }
+    .match-item:hover {
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center">
+<body class="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white min-h-screen">
     <div id="nav-placeholder" data-include="nav.html"></div>
 
-  <div class="w-full max-w-6xl p-4">
-    <h1 class="text-2xl font-bold text-center mb-4">TPL Standings and Matches</h1>
-    <div class="flex flex-col md:flex-row gap-4 justify-center mb-6">
-      <div>
-        <label class="block text-sm mb-1">Season</label>
-        <select id="lmSeason" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
-      </div>
-      <div>
-        <label class="block text-sm mb-1">Division</label>
-        <select id="lmDivision" class="px-3 py-2 rounded-md bg-gray-700 border border-gray-600"></select>
+  <div class="w-full max-w-7xl mx-auto p-6">
+    <!-- Header Section -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+        TPL Standings & Matches
+      </h1>
+      <p class="text-gray-300 text-lg">Track your team's progress through the season</p>
+    </div>
+
+    <!-- Controls Section -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-700/50">
+      <div class="flex flex-col sm:flex-row gap-6 justify-center items-end">
+        <div class="flex-1 max-w-xs">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Season</label>
+          <select id="lmSeason" class="w-full px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-600/50 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+          </select>
+        </div>
+        <div class="flex-1 max-w-xs">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Division</label>
+          <select id="lmDivision" class="w-full px-4 py-3 rounded-xl bg-gray-700/80 border border-gray-600/50 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+          </select>
+        </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <section class="bg-gray-800 rounded-lg shadow-lg p-4">
-        <h2 class="text-xl font-semibold mb-2">Standings</h2>
-        <table id="standingsTable" class="w-full text-left text-sm"></table>
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <!-- Standings Section -->
+      <section class="bg-gray-800/30 backdrop-blur-sm rounded-2xl border border-gray-700/50 card-hover">
+        <div class="p-6 border-b border-gray-700/50">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white">League Standings</h2>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="overflow-x-auto">
+            <table id="standingsTable" class="w-full text-left"></table>
+          </div>
+        </div>
       </section>
 
-      <section class="bg-gray-800 rounded-lg shadow-lg p-4">
-        <h2 class="text-xl font-semibold mb-2">Schedule</h2>
-        <div id="scheduleContainer"></div>
+      <!-- Schedule Section -->
+      <section class="bg-gray-800/30 backdrop-blur-sm rounded-2xl border border-gray-700/50 card-hover">
+        <div class="p-6 border-b border-gray-700/50">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white">Match Schedule</h2>
+          </div>
+        </div>
+        <div class="p-6">
+          <div id="scheduleContainer" class="space-y-4"></div>
+        </div>
       </section>
     </div>
   </div>
@@ -240,20 +306,43 @@
       table.innerHTML = '';
 
       const thead = document.createElement('thead');
-      thead.innerHTML = '<tr class="bg-gray-700 sticky top-0"><th class="px-2 py-1">Team</th><th class="px-2 py-1">W</th><th class="px-2 py-1">L</th><th class="px-2 py-1">Win%</th><th class="px-2 py-1">+/-</th></tr>';
+      thead.innerHTML = `
+        <tr class="bg-gradient-to-r from-gray-700 to-gray-600">
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Team</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-300 uppercase tracking-wider">W</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-300 uppercase tracking-wider">L</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-300 uppercase tracking-wider">Win%</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-300 uppercase tracking-wider">+/-</th>
+        </tr>
+      `;
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
       rows.forEach((r, idx) => {
         const tr = document.createElement('tr');
+        tr.className = 'standings-row border-b border-gray-700/30';
+        
         if (playoffTeams.includes(r.team)) {
-          tr.className = 'bg-green-800';
+          tr.classList.add('bg-green-900/20', 'playoff-glow');
         } else {
-          tr.className = idx % 2 === 0 ? 'bg-gray-800' : 'bg-gray-700';
+          tr.classList.add(idx % 2 === 0 ? 'bg-gray-800/20' : 'bg-gray-700/20');
         }
+        
         const logo = getLogo(r.team);
-        const teamCell = logo ? `<img src="${logo}" alt="${r.team} logo" class="w-6 h-6 inline mr-2">${r.team}` : r.team;
-        tr.innerHTML = `<td class="px-2 py-1">${teamCell}</td><td class="px-2 py-1">${r.wins}</td><td class="px-2 py-1">${r.losses}</td><td class="px-2 py-1">${r.winPct.toFixed(3)}</td><td class="px-2 py-1">${r.pointDiff}</td>`;
+        const teamCell = logo 
+          ? `<div class="flex items-center gap-3"><img src="${logo}" alt="${r.team} logo" class="w-8 h-8 rounded-lg object-cover">${r.team}</div>` 
+          : `<div class="flex items-center gap-3"><div class="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center"><span class="text-xs font-bold">${r.team.charAt(0)}</span></div>${r.team}</div>`;
+        
+        const winPctColor = r.winPct >= 0.6 ? 'text-green-400' : r.winPct >= 0.4 ? 'text-yellow-400' : 'text-red-400';
+        const pointDiffColor = r.pointDiff > 0 ? 'text-green-400' : r.pointDiff < 0 ? 'text-red-400' : 'text-gray-400';
+        
+        tr.innerHTML = `
+          <td class="px-4 py-4 text-sm font-medium text-white">${teamCell}</td>
+          <td class="px-4 py-4 text-center text-sm text-white font-semibold">${r.wins}</td>
+          <td class="px-4 py-4 text-center text-sm text-white font-semibold">${r.losses}</td>
+          <td class="px-4 py-4 text-center text-sm font-semibold ${winPctColor}">${r.winPct.toFixed(3)}</td>
+          <td class="px-4 py-4 text-center text-sm font-semibold ${pointDiffColor}">${r.pointDiff > 0 ? '+' : ''}${r.pointDiff}</td>
+        `;
         tbody.appendChild(tr);
       });
       table.appendChild(tbody);
@@ -263,19 +352,41 @@
       const container = document.getElementById('scheduleContainer');
       container.innerHTML = '';
       const playoffWeeks = weeks.filter(w => w.phase === 'playoffs');
+      
       if (playoffWeeks.length) {
         const bracket = document.createElement('div');
-        bracket.className = 'mb-6';
+        bracket.className = 'mb-8 p-6 bg-gradient-to-r from-green-900/20 to-blue-900/20 rounded-xl border border-green-500/30';
         const heading = document.createElement('h3');
-        heading.className = 'text-lg font-semibold mb-2';
-        heading.textContent = 'Playoff Bracket';
+        heading.className = 'text-xl font-bold text-green-400 mb-4 flex items-center gap-2';
+        heading.innerHTML = `
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Playoff Bracket
+        `;
         bracket.appendChild(heading);
         const grid = document.createElement('div');
-        grid.className = 'grid grid-cols-2 gap-4';
+        grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
         playoffWeeks[0].matches.forEach(m => {
           const match = document.createElement('div');
-          match.className = 'flex justify-between';
-          match.innerHTML = `<span>${m.away}</span><span>${m.home}</span>`;
+          match.className = 'bg-gray-800/50 rounded-lg p-4 border border-gray-600/50 match-item';
+          const awayLogo = getLogo(m.away);
+          const homeLogo = getLogo(m.home);
+          const awayLogoHtml = awayLogo ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-6 h-6 rounded">` : '';
+          const homeLogoHtml = homeLogo ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-6 h-6 rounded">` : '';
+          match.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                ${awayLogoHtml}
+                <span class="font-medium">${m.away}</span>
+              </div>
+              <span class="text-gray-400">vs</span>
+              <div class="flex items-center gap-2">
+                ${homeLogoHtml}
+                <span class="font-medium">${m.home}</span>
+              </div>
+            </div>
+          `;
           grid.appendChild(match);
         });
         bracket.appendChild(grid);
@@ -288,49 +399,84 @@
         if (phase !== currentPhase) {
           if (phase !== 'regular') {
             const heading = document.createElement('h3');
-            heading.className = 'text-lg font-semibold mt-4 mb-2';
-            heading.textContent = phase === 'playoffs' ? 'Playoffs' : 'Championship';
+            heading.className = 'text-xl font-bold text-blue-400 mt-6 mb-4 flex items-center gap-2';
+            const icon = phase === 'playoffs' ? 
+              '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' :
+              '<svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+            heading.innerHTML = `${icon}${phase === 'playoffs' ? 'Playoffs' : 'Championship'}`;
             container.appendChild(heading);
           }
           currentPhase = phase;
         }
 
         const details = document.createElement('details');
-        details.className = 'mb-2 border border-gray-700 rounded';
+        details.className = 'mb-4 bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden';
         if (idx === 0) details.open = true;
 
         const summary = document.createElement('summary');
-        summary.className = 'font-semibold cursor-pointer select-none px-2 py-1';
+        summary.className = 'font-semibold cursor-pointer select-none px-6 py-4 bg-gradient-to-r from-gray-700/50 to-gray-600/50 hover:from-gray-600/50 hover:to-gray-500/50 transition-all duration-200 flex items-center gap-3';
+        
+        const weekIcon = document.createElement('div');
+        weekIcon.className = 'w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center';
+        weekIcon.innerHTML = '<svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>';
+        summary.appendChild(weekIcon);
+        
+        const weekText = document.createElement('span');
         if (phase === 'regular') {
-          summary.textContent = `Week ${w.week}`;
+          weekText.textContent = `Week ${w.week}`;
         } else if (phase === 'playoffs') {
-          summary.textContent = `Round ${w.week}`;
+          weekText.textContent = `Round ${w.week}`;
         } else {
-          summary.textContent = 'Finals';
+          weekText.textContent = 'Finals';
         }
+        summary.appendChild(weekText);
+        
         details.appendChild(summary);
 
-        const ul = document.createElement('ul');
-        ul.className = 'px-2 py-2 space-y-1';
+        const matchesContainer = document.createElement('div');
+        matchesContainer.className = 'p-6 space-y-3';
         w.matches.forEach(m => {
-          const li = document.createElement('li');
-          li.className = 'flex items-center gap-2';
+          const matchDiv = document.createElement('div');
+          matchDiv.className = 'bg-gray-700/30 rounded-lg p-4 border border-gray-600/30 match-item';
+          
           const score = (m.homeScore != null && m.awayScore != null) ? `${m.awayScore} - ${m.homeScore}` : '';
           const timeStr = m.time ? ` ${m.time}` : '';
           const awayLogo = getLogo(m.away);
           const homeLogo = getLogo(m.home);
+          
           const awayLogoHtml = awayLogo
-            ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-5 h-5 flex-shrink-0">`
-            : '<span class="w-5 h-5"></span>';
+            ? `<img src="${awayLogo}" alt="${m.away} logo" class="w-8 h-8 rounded-lg object-cover">`
+            : `<div class="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center"><span class="text-xs font-bold">${m.away.charAt(0)}</span></div>`;
           const homeLogoHtml = homeLogo
-            ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-5 h-5 flex-shrink-0">`
-            : '<span class="w-5 h-5"></span>';
+            ? `<img src="${homeLogo}" alt="${m.home} logo" class="w-8 h-8 rounded-lg object-cover">`
+            : `<div class="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center"><span class="text-xs font-bold">${m.home.charAt(0)}</span></div>`;
 
-          li.innerHTML = `<span class="w-32 text-gray-400">${m.date}${timeStr}</span><span class="flex items-center w-40 gap-1">${awayLogoHtml}<span class="truncate">${m.away}</span></span><span class="w-4 text-center">@</span><span class="flex items-center w-40 gap-1">${homeLogoHtml}<span class="truncate">${m.home}</span></span><span class="w-16 text-center">${score}</span>`;
+          matchDiv.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                ${awayLogoHtml}
+                <div>
+                  <div class="font-medium text-white">${m.away}</div>
+                  <div class="text-xs text-gray-400">${m.date}${timeStr}</div>
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-lg font-bold text-blue-400">@</div>
+                ${score ? `<div class="text-sm text-gray-300">${score}</div>` : ''}
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="text-right">
+                  <div class="font-medium text-white">${m.home}</div>
+                  <div class="text-xs text-gray-400">Home</div>
+                </div>
+                ${homeLogoHtml}
+              </div>
+            </div>
+          `;
 
-          ul.appendChild(li);
+          matchesContainer.appendChild(matchDiv);
         });
-        details.appendChild(ul);
+        details.appendChild(matchesContainer);
         container.appendChild(details);
       });
     }
