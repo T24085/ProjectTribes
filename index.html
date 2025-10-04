@@ -1844,13 +1844,13 @@
           </select>
         </div>
         <div class="twitch-chat-container">
-          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 240px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 350px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
             <div class="text-center">
               <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
               <div>Connecting to Chat...</div>
             </div>
           </div>
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 240px; border: none; border-radius: 0.5rem; display: none;"></iframe>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 350px; border: none; border-radius: 0.5rem; display: none;"></iframe>
         </div>
         
         <!-- Player Chat Section -->
@@ -1860,13 +1860,13 @@
             <div id="selected-player-name" class="selected-player-display" style="color: var(--text-muted); font-size: 0.9rem;">Select a player</div>
           </div>
           <div class="twitch-chat-container">
-            <div class="player-chat-loading" style="display: flex; align-items: center; justify-content: center; height: 240px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+            <div class="player-chat-loading" style="display: flex; align-items: center; justify-content: center; height: 350px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
               <div class="text-center">
                 <div class="text-gray-400 mb-2">👤</div>
                 <div>Select a player to view their chat</div>
               </div>
             </div>
-            <iframe id="player-chat-iframe" src="about:blank" style="width: 100%; height: 240px; border: none; border-radius: 0.5rem; display: none;"></iframe>
+            <iframe id="player-chat-iframe" src="about:blank" style="width: 100%; height: 350px; border: none; border-radius: 0.5rem; display: none;"></iframe>
           </div>
         </div>
       </div>
@@ -5162,37 +5162,62 @@
 
     // Initialize viewer history modal
     function initializeViewerHistoryModal() {
+      console.log('Initializing viewer history modal...');
+      
       const historyBtn = document.getElementById('viewer-history-btn');
       const historyModal = document.getElementById('viewer-history-modal');
       const closeBtn = document.getElementById('close-viewer-history');
       
+      console.log('History button found:', !!historyBtn);
+      console.log('History modal found:', !!historyModal);
+      console.log('Close button found:', !!closeBtn);
+      
       if (historyBtn) {
-        historyBtn.addEventListener('click', () => {
+        historyBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('History button clicked');
           showViewerHistory();
         });
+      } else {
+        console.error('Viewer history button not found!');
       }
       
       if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
+        closeBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log('Close button clicked');
           hideViewerHistory();
         });
+      } else {
+        console.error('Close button not found!');
       }
       
       if (historyModal) {
         historyModal.addEventListener('click', (e) => {
           if (e.target === historyModal) {
+            console.log('Modal background clicked');
             hideViewerHistory();
           }
         });
+      } else {
+        console.error('Viewer history modal not found!');
       }
     }
 
     // Show viewer history modal
     function showViewerHistory() {
+      console.log('showViewerHistory called');
       const modal = document.getElementById('viewer-history-modal');
+      console.log('Modal element:', modal);
+      
       if (modal) {
+        console.log('Updating viewer history display...');
         updateViewerHistoryDisplay();
+        console.log('Setting modal display to flex');
         modal.style.display = 'flex';
+        console.log('Modal should now be visible');
+      } else {
+        console.error('Viewer history modal not found!');
       }
     }
 
@@ -5349,21 +5374,27 @@
     // Get Twitch viewer count for a specific channel
     async function getTwitchViewerCount(channel) {
       try {
-        // Note: This is a simplified implementation
-        // In a real implementation, you'd use Twitch's official API with proper authentication
-        // For now, we'll simulate viewer counts based on whether the stream is live
+        console.log(`Getting viewer count for channel: ${channel}`);
+        console.log('Available live streams:', liveStreams);
         
         // Check if this is a live stream by looking at our existing live streams data
         const isLive = liveStreams.some(stream => 
           stream.user_login && stream.user_login.toLowerCase() === channel.toLowerCase()
         );
         
+        console.log(`Channel ${channel} is live:`, isLive);
+        
         if (isLive) {
           // Simulate realistic viewer counts for live streams
           const baseViewers = Math.floor(Math.random() * 100) + 50; // 50-150 viewers
+          console.log(`Simulated viewer count for ${channel}: ${baseViewers}`);
           return baseViewers;
         } else {
-          return 0;
+          // For testing purposes, let's show some viewers even for offline streams
+          // This will help us see if the display is working
+          const testViewers = Math.floor(Math.random() * 20) + 5; // 5-25 viewers for testing
+          console.log(`Test viewer count for ${channel}: ${testViewers}`);
+          return testViewers;
         }
       } catch (error) {
         console.error(`Error getting viewer count for ${channel}:`, error);
@@ -5386,7 +5417,7 @@
       const liveStreamers = [];
       
       viewerData.forEach((data) => {
-        if (data.isLive && data.viewers > 0) {
+        if (data.viewers > 0) { // Show all streamers with viewers, not just live ones
           totalViewers += data.viewers;
           liveStreamers.push(data);
         }
