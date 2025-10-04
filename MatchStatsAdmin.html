@@ -209,6 +209,20 @@
       snap.forEach(docSnap => {
         const data = docSnap.data();
         matches.push({ id: docSnap.id, data });
+      });
+
+      // Sort matches by date (newest first)
+      matches.sort((a, b) => {
+        const aCreated = a.data?.created;
+        const bCreated = b.data?.created;
+        const aTime = aCreated?.toDate ? aCreated.toDate().getTime() : (aCreated instanceof Date ? aCreated.getTime() : new Date(aCreated || 0).getTime());
+        const bTime = bCreated?.toDate ? bCreated.toDate().getTime() : (bCreated instanceof Date ? bCreated.getTime() : new Date(bCreated || 0).getTime());
+        return bTime - aTime; // Sort newest first
+      });
+
+      // Now create table rows in sorted order
+      matches.forEach(match => {
+        const { id, data } = match;
         let dateStr = '';
         try { 
           dateStr = data.created.toDate().toLocaleString(); 
@@ -223,13 +237,13 @@
           <td class="px-2">${data.map}</td>
           <td class="px-2">${data.team1} vs ${data.team2}</td>
           <td class="px-2 space-x-2">
-            <button class="edit-btn bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded" data-id="${docSnap.id}">Edit</button>
-            <button class="delete-btn bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-id="${docSnap.id}">Delete</button>
+            <button class="edit-btn bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded" data-id="${id}">Edit</button>
+            <button class="delete-btn bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-id="${id}">Delete</button>
           </td>
         `;
         tbody.appendChild(tr);
-        tr.querySelector('.edit-btn').addEventListener('click', () => loadMatchForEdit(docSnap.id, data));
-        tr.querySelector('.delete-btn').addEventListener('click', () => deleteMatch(docSnap.id));
+        tr.querySelector('.edit-btn').addEventListener('click', () => loadMatchForEdit(id, data));
+        tr.querySelector('.delete-btn').addEventListener('click', () => deleteMatch(id));
       });
       listDiv.appendChild(table);
 
