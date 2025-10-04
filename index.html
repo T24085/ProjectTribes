@@ -123,6 +123,67 @@
       background: rgba(129, 140, 248, 0.2);
     }
 
+    /* Dropdown styles */
+    .nav-dropdown {
+      position: relative;
+    }
+
+    .nav-dropdown button {
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background var(--transition-snappy);
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .nav-dropdown button:hover {
+      background: rgba(129, 140, 248, 0.2);
+    }
+
+    .nav-dropdown-content {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 12rem;
+      background: var(--card-bg);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      padding: 0.5rem;
+      z-index: 50;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s ease;
+    }
+
+    .nav-dropdown:hover .nav-dropdown-content {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .nav-dropdown-content a {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-radius: 0.5rem;
+      transition: background var(--transition-snappy);
+      font-size: 0.9rem;
+    }
+
+    .nav-dropdown-content a:hover {
+      background: rgba(129, 140, 248, 0.2);
+    }
+
     .auth-buttons {
       display: flex;
       align-items: center;
@@ -1268,14 +1329,25 @@
         <a href="Schedule.html" class="nav-link">Matches</a>
         <a href="PlayerStats.html" class="nav-link">Statistics</a>
         <a href="News.html" class="nav-link">News</a>
-        <a href="Standings.html" class="nav-link">Standings</a>
-        <a href="Streamers.html" class="nav-link">Streamers</a>
-        <a href="TournamentBrackets.html" class="nav-link">Tournaments</a>
-        <a href="UpcomingEvents.html" class="nav-link">Events</a>
         <a href="TribesScrimWatcher.html" class="nav-link">Scrim Watcher</a>
         <a href="StreamerKits.html" class="nav-link">Streamer Kits</a>
         <a href="TeamSignUp.html" class="nav-link">Team Sign Up</a>
         <a href="DraftSignUp.html" class="nav-link">Draft Sign Up</a>
+        <div class="nav-dropdown">
+          <button>
+            Admin
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="nav-dropdown-content">
+            <a href="LeagueManager.html">League Manager</a>
+            <a href="TournamentManager.html">Tournament Manager</a>
+            <a href="MatchStatsAdmin.html">Match Stats Admin</a>
+            <a href="NewsAdmin.html">News Admin</a>
+            <a href="StreamersAdmin.html">Streamers Admin</a>
+          </div>
+        </div>
       </div>
       <div class="auth-buttons">
         <button id="admin-login-btn" class="btn btn-secondary" style="display: none;">Admin Login</button>
