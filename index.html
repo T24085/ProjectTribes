@@ -941,6 +941,8 @@
       position: relative;
       z-index: 10;
       isolation: isolate;
+      width: 350px;
+      height: 500px;
     }
     
     .twitch-chat-container iframe {
@@ -1853,13 +1855,13 @@
           </select>
         </div>
         <div class="twitch-chat-container">
-          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 350px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
             <div class="text-center">
               <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
               <div>Connecting to Chat...</div>
             </div>
           </div>
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 350px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 350px; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
         </div>
         
         <!-- Player Chat Section -->
@@ -1869,13 +1871,13 @@
             <div id="selected-player-name" class="selected-player-display" style="color: var(--text-muted); font-size: 0.9rem;">Select a player</div>
           </div>
           <div class="twitch-chat-container">
-            <div class="player-chat-loading" style="display: flex; align-items: center; justify-content: center; height: 350px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+            <div class="player-chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
               <div class="text-center">
                 <div class="text-gray-400 mb-2">👤</div>
                 <div>Select a player to view their chat</div>
               </div>
             </div>
-            <iframe id="player-chat-iframe" src="about:blank" style="width: 100%; height: 350px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
+            <iframe id="player-chat-iframe" src="about:blank" style="width: 350px; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
           </div>
         </div>
       </div>
