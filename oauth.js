@@ -181,9 +181,19 @@
   async function fetchLiveStreams(logins) {
     const token = getToken();
     if (!token || !Array.isArray(logins) || logins.length === 0) return [];
-    const query = logins.map(l => 'user_login=' + encodeURIComponent(l)).join('&');
+    
+    // Twitch API expects user_login parameters to be repeated, not joined with &
+    const queryParams = new URLSearchParams();
+    logins.forEach(login => {
+      queryParams.append('user_login', login);
+    });
+    
+    const apiUrl = 'https://api.twitch.tv/helix/streams?' + queryParams.toString();
+    console.log('Fetching live streams from:', apiUrl);
+    console.log('Logins being checked:', logins);
+    
     try {
-      const res = await fetch('https://api.twitch.tv/helix/streams?' + query, {
+      const res = await fetch(apiUrl, {
         headers: {
           'Client-ID': CLIENT_ID,
           'Authorization': 'Bearer ' + token
