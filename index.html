@@ -1264,10 +1264,13 @@
         </div>
       </div>
       <div class="header-nav">
-        <a href="#" class="nav-link">Main</a>
-        <a href="#" class="nav-link">Matches</a>
-        <a href="#" class="nav-link">Statistics</a>
-        <a href="#" class="nav-link">News</a>
+        <a href="index.html" class="nav-link">Main</a>
+        <a href="Schedule.html" class="nav-link">Matches</a>
+        <a href="PlayerStats.html" class="nav-link">Statistics</a>
+        <a href="News.html" class="nav-link">News</a>
+        <a href="Standings.html" class="nav-link">Standings</a>
+        <a href="Streamers.html" class="nav-link">Streamers</a>
+        <a href="TournamentBrackets.html" class="nav-link">Tournaments</a>
       </div>
       <div class="auth-buttons">
         <button id="admin-login-btn" class="btn btn-secondary" style="display: none;">Admin Login</button>
@@ -1547,7 +1550,7 @@
 
     const TEAM_DATA = {
       'AV!': { 
-        logo: 'https://github.com/T24085/Team-Avalanche/blob/main/aV!.png?raw=true', 
+        logo: 'images/aV!.png', 
         name: 'Avalanche', 
         folder: 'AV!',
         roster: "Players: TritiumJones, BakaToma, Vorpalkitty, Franchez, Dean, Ggglygy, Wriggles, Blitz, Hosh, Luna, Def_Monk",
@@ -1599,7 +1602,7 @@
         logo: 'https://github.com/T24085/Team-TXM/blob/main/TXM.png?raw=true', 
         name: 'Texas Militia', 
         folder: 'TXM',
-        roster: "Captain: @OpCats (LO/LD)\nCore: Prizzo, Cryof, Amyou, Thatguy, Visis, Jive, Freefood, Howsya\nBench: Txredneck",
+        roster: "Captain: @OperationCats (LO/LD)\nCore: Prizzo, Cryof, Amyou, Thatguy, Visis, Jive, Freefood, Howsya\nBench: Txredneck",
         streams: [
           { name: 'Prizzo', url: 'https://www.twitch.tv/prizzo4real' },
           { name: 'OperationCats', url: 'https://www.twitch.tv/operationcats' },
@@ -1607,6 +1610,7 @@
           { name: 'Visis', url: 'https://www.twitch.tv/visisgaming' },
           { name: 'Cryof', url: 'https://www.twitch.tv/cryofzshooter' },
           { name: 'Jive', url: 'https://www.twitch.tv/heavenlyjive' },
+          { name: 'Amyou', url: 'https://www.twitch.tv/iamyougaming' },
           { name: 'freefood', url: 'https://www.twitch.tv/freefoodd' },
           { name: 'Howsya', url: 'https://www.twitch.tv/howsya' }
         ]
@@ -2605,6 +2609,7 @@
       'Visis': 'visisgaming',
       'Cryof': 'cryofzshooter',
       'Jive': 'heavenlyjive',
+      'Amyou': 'iamyougaming',
       'freefood': 'freefoodd',
       'Howsya': 'howsya',
       
@@ -2643,6 +2648,14 @@
       'z4t01': 'z4t01',
       
       // Toxic Aimers team mappings
+      'Song': 'song',
+      'Sek': 'sek',
+      'Hatuey': 'hatuey',
+      'DareDevilMoon': 'daredevilmoon',
+      'Nerve': 'nerve',
+      'Radishblue': 'radishblue',
+      'Trey': 'trey',
+      'Sin': 'sin',
       'Stork': 'storksoofly',
       
       // DeadStop team mappings
