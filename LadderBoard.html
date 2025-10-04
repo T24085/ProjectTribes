@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ladder Board | Tribes Professional League</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="Tribes Professional League.png" type="image/png">
+  <style>
+    :root {
+      --bg-color: #030712;
+      --bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 55%), radial-gradient(circle at 80% 30%, rgba(129, 140, 248, 0.12), transparent 60%), linear-gradient(220deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.94));
+      --panel-bg: rgba(15, 23, 42, 0.82);
+      --surface-glass: rgba(17, 24, 39, 0.65);
+      --card-bg: rgba(13, 19, 33, 0.84);
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+      --accent-strong: #38bdf8;
+      --success: #22c55e;
+      --danger: #f87171;
+      --warning: #f59e0b;
+      --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-gradient), var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Countdown Banner */
+    .countdown-banner {
+      position: sticky;
+      top: 80px;
+      z-index: 30;
+      background: var(--panel-bg);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      backdrop-filter: blur(16px);
+      padding: 1rem 2rem;
+      text-align: center;
+      transition: all var(--transition-snappy);
+    }
+
+    .countdown-banner.warning {
+      background: rgba(245, 158, 11, 0.15);
+      border-bottom-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .countdown-banner.warning .countdown-timer {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .countdown-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .countdown-timer {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent-strong);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      background: var(--surface-glass);
+      padding: 0.5rem;
+      border-radius: 1rem;
+      backdrop-filter: blur(16px);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      font-weight: 500;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .tab:hover:not(.active) {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Ladder Table */
+    .ladder-table {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(16px);
+    }
+
+    .table-header {
+      background: var(--panel-bg);
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .table-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .table-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th {
+      background: var(--surface-glass);
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .table th.sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: color var(--transition-snappy);
+    }
+
+    .table th.sortable:hover {
+      color: var(--accent-strong);
+    }
+
+    .table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .table tr:hover {
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .team-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      background: var(--surface-glass);
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .team-tag {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .elo-value {
+      font-weight: 600;
+      color: var(--accent-strong);
+    }
+
+    .record {
+      font-weight: 500;
+    }
+
+    .win-percentage {
+      font-weight: 600;
+    }
+
+    .last-five {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .result-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .result-indicator.win {
+      background: var(--success);
+    }
+
+    .result-indicator.loss {
+      background: var(--danger);
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--text-muted);
+    }
+
+    .status-reported {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+
+    .status-final {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    .status-contested {
+      background: rgba(248, 113, 113, 0.2);
+      color: var(--danger);
+    }
+
+    /* Match Cards */
+    .matches-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .match-card {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(16px);
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .match-teams {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .vs-text {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .match-maps {
+      margin-top: 1rem;
+    }
+
+    .map-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .map-item:last-child {
+      border-bottom: none;
+    }
+
+    .map-name {
+      font-weight: 500;
+    }
+
+    .map-score {
+      font-weight: 600;
+      color: var(--accent-strong);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #7c3aed;
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-secondary {
+      background: var(--surface-glass);
+      color: var(--text-primary);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(148, 163, 184, 0.1);
+    }
+
+    /* Loading States */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-top: 2px solid var(--accent-strong);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      background: var(--panel-bg);
+      border-radius: 1rem 1rem 0 0;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .modal-close:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    .modal form {
+      padding: 1.5rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .match-info-display {
+      background: var(--surface-glass);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+
+    .map-result-input {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--surface-glass);
+      border-radius: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 1rem;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .table {
+        font-size: 0.9rem;
+      }
+
+      .table th, .table td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      .team-cell {
+        gap: 0.5rem;
+      }
+
+      .team-logo {
+        width: 32px;
+        height: 32px;
+      }
+
+      .modal-content {
+        width: 95%;
+        margin: 1rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div data-include="nav.html"></div>
+
+  <!-- Countdown Banner -->
+  <div class="countdown-banner" id="countdownBanner">
+    <div class="countdown-text">Next Ladder Refresh</div>
+    <div class="countdown-timer" id="countdownTimer">Loading...</div>
+  </div>
+
+  <div class="main-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Ladder Board</h1>
+      <p class="page-subtitle">Weekly competitive ladder for Tribes Professional League teams</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="rankings">Rankings</button>
+      <button class="tab" data-tab="matches">Matches</button>
+      <button class="tab" data-tab="rules">Rules & Schedule</button>
+      <button class="tab" data-tab="maps">Map Pool</button>
+    </div>
+
+    <!-- Rankings Tab -->
+    <div class="tab-content active" id="rankings">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Team Rankings</h2>
+          <p class="table-subtitle">Current ladder standings • Last updated: <span id="lastRefresh">Loading...</span></p>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="rank">Rank</th>
+              <th>Team</th>
+              <th class="sortable" data-sort="elo">Elo</th>
+              <th class="sortable" data-sort="record">W-L</th>
+              <th class="sortable" data-sort="winpct">Win%</th>
+              <th class="sortable" data-sort="maps">Maps W-L</th>
+              <th>Last 5</th>
+            </tr>
+          </thead>
+          <tbody id="rankingsTable">
+            <tr>
+              <td colspan="7" class="loading">
+                <div class="spinner"></div>
+                Loading rankings...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Matches Tab -->
+    <div class="tab-content" id="matches">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Week <span id="currentWeek">1</span> Matches</h2>
+          <p class="table-subtitle">Current week's matchups and results</p>
+        </div>
+        <div class="matches-grid" id="matchesGrid">
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading matches...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rules Tab -->
+    <div class="tab-content" id="rules">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Rules & Schedule</h2>
+          <p class="table-subtitle">How the ladder system works</p>
+        </div>
+        <div style="padding: 2rem;">
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Weekly Schedule</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+            The ladder refreshes every <strong>Saturday at 11:00 PM America/New_York</strong> (10:00 PM America/Chicago). 
+            At this time, Elo ratings are updated and new weekly pairings are generated.
+          </p>
+
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Match Reporting</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+            Team captains can report match results by uploading scoreboard images and entering map scores. 
+            Both teams must confirm the results for the match to be finalized. Disputed matches require admin review.
+          </p>
+
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Elo System</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+            Teams start with 1500 Elo. Wins and losses adjust Elo based on opponent strength. 
+            Elo changes are applied during the weekly refresh, not immediately after matches.
+          </p>
+
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Rankings</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;">
+            Teams are ranked by Elo rating. Ties are broken by win percentage, then map differential.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maps Tab -->
+    <div class="tab-content" id="maps">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Map Pool</h2>
+          <p class="table-subtitle">Available maps for ladder matches</p>
+        </div>
+        <div style="padding: 2rem;">
+          <div id="mapPool" class="loading">
+            <div class="spinner"></div>
+            Loading map pool...
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Match Reporting Modal -->
+  <div id="reportModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Report Match Result</h2>
+        <button class="modal-close" onclick="ladderBoard.closeReportModal()">&times;</button>
+      </div>
+      <form id="reportForm">
+        <div class="form-group">
+          <label class="form-label">Match</label>
+          <div id="matchInfo" class="match-info-display"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Scoreboard Images (Upload URLs)</label>
+          <div id="scoreboardInputs">
+            <input type="url" class="form-input" placeholder="https://example.com/scoreboard1.png" name="scoreboard1">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="ladderBoard.addScoreboardInput()">Add Another Image</button>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Map Results</label>
+          <div id="mapResults"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Winner</label>
+          <select class="form-select" name="winner" required>
+            <option value="">Select Winner</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Additional Notes (Optional)</label>
+          <textarea class="form-textarea" name="notes" placeholder="Any additional information about the match..."></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="ladderBoard.closeReportModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Match Confirmation Modal -->
+  <div id="confirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Confirm Match Result</h2>
+        <button class="modal-close" onclick="ladderBoard.closeConfirmModal()">&times;</button>
+      </div>
+      <div id="confirmContent"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="ladderBoard.closeConfirmModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="ladderBoard.disputeMatch()">Dispute Result</button>
+        <button type="button" class="btn btn-success" onclick="ladderBoard.confirmMatch()">Confirm Result</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/include.js" defer></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    // Ladder Board JavaScript
+    class LadderBoard {
+      constructor() {
+        this.teams = [];
+        this.matches = [];
+        this.currentWeek = 1;
+        this.mapPool = [];
+        this.lastRefresh = null;
+        this.nextRefresh = null;
+        this.sortColumn = 'rank';
+        this.sortDirection = 'asc';
+        this.currentUser = null;
+        this.currentReportMatch = null;
+        this.currentConfirmReport = null;
+        
+        this.init();
+      }
+
+      async init() {
+        this.setupAuth();
+        await this.loadData();
+        this.setupEventListeners();
+        this.startCountdown();
+        this.renderRankings();
+        this.renderMatches();
+        this.renderMapPool();
+        
+        // Setup form submission
+        document.getElementById('reportForm').addEventListener('submit', (e) => this.submitReport(e));
+      }
+
+      setupAuth() {
+        onAuthStateChanged(auth, (user) => {
+          this.currentUser = user;
+          console.log('Auth state changed:', user ? user.email : 'Not logged in');
+        });
+      }
+
+      async loadData() {
+        // Load teams data - All 13 teams
+        this.teams = [
+          { id: 'av', name: 'Avalanche', tag: 'AV!', logo: 'images/aV!.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'epi', name: 'ePidemic', tag: 'EPI', logo: 'images/ePi.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'dprk', name: 'DPRK', tag: 'DPRK', logo: 'images/TeamDPRKLogo3.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'zen', name: 'Zen', tag: 'ZEN', logo: 'images/Zenlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'fps', name: 'Flag Pole Smokers', tag: 'FPS', logo: 'images/FPSlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'ft', name: 'Flying Tractors', tag: 'FT', logo: 'images/FTlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'hoe', name: 'Hegemony of Euros', tag: 'HoE', logo: 'images/HoE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'txm', name: 'Texas Militia', tag: 'TXM', logo: 'images/TXM.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'ue', name: 'Unhandled Exception', tag: 'UE', logo: 'images/UE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'wiz', name: 'Magic', tag: 'WIZ', logo: 'images/Magic.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'ds', name: 'DeadStop', tag: 'DS', logo: 'DeadStopLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'ktl', name: 'Kicked to Lobby', tag: 'KTL', logo: 'images/KTLlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'null', name: 'null', tag: 'Null', logo: 'images/NullLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+          { id: 'ta', name: 'Toxic Aimers', tag: 'TA', logo: 'images/ToxicAimersLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' }
+        ];
+
+        // Load map pool - Updated to actual Tribes maps
+        this.mapPool = [
+          'Dry Dock', 'Raindance', 'Hollow', 'Dangerous Crossing', 
+          'Torment', 'Katabatic', 'Wave Mist', 'Moonrise'
+        ];
+
+        // Try to load data from Firebase
+        await this.loadFromFirebase();
+
+        // Generate weekly matches if none exist
+        if (this.matches.length === 0) {
+          this.generateWeeklyMatches();
+        }
+
+        // Set refresh times
+        this.lastRefresh = new Date();
+        this.nextRefresh = this.getNextRefreshTime();
+      }
+
+      async loadFromFirebase() {
+        try {
+          // Load ladder data from Firebase
+          const ladderRef = doc(db, 'ladder', 'data');
+          const ladderSnap = await getDoc(ladderRef);
+          
+          if (ladderSnap.exists()) {
+            const data = ladderSnap.data();
+            this.teams = data.teams || this.teams;
+            this.currentWeek = data.currentWeek || 1;
+            this.lastRefresh = data.lastRefresh ? data.lastRefresh.toDate() : new Date();
+          }
+
+          // Load matches for current week
+          const matchesQuery = query(
+            collection(db, 'ladderMatches'),
+            where('weekNumber', '==', this.currentWeek),
+            orderBy('scheduledAt')
+          );
+          const matchesSnap = await getDocs(matchesQuery);
+          
+          this.matches = [];
+          matchesSnap.forEach(doc => {
+            const matchData = doc.data();
+            matchData.id = doc.id;
+            matchData.homeTeam = this.teams.find(t => t.id === matchData.homeTeamId);
+            matchData.awayTeam = this.teams.find(t => t.id === matchData.awayTeamId);
+            this.matches.push(matchData);
+          });
+
+          // Load reports for matches
+          for (let match of this.matches) {
+            if (match.reportId) {
+              const reportRef = doc(db, 'ladderReports', match.reportId);
+              const reportSnap = await getDoc(reportRef);
+              if (reportSnap.exists()) {
+                match.report = { id: reportSnap.id, ...reportSnap.data() };
+              }
+            }
+          }
+
+        } catch (error) {
+          console.error('Error loading from Firebase:', error);
+        }
+      }
+
+      async saveToFirebase() {
+        try {
+          // Save ladder data
+          const ladderRef = doc(db, 'ladder', 'data');
+          await setDoc(ladderRef, {
+            teams: this.teams,
+            currentWeek: this.currentWeek,
+            lastRefresh: serverTimestamp(),
+            mapPool: this.mapPool
+          });
+
+          // Save matches
+          for (let match of this.matches) {
+            const matchData = {
+              weekNumber: match.weekNumber,
+              homeTeamId: match.homeTeamId,
+              awayTeamId: match.awayTeamId,
+              status: match.status,
+              mapSet: match.mapSet,
+              scheduledAt: match.scheduledAt,
+              reportId: match.reportId || null
+            };
+
+            if (match.id && match.id.startsWith('match-')) {
+              // Update existing match
+              const matchRef = doc(db, 'ladderMatches', match.id);
+              await updateDoc(matchRef, matchData);
+            } else {
+              // Create new match
+              const matchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
+              match.id = matchRef.id;
+            }
+          }
+
+        } catch (error) {
+          console.error('Error saving to Firebase:', error);
+        }
+      }
+
+      generateWeeklyMatches() {
+        this.matches = [];
+        const teamIds = this.teams.map(t => t.id);
+        
+        // Round-robin pairing with proper algorithm
+        const shuffled = [...teamIds].sort(() => 0.5 - Math.random());
+        
+        for (let i = 0; i < shuffled.length; i += 2) {
+          if (i + 1 < shuffled.length) {
+            const homeTeam = this.teams.find(t => t.id === shuffled[i]);
+            const awayTeam = this.teams.find(t => t.id === shuffled[i + 1]);
+            
+            this.matches.push({
+              id: `match-${this.currentWeek}-${i/2 + 1}`,
+              weekNumber: this.currentWeek,
+              homeTeamId: shuffled[i],
+              awayTeamId: shuffled[i + 1],
+              homeTeam: homeTeam,
+              awayTeam: awayTeam,
+              status: 'PENDING',
+              mapSet: this.generateMapSet(),
+              scheduledAt: new Date(),
+              report: null,
+              reportId: null
+            });
+          }
+        }
+        
+        // Save to Firebase
+        this.saveToFirebase();
+      }
+
+      generateMapSet() {
+        const shuffled = [...this.mapPool].sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 3); // Best of 3
+      }
+
+      getNextRefreshTime() {
+        const now = new Date();
+        const nextSaturday = new Date(now);
+        
+        // Find next Saturday
+        const daysUntilSaturday = (6 - now.getDay()) % 7;
+        if (daysUntilSaturday === 0 && now.getHours() >= 23) {
+          nextSaturday.setDate(now.getDate() + 7);
+        } else {
+          nextSaturday.setDate(now.getDate() + (daysUntilSaturday || 7));
+        }
+        
+        nextSaturday.setHours(23, 0, 0, 0); // 11 PM Eastern
+        return nextSaturday;
+      }
+
+      setupEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.addEventListener('click', (e) => {
+            const tabName = e.target.dataset.tab;
+            this.switchTab(tabName);
+          });
+        });
+
+        // Table sorting
+        document.querySelectorAll('.sortable').forEach(header => {
+          header.addEventListener('click', (e) => {
+            const column = e.target.dataset.sort;
+            this.sortTable(column);
+          });
+        });
+      }
+
+      switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab').forEach(tab => {
+          tab.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+      }
+
+      sortTable(column) {
+        if (this.sortColumn === column) {
+          this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          this.sortColumn = column;
+          this.sortDirection = 'asc';
+        }
+
+        this.teams.sort((a, b) => {
+          let aVal, bVal;
+          
+          switch (column) {
+            case 'rank':
+              aVal = this.teams.indexOf(a) + 1;
+              bVal = this.teams.indexOf(b) + 1;
+              break;
+            case 'elo':
+              aVal = a.elo;
+              bVal = b.elo;
+              break;
+            case 'record':
+              aVal = a.wins - a.losses;
+              bVal = b.wins - b.losses;
+              break;
+            case 'winpct':
+              aVal = a.wins + a.losses > 0 ? a.wins / (a.wins + a.losses) : 0;
+              bVal = b.wins + b.losses > 0 ? b.wins / (b.wins + b.losses) : 0;
+              break;
+            case 'maps':
+              aVal = a.mapsWon - a.mapsLost;
+              bVal = b.mapsWon - b.mapsLost;
+              break;
+            default:
+              return 0;
+          }
+
+          if (this.sortDirection === 'asc') {
+            return aVal > bVal ? 1 : -1;
+          } else {
+            return aVal < bVal ? 1 : -1;
+          }
+        });
+
+        this.renderRankings();
+      }
+
+      startCountdown() {
+        const updateCountdown = () => {
+          const now = new Date();
+          const timeLeft = this.nextRefresh - now;
+
+          if (timeLeft <= 0) {
+            document.getElementById('countdownTimer').textContent = 'Refreshing...';
+            return;
+          }
+
+          const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+          const timerText = `${days}d ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          document.getElementById('countdownTimer').textContent = timerText;
+
+          // Update banner style if less than 1 hour
+          const banner = document.getElementById('countdownBanner');
+          if (timeLeft < 60 * 60 * 1000) {
+            banner.classList.add('warning');
+          } else {
+            banner.classList.remove('warning');
+          }
+        };
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+      }
+
+      renderRankings() {
+        const tbody = document.getElementById('rankingsTable');
+        tbody.innerHTML = '';
+
+        // Sort teams by Elo (default ranking)
+        const sortedTeams = [...this.teams].sort((a, b) => {
+          if (b.elo !== a.elo) return b.elo - a.elo;
+          const aWinPct = a.wins + a.losses > 0 ? a.wins / (a.wins + a.losses) : 0;
+          const bWinPct = b.wins + b.losses > 0 ? b.wins / (b.wins + b.losses) : 0;
+          if (bWinPct !== aWinPct) return bWinPct - aWinPct;
+          return (b.mapsWon - b.mapsLost) - (a.mapsWon - a.mapsLost);
+        });
+
+        sortedTeams.forEach((team, index) => {
+          const row = document.createElement('tr');
+          const winPct = team.wins + team.losses > 0 ? (team.wins / (team.wins + team.losses) * 100).toFixed(1) : '0.0';
+          const last5Html = this.renderLastFive(team.last5);
+
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>
+              <div class="team-cell">
+                <img src="${team.logo}" alt="${team.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+                <div class="team-info">
+                  <div class="team-name">${team.name}</div>
+                  <div class="team-tag">[${team.tag}]</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="elo-value">${Math.round(team.elo)}</span></td>
+            <td><span class="record">${team.wins}-${team.losses}</span></td>
+            <td><span class="win-percentage">${winPct}%</span></td>
+            <td><span class="record">${team.mapsWon}-${team.mapsLost}</span></td>
+            <td><div class="last-five">${last5Html}</div></td>
+          `;
+          tbody.appendChild(row);
+        });
+
+        // Update last refresh time
+        document.getElementById('lastRefresh').textContent = this.lastRefresh.toLocaleString();
+      }
+
+      renderLastFive(last5String) {
+        if (!last5String) return '<span style="color: var(--text-muted);">-</span>';
+        
+        return last5String.split('').map(result => {
+          const className = result === 'W' ? 'win' : 'loss';
+          return `<span class="result-indicator ${className}"></span>`;
+        }).join('');
+      }
+
+      renderMatches() {
+        const grid = document.getElementById('matchesGrid');
+        grid.innerHTML = '';
+
+        if (this.matches.length === 0) {
+          grid.innerHTML = '<div class="loading">No matches scheduled for this week.</div>';
+          return;
+        }
+
+        this.matches.forEach(match => {
+          const card = document.createElement('div');
+          card.className = 'match-card';
+
+          const statusClass = `status-${match.status.toLowerCase()}`;
+          const mapListHtml = match.mapSet.map(map => `<div class="map-item"><span class="map-name">${map}</span><span class="map-score">-</span></div>`).join('');
+
+          card.innerHTML = `
+            <div class="match-header">
+              <div class="match-teams">
+                <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+                <span class="vs-text">vs</span>
+                <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+              </div>
+              <span class="status-badge ${statusClass}">${match.status}</span>
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <strong>${match.homeTeam.name} [${match.homeTeam.tag}]</strong> vs <strong>${match.awayTeam.name} [${match.awayTeam.tag}]</strong>
+            </div>
+            <div class="match-maps">
+              <h4 style="margin-bottom: 0.5rem; color: var(--text-muted);">Maps:</h4>
+              ${mapListHtml}
+            </div>
+            ${match.status === 'PENDING' ? `
+              <div style="margin-top: 1rem;">
+                <button class="btn btn-primary" onclick="ladderBoard.reportMatch('${match.id}')">Report Result</button>
+              </div>
+            ` : match.status === 'REPORTED' && match.report ? `
+              <div style="margin-top: 1rem;">
+                <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                  Reported by: ${match.report.submittedBy}<br>
+                  Home: ${match.report.homeTeamConfirm} | Away: ${match.report.awayTeamConfirm}
+                </div>
+                <button class="btn btn-success" onclick="ladderBoard.openConfirmModal('${match.report.id}')">Confirm/Dispute</button>
+              </div>
+            ` : match.status === 'FINAL' ? `
+              <div style="margin-top: 1rem; padding: 0.5rem; background: var(--success); color: white; border-radius: 0.25rem; text-align: center;">
+                <strong>Match Finalized</strong>
+              </div>
+            ` : match.status === 'CONTESTED' ? `
+              <div style="margin-top: 1rem; padding: 0.5rem; background: var(--danger); color: white; border-radius: 0.25rem; text-align: center;">
+                <strong>Match Disputed</strong>
+              </div>
+            ` : ''}
+          `;
+          grid.appendChild(card);
+        });
+      }
+
+      renderMapPool() {
+        const container = document.getElementById('mapPool');
+        container.innerHTML = '';
+
+        const mapGrid = document.createElement('div');
+        mapGrid.style.display = 'grid';
+        mapGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+        mapGrid.style.gap = '1rem';
+
+        this.mapPool.forEach(map => {
+          const mapCard = document.createElement('div');
+          mapCard.style.background = 'var(--surface-glass)';
+          mapCard.style.padding = '1rem';
+          mapCard.style.borderRadius = '0.5rem';
+          mapCard.style.textAlign = 'center';
+          mapCard.style.fontWeight = '600';
+          mapCard.textContent = map;
+          mapGrid.appendChild(mapCard);
+        });
+
+        container.appendChild(mapGrid);
+      }
+
+      reportMatch(matchId) {
+        if (!this.currentUser) {
+          alert('Please sign in to report match results.');
+          return;
+        }
+
+        const match = this.matches.find(m => m.id === matchId);
+        if (!match) return;
+
+        this.currentReportMatch = match;
+        this.openReportModal();
+      }
+
+      openReportModal() {
+        const modal = document.getElementById('reportModal');
+        const matchInfo = document.getElementById('matchInfo');
+        const mapResults = document.getElementById('mapResults');
+        const winnerSelect = document.querySelector('select[name="winner"]');
+        
+        // Display match info
+        matchInfo.innerHTML = `
+          <div class="match-teams">
+            <img src="${this.currentReportMatch.homeTeam.logo}" alt="${this.currentReportMatch.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+            <span class="vs-text">vs</span>
+            <img src="${this.currentReportMatch.awayTeam.logo}" alt="${this.currentReportMatch.awayTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <strong>${this.currentReportMatch.homeTeam.name} [${this.currentReportMatch.homeTeam.tag}]</strong> vs <strong>${this.currentReportMatch.awayTeam.name} [${this.currentReportMatch.awayTeam.tag}]</strong>
+          </div>
+        `;
+        
+        // Generate map result inputs
+        mapResults.innerHTML = '';
+        this.currentReportMatch.mapSet.forEach((map, index) => {
+          const mapDiv = document.createElement('div');
+          mapDiv.className = 'map-result-input';
+          mapDiv.style.display = 'flex';
+          mapDiv.style.alignItems = 'center';
+          mapDiv.style.gap = '1rem';
+          mapDiv.style.marginBottom = '1rem';
+          mapDiv.style.padding = '1rem';
+          mapDiv.style.background = 'var(--surface-glass)';
+          mapDiv.style.borderRadius = '0.5rem';
+          
+          mapDiv.innerHTML = `
+            <div style="flex: 1; font-weight: 600;">${map}</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="number" min="0" max="10" class="form-input" style="width: 60px;" name="map${index}_home" placeholder="0" required>
+              <span>-</span>
+              <input type="number" min="0" max="10" class="form-input" style="width: 60px;" name="map${index}_away" placeholder="0" required>
+            </div>
+          `;
+          mapResults.appendChild(mapDiv);
+        });
+        
+        // Populate winner select
+        winnerSelect.innerHTML = `
+          <option value="">Select Winner</option>
+          <option value="${this.currentReportMatch.homeTeamId}">${this.currentReportMatch.homeTeam.name} [${this.currentReportMatch.homeTeam.tag}]</option>
+          <option value="${this.currentReportMatch.awayTeamId}">${this.currentReportMatch.awayTeam.name} [${this.currentReportMatch.awayTeam.tag}]</option>
+        `;
+        
+        modal.style.display = 'block';
+      }
+
+      closeReportModal() {
+        document.getElementById('reportModal').style.display = 'none';
+        document.getElementById('reportForm').reset();
+        this.currentReportMatch = null;
+      }
+
+      addScoreboardInput() {
+        const container = document.getElementById('scoreboardInputs');
+        const inputCount = container.children.length;
+        const newInput = document.createElement('input');
+        newInput.type = 'url';
+        newInput.className = 'form-input';
+        newInput.name = `scoreboard${inputCount + 1}`;
+        newInput.placeholder = `https://example.com/scoreboard${inputCount + 1}.png`;
+        container.appendChild(newInput);
+      }
+
+      async submitReport(event) {
+        event.preventDefault();
+        
+        if (!this.currentUser) {
+          alert('Please sign in to submit reports.');
+          return;
+        }
+
+        const formData = new FormData(event.target);
+        
+        // Collect scoreboard URLs
+        const scoreboardUrls = [];
+        for (let i = 1; i <= 5; i++) {
+          const url = formData.get(`scoreboard${i}`);
+          if (url && url.trim()) {
+            scoreboardUrls.push(url.trim());
+          }
+        }
+        
+        // Collect map scores
+        const perMapScores = [];
+        this.currentReportMatch.mapSet.forEach((map, index) => {
+          const homeScore = parseInt(formData.get(`map${index}_home`));
+          const awayScore = parseInt(formData.get(`map${index}_away`));
+          perMapScores.push({
+            map: map,
+            home: homeScore,
+            away: awayScore
+          });
+        });
+        
+        const declaredWinner = formData.get('winner');
+        const notes = formData.get('notes') || '';
+        
+        try {
+          // Create report in Firebase
+          const reportData = {
+            matchId: this.currentReportMatch.id,
+            submittedByTeamId: this.currentReportMatch.homeTeamId, // Assuming home team submits
+            scoreboardUrls: scoreboardUrls,
+            perMapScores: perMapScores,
+            declaredWinnerTeamId: declaredWinner,
+            notes: notes,
+            homeTeamConfirm: 'PENDING',
+            awayTeamConfirm: 'PENDING',
+            createdAt: serverTimestamp(),
+            submittedBy: this.currentUser.email
+          };
+          
+          const reportRef = await addDoc(collection(db, 'ladderReports'), reportData);
+          
+          // Update match status
+          const matchRef = doc(db, 'ladderMatches', this.currentReportMatch.id);
+          await updateDoc(matchRef, {
+            status: 'REPORTED',
+            reportId: reportRef.id
+          });
+          
+          // Update local data
+          this.currentReportMatch.status = 'REPORTED';
+          this.currentReportMatch.reportId = reportRef.id;
+          this.currentReportMatch.report = { id: reportRef.id, ...reportData };
+          
+          this.closeReportModal();
+          this.renderMatches();
+          
+          alert('Match report submitted successfully! The opposing team will be notified to confirm.');
+          
+        } catch (error) {
+          console.error('Error submitting report:', error);
+          alert('Error submitting report. Please try again.');
+        }
+      }
+
+      openConfirmModal(reportId) {
+        const report = this.matches.find(m => m.report && m.report.id === reportId)?.report;
+        if (!report) return;
+        
+        this.currentConfirmReport = report;
+        const modal = document.getElementById('confirmModal');
+        const content = document.getElementById('confirmContent');
+        
+        const match = this.matches.find(m => m.reportId === reportId);
+        
+        content.innerHTML = `
+          <div class="match-info-display" style="margin-bottom: 1.5rem;">
+            <h3>Match Result to Confirm</h3>
+            <div class="match-teams" style="margin: 1rem 0;">
+              <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+              <span class="vs-text">vs</span>
+              <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+            </div>
+            <div><strong>${match.homeTeam.name} [${match.homeTeam.tag}]</strong> vs <strong>${match.awayTeam.name} [${match.awayTeam.tag}]</strong></div>
+          </div>
+          
+          <div style="margin-bottom: 1.5rem;">
+            <h4>Map Results:</h4>
+            ${report.perMapScores.map(score => 
+              `<div style="display: flex; justify-content: space-between; padding: 0.5rem; background: var(--surface-glass); margin: 0.25rem 0; border-radius: 0.25rem;">
+                <span>${score.map}</span>
+                <span><strong>${score.home} - ${score.away}</strong></span>
+              </div>`
+            ).join('')}
+          </div>
+          
+          <div style="margin-bottom: 1.5rem;">
+            <h4>Declared Winner:</h4>
+            <div style="padding: 0.5rem; background: var(--success); color: white; border-radius: 0.25rem; text-align: center;">
+              <strong>${match.homeTeamId === report.declaredWinnerTeamId ? match.homeTeam.name : match.awayTeam.name}</strong>
+            </div>
+          </div>
+          
+          ${report.scoreboardUrls.length > 0 ? `
+            <div style="margin-bottom: 1.5rem;">
+              <h4>Scoreboard Images:</h4>
+              ${report.scoreboardUrls.map(url => 
+                `<div style="margin: 0.5rem 0;"><a href="${url}" target="_blank" style="color: var(--accent-strong);">${url}</a></div>`
+              ).join('')}
+            </div>
+          ` : ''}
+          
+          ${report.notes ? `
+            <div style="margin-bottom: 1.5rem;">
+              <h4>Notes:</h4>
+              <div style="padding: 0.5rem; background: var(--surface-glass); border-radius: 0.25rem;">${report.notes}</div>
+            </div>
+          ` : ''}
+        `;
+        
+        modal.style.display = 'block';
+      }
+
+      closeConfirmModal() {
+        document.getElementById('confirmModal').style.display = 'none';
+        this.currentConfirmReport = null;
+      }
+
+      async confirmMatch() {
+        if (!this.currentUser || !this.currentConfirmReport) return;
+        
+        try {
+          const reportRef = doc(db, 'ladderReports', this.currentConfirmReport.id);
+          await updateDoc(reportRef, {
+            awayTeamConfirm: 'CONFIRMED',
+            confirmedAt: serverTimestamp(),
+            confirmedBy: this.currentUser.email
+          });
+          
+          // Check if both teams confirmed
+          const updatedReport = { ...this.currentConfirmReport, awayTeamConfirm: 'CONFIRMED' };
+          if (updatedReport.homeTeamConfirm === 'CONFIRMED' && updatedReport.awayTeamConfirm === 'CONFIRMED') {
+            // Finalize match
+            const match = this.matches.find(m => m.reportId === this.currentConfirmReport.id);
+            const matchRef = doc(db, 'ladderMatches', match.id);
+            await updateDoc(matchRef, {
+              status: 'FINAL'
+            });
+            
+            // Update team stats immediately
+            await this.updateTeamStats(match, updatedReport);
+            
+            match.status = 'FINAL';
+            alert('Match confirmed and finalized! Stats have been updated.');
+          } else {
+            alert('Match confirmed! Waiting for the other team to confirm.');
+          }
+          
+          this.closeConfirmModal();
+          this.renderMatches();
+          this.renderRankings();
+          
+        } catch (error) {
+          console.error('Error confirming match:', error);
+          alert('Error confirming match. Please try again.');
+        }
+      }
+
+      async disputeMatch() {
+        if (!this.currentUser || !this.currentConfirmReport) return;
+        
+        const reason = prompt('Please provide a reason for disputing this match result:');
+        if (!reason) return;
+        
+        try {
+          const reportRef = doc(db, 'ladderReports', this.currentConfirmReport.id);
+          await updateDoc(reportRef, {
+            awayTeamConfirm: 'DISPUTED',
+            disputeReason: reason,
+            disputedAt: serverTimestamp(),
+            disputedBy: this.currentUser.email
+          });
+          
+          // Update match status
+          const match = this.matches.find(m => m.reportId === this.currentConfirmReport.id);
+          const matchRef = doc(db, 'ladderMatches', match.id);
+          await updateDoc(matchRef, {
+            status: 'CONTESTED'
+          });
+          
+          match.status = 'CONTESTED';
+          
+          this.closeConfirmModal();
+          this.renderMatches();
+          
+          alert('Match disputed. An admin will review the dispute.');
+          
+        } catch (error) {
+          console.error('Error disputing match:', error);
+          alert('Error disputing match. Please try again.');
+        }
+      }
+
+      async updateTeamStats(match, report) {
+        const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
+        const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+        
+        const homeWon = report.declaredWinnerTeamId === match.homeTeamId;
+        
+        // Update wins/losses
+        if (homeWon) {
+          homeTeam.wins++;
+          awayTeam.losses++;
+        } else {
+          awayTeam.wins++;
+          homeTeam.losses++;
+        }
+        
+        // Update map stats
+        report.perMapScores.forEach(score => {
+          homeTeam.mapsWon += score.home;
+          homeTeam.mapsLost += score.away;
+          awayTeam.mapsWon += score.away;
+          awayTeam.mapsLost += score.home;
+        });
+        
+        // Update last 5 results
+        homeTeam.last5 = (homeTeam.last5 + (homeWon ? 'W' : 'L')).slice(-5);
+        awayTeam.last5 = (awayTeam.last5 + (homeWon ? 'L' : 'W')).slice(-5);
+        
+        // Save updated teams to Firebase
+        await this.saveToFirebase();
+      }
+    }
+
+    // Initialize the ladder board when the page loads
+    let ladderBoard;
+    document.addEventListener('DOMContentLoaded', () => {
+      ladderBoard = new LadderBoard();
+    });
+
+    // Make ladderBoard globally available for onclick handlers
+    window.ladderBoard = ladderBoard;
+  </script>
+</body>
+</html>
