@@ -3062,6 +3062,15 @@
       // First try to get the handle from the player object
       let twitchHandle = player.twitchHandle || player.twitch || player.twitchChannel || player.channel;
       
+      // If we got a full URL, extract just the handle
+      if (twitchHandle && twitchHandle.includes('twitch.tv/')) {
+        const match = twitchHandle.match(/twitch\.tv\/([^/?]+)/i);
+        if (match) {
+          twitchHandle = match[1];
+          console.log(`Extracted handle from URL: ${twitchHandle}`);
+        }
+      }
+      
       // If no handle found, try to map the name and look it up in oauth.js
       if (!twitchHandle && player.name) {
         const mappedName = PLAYER_NAME_MAPPING[player.name] || player.name;
@@ -3108,6 +3117,19 @@
               }
             }
           }
+        }
+      }
+      
+      // Validate the final handle
+      if (twitchHandle) {
+        // Ensure it's not too long and contains only valid characters
+        if (twitchHandle.length > 100) {
+          console.warn(`Twitch handle too long for ${player.name}: ${twitchHandle} (${twitchHandle.length} chars)`);
+          return null;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(twitchHandle)) {
+          console.warn(`Invalid Twitch handle format for ${player.name}: ${twitchHandle}`);
+          return null;
         }
       }
       

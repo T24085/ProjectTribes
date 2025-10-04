@@ -183,14 +183,30 @@
     if (!token || !Array.isArray(logins) || logins.length === 0) return [];
     
     // Twitch API expects user_login parameters to be repeated, not joined with &
+    // Also filter out logins that are too long (Twitch API limit is 100 characters)
+    const validLogins = logins.filter(login => {
+      if (login && login.length <= 100) {
+        return true;
+      } else {
+        console.warn(`Skipping login "${login}" - too long (${login ? login.length : 0} characters, max 100)`);
+        return false;
+      }
+    });
+    
+    if (validLogins.length === 0) {
+      console.log('No valid logins to check (all were too long)');
+      return [];
+    }
+    
     const queryParams = new URLSearchParams();
-    logins.forEach(login => {
+    validLogins.forEach(login => {
       queryParams.append('user_login', login);
     });
     
     const apiUrl = 'https://api.twitch.tv/helix/streams?' + queryParams.toString();
     console.log('Fetching live streams from:', apiUrl);
-    console.log('Logins being checked:', logins);
+    console.log('Original logins:', logins);
+    console.log('Valid logins (≤100 chars):', validLogins);
     
     try {
       const res = await fetch(apiUrl, {
