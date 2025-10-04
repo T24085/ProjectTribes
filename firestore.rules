@@ -19,8 +19,7 @@ service cloud.firestore {
 
     match /teams/{teamId} {
       allow read: if resource.data.approved == true || isAdmin();
-      allow create: if request.auth != null &&
-        request.resource.data.approved == false &&
+      allow create: if request.resource.data.approved == false &&
         request.resource.data.teamName is string &&
         request.resource.data.teamTag is string &&
         request.resource.data.season is int &&
