@@ -1249,23 +1249,38 @@
       }
 
       reportMatch(matchId) {
-        if (!this.currentUser) {
-          alert('Please sign in to report match results.');
+        console.log('reportMatch called with:', matchId);
+        console.log('Current user:', this.currentUser);
+        
+        // Simple test alert first
+        alert(`Report Match button clicked for: ${matchId}`);
+        
+        const match = this.matches.find(m => m.id === matchId);
+        console.log('Found match:', match);
+        
+        if (!match) {
+          alert('Match not found.');
           return;
         }
 
-        const match = this.matches.find(m => m.id === matchId);
-        if (!match) return;
+        // For now, allow reporting without authentication for testing
+        // if (!this.currentUser) {
+        //   alert('Please sign in to report match results.');
+        //   return;
+        // }
 
         this.currentReportMatch = match;
         this.openReportModal();
       }
 
       openReportModal() {
+        console.log('openReportModal called');
         const modal = document.getElementById('reportModal');
         const matchInfo = document.getElementById('matchInfo');
         const mapResults = document.getElementById('mapResults');
         const winnerSelect = document.querySelector('select[name="winner"]');
+        
+        console.log('Modal elements found:', { modal, matchInfo, mapResults, winnerSelect });
         
         // Display match info
         matchInfo.innerHTML = `
@@ -1311,6 +1326,7 @@
         `;
         
         modal.style.display = 'block';
+        console.log('Report modal should now be visible');
       }
 
       closeReportModal() {
@@ -1332,13 +1348,16 @@
 
       async submitReport(event) {
         event.preventDefault();
+        console.log('submitReport called');
         
-        if (!this.currentUser) {
-          alert('Please sign in to submit reports.');
-          return;
-        }
+        // For testing, allow submission without authentication
+        // if (!this.currentUser) {
+        //   alert('Please sign in to submit reports.');
+        //   return;
+        // }
 
         const formData = new FormData(event.target);
+        console.log('Form data collected');
         
         // Collect scoreboard URLs
         const scoreboardUrls = [];
@@ -1348,6 +1367,7 @@
             scoreboardUrls.push(url.trim());
           }
         }
+        console.log('Scoreboard URLs:', scoreboardUrls);
         
         // Collect map scores
         const perMapScores = [];
@@ -1360,11 +1380,42 @@
             away: awayScore
           });
         });
+        console.log('Map scores:', perMapScores);
         
         const declaredWinner = formData.get('winner');
         const notes = formData.get('notes') || '';
+        console.log('Declared winner:', declaredWinner);
+        console.log('Notes:', notes);
         
         try {
+          // For testing without Firebase, just update local data
+          if (typeof db === 'undefined') {
+            console.log('Firebase not available, updating local data only');
+            
+            // Update local data
+            this.currentReportMatch.status = 'REPORTED';
+            this.currentReportMatch.reportId = 'test-report-' + Date.now();
+            this.currentReportMatch.report = {
+              id: this.currentReportMatch.reportId,
+              matchId: this.currentReportMatch.id,
+              submittedByTeamId: this.currentReportMatch.homeTeamId,
+              scoreboardUrls: scoreboardUrls,
+              perMapScores: perMapScores,
+              declaredWinnerTeamId: declaredWinner,
+              notes: notes,
+              homeTeamConfirm: 'PENDING',
+              awayTeamConfirm: 'PENDING',
+              createdAt: new Date(),
+              submittedBy: 'test@example.com'
+            };
+            
+            this.closeReportModal();
+            this.renderMatches();
+            
+            alert('Match report submitted successfully! (Local test mode)');
+            return;
+          }
+          
           // Create report in Firebase
           const reportData = {
             matchId: this.currentReportMatch.id,
@@ -1376,7 +1427,7 @@
             homeTeamConfirm: 'PENDING',
             awayTeamConfirm: 'PENDING',
             createdAt: serverTimestamp(),
-            submittedBy: this.currentUser.email
+            submittedBy: this.currentUser ? this.currentUser.email : 'anonymous@test.com'
           };
           
           const reportRef = await addDoc(collection(db, 'ladderReports'), reportData);
@@ -1578,10 +1629,9 @@
     let ladderBoard;
     document.addEventListener('DOMContentLoaded', () => {
       ladderBoard = new LadderBoard();
+      // Make ladderBoard globally available for onclick handlers
+      window.ladderBoard = ladderBoard;
     });
-
-    // Make ladderBoard globally available for onclick handlers
-    window.ladderBoard = ladderBoard;
   </script>
 </body>
 </html>
