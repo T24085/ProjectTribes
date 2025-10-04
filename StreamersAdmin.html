@@ -158,6 +158,8 @@
         loginDiv.classList.add('hidden');
         adminPanel.classList.remove('hidden');
         loadStreamers();
+        loadTeamRosters();
+        loadPlayerTwitchHandles();
       } else {
         loginDiv.classList.remove('hidden');
         adminPanel.classList.add('hidden');
@@ -220,13 +222,40 @@
     // Load team rosters and populate team selector
     async function loadTeamRosters() {
       try {
+        console.log('Loading team rosters for admin panel...');
         const teamsSnapshot = await getDocs(collection(db, 'teams'));
         teamRosters = {};
         
         teamsSnapshot.forEach(doc => {
           const teamData = doc.data();
-          if (teamData.roster && Array.isArray(teamData.roster)) {
-            teamRosters[teamData.name] = teamData.roster;
+          console.log('Processing team:', teamData.teamName, teamData);
+          
+          if (teamData.teamName) {
+            // Load complete roster including all players and bench players
+            const completeRoster = [];
+            
+            // Add main roster players
+            if (teamData.players && Array.isArray(teamData.players)) {
+              console.log('Adding main players for', teamData.teamName, ':', teamData.players);
+              completeRoster.push(...teamData.players);
+            }
+            
+            // Add bench players if they exist
+            if (teamData.benchPlayers && Array.isArray(teamData.benchPlayers)) {
+              console.log('Adding bench players for', teamData.teamName, ':', teamData.benchPlayers);
+              completeRoster.push(...teamData.benchPlayers);
+            }
+            
+            // Add any additional roster data (legacy support)
+            if (teamData.roster && Array.isArray(teamData.roster)) {
+              console.log('Adding roster data for', teamData.teamName, ':', teamData.roster);
+              completeRoster.push(...teamData.roster);
+            }
+            
+            if (completeRoster.length > 0) {
+              teamRosters[teamData.teamName] = completeRoster;
+              console.log('Final roster for', teamData.teamName, ':', completeRoster);
+            }
           }
         });
         
@@ -234,7 +263,10 @@
         const teamSelect = document.getElementById('playerTeamSelect');
         teamSelect.innerHTML = '<option value="">Select a team...</option>';
         
-        Object.keys(teamRosters).sort().forEach(teamName => {
+        const teamNames = Object.keys(teamRosters).sort();
+        console.log('Available teams:', teamNames);
+        
+        teamNames.forEach(teamName => {
           const option = document.createElement('option');
           option.value = teamName;
           option.textContent = teamName;
@@ -242,9 +274,15 @@
         });
         
         console.log('Loaded team rosters:', teamRosters);
+        
+        if (teamNames.length === 0) {
+          showStatus('No teams found in database. Make sure teams are approved.', 'error');
+        } else {
+          showStatus(`Loaded ${teamNames.length} teams successfully`, 'success');
+        }
       } catch (error) {
         console.error('Error loading team rosters:', error);
-        showStatus('Error loading team rosters', 'error');
+        showStatus('Error loading team rosters: ' + error.message, 'error');
       }
     }
 
@@ -510,19 +548,6 @@
       }, 5000);
     }
 
-    // Initialize player handle management when admin panel loads
-    onAuthStateChanged(auth, (user) => {
-      if (user && ADMIN_UIDS.includes(user.uid)) {
-        loginDiv.classList.add('hidden');
-        adminPanel.classList.remove('hidden');
-        loadStreamers();
-        loadTeamRosters();
-        loadPlayerTwitchHandles();
-      } else {
-        loginDiv.classList.remove('hidden');
-        adminPanel.classList.add('hidden');
-      }
-    });
 
   </script>
     <script src="./assets/include.js" defer></script>
