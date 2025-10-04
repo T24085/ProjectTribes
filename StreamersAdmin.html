@@ -48,11 +48,20 @@
     <div class="mt-12 border-t border-gray-700 pt-8">
       <h2 class="text-2xl font-bold mb-6">Manage Player Twitch Handles</h2>
       
-      <!-- Current Match Display -->
+      <!-- Team Selector -->
       <div class="mb-8 p-4 bg-gray-800 rounded border border-gray-700">
-        <h3 class="text-lg font-semibold mb-4">Current Match Players</h3>
-        <div id="currentMatchDisplay" class="text-gray-400">
-          Loading current match...
+        <h3 class="text-lg font-semibold mb-4">Select Team to Manage</h3>
+        <div class="flex flex-wrap gap-4 items-center">
+          <div>
+            <label class="block text-sm mb-2">Choose Team:</label>
+            <select id="teamSelector" class="px-3 py-2 rounded bg-gray-700 border border-gray-600 text-white">
+              <option value="">Select a team...</option>
+            </select>
+          </div>
+          <div id="selectedTeamInfo" class="hidden">
+            <span class="text-gray-400">Selected:</span>
+            <span id="selectedTeamName" class="font-semibold text-blue-400"></span>
+          </div>
         </div>
       </div>
       
@@ -158,7 +167,7 @@
         adminPanel.classList.remove('hidden');
         loadStreamers();
         loadPlayerTwitchHandles().then(() => {
-          loadCurrentMatch();
+          loadAllTeams();
         });
       } else {
         loginDiv.classList.remove('hidden');
@@ -216,80 +225,19 @@
     }
 
     // Player Twitch Handle Management
-    let currentMatch = null;
+    let allTeams = {};
     let playerTwitchHandles = {};
     let selectedPlayer = null;
+    let selectedTeam = null;
 
-    // Load current active match and display player buttons
-    async function loadCurrentMatch() {
+    // Load all teams and populate team selector
+    async function loadAllTeams() {
       try {
-        console.log('Loading current match for admin panel...');
+        console.log('Loading all teams for admin panel...');
         
-        // Try to get the active match from Firebase
-        const matchesSnapshot = await getDocs(collection(db, 'matches'));
-        let activeMatch = null;
-        
-        matchesSnapshot.forEach(doc => {
-          const matchData = doc.data();
-          if (matchData.isActive || matchData.status === 'live' || matchData.status === 'upcoming') {
-            activeMatch = matchData;
-          }
-        });
-        
-        if (activeMatch) {
-          currentMatch = activeMatch;
-          console.log('Found active match:', activeMatch);
-          displayCurrentMatch(activeMatch);
-          await loadPlayerButtons(activeMatch);
-        } else {
-          // Fallback: create a test match with some teams
-          console.log('No active match found, using fallback teams');
-          currentMatch = {
-            teamA: 'Texas Militia',
-            teamB: 'Flag Pole Smokers',
-            teamAName: 'Texas Militia',
-            teamBName: 'Flag Pole Smokers'
-          };
-          displayCurrentMatch(currentMatch);
-          await loadPlayerButtons(currentMatch);
-        }
-        
-      } catch (error) {
-        console.error('Error loading current match:', error);
-        showStatus('Error loading current match: ' + error.message, 'error');
-      }
-    }
-
-    // Display current match info
-    function displayCurrentMatch(match) {
-      const matchDisplay = document.getElementById('currentMatchDisplay');
-      if (match.teamAName && match.teamBName) {
-        matchDisplay.innerHTML = `
-          <div class="flex items-center justify-center gap-4">
-            <div class="text-lg font-semibold">${match.teamAName}</div>
-            <div class="text-gray-400">VS</div>
-            <div class="text-lg font-semibold">${match.teamBName}</div>
-          </div>
-        `;
-      } else {
-        matchDisplay.innerHTML = `
-          <div class="text-center">
-            <div class="text-lg font-semibold">${match.teamA || 'Team A'}</div>
-            <div class="text-gray-400">VS</div>
-            <div class="text-lg font-semibold">${match.teamB || 'Team B'}</div>
-          </div>
-        `;
-      }
-    }
-
-    // Load player buttons for the current match
-    async function loadPlayerButtons(match) {
-      try {
-        console.log('Loading player buttons for match:', match);
-        
-        // Get team rosters from Firebase
+        // Get all teams from Firebase
         const teamsSnapshot = await getDocs(collection(db, 'teams'));
-        const teamRosters = {};
+        allTeams = {};
         
         teamsSnapshot.forEach(doc => {
           const teamData = doc.data();
@@ -307,53 +255,94 @@
             }
             
             if (completeRoster.length > 0) {
-              teamRosters[teamData.teamName] = completeRoster;
+              allTeams[teamData.teamName] = completeRoster;
             }
           }
         });
+        
+        // Populate team selector
+        const teamSelector = document.getElementById('teamSelector');
+        teamSelector.innerHTML = '<option value="">Select a team...</option>';
+        
+        const teamNames = Object.keys(allTeams).sort();
+        console.log('Available teams:', teamNames);
+        
+        teamNames.forEach(teamName => {
+          const option = document.createElement('option');
+          option.value = teamName;
+          option.textContent = teamName;
+          teamSelector.appendChild(option);
+        });
+        
+        console.log('Loaded all teams:', allTeams);
+        
+        if (teamNames.length === 0) {
+          showStatus('No teams found in database. Make sure teams are approved.', 'error');
+        } else {
+          showStatus(`Loaded ${teamNames.length} teams successfully`, 'success');
+        }
+        
+      } catch (error) {
+        console.error('Error loading teams:', error);
+        showStatus('Error loading teams: ' + error.message, 'error');
+      }
+    }
+
+    // Handle team selection
+    function handleTeamSelection(teamName) {
+      if (!teamName) {
+        selectedTeam = null;
+        document.getElementById('selectedTeamInfo').classList.add('hidden');
+        document.getElementById('playerButtonsContainer').innerHTML = `
+          <div class="text-gray-400 text-center py-8">
+            Select a team to see their players
+          </div>
+        `;
+        return;
+      }
+      
+      selectedTeam = teamName;
+      document.getElementById('selectedTeamName').textContent = teamName;
+      document.getElementById('selectedTeamInfo').classList.remove('hidden');
+      
+      // Load player buttons for selected team
+      loadPlayerButtonsForTeam(teamName);
+    }
+
+    // Load player buttons for a specific team
+    function loadPlayerButtonsForTeam(teamName) {
+      try {
+        console.log('Loading player buttons for team:', teamName);
+        
+        const roster = allTeams[teamName];
+        if (!roster || roster.length === 0) {
+          document.getElementById('playerButtonsContainer').innerHTML = `
+            <div class="text-gray-400 text-center py-8">
+              No players found for ${teamName}
+            </div>
+          `;
+          return;
+        }
         
         // Display player buttons
         const container = document.getElementById('playerButtonsContainer');
         container.innerHTML = '';
         
-        // Team A players
-        const teamA = match.teamA || match.teamAName;
-        const teamB = match.teamB || match.teamBName;
+        const teamSection = document.createElement('div');
+        teamSection.className = 'mb-6';
+        teamSection.innerHTML = `
+          <h4 class="text-md font-semibold mb-3 text-blue-400">${teamName}</h4>
+          <div class="grid grid-cols-2 gap-2" id="teamButtons"></div>
+        `;
+        container.appendChild(teamSection);
         
-        if (teamRosters[teamA]) {
-          const teamASection = document.createElement('div');
-          teamASection.className = 'mb-6';
-          teamASection.innerHTML = `
-            <h4 class="text-md font-semibold mb-3 text-blue-400">${teamA}</h4>
-            <div class="grid grid-cols-2 gap-2" id="teamAButtons"></div>
-          `;
-          container.appendChild(teamASection);
-          
-          const teamAButtons = teamASection.querySelector('#teamAButtons');
-          teamRosters[teamA].forEach((player, index) => {
-            const button = createPlayerButton(player, teamA, index, 'A');
-            teamAButtons.appendChild(button);
-          });
-        }
+        const teamButtons = teamSection.querySelector('#teamButtons');
+        roster.forEach((player, index) => {
+          const button = createPlayerButton(player, teamName, index);
+          teamButtons.appendChild(button);
+        });
         
-        // Team B players
-        if (teamRosters[teamB]) {
-          const teamBSection = document.createElement('div');
-          teamBSection.className = 'mb-6';
-          teamBSection.innerHTML = `
-            <h4 class="text-md font-semibold mb-3 text-red-400">${teamB}</h4>
-            <div class="grid grid-cols-2 gap-2" id="teamBButtons"></div>
-          `;
-          container.appendChild(teamBSection);
-          
-          const teamBButtons = teamBSection.querySelector('#teamBButtons');
-          teamRosters[teamB].forEach((player, index) => {
-            const button = createPlayerButton(player, teamB, index, 'B');
-            teamBButtons.appendChild(button);
-          });
-        }
-        
-        console.log('Player buttons loaded successfully');
+        console.log(`Loaded ${roster.length} player buttons for ${teamName}`);
         
       } catch (error) {
         console.error('Error loading player buttons:', error);
@@ -362,7 +351,7 @@
     }
 
     // Create a player button
-    function createPlayerButton(player, teamName, index, team) {
+    function createPlayerButton(player, teamName, index) {
       const button = document.createElement('button');
       const playerName = player.name || player.displayName || `Player ${index + 1}`;
       const currentHandle = playerTwitchHandles[playerName] || '';
@@ -382,15 +371,15 @@
       `;
       
       button.addEventListener('click', () => {
-        selectPlayer(player, teamName, index, team);
+        selectPlayer(player, teamName, index);
       });
       
       return button;
     }
 
     // Select a player for editing
-    function selectPlayer(player, teamName, index, team) {
-      selectedPlayer = { player, teamName, index, team };
+    function selectPlayer(player, teamName, index) {
+      selectedPlayer = { player, teamName, index };
       const playerName = player.name || player.displayName;
       const currentHandle = playerTwitchHandles[playerName] || '';
       
@@ -445,10 +434,15 @@
 
     // Refresh player buttons after handle update
     async function refreshPlayerButtons() {
-      if (currentMatch) {
-        await loadPlayerButtons(currentMatch);
+      if (selectedTeam) {
+        loadPlayerButtonsForTeam(selectedTeam);
       }
     }
+
+    // Add team selector event listener
+    document.getElementById('teamSelector').addEventListener('change', (e) => {
+      handleTeamSelection(e.target.value);
+    });
 
     // Update Twitch handle
     document.getElementById('updateTwitchHandle').addEventListener('click', async () => {
