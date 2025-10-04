@@ -93,5 +93,27 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    // Ladder system rules
+    match /ladder/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /ladderMatches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /ladderReports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && 
+        (resource.data.submittedBy == request.auth.token.email ||
+         resource.data.confirmedBy == request.auth.token.email ||
+         resource.data.disputedBy == request.auth.token.email) ||
+        isAdmin();
+      allow delete: if isAdmin();
+    }
   }
 }
