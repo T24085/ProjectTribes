@@ -19,13 +19,15 @@ service cloud.firestore {
 
     match /teams/{teamId} {
       allow read: if resource.data.approved == true || isAdmin();
-      allow create: if
+      allow create: if request.auth != null &&
         request.resource.data.approved == false &&
         request.resource.data.teamName is string &&
         request.resource.data.teamTag is string &&
         request.resource.data.season is int &&
         request.resource.data.division is string &&
-        request.resource.data.division in ['TPL-O', 'TPL-IM', 'TPL-I'];
+        request.resource.data.division in ['TPL-O', 'TPL-IM', 'TPL-I'] &&
+        request.resource.data.players is list &&
+        request.resource.data.benchPlayers is list;
       allow update, delete: if isAdmin();
     }
 

@@ -53,6 +53,7 @@
 
     <div class="mt-6">
       <h2 class="text-lg font-bold mb-2">Teams</h2>
+      <div id="loadingIndicator" class="text-center text-gray-400 mb-4">Loading teams...</div>
       <ul id="teamOutput" class="space-y-2"></ul>
       <button id="exportExcel" class="w-full mt-4 py-2 rounded-md bg-green-600 hover:bg-green-700">Export to Excel</button>
     </div>
@@ -61,6 +62,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
@@ -73,6 +75,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
     const form = document.getElementById("teamForm");
     const output = document.getElementById("teamOutput");
@@ -82,6 +85,7 @@
     const divisionSelect = document.getElementById('divisionSelect');
     const status = document.getElementById('formStatus');
     const submitTeamBtn = document.getElementById('submitTeamBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
     let playerCount = 0;
     let seasonsIndex = [];
     const divisionLabels = {
@@ -90,6 +94,32 @@
       'TPL-I': 'Invite'
     };
     const allowedDivisions = Object.keys(divisionLabels);
+    let isAuthenticated = false;
+
+    // Initialize Firebase Authentication
+    async function initializeAuth() {
+      try {
+        await signInAnonymously(auth);
+        console.log('Signed in anonymously');
+      } catch (error) {
+        console.error('Failed to sign in anonymously:', error);
+        status.textContent = 'Failed to initialize authentication. Please refresh the page.';
+      }
+    }
+
+    // Monitor authentication state
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        isAuthenticated = true;
+        console.log('User authenticated:', user.uid);
+        // Load data once authenticated
+        loadSeasons();
+        loadTeams();
+      } else {
+        isAuthenticated = false;
+        console.log('User not authenticated');
+      }
+    });
 
     function addPlayerRow(name = "", twitch = "") {
       if (playerCount >= 7) return;
@@ -140,25 +170,66 @@
     }
 
     seasonSelect.addEventListener('change', e => loadDivisions(e.target.value));
-    loadSeasons();
 
     async function loadTeams() {
+      if (!isAuthenticated) {
+        console.log('Not authenticated, skipping team load');
+        return;
+      }
+      
       output.innerHTML = "";
-      const snapshot = await getDocs(collection(db, "teams"));
-      snapshot.forEach(doc => {
-        const data = doc.data();
+      try {
+        const snapshot = await getDocs(collection(db, "teams"));
+        let hasApprovedTeams = false;
+        
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          // Only show approved teams to regular users
+          if (data.approved) {
+            hasApprovedTeams = true;
+            const li = document.createElement("li");
+            li.className = "bg-gray-700 p-2 rounded-md";
+            const players = (data.players || []).map(p => p.name).join(', ');
+            const bench = (data.benchPlayers || []).join(', ');
+            li.innerHTML = `<strong>${data.teamName} [${data.teamTag}]</strong> - Season ${data.season} ${data.division}<br>Players: ${players}${bench ? `<br>Bench: ${bench}` : ''}`;
+            output.appendChild(li);
+          }
+        });
+        
+        if (!hasApprovedTeams) {
+          const li = document.createElement("li");
+          li.className = "bg-gray-700 p-2 rounded-md text-center text-gray-400";
+          li.textContent = "No approved teams yet. Submit your team below!";
+          output.appendChild(li);
+        }
+        
+        // Hide loading indicator
+        if (loadingIndicator) {
+          loadingIndicator.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Failed to load teams:', error);
         const li = document.createElement("li");
-        li.className = "bg-gray-700 p-2 rounded-md";
-        const players = (data.players || []).map(p => p.name).join(', ');
-        const bench = (data.benchPlayers || []).join(', ');
-        li.innerHTML = `<strong>${data.teamName} [${data.teamTag}]</strong> - Season ${data.season} ${data.division}<br>Players: ${players}${bench ? `<br>Bench: ${bench}` : ''}`;
+        li.className = "bg-red-700 p-2 rounded-md text-center";
+        li.textContent = "Failed to load teams. Please refresh the page.";
         output.appendChild(li);
-      });
+        
+        // Hide loading indicator even on error
+        if (loadingIndicator) {
+          loadingIndicator.style.display = 'none';
+        }
+      }
     }
 
     async function submitTeam(e) {
       e.preventDefault();
       status.textContent = '';
+      
+      if (!isAuthenticated) {
+        status.textContent = 'Please wait for authentication to complete.';
+        return;
+      }
+      
       const teamName = document.getElementById("teamName").value.trim();
       const teamTag = document.getElementById("teamTag").value.trim();
       const season = parseInt(seasonSelect.value, 10);
@@ -171,6 +242,7 @@
         if (!name) return null;
         return { name, twitch };
       }).filter(Boolean);
+      
       if (!teamName || !teamTag || players.length === 0 || !division || isNaN(season)) {
         status.textContent = 'Please fill out team info and at least one player.';
         return;
@@ -180,9 +252,23 @@
         return;
       }
 
+      // Disable submit button to prevent double submission
+      submitTeamBtn.disabled = true;
+      submitTeamBtn.textContent = 'Submitting...';
+
       try {
-        await addDoc(collection(db, "teams"), { teamName, teamTag, season, division, players, benchPlayers, approved: false });
+        await addDoc(collection(db, "teams"), { 
+          teamName, 
+          teamTag, 
+          season, 
+          division, 
+          players, 
+          benchPlayers, 
+          approved: false,
+          submittedAt: new Date()
+        });
         status.textContent = 'Team submitted for approval.';
+        status.className = 'text-center text-sm mt-2 text-green-400';
         form.reset();
         playersContainer.innerHTML = '';
         playerCount = 0;
@@ -192,12 +278,18 @@
       } catch (err) {
         console.error('Failed to add team', err);
         status.textContent = `Failed to submit team: ${err.message}`;
+        status.className = 'text-center text-sm mt-2 text-red-400';
+      } finally {
+        // Re-enable submit button
+        submitTeamBtn.disabled = false;
+        submitTeamBtn.textContent = 'Add Team';
       }
     }
 
     form.addEventListener("submit", submitTeam);
 
-    loadTeams();
+    // Initialize authentication when the page loads
+    initializeAuth();
 
     document.getElementById('exportExcel').addEventListener('click', () => {
       const rows = [];
