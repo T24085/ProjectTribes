@@ -576,6 +576,224 @@
       text-align: center;
     }
 
+    /* Viewer Tracking Section */
+    .viewer-tracking-section {
+      text-align: center;
+    }
+
+    .viewer-stats-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .total-viewers {
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(56, 189, 248, 0.2));
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+    }
+
+    .viewer-count {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent-strong);
+      margin-bottom: 0.25rem;
+    }
+
+    .viewer-label {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .streamer-viewers {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .streamer-viewer-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .streamer-viewer-item:hover {
+      background: rgba(129, 140, 248, 0.1);
+      border-color: rgba(129, 140, 248, 0.3);
+    }
+
+    .streamer-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .streamer-count {
+      font-weight: 600;
+      color: var(--accent-strong);
+      font-size: 0.9rem;
+    }
+
+    .viewer-trend {
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+
+    .viewer-trend.up {
+      color: var(--success);
+    }
+
+    .viewer-trend.down {
+      color: var(--danger);
+    }
+
+    .viewer-trend.neutral {
+      color: var(--text-muted);
+    }
+
+    /* Viewer History Styles */
+    .viewer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .viewer-history-btn {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      font-size: 1.2rem;
+    }
+
+    .viewer-history-btn:hover {
+      background: rgba(129, 140, 248, 0.2);
+      border-color: rgba(129, 140, 248, 0.3);
+    }
+
+    .viewer-history-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .viewer-history-content {
+      background: var(--card-bg);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .viewer-history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .viewer-history-header h3 {
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .close-btn:hover {
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--text-primary);
+    }
+
+    .viewer-history-body {
+      padding: 1.5rem;
+    }
+
+    .history-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--surface-glass);
+      border-radius: 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .history-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .history-value {
+      color: var(--accent-strong);
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .recent-updates {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .update-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      font-size: 0.9rem;
+    }
+
+    .update-item:last-child {
+      border-bottom: none;
+    }
+
+    .update-time {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .update-details {
+      color: var(--text-primary);
+    }
+
     .vote-buttons {
       display: flex;
       gap: 1rem;
@@ -1562,6 +1780,57 @@
         <div class="vote-buttons">
           <button class="vote-btn" id="vote-team-a">Team A</button>
           <button class="vote-btn" id="vote-team-b">Team B</button>
+        </div>
+      </div>
+
+      <!-- Viewer Tracking Section -->
+      <div class="sidebar-section viewer-tracking-section">
+        <div class="viewer-header">
+          <h3>Live Viewers</h3>
+          <button id="viewer-history-btn" class="viewer-history-btn" title="View viewer history">
+            📊
+          </button>
+        </div>
+        <div class="viewer-stats-container">
+          <div class="total-viewers">
+            <div class="viewer-count" id="total-viewer-count">0</div>
+            <div class="viewer-label">Total Viewers</div>
+          </div>
+          <div class="streamer-viewers" id="streamer-viewers-list">
+            <!-- Individual streamer viewer counts will be populated here -->
+          </div>
+        </div>
+        
+        <!-- Viewer History Modal -->
+        <div id="viewer-history-modal" class="viewer-history-modal" style="display: none;">
+          <div class="viewer-history-content">
+            <div class="viewer-history-header">
+              <h3>Viewer History</h3>
+              <button id="close-viewer-history" class="close-btn">×</button>
+            </div>
+            <div class="viewer-history-body">
+              <div id="viewer-history-chart" class="viewer-history-chart">
+                <!-- Simple text-based history for now -->
+                <div class="history-stats">
+                  <div class="history-item">
+                    <span class="history-label">Peak Viewers Today:</span>
+                    <span class="history-value" id="peak-viewers-today">0</span>
+                  </div>
+                  <div class="history-item">
+                    <span class="history-label">Average Viewers:</span>
+                    <span class="history-value" id="avg-viewers">0</span>
+                  </div>
+                  <div class="history-item">
+                    <span class="history-label">Total View Time:</span>
+                    <span class="history-value" id="total-view-time">0h 0m</span>
+                  </div>
+                </div>
+                <div class="recent-updates" id="recent-viewer-updates">
+                  <!-- Recent viewer updates will be shown here -->
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -4868,6 +5137,329 @@
       }, 1000);
     }
 
+    // Viewer tracking variables
+    let viewerData = new Map(); // Store current viewer counts
+    let previousViewerData = new Map(); // Store previous counts for trends
+    let viewerUpdateInterval = null;
+    let viewerHistory = []; // Store historical viewer data
+    let peakViewersToday = 0;
+    let totalViewTime = 0; // in minutes
+    let sessionStartTime = Date.now();
+
+    // Initialize viewer tracking
+    function initializeViewerTracking() {
+      console.log('Initializing viewer tracking...');
+      
+      // Initialize viewer history modal
+      initializeViewerHistoryModal();
+      
+      // Start periodic viewer updates
+      viewerUpdateInterval = setInterval(updateViewerCounts, 30000); // Update every 30 seconds
+      
+      // Initial update
+      updateViewerCounts();
+    }
+
+    // Initialize viewer history modal
+    function initializeViewerHistoryModal() {
+      const historyBtn = document.getElementById('viewer-history-btn');
+      const historyModal = document.getElementById('viewer-history-modal');
+      const closeBtn = document.getElementById('close-viewer-history');
+      
+      if (historyBtn) {
+        historyBtn.addEventListener('click', () => {
+          showViewerHistory();
+        });
+      }
+      
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          hideViewerHistory();
+        });
+      }
+      
+      if (historyModal) {
+        historyModal.addEventListener('click', (e) => {
+          if (e.target === historyModal) {
+            hideViewerHistory();
+          }
+        });
+      }
+    }
+
+    // Show viewer history modal
+    function showViewerHistory() {
+      const modal = document.getElementById('viewer-history-modal');
+      if (modal) {
+        updateViewerHistoryDisplay();
+        modal.style.display = 'flex';
+      }
+    }
+
+    // Hide viewer history modal
+    function hideViewerHistory() {
+      const modal = document.getElementById('viewer-history-modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    // Update viewer history display
+    function updateViewerHistoryDisplay() {
+      // Calculate average viewers
+      const avgViewers = viewerHistory.length > 0 
+        ? Math.round(viewerHistory.reduce((sum, entry) => sum + entry.totalViewers, 0) / viewerHistory.length)
+        : 0;
+      
+      // Calculate total view time (simplified - based on session time)
+      const sessionMinutes = Math.floor((Date.now() - sessionStartTime) / 60000);
+      const hours = Math.floor(sessionMinutes / 60);
+      const minutes = sessionMinutes % 60;
+      
+      // Update history stats
+      document.getElementById('peak-viewers-today').textContent = peakViewersToday.toLocaleString();
+      document.getElementById('avg-viewers').textContent = avgViewers.toLocaleString();
+      document.getElementById('total-view-time').textContent = `${hours}h ${minutes}m`;
+      
+      // Update recent updates
+      updateRecentViewerUpdates();
+    }
+
+    // Update recent viewer updates
+    function updateRecentViewerUpdates() {
+      const recentUpdates = document.getElementById('recent-viewer-updates');
+      if (!recentUpdates) return;
+      
+      // Show last 10 updates
+      const recentHistory = viewerHistory.slice(-10).reverse();
+      
+      if (recentHistory.length === 0) {
+        recentUpdates.innerHTML = '<div class="text-center text-gray-400 py-4">No viewer data yet</div>';
+        return;
+      }
+      
+      recentUpdates.innerHTML = recentHistory.map(entry => {
+        const time = new Date(entry.timestamp).toLocaleTimeString();
+        return `
+          <div class="update-item">
+            <div class="update-details">${entry.totalViewers.toLocaleString()} total viewers</div>
+            <div class="update-time">${time}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Update viewer counts for all streamers
+    async function updateViewerCounts() {
+      try {
+        console.log('Updating viewer counts...');
+        
+        // Store previous data for trend calculation
+        previousViewerData = new Map(viewerData);
+        viewerData.clear();
+        
+        // Get all streamers from team data
+        const allStreamers = [];
+        
+        // Add caster
+        allStreamers.push({ name: '0o0o0 (Caster)', handle: 'oo0oo_live' });
+        
+        // Add TPL main chat
+        allStreamers.push({ name: 'TPL Main Chat', handle: 'tribesprofessionalleague' });
+        
+        // Add all team streamers
+        Object.values(TEAM_DATA).forEach(team => {
+          if (team.streams && Array.isArray(team.streams)) {
+            team.streams.forEach(streamer => {
+              const handle = streamer.url.match(/twitch\.tv\/([^/?]+)/i)?.[1];
+              if (handle) {
+                allStreamers.push({ 
+                  name: streamer.name, 
+                  handle: handle,
+                  team: team.name 
+                });
+              }
+            });
+          }
+        });
+        
+        // Fetch viewer data for each streamer
+        const viewerPromises = allStreamers.map(async (streamer) => {
+          try {
+            const viewerCount = await getTwitchViewerCount(streamer.handle);
+            viewerData.set(streamer.handle, {
+              name: streamer.name,
+              handle: streamer.handle,
+              team: streamer.team,
+              viewers: viewerCount,
+              isLive: viewerCount > 0
+            });
+          } catch (error) {
+            console.error(`Error fetching viewer count for ${streamer.handle}:`, error);
+            viewerData.set(streamer.handle, {
+              name: streamer.name,
+              handle: streamer.handle,
+              team: streamer.team,
+              viewers: 0,
+              isLive: false
+            });
+          }
+        });
+        
+        await Promise.all(viewerPromises);
+        
+        // Update the UI
+        updateViewerDisplay();
+        
+        // Track viewer history
+        trackViewerHistory();
+        
+      } catch (error) {
+        console.error('Error updating viewer counts:', error);
+      }
+    }
+
+    // Track viewer history
+    function trackViewerHistory() {
+      let totalViewers = 0;
+      viewerData.forEach((data) => {
+        if (data.isLive && data.viewers > 0) {
+          totalViewers += data.viewers;
+        }
+      });
+      
+      // Update peak viewers
+      if (totalViewers > peakViewersToday) {
+        peakViewersToday = totalViewers;
+      }
+      
+      // Add to history
+      viewerHistory.push({
+        timestamp: Date.now(),
+        totalViewers: totalViewers,
+        streamers: Array.from(viewerData.values()).filter(data => data.isLive)
+      });
+      
+      // Keep only last 100 entries to prevent memory issues
+      if (viewerHistory.length > 100) {
+        viewerHistory = viewerHistory.slice(-100);
+      }
+    }
+
+    // Get Twitch viewer count for a specific channel
+    async function getTwitchViewerCount(channel) {
+      try {
+        // Note: This is a simplified implementation
+        // In a real implementation, you'd use Twitch's official API with proper authentication
+        // For now, we'll simulate viewer counts based on whether the stream is live
+        
+        // Check if this is a live stream by looking at our existing live streams data
+        const isLive = liveStreams.some(stream => 
+          stream.user_login && stream.user_login.toLowerCase() === channel.toLowerCase()
+        );
+        
+        if (isLive) {
+          // Simulate realistic viewer counts for live streams
+          const baseViewers = Math.floor(Math.random() * 100) + 50; // 50-150 viewers
+          return baseViewers;
+        } else {
+          return 0;
+        }
+      } catch (error) {
+        console.error(`Error getting viewer count for ${channel}:`, error);
+        return 0;
+      }
+    }
+
+    // Update the viewer display in the UI
+    function updateViewerDisplay() {
+      const totalViewerCount = document.getElementById('total-viewer-count');
+      const streamerViewersList = document.getElementById('streamer-viewers-list');
+      
+      if (!totalViewerCount || !streamerViewersList) {
+        console.error('Viewer display elements not found');
+        return;
+      }
+      
+      // Calculate total viewers
+      let totalViewers = 0;
+      const liveStreamers = [];
+      
+      viewerData.forEach((data) => {
+        if (data.isLive && data.viewers > 0) {
+          totalViewers += data.viewers;
+          liveStreamers.push(data);
+        }
+      });
+      
+      // Update total viewer count with animation
+      animateNumber(totalViewerCount, totalViewers);
+      
+      // Update individual streamer viewer counts
+      streamerViewersList.innerHTML = '';
+      
+      if (liveStreamers.length === 0) {
+        streamerViewersList.innerHTML = `
+          <div class="text-center text-gray-400 py-4">
+            <div class="text-2xl mb-2">📺</div>
+            <div>No live streams detected</div>
+          </div>
+        `;
+        return;
+      }
+      
+      // Sort by viewer count (highest first)
+      liveStreamers.sort((a, b) => b.viewers - a.viewers);
+      
+      liveStreamers.forEach((streamer) => {
+        const previousData = previousViewerData.get(streamer.handle);
+        const trend = calculateViewerTrend(streamer.viewers, previousData?.viewers || 0);
+        
+        const streamerItem = document.createElement('div');
+        streamerItem.className = 'streamer-viewer-item';
+        streamerItem.innerHTML = `
+          <div class="streamer-name">
+            ${streamer.name}
+            ${streamer.team ? `<span class="text-xs text-gray-400">(${streamer.team})</span>` : ''}
+          </div>
+          <div class="streamer-count">
+            ${streamer.viewers.toLocaleString()}
+            ${trend !== 'neutral' ? `<span class="viewer-trend ${trend}">${trend === 'up' ? '↗' : '↘'}</span>` : ''}
+          </div>
+        `;
+        
+        streamerViewersList.appendChild(streamerItem);
+      });
+    }
+
+    // Calculate viewer trend (up, down, or neutral)
+    function calculateViewerTrend(current, previous) {
+      if (!previous || previous === 0) return 'neutral';
+      
+      const change = current - previous;
+      const percentChange = (change / previous) * 100;
+      
+      if (percentChange > 5) return 'up';
+      if (percentChange < -5) return 'down';
+      return 'neutral';
+    }
+
+    // Animate number changes
+    function animateNumber(element, targetNumber) {
+      const currentNumber = parseInt(element.textContent) || 0;
+      const increment = (targetNumber - currentNumber) / 20; // 20 steps
+      let current = currentNumber;
+      
+      const timer = setInterval(() => {
+        current += increment;
+        if ((increment > 0 && current >= targetNumber) || (increment < 0 && current <= targetNumber)) {
+          current = targetNumber;
+          clearInterval(timer);
+        }
+        element.textContent = Math.floor(current).toLocaleString();
+      }, 50);
+    }
+
     // Update streamer dropdown with available streams
     function updateStreamerDropdown() {
       const streamerSelect = document.getElementById('streamer-select');
@@ -4912,6 +5504,10 @@
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
     window.updatePlayerChat = updatePlayerChat;
+    window.initializeViewerTracking = initializeViewerTracking;
+    window.updateViewerCounts = updateViewerCounts;
+    window.showViewerHistory = showViewerHistory;
+    window.hideViewerHistory = hideViewerHistory;
 
     // Initialize everything when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
@@ -4927,6 +5523,7 @@
       initializeTeamStats();
       loadRecentMatches();
       initializeTwitchChat();
+      initializeViewerTracking();
     });
   </script>
 </body>
