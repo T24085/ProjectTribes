@@ -3083,6 +3083,7 @@
         });
         
         console.log('Loaded Firebase Twitch handles:', firebaseTwitchHandles);
+        console.log('Number of handles loaded:', Object.keys(firebaseTwitchHandles).length);
       } catch (error) {
         console.error('Error loading Firebase Twitch handles:', error);
       }
@@ -3094,10 +3095,13 @@
       const playerName = player.name || player.displayName;
       
       // First priority: Check Firebase handles (admin-managed)
+      console.log(`Getting handle for ${playerName}. Firebase handles available:`, Object.keys(firebaseTwitchHandles));
       if (playerName && firebaseTwitchHandles[playerName]) {
         const handle = firebaseTwitchHandles[playerName];
-        console.log(`Found Firebase Twitch handle for ${playerName}: ${handle}`);
+        console.log(`✅ Found Firebase Twitch handle for ${playerName}: ${handle}`);
         return validateTwitchHandle(handle, playerName);
+      } else {
+        console.log(`❌ No Firebase handle found for ${playerName}`);
       }
       
       // Second priority: Check player object properties
@@ -4458,9 +4462,12 @@
 
       // Get all player logins from the current teams
       const allPlayerLogins = [];
+      console.log('Team rosters available:', Object.keys(teamRosters));
       Object.values(teamRosters).forEach(roster => {
         roster.forEach(player => {
+          console.log(`Processing player: ${player.name || player.displayName}`);
           const twitchHandle = getTwitchHandleForPlayer(player);
+          console.log(`Resolved handle for ${player.name || player.displayName}: ${twitchHandle}`);
           if (twitchHandle) {
             allPlayerLogins.push(twitchHandle);
           }
@@ -5757,6 +5764,15 @@
       console.log('Selected teams:', selectedTeams);
       console.log('Twitch OAuth available:', !!window.twitchOAuth);
       console.log('Twitch token available:', !!window.twitchOAuth?.getToken());
+      console.log('Firebase handles loaded:', firebaseTwitchHandles);
+      await updateLivePlayerIndicators();
+    };
+    
+    // Function to manually refresh Firebase handles and update indicators
+    window.refreshFirebaseHandles = async function() {
+      console.log('Manually refreshing Firebase handles...');
+      await loadFirebaseTwitchHandles();
+      console.log('Firebase handles after refresh:', firebaseTwitchHandles);
       await updateLivePlayerIndicators();
     };
     
