@@ -2401,7 +2401,7 @@
         // First, load from Firestore
         teamsSnapshot.forEach(doc => {
           const teamData = doc.data();
-          console.log('Processing team:', teamData.teamName, teamData);
+          // console.log('Processing team:', teamData.teamName, teamData);
           
           if (teamData.teamName) {
             // Load complete roster including all players and bench players
@@ -2426,7 +2426,7 @@
             }
             
             teamRosters[teamData.teamName] = completeRoster;
-            console.log('Final roster for', teamData.teamName, ':', completeRoster);
+            // console.log('Final roster for', teamData.teamName, ':', completeRoster);
           }
         });
         
@@ -3148,7 +3148,7 @@
           
           // If still no handle found, check default TEAM_DATA streams
           if (!twitchHandle) {
-            console.log(`Looking in default TEAM_DATA streams for ${mappedName} or ${player.name}`);
+            // console.log(`Looking in default TEAM_DATA streams for ${mappedName} or ${player.name}`);
             for (const [teamKey, teamData] of Object.entries(TEAM_DATA)) {
               if (teamData.streams && Array.isArray(teamData.streams)) {
                 const streamer = teamData.streams.find(s => s.name === mappedName || s.name === player.name);
@@ -4537,10 +4537,28 @@
 
       // console.log('Checking live status for players:', allPlayerLogins);
 
-      // Fetch current live streams
+      // Fetch current live streams in batches to avoid API limits
       let liveStreams = [];
       try {
-        liveStreams = await window.twitchOAuth.fetchLiveStreams(allPlayerLogins);
+        // Twitch API has a limit of 100 user_login parameters per request
+        const BATCH_SIZE = 100;
+        const batches = [];
+        
+        for (let i = 0; i < allPlayerLogins.length; i += BATCH_SIZE) {
+          batches.push(allPlayerLogins.slice(i, i + BATCH_SIZE));
+        }
+        
+        // Process each batch
+        for (const batch of batches) {
+          try {
+            const batchStreams = await window.twitchOAuth.fetchLiveStreams(batch);
+            liveStreams.push(...batchStreams);
+          } catch (batchError) {
+            console.error('Error fetching batch:', batchError);
+            // Continue with other batches even if one fails
+          }
+        }
+        
         // console.log('Fetched live streams:', liveStreams.length);
       } catch (error) {
         console.error('Error fetching live streams:', error);
@@ -5825,7 +5843,7 @@
     window.hideAdminPanel = hideAdminPanel;
     window.showTeamStats = showTeamStats;
     window.hideTeamStats = hideTeamStats;
-    window.debugStatsSystem = debugStatsSystem;
+    // window.debugStatsSystem = debugStatsSystem; // Function not defined
     window.loadRecentMatches = loadRecentMatches;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
