@@ -6360,12 +6360,95 @@
     const twitchDonations = new TwitchDonationIntegration();
     window.twitchDonations = twitchDonations;
     
+    // Local server connection for real-time donations
+    let donationServerConnection = null;
+    
+    function connectToDonationServer() {
+      // Try to connect to local donation server
+      const serverUrl = 'http://localhost:3000/events';
+      
+      try {
+        donationServerConnection = new EventSource(serverUrl);
+        
+        donationServerConnection.onopen = function(event) {
+          console.log('✅ Connected to donation server');
+        };
+        
+        donationServerConnection.onmessage = function(event) {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'donation') {
+              const donation = data.data;
+              console.log('🎉 Received donation from server:', donation);
+              
+              // Trigger donation effect
+              triggerDonationWithTarget(
+                donation.type,
+                donation.amount,
+                donation.message,
+                donation.from,
+                donation.target
+              );
+            } else if (data.type === 'connected') {
+              console.log('📡 Connected to donation server:', data.message);
+            }
+          } catch (error) {
+            console.error('Error parsing donation data:', error);
+          }
+        };
+        
+        donationServerConnection.onerror = function(event) {
+          console.log('⚠️ Donation server connection error - server may not be running');
+          // Try to reconnect after 5 seconds
+          setTimeout(() => {
+            if (donationServerConnection.readyState === EventSource.CLOSED) {
+              connectToDonationServer();
+            }
+          }, 5000);
+        };
+        
+      } catch (error) {
+        console.log('⚠️ Could not connect to donation server:', error.message);
+        console.log('💡 Make sure the donation server is running (double-click desktop shortcut)');
+      }
+    }
+    
+    // Test function to send donation to server
+    function testServerConnection() {
+      fetch('http://localhost:3000/test-donation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'donation',
+          amount: 10,
+          message: 'Test from website!',
+          from: 'WebsiteTest'
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('✅ Server test successful:', data);
+      })
+      .catch(error => {
+        console.log('❌ Server test failed:', error);
+        console.log('💡 Make sure the donation server is running');
+      });
+    }
+    
     // Start integration when page loads
     document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         twitchDonations.initialize();
+        connectToDonationServer();
       }, 2000); // Wait for other systems to initialize
     });
+    
+    // Add global functions
+    window.testServerConnection = testServerConnection;
+    window.connectToDonationServer = connectToDonationServer;
     
     // Function to manually trigger donation for specific player/team
     function donateToPlayer(playerName, amount, message, from) {
