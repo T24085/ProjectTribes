@@ -2409,13 +2409,13 @@
             
             // Add main roster players
             if (teamData.players && Array.isArray(teamData.players)) {
-              console.log('Adding main players for', teamData.teamName, ':', teamData.players);
+              // console.log('Adding main players for', teamData.teamName, ':', teamData.players);
               completeRoster.push(...teamData.players);
             }
             
             // Add bench players if they exist
             if (teamData.benchPlayers && Array.isArray(teamData.benchPlayers)) {
-              console.log('Adding bench players for', teamData.teamName, ':', teamData.benchPlayers);
+              // console.log('Adding bench players for', teamData.teamName, ':', teamData.benchPlayers);
               completeRoster.push(...teamData.benchPlayers);
             }
             
@@ -2453,7 +2453,7 @@
         
         // Update player tabs if teams are selected
         if (selectedTeams.teamA && selectedTeams.teamB) {
-          console.log('Updating player tabs for teams:', selectedTeams.teamA, selectedTeams.teamB);
+          // console.log('Updating player tabs for teams:', selectedTeams.teamA, selectedTeams.teamB);
           updatePlayerTabs();
         }
       } catch (error) {
@@ -3092,18 +3092,18 @@
     }
 
     function getTwitchHandleForPlayer(player) {
-      console.log(`Getting Twitch handle for player:`, player);
+      // console.log(`Getting Twitch handle for player:`, player);
       
       const playerName = player.name || player.displayName;
       
       // First priority: Check Firebase handles (admin-managed)
-      console.log(`Getting handle for ${playerName}. Firebase handles available:`, Object.keys(firebaseTwitchHandles));
+      // console.log(`Getting handle for ${playerName}. Firebase handles available:`, Object.keys(firebaseTwitchHandles));
       if (playerName && firebaseTwitchHandles[playerName]) {
         const handle = firebaseTwitchHandles[playerName];
-        console.log(`✅ Found Firebase Twitch handle for ${playerName}: ${handle}`);
+        // console.log(`✅ Found Firebase Twitch handle for ${playerName}: ${handle}`);
         return validateTwitchHandle(handle, playerName);
       } else {
-        console.log(`❌ No Firebase handle found for ${playerName}`);
+        // console.log(`❌ No Firebase handle found for ${playerName}`);
       }
       
       // Second priority: Check player object properties
@@ -3121,17 +3121,17 @@
       // Third priority: Use hardcoded mappings
       if (!twitchHandle && player.name) {
         const mappedName = PLAYER_NAME_MAPPING[player.name] || player.name;
-        console.log(`Player ${player.name} mapped to: ${mappedName}`);
+        // console.log(`Player ${player.name} mapped to: ${mappedName}`);
         
         // Check if the mapped name is already a Twitch handle (contains lowercase letters/numbers)
         // This handles cases like 'Panda' -> 'pandoracast' where the mapping is direct
         if (mappedName && mappedName !== player.name && /^[a-z0-9_]+$/.test(mappedName)) {
           twitchHandle = mappedName;
-          console.log(`Direct Twitch handle mapping for ${player.name}: ${twitchHandle}`);
+          // console.log(`Direct Twitch handle mapping for ${player.name}: ${twitchHandle}`);
         } else {
           // Look up in oauth.js TEAM_STREAMS data
           if (window.twitchOAuth && window.twitchOAuth.TEAM_STREAMS) {
-            console.log(`Looking in oauth.js TEAM_STREAMS for ${mappedName}`);
+            // console.log(`Looking in oauth.js TEAM_STREAMS for ${mappedName}`);
             for (const [teamName, streams] of Object.entries(window.twitchOAuth.TEAM_STREAMS)) {
               const streamer = streams.find(s => s.name === mappedName);
               if (streamer) {
@@ -3167,7 +3167,7 @@
         }
       }
       
-      console.log(`Final Twitch handle for ${playerName}: ${twitchHandle}`);
+      // console.log(`Final Twitch handle for ${playerName}: ${twitchHandle}`);
       return validateTwitchHandle(twitchHandle, playerName);
     }
 
