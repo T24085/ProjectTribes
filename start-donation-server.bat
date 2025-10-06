@@ -45,7 +45,14 @@ echo - Display webhook URLs for Twitch setup
 echo.
 echo Press Ctrl+C to stop the server
 echo.
+echo ========================================
+echo.
 
-npm start
+REM Start npm and keep window open
+call npm start
 
+echo.
+echo ========================================
+echo Server has stopped.
+echo.
 pause
