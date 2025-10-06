@@ -1362,6 +1362,146 @@
       z-index: 10;
     }
 
+    /* Donation System Styles */
+    .donation-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .donation-notification {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.95), rgba(59, 130, 246, 0.95));
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 1rem;
+      padding: 2rem 3rem;
+      color: white;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      animation: donationPop 3s ease-out forwards;
+      z-index: 1001;
+    }
+
+    .donation-amount {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .donation-message {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.9;
+    }
+
+    .donation-from {
+      font-size: 1rem;
+      opacity: 0.8;
+      font-style: italic;
+    }
+
+    @keyframes donationPop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+      }
+      20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+    }
+
+    /* Confetti particles */
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #ff6b6b;
+      animation: confetti-fall 3s linear infinite;
+    }
+
+    .confetti:nth-child(2n) { background: #4ecdc4; }
+    .confetti:nth-child(3n) { background: #45b7d1; }
+    .confetti:nth-child(4n) { background: #f9ca24; }
+    .confetti:nth-child(5n) { background: #f0932b; }
+    .confetti:nth-child(6n) { background: #eb4d4b; }
+    .confetti:nth-child(7n) { background: #6c5ce7; }
+    .confetti:nth-child(8n) { background: #a29bfe; }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    /* Donation buttons */
+    .donation-buttons {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      z-index: 100;
+    }
+
+    .donation-btn {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    .donation-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+    }
+
+    .donation-btn.bits {
+      background: linear-gradient(135deg, #9146ff, #772ce8);
+      box-shadow: 0 4px 15px rgba(145, 70, 255, 0.4);
+    }
+
+    .donation-btn.bits:hover {
+      box-shadow: 0 6px 20px rgba(145, 70, 255, 0.6);
+    }
+
+    .donation-btn.channel-points {
+      background: linear-gradient(135deg, #00d4aa, #00b894);
+      box-shadow: 0 4px 15px rgba(0, 212, 170, 0.4);
+    }
+
+    .donation-btn.channel-points:hover {
+      box-shadow: 0 6px 20px rgba(0, 212, 170, 0.6);
+    }
+
     .player-tab.live:hover {
       background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2));
       border-color: rgba(34, 197, 94, 0.8);
@@ -5988,6 +6128,147 @@
       }
     };
     
+    // Donation System Functions
+    function triggerDonation(type, amount, message, from) {
+      console.log(`Donation triggered: ${type} - ${amount} - ${message} - ${from}`);
+      
+      // Create confetti effect
+      createConfetti();
+      
+      // Show donation notification
+      showDonationNotification(type, amount, message, from);
+      
+      // Store donation in localStorage for persistence
+      const donation = {
+        type,
+        amount,
+        message,
+        from,
+        timestamp: Date.now()
+      };
+      
+      // Add to donation history
+      let donations = JSON.parse(localStorage.getItem('donations') || '[]');
+      donations.push(donation);
+      localStorage.setItem('donations', JSON.stringify(donations));
+      
+      // Broadcast to other users (in a real implementation, this would use WebSockets)
+      broadcastDonation(donation);
+    }
+    
+    function createConfetti() {
+      const overlay = document.getElementById('donation-overlay');
+      const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7', '#a29bfe'];
+      
+      // Create 50 confetti pieces
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        
+        overlay.appendChild(confetti);
+        
+        // Remove confetti after animation
+        setTimeout(() => {
+          if (confetti.parentNode) {
+            confetti.parentNode.removeChild(confetti);
+          }
+        }, 5000);
+      }
+    }
+    
+    function showDonationNotification(type, amount, message, from) {
+      const notification = document.createElement('div');
+      notification.className = 'donation-notification';
+      
+      let displayAmount = '';
+      let icon = '';
+      
+      switch(type) {
+        case 'donation':
+          displayAmount = `$${amount}`;
+          icon = '💰';
+          break;
+        case 'bits':
+          displayAmount = `${amount} Bits`;
+          icon = '💎';
+          break;
+        case 'points':
+          displayAmount = `${amount} Points`;
+          icon = '⭐';
+          break;
+      }
+      
+      notification.innerHTML = `
+        <div class="donation-amount">${icon} ${displayAmount}</div>
+        <div class="donation-message">"${message}"</div>
+        <div class="donation-from">- ${from}</div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after animation
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 3000);
+    }
+    
+    function broadcastDonation(donation) {
+      // In a real implementation, this would send to a WebSocket server
+      // For now, we'll just log it
+      console.log('Broadcasting donation:', donation);
+      
+      // You could integrate with Twitch API here to get real donations
+      // or use a service like Streamlabs, StreamElements, etc.
+    }
+    
+    // Function to simulate real donations (for testing)
+    function simulateRandomDonation() {
+      const types = ['donation', 'bits', 'points'];
+      const amounts = {
+        donation: [1, 5, 10, 25, 50, 100],
+        bits: [50, 100, 250, 500, 1000, 2500],
+        points: [100, 500, 1000, 2500, 5000, 10000]
+      };
+      const messages = [
+        'Great stream!',
+        'Love the content!',
+        'Keep it up!',
+        'Amazing gameplay!',
+        'Thanks for the entertainment!',
+        'You rock!',
+        'Best streamer ever!',
+        'This is awesome!'
+      ];
+      const names = [
+        'Anonymous',
+        'Viewer123',
+        'GamerPro',
+        'StreamFan',
+        'TribesPlayer',
+        'CommunityMember',
+        'Supporter',
+        'Fan'
+      ];
+      
+      const type = types[Math.floor(Math.random() * types.length)];
+      const amount = amounts[type][Math.floor(Math.random() * amounts[type].length)];
+      const message = messages[Math.floor(Math.random() * messages.length)];
+      const from = names[Math.floor(Math.random() * names.length)];
+      
+      triggerDonation(type, amount, message, from);
+    }
+    
+    // Add global functions for testing
+    window.triggerDonation = triggerDonation;
+    window.simulateRandomDonation = simulateRandomDonation;
+
     // Function to get app access token for server-to-server requests
     async function getAppAccessToken() {
       try {
@@ -6035,5 +6316,21 @@
       initializeViewerTracking();
     });
   </script>
+
+  <!-- Donation System -->
+  <div class="donation-overlay" id="donation-overlay"></div>
+
+  <!-- Donation Buttons -->
+  <div class="donation-buttons">
+    <button class="donation-btn" onclick="triggerDonation('donation', 5, 'Test Donation', 'Anonymous')">
+      💰 Donate $5
+    </button>
+    <button class="donation-btn bits" onclick="triggerDonation('bits', 100, 'Test Bits', 'Anonymous')">
+      💎 100 Bits
+    </button>
+    <button class="donation-btn channel-points" onclick="triggerDonation('points', 500, 'Test Channel Points', 'Anonymous')">
+      ⭐ 500 Points
+    </button>
+  </div>
 </body>
 </html>
