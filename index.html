@@ -6268,6 +6268,199 @@
     // Add global functions for testing
     window.triggerDonation = triggerDonation;
     window.simulateRandomDonation = simulateRandomDonation;
+    
+    // Twitch API Integration for Real Donations/Bits
+    class TwitchDonationIntegration {
+      constructor() {
+        this.clientId = 'YOUR_TWITCH_CLIENT_ID'; // You'll need to get this from Twitch Developer Console
+        this.accessToken = null;
+        this.webhookSecret = 'YOUR_WEBHOOK_SECRET'; // For EventSub verification
+        this.isConnected = false;
+      }
+      
+      // Initialize Twitch API connection
+      async initialize() {
+        try {
+          // Get access token from existing Twitch OAuth
+          if (window.twitchOAuth && window.twitchOAuth.getToken()) {
+            this.accessToken = window.twitchOAuth.getToken();
+            this.isConnected = true;
+            console.log('✅ Twitch API connected for donations');
+            this.setupEventListeners();
+          } else {
+            console.log('⚠️ Twitch OAuth not available - donations will be test only');
+          }
+        } catch (error) {
+          console.error('❌ Failed to initialize Twitch API:', error);
+        }
+      }
+      
+      // Setup EventSub webhooks for real-time events
+      async setupEventListeners() {
+        // This would typically be done on your server, but for demo purposes:
+        console.log('Setting up Twitch EventSub listeners...');
+        
+        // You would need to:
+        // 1. Create EventSub subscriptions for:
+        //    - channel.bits (when someone sends bits)
+        //    - channel.subscribe (when someone subscribes)
+        //    - channel.channel_points_custom_reward_redemption.add (channel points)
+        // 2. Set up a webhook endpoint to receive events
+        // 3. Verify webhook signatures
+        // 4. Process events and trigger confetti
+        
+        // For now, we'll simulate this with polling
+        this.startPolling();
+      }
+      
+      // Poll for recent events (simplified approach)
+      async startPolling() {
+        setInterval(async () => {
+          if (this.isConnected) {
+            await this.checkForNewEvents();
+          }
+        }, 10000); // Check every 10 seconds
+      }
+      
+      // Check for new Twitch events
+      async checkForNewEvents() {
+        try {
+          // This is a simplified version - in reality you'd use EventSub webhooks
+          // For now, we'll just log that we're checking
+          console.log('Checking for new Twitch events...');
+          
+          // You could also check recent chat messages for donation commands
+          // or use other Twitch API endpoints
+        } catch (error) {
+          console.error('Error checking for events:', error);
+        }
+      }
+      
+      // Handle incoming bits event
+      handleBitsEvent(event) {
+        const { user_name, bits_used, message } = event;
+        triggerDonation('bits', bits_used, message || 'Thanks for the bits!', user_name);
+      }
+      
+      // Handle incoming subscription event
+      handleSubscriptionEvent(event) {
+        const { user_name, tier } = event;
+        const amount = tier === '1000' ? 5 : tier === '2000' ? 10 : 25; // Convert tier to dollar equivalent
+        triggerDonation('subscription', amount, 'Thanks for subscribing!', user_name);
+      }
+      
+      // Handle channel points redemption
+      handleChannelPointsEvent(event) {
+        const { user_name, reward_title, cost } = event;
+        triggerDonation('points', cost, `Redeemed: ${reward_title}`, user_name);
+      }
+    }
+    
+    // Initialize Twitch donation integration
+    const twitchDonations = new TwitchDonationIntegration();
+    window.twitchDonations = twitchDonations;
+    
+    // Start integration when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        twitchDonations.initialize();
+      }, 2000); // Wait for other systems to initialize
+    });
+    
+    // Function to manually trigger donation for specific player/team
+    function donateToPlayer(playerName, amount, message, from) {
+      triggerDonation('player', amount, message, from, playerName);
+    }
+    
+    // Function to donate to caster
+    function donateToCaster(amount, message, from) {
+      triggerDonation('caster', amount, message, from);
+    }
+    
+    // Enhanced donation function with targets
+    function triggerDonationWithTarget(type, amount, message, from, target = null) {
+      const donation = {
+        type,
+        amount,
+        message,
+        from,
+        target, // 'player_name' or 'caster' or null for general
+        timestamp: Date.now()
+      };
+      
+      // Create confetti effect
+      createConfetti();
+      
+      // Show enhanced notification
+      showEnhancedDonationNotification(donation);
+      
+      // Store donation
+      let donations = JSON.parse(localStorage.getItem('donations') || '[]');
+      donations.push(donation);
+      localStorage.setItem('donations', JSON.stringify(donations));
+      
+      // Broadcast donation
+      broadcastDonation(donation);
+    }
+    
+    // Enhanced notification with target
+    function showEnhancedDonationNotification(donation) {
+      const notification = document.createElement('div');
+      notification.className = 'donation-notification';
+      
+      let displayAmount = '';
+      let icon = '';
+      let targetText = '';
+      
+      switch(donation.type) {
+        case 'donation':
+        case 'player':
+        case 'caster':
+          displayAmount = `$${donation.amount}`;
+          icon = '💰';
+          break;
+        case 'bits':
+          displayAmount = `${donation.amount} Bits`;
+          icon = '💎';
+          break;
+        case 'points':
+          displayAmount = `${donation.amount} Points`;
+          icon = '⭐';
+          break;
+        case 'subscription':
+          displayAmount = `$${donation.amount}`;
+          icon = '🎉';
+          break;
+      }
+      
+      if (donation.target) {
+        if (donation.target === 'caster') {
+          targetText = '<div style="font-size: 0.9rem; opacity: 0.8;">🎙️ To Caster</div>';
+        } else {
+          targetText = `<div style="font-size: 0.9rem; opacity: 0.8;">👤 To ${donation.target}</div>`;
+        }
+      }
+      
+      notification.innerHTML = `
+        <div class="donation-amount">${icon} ${displayAmount}</div>
+        ${targetText}
+        <div class="donation-message">"${donation.message}"</div>
+        <div class="donation-from">- ${donation.from}</div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 3000);
+    }
+    
+    // Add new global functions
+    window.donateToPlayer = donateToPlayer;
+    window.donateToCaster = donateToCaster;
+    window.triggerDonationWithTarget = triggerDonationWithTarget;
 
     // Function to get app access token for server-to-server requests
     async function getAppAccessToken() {
@@ -6322,14 +6515,25 @@
 
   <!-- Donation Buttons -->
   <div class="donation-buttons">
+    <!-- PayPal Donation Button -->
+    <div class="paypal-donation">
+      <style>.pp-BC4EF2QC9T5GA{text-align:center;border:none;border-radius:0.25rem;min-width:11.625rem;padding:0 2rem;height:2.625rem;font-weight:bold;background-color:#ff0f0f;color:#000000;font-family:"Helvetica Neue",Arial,sans-serif;font-size:1rem;line-height:1.25rem;cursor:pointer;}</style>
+      <form action="https://www.paypal.com/ncp/payment/BC4EF2QC9T5GA" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
+        <input class="pp-BC4EF2QC9T5GA" type="submit" value="Donate Now" />
+        <img src=https://www.paypalobjects.com/images/Debit_Credit_APM.svg alt="cards" />
+        <section style="font-size: 0.75rem;"> Powered by <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal" style="height:0.875rem;vertical-align:middle;"/></section>
+      </form>
+    </div>
+    
+    <!-- Test Buttons -->
     <button class="donation-btn" onclick="triggerDonation('donation', 5, 'Test Donation', 'Anonymous')">
-      💰 Donate $5
+      💰 Test $5
     </button>
     <button class="donation-btn bits" onclick="triggerDonation('bits', 100, 'Test Bits', 'Anonymous')">
-      💎 100 Bits
+      💎 Test 100 Bits
     </button>
     <button class="donation-btn channel-points" onclick="triggerDonation('points', 500, 'Test Channel Points', 'Anonymous')">
-      ⭐ 500 Points
+      ⭐ Test 500 Points
     </button>
   </div>
 </body>
