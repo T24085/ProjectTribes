@@ -1351,13 +1351,15 @@
 
     /* Live Player Indicators */
     .player-tab.live {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.2)) !important;
-      border: 3px solid rgba(34, 197, 94, 0.8) !important;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(22, 163, 74, 0.3)) !important;
+      border: 3px solid rgba(34, 197, 94, 1) !important;
       color: #ffffff !important;
-      box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.4) !important;
+      box-shadow: 0 0 25px rgba(34, 197, 94, 0.8), 0 0 50px rgba(34, 197, 94, 0.6), inset 0 0 20px rgba(34, 197, 94, 0.2) !important;
       animation: livePulse 2s ease-in-out infinite;
       position: relative;
       font-weight: bold !important;
+      transform: scale(1.05);
+      z-index: 10;
     }
 
     .player-tab.live:hover {
@@ -2171,6 +2173,9 @@
     document.addEventListener('DOMContentLoaded', function() {
       initializePollManagement();
       initializeVoting();
+      
+      // Initialize live announcement banner
+      initLiveAnnouncementBanner();
       
       // Load active match first, then team rosters
       loadActiveMatch().then(() => {
@@ -4448,6 +4453,60 @@
       }
     }
 
+    // Live announcement banner functionality
+    function initLiveAnnouncementBanner() {
+      const banner = document.getElementById("live-announcement-banner");
+      const nav = document.querySelector("nav");
+      if (!banner || !nav) return;
+
+      const BANNER_GAP = 12;
+      const iconMarkup = "<span class='banner-icon' aria-hidden='true'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'><path fill='currentColor' d='M1.45 7.88a.75.75 0 0 1 1.06-.03A11.94 11.94 0 0 1 10 5c2.99 0 5.73 1.12 7.49 2.85a.75.75 0 0 1-1.03 1.09A10.44 10.44 0 0 0 10 6.5c-2.62 0-5 1-6.46 2.44a.75.75 0 0 1-1.06-.03zm2.94 3a.75.75 0 0 1 1.06-.05A7.45 7.45 0 0 1 10 9c2.09 0 3.99.86 5.55 2.3a.75.75 0 1 1-1 1.12A5.95 5.95 0 0 0 10 10.5a5.95 5.95 0 0 0-4.55 1.92.75.75 0 0 1-1.06-.03zM10 13.25a2.25 2.25 0 1 1 0 4.5 2.25 2.25 0 0 1 0-4.5z'/></svg></span>";
+      const htmlEscapes = { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "\u0027": "&#39;" };
+      const escapeHtml = (str = "") => String(str).replace(/[&<>\"\u0027]/g, ch => htmlEscapes[ch] || ch);
+      const highlight = (team) => `<strong>${escapeHtml(team)}</strong>`;
+      
+      const formatMessage = (teams) => {
+        if (!teams.length) return "";
+        if (teams.length === 1) return `${highlight(teams[0])} is live!`;
+        if (teams.length === 2) return `${highlight(teams[0])} vs ${highlight(teams[1])} is live!`;
+        const extra = teams.length - 2;
+        return `${highlight(teams[0])} vs ${highlight(teams[1])} + ${extra} more live!`;
+      };
+      
+      const syncLayout = () => {
+        const navHeight = nav.offsetHeight;
+        const isVisible = banner.classList.contains("is-visible");
+        const bannerHeight = isVisible ? banner.offsetHeight : 0;
+        banner.style.top = `${navHeight + BANNER_GAP}px`;
+      };
+      
+      const hideBanner = () => {
+        banner.classList.remove("is-visible");
+        banner.innerHTML = "";
+        syncLayout();
+      };
+      
+      const showBanner = (teams) => {
+        const message = formatMessage(teams);
+        if (!message) {
+          hideBanner();
+          return;
+        }
+        banner.innerHTML = `${iconMarkup}<span>${message}</span>`;
+        if (!banner.classList.contains("is-visible")) {
+          requestAnimationFrame(() => {
+            banner.classList.add("is-visible");
+            requestAnimationFrame(syncLayout);
+          });
+        } else {
+          syncLayout();
+        }
+      };
+
+      // Store banner functions globally for use by live indicators
+      window.liveBanner = { showBanner, hideBanner };
+    }
+
     // Check for live players and update indicators
     async function updateLivePlayerIndicators() {
       console.log('Checking live player indicators...');
@@ -4563,6 +4622,37 @@
       // Update admin panel if open
       if (document.getElementById('admin-modal').style.display === 'flex') {
         updateLivePlayersStatus();
+      }
+      
+      // Update banner with live teams
+      updateLiveBanner();
+    }
+
+    // Update live banner based on live players
+    function updateLiveBanner() {
+      if (!window.liveBanner) return;
+      
+      // Get unique teams that have live players
+      const liveTeams = new Set();
+      const playerTabs = document.querySelectorAll('.player-tab.live');
+      
+      playerTabs.forEach(tab => {
+        if (tab.dataset.team && tab.dataset.playerIndex !== undefined) {
+          const team = tab.dataset.team;
+          const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
+          if (teamKey) {
+            liveTeams.add(teamKey);
+          }
+        }
+      });
+      
+      const liveTeamsArray = Array.from(liveTeams);
+      console.log('Live teams for banner:', liveTeamsArray);
+      
+      if (liveTeamsArray.length > 0) {
+        window.liveBanner.showBanner(liveTeamsArray);
+      } else {
+        window.liveBanner.hideBanner();
       }
     }
 
