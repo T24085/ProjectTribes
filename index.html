@@ -5889,6 +5889,52 @@
       }
     };
     
+    // Enhanced debug function to test live detection manually
+    window.testLiveDetection = async function() {
+      console.log('=== TESTING LIVE DETECTION ===');
+      
+      // Check if we have the necessary components
+      if (!window.twitchOAuth) {
+        console.error('❌ Twitch OAuth not available');
+        return;
+      }
+      
+      if (!window.twitchOAuth.getToken()) {
+        console.error('❌ No Twitch token - you may need to sign in with Twitch');
+        return;
+      }
+      
+      console.log('✅ Twitch OAuth and token available');
+      
+      // Test with a known live streamer (you can change this to your handle)
+      const testHandles = ['pandoracast']; // Add your Twitch handle here
+      
+      try {
+        console.log('Testing live stream detection for:', testHandles);
+        const liveStreams = await window.twitchOAuth.fetchLiveStreams(testHandles);
+        console.log('Live streams found:', liveStreams);
+        
+        if (liveStreams && liveStreams.length > 0) {
+          console.log('✅ Live detection is working! Found streams:', liveStreams.map(s => s.user_name));
+        } else {
+          console.log('ℹ️ No live streams found for test handles');
+        }
+      } catch (error) {
+        console.error('❌ Error testing live detection:', error);
+      }
+    };
+    
+    // Function to manually trigger live indicator update
+    window.forceLiveUpdate = async function() {
+      console.log('=== FORCING LIVE UPDATE ===');
+      try {
+        await updateLivePlayerIndicators();
+        console.log('✅ Live indicators updated');
+      } catch (error) {
+        console.error('❌ Error updating live indicators:', error);
+      }
+    };
+    
     // Function to get app access token for server-to-server requests
     async function getAppAccessToken() {
       try {
