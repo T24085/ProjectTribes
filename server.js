@@ -215,29 +215,54 @@ app.get('/health', (req, res) => {
 // Start server and ngrok tunnel
 async function startServer() {
   try {
-    // Start Express server
+    // Start Express server first
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
     
-    // Start ngrok tunnel
-    await ngrok.authtoken(TWITCH_CONFIG.ngrokAuthToken);
-    const url = await ngrok.connect(PORT);
+    // Wait a moment for server to start
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    console.log('🌐 Ngrok tunnel active:', url);
-    console.log('📡 Webhook endpoints:');
-    console.log(`   Bits: ${url}/webhook/bits`);
-    console.log(`   Channel Points: ${url}/webhook/channel-points`);
-    console.log(`   Subscriptions: ${url}/webhook/subscription`);
-    console.log(`   Follows: ${url}/webhook/follow`);
-    console.log(`   Events: ${url}/events`);
-    console.log(`   Test: ${url}/test-donation`);
-    
-    // Save ngrok URL to file for easy access
-    require('fs').writeFileSync('ngrok-url.txt', url);
-    
-    console.log('\n✅ Server is ready! Your website can now connect to:', url);
-    console.log('💡 Use this URL to set up Twitch EventSub webhooks');
+    // Try to start ngrok tunnel
+    try {
+      console.log('🌐 Starting ngrok tunnel...');
+      
+      // Set auth token
+      await ngrok.authtoken(TWITCH_CONFIG.ngrokAuthToken);
+      console.log('✅ Ngrok auth token set');
+      
+      // Connect tunnel
+      const url = await ngrok.connect({
+        addr: PORT,
+        authtoken: TWITCH_CONFIG.ngrokAuthToken
+      });
+      
+      console.log('🌐 Ngrok tunnel active:', url);
+      console.log('📡 Webhook endpoints:');
+      console.log(`   Bits: ${url}/webhook/bits`);
+      console.log(`   Channel Points: ${url}/webhook/channel-points`);
+      console.log(`   Subscriptions: ${url}/webhook/subscription`);
+      console.log(`   Follows: ${url}/webhook/follow`);
+      console.log(`   Events: ${url}/events`);
+      console.log(`   Test: ${url}/test-donation`);
+      
+      // Save ngrok URL to file for easy access
+      require('fs').writeFileSync('ngrok-url.txt', url);
+      
+      console.log('\n✅ Server is ready! Your website can now connect to:', url);
+      console.log('💡 Use this URL to set up Twitch EventSub webhooks');
+      
+    } catch (ngrokError) {
+      console.log('⚠️ Ngrok tunnel failed to start:', ngrokError.message);
+      console.log('📡 Server is still running on http://localhost:3000');
+      console.log('💡 You can still test the server locally:');
+      console.log(`   Test: http://localhost:3000/test-donation`);
+      console.log(`   Events: http://localhost:3000/events`);
+      console.log('💡 For Twitch webhooks, you may need to:');
+      console.log('   1. Check your ngrok auth token');
+      console.log('   2. Try running: ngrok http 3000 (manually)');
+      console.log('   3. Or use a different tunneling service');
+    }
     
   } catch (error) {
     console.error('❌ Failed to start server:', error);
