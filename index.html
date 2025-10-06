@@ -4524,7 +4524,7 @@
           // console.log(`Processing player: ${player.name || player.displayName}`);
           const twitchHandle = getTwitchHandleForPlayer(player);
           // console.log(`Resolved handle for ${player.name || player.displayName}: ${twitchHandle}`);
-          if (twitchHandle) {
+          if (twitchHandle && twitchHandle !== 'undefined' && twitchHandle !== 'null' && twitchHandle.length > 0) {
             allPlayerLogins.push(twitchHandle);
           }
         });
@@ -5940,6 +5940,41 @@
       } catch (error) {
         console.error('❌ Error testing live detection:', error);
       }
+    };
+    
+    // Function to debug what handles are being sent to Twitch API
+    window.debugTwitchHandles = function() {
+      console.log('=== DEBUGGING TWITCH HANDLES ===');
+      
+      const allPlayerLogins = [];
+      Object.values(teamRosters).forEach(roster => {
+        roster.forEach(player => {
+          const twitchHandle = getTwitchHandleForPlayer(player);
+          if (twitchHandle) {
+            allPlayerLogins.push(twitchHandle);
+          }
+        });
+      });
+      
+      console.log('All Twitch handles being sent to API:', allPlayerLogins);
+      console.log('Total handles:', allPlayerLogins.length);
+      
+      // Check for invalid handles
+      const invalidHandles = allPlayerLogins.filter(handle => {
+        return !handle || handle.length === 0 || handle.includes('undefined') || handle.includes('null');
+      });
+      
+      if (invalidHandles.length > 0) {
+        console.warn('⚠️ Invalid handles found:', invalidHandles);
+      }
+      
+      // Check for handles that might be too long
+      const longHandles = allPlayerLogins.filter(handle => handle && handle.length > 25);
+      if (longHandles.length > 0) {
+        console.warn('⚠️ Suspiciously long handles:', longHandles);
+      }
+      
+      return allPlayerLogins;
     };
     
     // Function to manually trigger live indicator update
