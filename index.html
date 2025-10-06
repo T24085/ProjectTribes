@@ -4509,21 +4509,21 @@
 
     // Check for live players and update indicators
     async function updateLivePlayerIndicators() {
-      console.log('Checking live player indicators...');
+      // console.log('Checking live player indicators...');
       
       if (!window.twitchOAuth) {
-        console.log('Twitch OAuth not available - skipping live indicators');
+        // console.log('Twitch OAuth not available - skipping live indicators');
         return;
       }
 
       // Get all player logins from the current teams
       const allPlayerLogins = [];
-      console.log('Team rosters available:', Object.keys(teamRosters));
+      // console.log('Team rosters available:', Object.keys(teamRosters));
       Object.values(teamRosters).forEach(roster => {
         roster.forEach(player => {
-          console.log(`Processing player: ${player.name || player.displayName}`);
+          // console.log(`Processing player: ${player.name || player.displayName}`);
           const twitchHandle = getTwitchHandleForPlayer(player);
-          console.log(`Resolved handle for ${player.name || player.displayName}: ${twitchHandle}`);
+          // console.log(`Resolved handle for ${player.name || player.displayName}: ${twitchHandle}`);
           if (twitchHandle) {
             allPlayerLogins.push(twitchHandle);
           }
@@ -4531,33 +4531,33 @@
       });
 
       if (allPlayerLogins.length === 0) {
-        console.log('No player logins found for live stream checking');
+        // console.log('No player logins found for live stream checking');
         return;
       }
 
-      console.log('Checking live status for players:', allPlayerLogins);
+      // console.log('Checking live status for players:', allPlayerLogins);
 
       // Fetch current live streams
       let liveStreams = [];
       try {
         liveStreams = await window.twitchOAuth.fetchLiveStreams(allPlayerLogins);
-        console.log('Fetched live streams:', liveStreams.length);
+        // console.log('Fetched live streams:', liveStreams.length);
       } catch (error) {
         console.error('Error fetching live streams:', error);
-        console.log('Falling back to test data for live indicators');
+        // console.log('Falling back to test data for live indicators');
         // Fallback: mark some players as live for testing
         liveStreams = allPlayerLogins.slice(0, 2).map(login => ({
           user_login: login,
           user_name: login,
           viewer_count: Math.floor(Math.random() * 50) + 10
         }));
-        console.log('Using fallback live streams:', liveStreams.length);
+        // console.log('Using fallback live streams:', liveStreams.length);
       }
       const playerTabs = document.querySelectorAll('.player-tab');
       
-      console.log('Found live streams:', liveStreams.length);
-      console.log('Found player tabs:', playerTabs.length);
-      console.log('Live streams data:', liveStreams.map(s => ({ name: s.user_name, login: s.user_login })));
+      // console.log('Found live streams:', liveStreams.length);
+      // console.log('Found player tabs:', playerTabs.length);
+      // console.log('Live streams data:', liveStreams.map(s => ({ name: s.user_name, login: s.user_login })));
       
       // Clear previous live indicators and reset colors
       playerTabs.forEach(tab => {
@@ -4594,7 +4594,7 @@
             const playerName = player.name || player.displayName;
             const twitchHandle = getTwitchHandleForPlayer(player);
             
-            console.log(`Checking player ${playerName} with Twitch handle: ${twitchHandle}`);
+            // console.log(`Checking player ${playerName} with Twitch handle: ${twitchHandle}`);
             
             // Check if this player is live
             const isLive = liveStreams.some(stream => {
@@ -4602,7 +4602,7 @@
               const handle = twitchHandle ? twitchHandle.toLowerCase() : '';
               const match = streamLogin === handle;
               if (match) {
-                console.log(`Found live stream for ${playerName}: ${stream.user_name}`);
+                // console.log(`Found live stream for ${playerName}: ${stream.user_name}`);
               }
               return match;
             });
@@ -4611,13 +4611,13 @@
               tab.classList.add('live');
               tab.style.color = '#22c55e'; // Green for live players
               livePlayers.add(playerName);
-              console.log(`Marked ${playerName} as live`);
+              // console.log(`Marked ${playerName} as live`);
             }
           }
         }
       });
 
-      console.log('Live players found:', Array.from(livePlayers));
+      // console.log('Live players found:', Array.from(livePlayers));
 
       // Update admin panel if open
       if (document.getElementById('admin-modal').style.display === 'flex') {
@@ -4647,7 +4647,7 @@
       });
       
       const liveTeamsArray = Array.from(liveTeams);
-      console.log('Live teams for banner:', liveTeamsArray);
+      // console.log('Live teams for banner:', liveTeamsArray);
       
       if (liveTeamsArray.length > 0) {
         window.liveBanner.showBanner(liveTeamsArray);
@@ -5861,6 +5861,32 @@
       await loadFirebaseTwitchHandles();
       console.log('Firebase handles after refresh:', firebaseTwitchHandles);
       await updateLivePlayerIndicators();
+    };
+    
+    // Debug function to check live detection status
+    window.debugLiveDetection = function() {
+      console.log('=== LIVE DETECTION DEBUG ===');
+      console.log('Twitch OAuth available:', !!window.twitchOAuth);
+      console.log('Twitch token available:', !!window.twitchOAuth?.getToken());
+      console.log('Team rosters loaded:', Object.keys(teamRosters));
+      console.log('Selected teams:', selectedTeams);
+      console.log('Firebase handles:', firebaseTwitchHandles);
+      
+      // Check if player tabs exist
+      const playerTabs = document.querySelectorAll('.player-tab');
+      console.log('Player tabs found:', playerTabs.length);
+      
+      // Check current live players
+      console.log('Current live players:', Array.from(livePlayers));
+      
+      // Test with a specific player
+      if (selectedTeams.teamA && teamRosters[selectedTeams.teamA]) {
+        const firstPlayer = teamRosters[selectedTeams.teamA][0];
+        if (firstPlayer) {
+          const handle = getTwitchHandleForPlayer(firstPlayer);
+          console.log(`First player (${firstPlayer.name}) Twitch handle:`, handle);
+        }
+      }
     };
     
     // Function to get app access token for server-to-server requests
