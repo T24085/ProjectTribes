@@ -617,6 +617,7 @@
       <button class="tab" data-tab="matches">Matches</button>
       <button class="tab" data-tab="rules">Rules & Schedule</button>
       <button class="tab" data-tab="maps">Map Pool</button>
+      <button class="tab" data-tab="admin" id="adminTab" style="display: none;">Admin</button>
     </div>
 
     <!-- Rankings Tab -->
@@ -715,6 +716,61 @@
         </div>
       </div>
     </div>
+
+    <!-- Admin Tab -->
+    <div class="tab-content" id="admin">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Admin Panel</h2>
+          <p class="table-subtitle">Manage ladder settings and data</p>
+        </div>
+        <div style="padding: 2rem;">
+          <!-- Season Management -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Season Management</h3>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <button class="btn btn-danger" onclick="ladderBoard.resetLadder()">Reset Ladder for New Season</button>
+              <button class="btn btn-secondary" onclick="ladderBoard.advanceWeek()">Advance to Next Week</button>
+              <button class="btn btn-secondary" onclick="ladderBoard.regenerateMatches()">Regenerate Current Week Matches</button>
+            </div>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+              Reset will clear all team stats and start fresh. Advance Week will move to the next week's matches.
+            </p>
+          </div>
+
+          <!-- Match Management -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Match Management</h3>
+            <div id="adminMatchesList" class="loading">
+              <div class="spinner"></div>
+              Loading matches...
+            </div>
+          </div>
+
+          <!-- Team Management -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Team Management</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+              <div id="adminTeamsList" class="loading">
+                <div class="spinner"></div>
+                Loading teams...
+              </div>
+            </div>
+          </div>
+
+          <!-- Map Pool Management -->
+          <div>
+            <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Map Pool Management</h3>
+            <div id="adminMapPool">
+              <div class="loading">
+                <div class="spinner"></div>
+                Loading map pool...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Match Reporting Modal -->
@@ -779,6 +835,135 @@
     </div>
   </div>
 
+  <!-- Admin Edit Match Modal -->
+  <div id="adminEditMatchModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Match</h2>
+        <button class="modal-close" onclick="ladderBoard.closeAdminEditMatchModal()">&times;</button>
+      </div>
+      <form id="adminEditMatchForm">
+        <div class="form-group">
+          <label class="form-label">Home Team</label>
+          <select class="form-select" name="homeTeamId" required>
+            <option value="">Select Home Team</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Away Team</label>
+          <select class="form-select" name="awayTeamId" required>
+            <option value="">Select Away Team</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Match Status</label>
+          <select class="form-select" name="status" required>
+            <option value="PENDING">Pending</option>
+            <option value="REPORTED">Reported</option>
+            <option value="FINAL">Final</option>
+            <option value="CONTESTED">Contested</option>
+            <option value="BYE">Bye</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Maps</label>
+          <div id="adminMapSet"></div>
+          <button type="button" class="btn btn-secondary" onclick="ladderBoard.addAdminMap()">Add Map</button>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="ladderBoard.closeAdminEditMatchModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Edit Score Modal -->
+  <div id="adminEditScoreModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Match Score</h2>
+        <button class="modal-close" onclick="ladderBoard.closeAdminEditScoreModal()">&times;</button>
+      </div>
+      <form id="adminEditScoreForm">
+        <div class="form-group">
+          <label class="form-label">Match</label>
+          <div id="adminScoreMatchInfo" class="match-info-display"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Map Scores</label>
+          <div id="adminScoreMapResults"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Winner</label>
+          <select class="form-select" name="winner" required>
+            <option value="">Select Winner</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Scoreboard Images (URLs)</label>
+          <div id="adminScoreboardInputs">
+            <input type="url" class="form-input" placeholder="https://example.com/scoreboard1.png" name="scoreboard1">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="ladderBoard.addAdminScoreboardInput()">Add Another Image</button>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-textarea" name="notes" placeholder="Admin notes about this match..."></textarea>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="ladderBoard.closeAdminEditScoreModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Score</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Reset Confirmation Modal -->
+  <div id="adminResetModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Confirm Ladder Reset</h2>
+        <button class="modal-close" onclick="ladderBoard.closeAdminResetModal()">&times;</button>
+      </div>
+      <div style="padding: 1.5rem;">
+        <p style="margin-bottom: 1rem; color: var(--danger); font-weight: 600;">
+          ⚠️ WARNING: This will permanently reset all ladder data!
+        </p>
+        <p style="margin-bottom: 1.5rem;">
+          This action will:
+        </p>
+        <ul style="margin-bottom: 1.5rem; padding-left: 1.5rem;">
+          <li>Reset all team Elo ratings to 1500</li>
+          <li>Clear all win/loss records</li>
+          <li>Reset all map statistics</li>
+          <li>Clear match history</li>
+          <li>Start a new season from Week 1</li>
+        </ul>
+        <p style="margin-bottom: 1.5rem; font-weight: 600;">
+          This action cannot be undone. Are you sure you want to proceed?
+        </p>
+        <div class="form-group">
+          <label class="form-label">Type "RESET" to confirm:</label>
+          <input type="text" class="form-input" id="resetConfirmation" placeholder="Type RESET here">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" onclick="ladderBoard.closeAdminResetModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" onclick="ladderBoard.confirmReset()">Reset Ladder</button>
+      </div>
+    </div>
+  </div>
+
   <script src="./assets/include.js" defer></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -812,6 +997,9 @@
         this.currentUser = null;
         this.currentReportMatch = null;
         this.currentConfirmReport = null;
+        this.isAdmin = false;
+        this.currentEditMatch = null;
+        this.currentEditScore = null;
         
         this.init();
       }
@@ -824,16 +1012,40 @@
         this.renderRankings();
         this.renderMatches();
         this.renderMapPool();
+        this.renderAdminContent();
         
         // Setup form submission
         document.getElementById('reportForm').addEventListener('submit', (e) => this.submitReport(e));
+        document.getElementById('adminEditMatchForm').addEventListener('submit', (e) => this.submitAdminEditMatch(e));
+        document.getElementById('adminEditScoreForm').addEventListener('submit', (e) => this.submitAdminEditScore(e));
       }
 
       setupAuth() {
         onAuthStateChanged(auth, (user) => {
           this.currentUser = user;
           console.log('Auth state changed:', user ? user.email : 'Not logged in');
+          
+          // Check if user is admin (simple email check for now)
+          this.isAdmin = user && this.isAdminEmail(user.email);
+          this.updateAdminUI();
         });
+      }
+
+      isAdminEmail(email) {
+        // Simple admin check - you can expand this to check against a list
+        const adminEmails = [
+          'admin@tribesleague.com',
+          'chris@example.com', // Add your admin email here
+          // Add more admin emails as needed
+        ];
+        return adminEmails.includes(email);
+      }
+
+      updateAdminUI() {
+        const adminTab = document.getElementById('adminTab');
+        if (adminTab) {
+          adminTab.style.display = this.isAdmin ? 'block' : 'none';
+        }
       }
 
       async loadData() {
@@ -1718,6 +1930,548 @@
         
         // Save updated teams to Firebase
         await this.saveToFirebase();
+      }
+
+      // Admin Methods
+      async renderAdminContent() {
+        if (!this.isAdmin) return;
+        
+        this.renderAdminMatches();
+        this.renderAdminTeams();
+        this.renderAdminMapPool();
+      }
+
+      renderAdminMatches() {
+        const container = document.getElementById('adminMatchesList');
+        container.innerHTML = '';
+
+        this.matches.forEach(match => {
+          const matchCard = document.createElement('div');
+          matchCard.style.background = 'var(--surface-glass)';
+          matchCard.style.padding = '1rem';
+          matchCard.style.borderRadius = '0.5rem';
+          matchCard.style.marginBottom = '1rem';
+
+          const statusClass = `status-${match.status.toLowerCase()}`;
+          
+          if (match.status === 'BYE') {
+            matchCard.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong>${match.homeTeam.name} [${match.homeTeam.tag}] - BYE</strong>
+                <span class="status-badge ${statusClass}">${match.status}</span>
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary" onclick="ladderBoard.editMatch('${match.id}')">Edit Match</button>
+              </div>
+            `;
+          } else {
+            matchCard.innerHTML = `
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <strong>${match.homeTeam.name} [${match.homeTeam.tag}] vs ${match.awayTeam.name} [${match.awayTeam.tag}]</strong>
+                <span class="status-badge ${statusClass}">${match.status}</span>
+              </div>
+              <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                Maps: ${match.mapSet.join(', ')}
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-secondary" onclick="ladderBoard.editMatch('${match.id}')">Edit Match</button>
+                <button class="btn btn-primary" onclick="ladderBoard.editScore('${match.id}')">Edit Score</button>
+              </div>
+            `;
+          }
+          
+          container.appendChild(matchCard);
+        });
+      }
+
+      renderAdminTeams() {
+        const container = document.getElementById('adminTeamsList');
+        container.innerHTML = '';
+
+        this.teams.forEach(team => {
+          const teamCard = document.createElement('div');
+          teamCard.style.background = 'var(--surface-glass)';
+          teamCard.style.padding = '1rem';
+          teamCard.style.borderRadius = '0.5rem';
+          teamCard.style.marginBottom = '1rem';
+
+          teamCard.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+              <img src="${team.logo}" alt="${team.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+              <div>
+                <div style="font-weight: 600;">${team.name} [${team.tag}]</div>
+                <div style="font-size: 0.9rem; color: var(--text-muted);">Elo: ${Math.round(team.elo)} | Record: ${team.wins}-${team.losses}</div>
+              </div>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              Maps: ${team.mapsWon}-${team.mapsLost} | Last 5: ${team.last5 || '-'}
+            </div>
+          `;
+          
+          container.appendChild(teamCard);
+        });
+      }
+
+      renderAdminMapPool() {
+        const container = document.getElementById('adminMapPool');
+        container.innerHTML = '';
+
+        const mapGrid = document.createElement('div');
+        mapGrid.style.display = 'grid';
+        mapGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+        mapGrid.style.gap = '1rem';
+        mapGrid.style.marginBottom = '1rem';
+
+        this.mapPool.forEach((map, index) => {
+          const mapCard = document.createElement('div');
+          mapCard.style.background = 'var(--surface-glass)';
+          mapCard.style.padding = '1rem';
+          mapCard.style.borderRadius = '0.5rem';
+          mapCard.style.textAlign = 'center';
+          mapCard.style.position = 'relative';
+          
+          mapCard.innerHTML = `
+            <div style="font-weight: 600; margin-bottom: 0.5rem;">${map}</div>
+            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="ladderBoard.removeMap(${index})">Remove</button>
+          `;
+          
+          mapGrid.appendChild(mapCard);
+        });
+
+        container.appendChild(mapGrid);
+
+        // Add new map input
+        const addMapDiv = document.createElement('div');
+        addMapDiv.style.display = 'flex';
+        addMapDiv.style.gap = '0.5rem';
+        addMapDiv.style.alignItems = 'center';
+        
+        const mapInput = document.createElement('input');
+        mapInput.type = 'text';
+        mapInput.className = 'form-input';
+        mapInput.placeholder = 'Enter new map name';
+        mapInput.id = 'newMapInput';
+        
+        const addButton = document.createElement('button');
+        addButton.className = 'btn btn-primary';
+        addButton.textContent = 'Add Map';
+        addButton.onclick = () => this.addMap();
+        
+        addMapDiv.appendChild(mapInput);
+        addMapDiv.appendChild(addButton);
+        container.appendChild(addMapDiv);
+      }
+
+      // Season Management
+      resetLadder() {
+        document.getElementById('adminResetModal').style.display = 'block';
+      }
+
+      closeAdminResetModal() {
+        document.getElementById('adminResetModal').style.display = 'none';
+        document.getElementById('resetConfirmation').value = '';
+      }
+
+      async confirmReset() {
+        const confirmation = document.getElementById('resetConfirmation').value;
+        if (confirmation !== 'RESET') {
+          alert('Please type "RESET" exactly to confirm.');
+          return;
+        }
+
+        try {
+          // Reset all team data
+          this.teams.forEach(team => {
+            team.elo = 1500;
+            team.wins = 0;
+            team.losses = 0;
+            team.mapsWon = 0;
+            team.mapsLost = 0;
+            team.last5 = '';
+          });
+
+          // Reset week and matches
+          this.currentWeek = 1;
+          this.matches = [];
+          this.generateWeeklyMatches();
+
+          // Save to Firebase
+          await this.saveToFirebase();
+
+          this.closeAdminResetModal();
+          this.renderRankings();
+          this.renderMatches();
+          this.renderAdminContent();
+
+          alert('Ladder has been reset for the new season!');
+        } catch (error) {
+          console.error('Error resetting ladder:', error);
+          alert('Error resetting ladder. Please try again.');
+        }
+      }
+
+      async advanceWeek() {
+        if (confirm('Are you sure you want to advance to the next week? This will generate new matches.')) {
+          this.currentWeek++;
+          this.generateWeeklyMatches();
+          await this.saveToFirebase();
+          this.renderMatches();
+          this.renderAdminContent();
+          alert(`Advanced to Week ${this.currentWeek}`);
+        }
+      }
+
+      async regenerateMatches() {
+        if (confirm('Are you sure you want to regenerate the current week\'s matches? This will overwrite existing matches.')) {
+          this.generateWeeklyMatches();
+          await this.saveToFirebase();
+          this.renderMatches();
+          this.renderAdminContent();
+          alert('Current week matches have been regenerated.');
+        }
+      }
+
+      // Match Management
+      editMatch(matchId) {
+        const match = this.matches.find(m => m.id === matchId);
+        if (!match) return;
+
+        this.currentEditMatch = match;
+        const modal = document.getElementById('adminEditMatchModal');
+        const homeSelect = modal.querySelector('select[name="homeTeamId"]');
+        const awaySelect = modal.querySelector('select[name="awayTeamId"]');
+        const statusSelect = modal.querySelector('select[name="status"]');
+
+        // Populate team selects
+        homeSelect.innerHTML = '<option value="">Select Home Team</option>';
+        awaySelect.innerHTML = '<option value="">Select Away Team</option>';
+        
+        this.teams.forEach(team => {
+          const homeOption = document.createElement('option');
+          homeOption.value = team.id;
+          homeOption.textContent = `${team.name} [${team.tag}]`;
+          if (team.id === match.homeTeamId) homeOption.selected = true;
+          homeSelect.appendChild(homeOption);
+
+          const awayOption = document.createElement('option');
+          awayOption.value = team.id;
+          awayOption.textContent = `${team.name} [${team.tag}]`;
+          if (team.id === match.awayTeamId) awayOption.selected = true;
+          awaySelect.appendChild(awayOption);
+        });
+
+        // Add BYE option to away team
+        const byeOption = document.createElement('option');
+        byeOption.value = 'BYE';
+        byeOption.textContent = 'BYE';
+        if (match.awayTeamId === 'BYE') byeOption.selected = true;
+        awaySelect.appendChild(byeOption);
+
+        // Set status
+        statusSelect.value = match.status;
+
+        // Populate maps
+        this.renderAdminMapSet(match.mapSet);
+
+        modal.style.display = 'block';
+      }
+
+      renderAdminMapSet(maps) {
+        const container = document.getElementById('adminMapSet');
+        container.innerHTML = '';
+
+        maps.forEach((map, index) => {
+          const mapDiv = document.createElement('div');
+          mapDiv.style.display = 'flex';
+          mapDiv.style.alignItems = 'center';
+          mapDiv.style.gap = '0.5rem';
+          mapDiv.style.marginBottom = '0.5rem';
+
+          const mapSelect = document.createElement('select');
+          mapSelect.className = 'form-select';
+          mapSelect.name = `map${index}`;
+          mapSelect.style.flex = '1';
+
+          // Populate with map pool
+          this.mapPool.forEach(mapName => {
+            const option = document.createElement('option');
+            option.value = mapName;
+            option.textContent = mapName;
+            if (mapName === map) option.selected = true;
+            mapSelect.appendChild(option);
+          });
+
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'btn btn-danger';
+          removeButton.style.padding = '0.25rem 0.5rem';
+          removeButton.textContent = 'Remove';
+          removeButton.onclick = () => mapDiv.remove();
+
+          mapDiv.appendChild(mapSelect);
+          mapDiv.appendChild(removeButton);
+          container.appendChild(mapDiv);
+        });
+      }
+
+      addAdminMap() {
+        const container = document.getElementById('adminMapSet');
+        const index = container.children.length;
+        
+        const mapDiv = document.createElement('div');
+        mapDiv.style.display = 'flex';
+        mapDiv.style.alignItems = 'center';
+        mapDiv.style.gap = '0.5rem';
+        mapDiv.style.marginBottom = '0.5rem';
+
+        const mapSelect = document.createElement('select');
+        mapSelect.className = 'form-select';
+        mapSelect.name = `map${index}`;
+        mapSelect.style.flex = '1';
+
+        // Populate with map pool
+        this.mapPool.forEach(mapName => {
+          const option = document.createElement('option');
+          option.value = mapName;
+          option.textContent = mapName;
+          mapSelect.appendChild(option);
+        });
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-danger';
+        removeButton.style.padding = '0.25rem 0.5rem';
+        removeButton.textContent = 'Remove';
+        removeButton.onclick = () => mapDiv.remove();
+
+        mapDiv.appendChild(mapSelect);
+        mapDiv.appendChild(removeButton);
+        container.appendChild(mapDiv);
+      }
+
+      closeAdminEditMatchModal() {
+        document.getElementById('adminEditMatchModal').style.display = 'none';
+        this.currentEditMatch = null;
+      }
+
+      async submitAdminEditMatch(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        const homeTeamId = formData.get('homeTeamId');
+        const awayTeamId = formData.get('awayTeamId');
+        const status = formData.get('status');
+
+        // Collect maps
+        const maps = [];
+        for (let i = 0; i < 10; i++) { // Max 10 maps
+          const map = formData.get(`map${i}`);
+          if (map) maps.push(map);
+        }
+
+        try {
+          // Update match
+          this.currentEditMatch.homeTeamId = homeTeamId;
+          this.currentEditMatch.awayTeamId = awayTeamId;
+          this.currentEditMatch.status = status;
+          this.currentEditMatch.mapSet = maps;
+
+          // Update team references
+          this.currentEditMatch.homeTeam = this.teams.find(t => t.id === homeTeamId);
+          this.currentEditMatch.awayTeam = awayTeamId === 'BYE' ? 
+            { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' } :
+            this.teams.find(t => t.id === awayTeamId);
+
+          // Save to Firebase
+          await this.saveToFirebase();
+
+          this.closeAdminEditMatchModal();
+          this.renderMatches();
+          this.renderAdminContent();
+
+          alert('Match updated successfully!');
+        } catch (error) {
+          console.error('Error updating match:', error);
+          alert('Error updating match. Please try again.');
+        }
+      }
+
+      // Score Management
+      editScore(matchId) {
+        const match = this.matches.find(m => m.id === matchId);
+        if (!match) return;
+
+        this.currentEditScore = match;
+        const modal = document.getElementById('adminEditScoreModal');
+        const matchInfo = document.getElementById('adminScoreMatchInfo');
+        const mapResults = document.getElementById('adminScoreMapResults');
+        const winnerSelect = modal.querySelector('select[name="winner"]');
+
+        // Display match info
+        matchInfo.innerHTML = `
+          <div class="match-teams">
+            <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+            <span class="vs-text">vs</span>
+            <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <strong>${match.homeTeam.name} [${match.homeTeam.tag}]</strong> vs <strong>${match.awayTeam.name} [${match.awayTeam.tag}]</strong>
+          </div>
+        `;
+
+        // Generate map result inputs
+        mapResults.innerHTML = '';
+        match.mapSet.forEach((map, index) => {
+          const mapDiv = document.createElement('div');
+          mapDiv.className = 'map-result-input';
+          
+          mapDiv.innerHTML = `
+            <div style="flex: 1; font-weight: 600;">${map}</div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="number" min="0" max="10" class="form-input" style="width: 60px;" name="map${index}_home" placeholder="0" required>
+              <span>-</span>
+              <input type="number" min="0" max="10" class="form-input" style="width: 60px;" name="map${index}_away" placeholder="0" required>
+            </div>
+          `;
+          mapResults.appendChild(mapDiv);
+        });
+
+        // Populate winner select
+        winnerSelect.innerHTML = `
+          <option value="">Select Winner</option>
+          <option value="${match.homeTeamId}">${match.homeTeam.name} [${match.homeTeam.tag}]</option>
+          <option value="${match.awayTeamId}">${match.awayTeam.name} [${match.awayTeam.tag}]</option>
+        `;
+
+        modal.style.display = 'block';
+      }
+
+      closeAdminEditScoreModal() {
+        document.getElementById('adminEditScoreModal').style.display = 'none';
+        this.currentEditScore = null;
+      }
+
+      async submitAdminEditScore(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(event.target);
+        
+        // Collect map scores
+        const perMapScores = [];
+        this.currentEditScore.mapSet.forEach((map, index) => {
+          const homeScore = parseInt(formData.get(`map${index}_home`));
+          const awayScore = parseInt(formData.get(`map${index}_away`));
+          perMapScores.push({
+            map: map,
+            home: homeScore,
+            away: awayScore
+          });
+        });
+
+        const declaredWinner = formData.get('winner');
+        const notes = formData.get('notes') || '';
+
+        // Collect scoreboard URLs
+        const scoreboardUrls = [];
+        for (let i = 1; i <= 5; i++) {
+          const url = formData.get(`scoreboard${i}`);
+          if (url && url.trim()) {
+            scoreboardUrls.push(url.trim());
+          }
+        }
+
+        try {
+          // Create or update report
+          const reportData = {
+            matchId: this.currentEditScore.id,
+            submittedByTeamId: this.currentEditScore.homeTeamId,
+            scoreboardUrls: scoreboardUrls,
+            perMapScores: perMapScores,
+            declaredWinnerTeamId: declaredWinner,
+            notes: notes,
+            homeTeamConfirm: 'CONFIRMED',
+            awayTeamConfirm: 'CONFIRMED',
+            createdAt: serverTimestamp(),
+            submittedBy: this.currentUser ? this.currentUser.email : 'admin@system'
+          };
+
+          let reportRef;
+          if (this.currentEditScore.reportId) {
+            // Update existing report
+            reportRef = doc(db, 'ladderReports', this.currentEditScore.reportId);
+            await updateDoc(reportRef, reportData);
+          } else {
+            // Create new report
+            reportRef = await addDoc(collection(db, 'ladderReports'), reportData);
+            this.currentEditScore.reportId = reportRef.id;
+          }
+
+          // Update match status
+          this.currentEditScore.status = 'FINAL';
+          this.currentEditScore.report = { id: reportRef.id, ...reportData };
+
+          // Update team stats
+          await this.updateTeamStats(this.currentEditScore, reportData);
+
+          // Save to Firebase
+          await this.saveToFirebase();
+
+          this.closeAdminEditScoreModal();
+          this.renderMatches();
+          this.renderRankings();
+          this.renderAdminContent();
+
+          alert('Match score updated successfully!');
+        } catch (error) {
+          console.error('Error updating score:', error);
+          alert('Error updating score. Please try again.');
+        }
+      }
+
+      addAdminScoreboardInput() {
+        const container = document.getElementById('adminScoreboardInputs');
+        const inputCount = container.children.length;
+        const newInput = document.createElement('input');
+        newInput.type = 'url';
+        newInput.className = 'form-input';
+        newInput.name = `scoreboard${inputCount + 1}`;
+        newInput.placeholder = `https://example.com/scoreboard${inputCount + 1}.png`;
+        container.appendChild(newInput);
+      }
+
+      // Map Pool Management
+      addMap() {
+        const input = document.getElementById('newMapInput');
+        const mapName = input.value.trim();
+        
+        if (!mapName) {
+          alert('Please enter a map name.');
+          return;
+        }
+
+        if (this.mapPool.includes(mapName)) {
+          alert('This map is already in the pool.');
+          return;
+        }
+
+        this.mapPool.push(mapName);
+        this.renderAdminMapPool();
+        this.renderMapPool();
+        input.value = '';
+
+        // Save to Firebase
+        this.saveToFirebase();
+      }
+
+      removeMap(index) {
+        if (confirm(`Are you sure you want to remove "${this.mapPool[index]}" from the map pool?`)) {
+          this.mapPool.splice(index, 1);
+          this.renderAdminMapPool();
+          this.renderMapPool();
+          
+          // Save to Firebase
+          this.saveToFirebase();
+        }
       }
     }
 
