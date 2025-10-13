@@ -1866,6 +1866,45 @@
       position: relative;
     }
 
+    .stream-preview-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #333;
+      border-top: 2px solid var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 8px;
+    }
+
+    .loading-text, .error-text {
+      color: #888;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .error-text {
+      color: var(--danger);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     .stream-preview-overlay {
       position: absolute;
       top: 0;
@@ -6995,10 +7034,20 @@
             <div class="stream-preview-category">${stream.category}</div>
           </div>
           <div style="position: relative;">
+            <div class="stream-preview-loading" id="loading-${stream.handle}">
+              <div class="loading-spinner"></div>
+              <div class="loading-text">Loading stream...</div>
+              <div class="loading-fallback" style="margin-top: 8px; font-size: 10px; color: #666;">
+                If stream doesn't load, click the play button
+              </div>
+            </div>
             <iframe 
               class="stream-preview-iframe" 
-              src="https://player.twitch.tv/?channel=${stream.handle}&parent=tribesprofessionalleague.com&autoplay=true&muted=true&controls=false"
-              allowfullscreen>
+              id="preview-${stream.handle}"
+              src="https://player.twitch.tv/?channel=${stream.handle}&parent=tribesprofessionalleague.com&autoplay=true&muted=true&controls=false&playsinline=true"
+              allowfullscreen
+              onload="setTimeout(() => { const loading = document.getElementById('loading-${stream.handle}'); if(loading) loading.style.display='none'; }, 2000)"
+              onerror="document.getElementById('loading-${stream.handle}').innerHTML='<div class=\\"error-text\\">Stream unavailable</div>'">
             </iframe>
             <div class="stream-preview-overlay">
               <button class="stream-preview-play-btn" data-stream-id="${stream.id}">
@@ -7212,6 +7261,17 @@
         renderEventStreams();
         updateStreamCount();
         showNotification('Event streams refreshed');
+        
+        // Force reload all preview iframes after a short delay
+        setTimeout(() => {
+          document.querySelectorAll('.stream-preview-iframe').forEach(iframe => {
+            const currentSrc = iframe.src;
+            iframe.src = '';
+            setTimeout(() => {
+              iframe.src = currentSrc;
+            }, 100);
+          });
+        }, 1000);
       };
       
       // Insert before the close button
