@@ -765,7 +765,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Password</label>
-                <input type="password" class="form-input" id="adminPassword" placeholder="Password" required>
+                <input type="password" class="form-input" id="adminPassword" placeholder="Password" autocomplete="current-password" required>
               </div>
               <div style="display: flex; gap: 1rem; justify-content: center;">
                 <button type="button" class="btn btn-primary" id="adminLoginBtn">Login</button>
@@ -844,7 +844,7 @@
             
             <div style="display: flex; gap: 1rem;">
               <button class="btn btn-primary" onclick="ladderBoard.saveRules()">Save Rules</button>
-              <button class="btn btn-secondary" onclick="ladderBoard.loadRules()">Load Current Rules</button>
+              <button class="btn btn-secondary" onclick="ladderBoard.loadRules(true)">Load Current Rules</button>
             </div>
           </div>
           </div>
@@ -2287,7 +2287,10 @@
         document.getElementById('eloSystemText').value = this.rules.eloSystem || '';
         document.getElementById('rankingsText').value = this.rules.rankings || '';
 
-        alert('Current rules loaded into form fields.');
+        // Only show alert if called manually (not during auto-load)
+        if (arguments.length > 0 && arguments[0] === true) {
+          alert('Current rules loaded into form fields.');
+        }
       }
 
       // Season Management
@@ -2383,6 +2386,70 @@
         this.nextRefresh = this.getNextRefreshTime();
       }
 
+      async processAllFinalizedMatches() {
+        try {
+          // Load all matches from all weeks to process Elo
+          const allMatchesQuery = query(collection(db, 'ladderMatches'));
+          const allMatchesSnap = await getDocs(allMatchesQuery);
+          
+          const allMatches = [];
+          allMatchesSnap.forEach(doc => {
+            const matchData = doc.data();
+            matchData.id = doc.id;
+            matchData.homeTeam = this.teams.find(t => t.id === matchData.homeTeamId);
+            matchData.awayTeam = this.teams.find(t => t.id === matchData.awayTeamId);
+            allMatches.push(matchData);
+          });
+
+          // Load reports for all matches
+          for (let match of allMatches) {
+            if (match.reportId) {
+              const reportRef = doc(db, 'ladderReports', match.reportId);
+              const reportSnap = await getDoc(reportRef);
+              if (reportSnap.exists()) {
+                match.report = { id: reportSnap.id, ...reportSnap.data() };
+              }
+            }
+          }
+
+          // Process all finalized matches
+          const finalizedMatches = allMatches.filter(match => 
+            match.status === 'FINAL' && match.report && match.report.declaredWinnerTeamId
+          );
+
+          console.log(`Processing ${finalizedMatches.length} total finalized matches for Elo updates`);
+
+          // Reset all teams to starting Elo
+          this.teams.forEach(team => {
+            team.elo = 1500;
+            team.wins = 0;
+            team.losses = 0;
+            team.mapsWon = 0;
+            team.mapsLost = 0;
+            team.last5 = '';
+          });
+
+          // Process matches in chronological order
+          finalizedMatches.sort((a, b) => {
+            if (a.weekNumber !== b.weekNumber) {
+              return a.weekNumber - b.weekNumber;
+            }
+            return a.scheduledAt - b.scheduledAt;
+          });
+
+          for (const match of finalizedMatches) {
+            await this.updateTeamElo(match, match.report);
+            await this.updateTeamStats(match, match.report);
+          }
+
+          console.log('All Elo ratings have been recalculated');
+          return true;
+        } catch (error) {
+          console.error('Error processing all finalized matches:', error);
+          return false;
+        }
+      }
+
       async updateTeamElo(match, report) {
         const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
         const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
@@ -2416,13 +2483,17 @@
       }
 
       async refreshElo() {
-        if (confirm('Are you sure you want to refresh Elo ratings? This will process all finalized matches and update team ratings.')) {
+        if (confirm('Are you sure you want to refresh Elo ratings? This will process all finalized matches from all weeks and recalculate team ratings.')) {
           try {
-            await this.processWeekResults();
-            await this.saveToFirebase();
-            this.renderRankings();
-            this.renderAdminContent();
-            alert('Elo ratings have been refreshed based on finalized matches.');
+            const success = await this.processAllFinalizedMatches();
+            if (success) {
+              await this.saveToFirebase();
+              this.renderRankings();
+              this.renderAdminContent();
+              alert('Elo ratings have been refreshed based on all finalized matches.');
+            } else {
+              alert('Error processing matches. Please try again.');
+            }
           } catch (error) {
             console.error('Error refreshing Elo:', error);
             alert('Error refreshing Elo ratings. Please try again.');
