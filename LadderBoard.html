@@ -758,20 +758,20 @@
           <!-- Admin Login Form -->
           <div id="adminLoginForm" style="text-align: center; margin-bottom: 2rem;">
             <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Admin Login Required</h3>
-            <div style="max-width: 300px; margin: 0 auto;">
+            <form id="adminLoginFormElement" style="max-width: 300px; margin: 0 auto;">
               <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" class="form-input" id="adminEmail" placeholder="admin@example.com">
+                <input type="email" class="form-input" id="adminEmail" placeholder="admin@example.com" required>
               </div>
               <div class="form-group">
                 <label class="form-label">Password</label>
-                <input type="password" class="form-input" id="adminPassword" placeholder="Password">
+                <input type="password" class="form-input" id="adminPassword" placeholder="Password" required>
               </div>
               <div style="display: flex; gap: 1rem; justify-content: center;">
-                <button class="btn btn-primary" id="adminLoginBtn">Login</button>
-                <button class="btn btn-secondary" id="adminLogoutBtn" style="display: none;">Logout</button>
+                <button type="button" class="btn btn-primary" id="adminLoginBtn">Login</button>
+                <button type="button" class="btn btn-secondary" id="adminLogoutBtn" style="display: none;">Logout</button>
               </div>
-            </div>
+            </form>
           </div>
 
           <!-- Admin Panel Content -->
@@ -1237,8 +1237,7 @@
           // Load matches for current week
           const matchesQuery = query(
             collection(db, 'ladderMatches'),
-            where('weekNumber', '==', this.currentWeek),
-            orderBy('scheduledAt')
+            where('weekNumber', '==', this.currentWeek)
           );
           const matchesSnap = await getDocs(matchesQuery);
           
@@ -1264,6 +1263,10 @@
 
         } catch (error) {
           console.error('Error loading from Firebase:', error);
+          // If it's an index error, continue with local data
+          if (error.code === 'failed-precondition') {
+            console.log('Firebase index not created yet, using local data');
+          }
         }
       }
 
@@ -1292,9 +1295,17 @@
             };
 
             if (match.id && match.id.startsWith('match-')) {
-              // Update existing match
+              // Check if document exists before updating
               const matchRef = doc(db, 'ladderMatches', match.id);
-              await updateDoc(matchRef, matchData);
+              const matchSnap = await getDoc(matchRef);
+              
+              if (matchSnap.exists()) {
+                await updateDoc(matchRef, matchData);
+              } else {
+                // Document doesn't exist, create new one
+                const newMatchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
+                match.id = newMatchRef.id;
+              }
             } else {
               // Create new match
               const matchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
@@ -1304,6 +1315,8 @@
 
         } catch (error) {
           console.error('Error saving to Firebase:', error);
+          // Continue with local operations even if Firebase fails
+          console.log('Continuing with local data operations');
         }
       }
 
