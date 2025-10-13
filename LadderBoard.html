@@ -783,9 +783,10 @@
               <button class="btn btn-danger" onclick="ladderBoard.resetLadder()">Reset Ladder for New Season</button>
               <button class="btn btn-secondary" onclick="ladderBoard.advanceWeek()">Advance to Next Week</button>
               <button class="btn btn-secondary" onclick="ladderBoard.regenerateMatches()">Regenerate Current Week Matches</button>
+              <button class="btn btn-primary" onclick="ladderBoard.refreshElo()">Refresh Elo Ratings</button>
             </div>
             <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
-              Reset will clear all team stats and start fresh. Advance Week will move to the next week's matches.
+              Reset will clear all team stats and start fresh. Advance Week will process finalized matches and update Elo ratings. Refresh Elo will update ratings without advancing the week.
             </p>
           </div>
 
@@ -2026,6 +2027,9 @@
         homeTeam.last5 = (homeTeam.last5 + (homeWon ? 'W' : 'L')).slice(-5);
         awayTeam.last5 = (awayTeam.last5 + (homeWon ? 'L' : 'W')).slice(-5);
         
+        // Note: Elo ratings are NOT updated here - they are updated during weekly refresh
+        // This ensures Elo changes happen at the scheduled time, not immediately after matches
+        
         // Save updated teams to Firebase
         await this.saveToFirebase();
       }
@@ -2227,13 +2231,94 @@
       }
 
       async advanceWeek() {
-        if (confirm('Are you sure you want to advance to the next week? This will generate new matches.')) {
-          this.currentWeek++;
-          this.generateWeeklyMatches();
-          await this.saveToFirebase();
-          this.renderMatches();
-          this.renderAdminContent();
-          alert(`Advanced to Week ${this.currentWeek}`);
+        if (confirm('Are you sure you want to advance to the next week? This will process finalized matches and update Elo ratings.')) {
+          try {
+            // Process all finalized matches from the current week to update Elo
+            await this.processWeekResults();
+            
+            // Advance to next week
+            this.currentWeek++;
+            
+            // Generate new matches for the new week
+            this.generateWeeklyMatches();
+            
+            // Save to Firebase
+            await this.saveToFirebase();
+            
+            // Update UI
+            this.renderMatches();
+            this.renderRankings();
+            this.renderAdminContent();
+            
+            alert(`Advanced to Week ${this.currentWeek}. Elo ratings have been updated based on finalized matches.`);
+          } catch (error) {
+            console.error('Error advancing week:', error);
+            alert('Error advancing week. Please try again.');
+          }
+        }
+      }
+
+      async processWeekResults() {
+        // Process all finalized matches from the current week
+        const finalizedMatches = this.matches.filter(match => 
+          match.status === 'FINAL' && match.report && match.report.declaredWinnerTeamId
+        );
+
+        console.log(`Processing ${finalizedMatches.length} finalized matches for Elo updates`);
+
+        for (const match of finalizedMatches) {
+          await this.updateTeamElo(match, match.report);
+        }
+
+        // Update last refresh time
+        this.lastRefresh = new Date();
+        this.nextRefresh = this.getNextRefreshTime();
+      }
+
+      async updateTeamElo(match, report) {
+        const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
+        const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+        
+        if (!homeTeam || !awayTeam) {
+          console.error('Team not found for Elo update:', match);
+          return;
+        }
+
+        const homeWon = report.declaredWinnerTeamId === match.homeTeamId;
+        const kFactor = 32; // Standard Elo K-factor
+
+        // Calculate expected scores
+        const homeExpected = 1 / (1 + Math.pow(10, (awayTeam.elo - homeTeam.elo) / 400));
+        const awayExpected = 1 / (1 + Math.pow(10, (homeTeam.elo - awayTeam.elo) / 400));
+
+        // Calculate actual scores (1 for win, 0 for loss)
+        const homeActual = homeWon ? 1 : 0;
+        const awayActual = homeWon ? 0 : 1;
+
+        // Calculate Elo changes
+        const homeEloChange = Math.round(kFactor * (homeActual - homeExpected));
+        const awayEloChange = Math.round(kFactor * (awayActual - awayExpected));
+
+        // Update Elo ratings
+        homeTeam.elo += homeEloChange;
+        awayTeam.elo += awayEloChange;
+
+        console.log(`${homeTeam.name}: ${homeTeam.elo - homeEloChange} → ${homeTeam.elo} (${homeEloChange > 0 ? '+' : ''}${homeEloChange})`);
+        console.log(`${awayTeam.name}: ${awayTeam.elo - awayEloChange} → ${awayTeam.elo} (${awayEloChange > 0 ? '+' : ''}${awayEloChange})`);
+      }
+
+      async refreshElo() {
+        if (confirm('Are you sure you want to refresh Elo ratings? This will process all finalized matches and update team ratings.')) {
+          try {
+            await this.processWeekResults();
+            await this.saveToFirebase();
+            this.renderRankings();
+            this.renderAdminContent();
+            alert('Elo ratings have been refreshed based on finalized matches.');
+          } catch (error) {
+            console.error('Error refreshing Elo:', error);
+            alert('Error refreshing Elo ratings. Please try again.');
+          }
         }
       }
 
