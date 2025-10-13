@@ -621,8 +621,9 @@
       background: var(--surface-glass);
       border: 1px solid rgba(148, 163, 184, 0.2);
       border-radius: 0.5rem;
-      padding: 0.75rem;
+      padding: 0.5rem 0.75rem;
       transition: all var(--transition-snappy);
+      font-size: 0.85rem;
     }
 
     .streamer-viewer-item:hover {
@@ -633,13 +634,13 @@
     .streamer-name {
       font-weight: 500;
       color: var(--text-primary);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .streamer-count {
       font-weight: 600;
       color: var(--accent-strong);
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .viewer-trend {
@@ -1678,6 +1679,291 @@
         order: -1;
       }
     }
+
+    /* Event Streams Sidebar */
+    .event-streams-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .event-streams-btn:hover {
+      background: #7c3aed;
+      transform: translateY(-1px);
+    }
+
+    .stream-count {
+      background: var(--danger);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .event-streams-sidebar {
+      position: fixed;
+      top: 0;
+      right: -500px;
+      width: 500px;
+      height: 100vh;
+      background: var(--card-bg);
+      border-left: 1px solid rgba(148, 163, 184, 0.16);
+      backdrop-filter: blur(16px);
+      z-index: 50;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow-y: auto;
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .event-streams-sidebar.open {
+      right: 0;
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 45;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel-bg);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .sidebar-header h3 {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .close-sidebar {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .close-sidebar:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    .sidebar-content {
+      padding: 1rem;
+    }
+
+    .event-stream-preview {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .event-stream-preview:hover {
+      border-color: var(--accent-strong);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .event-stream-preview.live {
+      border-color: var(--success);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+    }
+
+    .event-stream-preview.live::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--success);
+      z-index: 2;
+    }
+
+    .stream-preview-header {
+      padding: 0.75rem;
+      background: var(--panel-bg);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .stream-preview-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      line-height: 1.2;
+      flex: 1;
+      margin-right: 0.5rem;
+    }
+
+    .stream-preview-category {
+      background: var(--accent);
+      color: white;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .stream-preview-iframe {
+      width: 100%;
+      height: 120px;
+      border: none;
+      background: #000;
+      position: relative;
+    }
+
+    .stream-preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity var(--transition-snappy);
+      z-index: 1;
+    }
+
+    .event-stream-preview:hover .stream-preview-overlay {
+      opacity: 1;
+    }
+
+    .stream-preview-play-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+    }
+
+    .stream-preview-play-btn:hover {
+      background: #7c3aed;
+      transform: scale(1.1);
+    }
+
+    .stream-preview-info {
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--surface-glass);
+    }
+
+    .stream-preview-viewers {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .stream-preview-status {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.75rem;
+    }
+
+    .status-live {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .status-offline {
+      color: var(--text-muted);
+    }
+
+    .live-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+
+    .no-events {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+      font-style: italic;
+    }
+
+    /* Responsive Design for Event Streams */
+    @media (max-width: 768px) {
+      .event-streams-sidebar {
+        width: 100%;
+        right: -100%;
+      }
+
+      .event-streams-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1718,6 +2004,10 @@
         </div>
       </div>
       <div class="auth-buttons">
+        <button id="event-streams-toggle" class="event-streams-btn">
+          <span>Event Streams</span>
+          <span class="stream-count" id="event-stream-count">0</span>
+        </button>
         <button id="admin-login-btn" class="btn btn-secondary" style="display: none;">Admin Login</button>
         <button id="admin-panel-btn" class="btn btn-secondary" style="display: none;">Admin Panel</button>
         <button id="admin-logout-btn" class="btn btn-danger" style="display: none;">Logout</button>
@@ -1767,7 +2057,7 @@
 
       <!-- Active Stream -->
       <div class="active-stream">
-        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=oo0oo_live&autoplay=false" allowfullscreen></iframe>
+        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=oo0oo_live&autoplay=false&parent=localhost&parent=127.0.0.1" allowfullscreen></iframe>
       </div>
 
       <!-- Player Stats Section -->
@@ -5803,9 +6093,9 @@
         
         // Check if we have Twitch OAuth available
         if (!window.twitchOAuth || !window.twitchOAuth.getToken()) {
-          console.log('No Twitch OAuth token available, using fallback data');
-          // Return some test data when not authenticated
-          return Math.floor(Math.random() * 30) + 10; // 10-40 viewers for testing
+          console.log('No Twitch OAuth token available, returning 0 viewers');
+          // Return 0 when not authenticated to avoid showing fake live streams
+          return 0;
         }
         
         // Try to use the existing Twitch API to get real viewer data
@@ -5829,14 +6119,14 @@
           
         } catch (apiError) {
           console.warn(`Twitch API call failed for ${channel}, likely due to tracking prevention:`, apiError);
-          // If API fails due to tracking prevention, use fallback data
-          return Math.floor(Math.random() * 25) + 15; // 15-40 viewers for testing
+          // If API fails, return 0 to avoid showing fake live streams
+          return 0;
         }
         
       } catch (error) {
         console.error(`Error getting viewer count for ${channel}:`, error);
-        // Return some test data on error
-        return Math.floor(Math.random() * 20) + 5; // 5-25 viewers for testing
+        // Return 0 on error to avoid showing fake live streams
+        return 0;
       }
     }
 
@@ -5888,12 +6178,13 @@
         return;
       }
       
-      // Sort by viewer count (highest first)
+      // Sort by viewer count (highest first) and limit to top 5
       liveStreamers.sort((a, b) => b.viewers - a.viewers);
+      const topStreamers = liveStreamers.slice(0, 5);
       
-      console.log('Rendering streamer items:', liveStreamers);
+      console.log('Rendering top streamer items:', topStreamers);
       
-      liveStreamers.forEach((streamer) => {
+      topStreamers.forEach((streamer) => {
         const previousData = previousViewerData.get(streamer.handle);
         const trend = calculateViewerTrend(streamer.viewers, previousData?.viewers || 0);
         
@@ -5913,7 +6204,27 @@
         streamerViewersList.appendChild(streamerItem);
       });
       
+      // Add a summary if there are more than 5 streamers
+      if (liveStreamers.length > 5) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'streamer-viewer-item';
+        moreItem.style.cssText = 'text-align: center; color: var(--text-muted); font-style: italic; background: rgba(148, 163, 184, 0.1);';
+        moreItem.innerHTML = `+${liveStreamers.length - 5} more streamers`;
+        streamerViewersList.appendChild(moreItem);
+      }
+      
       console.log('Viewer display update complete');
+      
+      // Update event streams when viewer data changes
+      if (typeof updateEventStreamsFromLiveData === 'function') {
+        updateEventStreamsFromLiveData();
+        if (typeof renderEventStreams === 'function') {
+          renderEventStreams();
+        }
+        if (typeof updateStreamCount === 'function') {
+          updateStreamCount();
+        }
+      }
     }
 
     // Calculate viewer trend (up, down, or neutral)
@@ -6590,7 +6901,297 @@
       loadRecentMatches();
       initializeTwitchChat();
       initializeViewerTracking();
+      initializeEventStreams();
     });
+
+    // Event Streams Functionality - Show real live streams from community
+    let eventStreams = [];
+
+    function initializeEventStreams() {
+      const toggleBtn = document.getElementById('event-streams-toggle');
+      const sidebar = document.getElementById('event-streams-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      const closeBtn = document.getElementById('close-sidebar');
+
+      // Toggle sidebar
+      toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+      });
+
+      // Close sidebar
+      closeBtn.addEventListener('click', closeSidebar);
+      overlay.addEventListener('click', closeSidebar);
+
+      // Close on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+          closeSidebar();
+        }
+      });
+
+      // Render event streams
+      updateEventStreamsFromLiveData();
+      renderEventStreams();
+      updateStreamCount();
+      
+      // Add return to teams button
+      addReturnToTeamsButton();
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('event-streams-sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    }
+
+    // Update event streams from real live stream data
+    function updateEventStreamsFromLiveData() {
+      eventStreams = [];
+      
+      // Get live streamers from the existing viewer data
+      if (typeof viewerData !== 'undefined' && viewerData.size > 0) {
+        viewerData.forEach((data) => {
+          // Only show streams that are actually live with a minimum viewer count
+          if (data.isLive && data.viewers > 0) {
+            eventStreams.push({
+              id: data.handle,
+              title: `${data.name} (${data.team})`,
+              description: `Live stream from ${data.name}`,
+              streamUrl: `https://player.twitch.tv/?channel=${data.handle}&autoplay=false`,
+              chatUrl: `https://www.twitch.tv/embed/${data.handle}/chat`,
+              category: data.team || 'Community',
+              isLive: true,
+              viewers: data.viewers,
+              startTime: new Date().toISOString(),
+              handle: data.handle
+            });
+          }
+        });
+      }
+      
+      // Sort by viewer count (highest first)
+      eventStreams.sort((a, b) => b.viewers - a.viewers);
+    }
+
+    function renderEventStreams() {
+      const container = document.getElementById('event-streams-list');
+      
+      // Clear any existing content first
+      container.innerHTML = '';
+      
+      if (eventStreams.length === 0) {
+        container.innerHTML = '<div class="no-events">No event streams available</div>';
+        return;
+      }
+
+      container.innerHTML = eventStreams.map(stream => `
+        <div class="event-stream-preview ${stream.isLive ? 'live' : ''}" data-stream-id="${stream.id}">
+          <div class="stream-preview-header">
+            <div class="stream-preview-title">${stream.title}</div>
+            <div class="stream-preview-category">${stream.category}</div>
+          </div>
+          <div style="position: relative;">
+            <iframe 
+              class="stream-preview-iframe" 
+              src="${stream.streamUrl}&muted=true&controls=false"
+              allowfullscreen>
+            </iframe>
+            <div class="stream-preview-overlay">
+              <button class="stream-preview-play-btn" data-stream-id="${stream.id}">
+                ▶
+              </button>
+            </div>
+          </div>
+          <div class="stream-preview-info">
+            <div class="stream-preview-viewers">
+              👥 ${stream.viewers} viewers
+            </div>
+            <div class="stream-preview-status">
+              ${stream.isLive ? '<span class="live-indicator"></span><span class="status-live">LIVE</span>' : '<span class="status-offline">Offline</span>'}
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Add event listeners to the stream previews
+      container.querySelectorAll('.event-stream-preview').forEach(preview => {
+        preview.addEventListener('click', (e) => {
+          const streamId = preview.dataset.streamId;
+          switchToEventStream(streamId);
+        });
+      });
+
+      // Add event listeners to the play buttons
+      container.querySelectorAll('.stream-preview-play-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const streamId = btn.dataset.streamId;
+          switchToEventStream(streamId);
+        });
+      });
+    }
+
+    function updateStreamCount() {
+      const count = eventStreams.filter(stream => stream.isLive).length;
+      document.getElementById('event-stream-count').textContent = count;
+    }
+
+    // Make switchToEventStream globally accessible
+    window.switchToEventStream = function(streamId) {
+      const stream = eventStreams.find(s => s.id === streamId);
+      if (!stream) return;
+
+      // Update main stream frame with full stream (not muted, with controls)
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        // Remove muted and controls=false for main stream
+        const mainStreamUrl = stream.streamUrl.replace('&muted=true', '').replace('&controls=false', '');
+        streamFrame.src = mainStreamUrl;
+      }
+
+      // Update chat if available
+      const chatFrame = document.querySelector('.twitch-chat-container iframe');
+      if (chatFrame && stream.chatUrl) {
+        chatFrame.src = stream.chatUrl;
+      }
+
+      // Update the spectating section title to show we're watching an event
+      const spectatingLabel = document.querySelector('.spectating-label');
+      if (spectatingLabel) {
+        spectatingLabel.textContent = `WATCHING: ${stream.category.toUpperCase()}`;
+        spectatingLabel.style.background = 'var(--accent)';
+      }
+
+      // Close sidebar
+      closeSidebar();
+
+      // Show notification
+      showNotification(`Now watching: ${stream.title}`);
+    };
+
+    function showNotification(message) {
+      // Create a simple notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: var(--accent);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        z-index: 1000;
+        font-weight: 600;
+        box-shadow: var(--shadow-xl);
+        animation: slideIn 0.3s ease;
+      `;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    // Add notification animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Function to return to team streams
+    window.returnToTeamStreams = function() {
+      // Reset to default team stream
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        streamFrame.src = 'https://player.twitch.tv/?channel=oo0oo_live&autoplay=false';
+      }
+
+      // Reset chat to default
+      const chatFrame = document.querySelector('.twitch-chat-container iframe');
+      if (chatFrame) {
+        chatFrame.src = 'https://www.twitch.tv/embed/oo0oo_live/chat';
+      }
+
+      // Reset spectating label
+      const spectatingLabel = document.querySelector('.spectating-label');
+      if (spectatingLabel) {
+        spectatingLabel.textContent = 'SPECTATING';
+        spectatingLabel.style.background = 'var(--danger)';
+      }
+
+      showNotification('Returned to team streams');
+    };
+
+    // Admin functions for managing event streams (can be called from console for testing)
+    window.addEventStream = function(stream) {
+      eventStreams.push(stream);
+      renderEventStreams();
+      updateStreamCount();
+    };
+
+    window.removeEventStream = function(streamId) {
+      eventStreams = eventStreams.filter(s => s.id !== streamId);
+      renderEventStreams();
+      updateStreamCount();
+    };
+
+    window.updateEventStreamStatus = function(streamId, isLive, viewers = 0) {
+      const stream = eventStreams.find(s => s.id === streamId);
+      if (stream) {
+        stream.isLive = isLive;
+        stream.viewers = viewers;
+        renderEventStreams();
+        updateStreamCount();
+      }
+    };
+
+    // Add a "Return to Teams" button to the sidebar header
+    function addReturnToTeamsButton() {
+      const sidebarHeader = document.querySelector('.sidebar-header');
+      const returnBtn = document.createElement('button');
+      returnBtn.className = 'btn btn-secondary';
+      returnBtn.style.cssText = 'padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.5rem;';
+      returnBtn.textContent = '← Teams';
+      returnBtn.onclick = () => {
+        returnToTeamStreams();
+        closeSidebar();
+      };
+      
+      // Add a refresh button to manually update live streams
+      const refreshBtn = document.createElement('button');
+      refreshBtn.className = 'btn btn-primary';
+      refreshBtn.style.cssText = 'padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.5rem;';
+      refreshBtn.textContent = '🔄';
+      refreshBtn.title = 'Refresh live streams';
+      refreshBtn.onclick = () => {
+        // Clear cached data and refresh
+        if (typeof viewerData !== 'undefined') {
+          viewerData.clear();
+        }
+        if (typeof updateViewerCounts === 'function') {
+          updateViewerCounts();
+        }
+        showNotification('Refreshing live streams...');
+      };
+      
+      // Insert before the close button
+      const closeBtn = document.getElementById('close-sidebar');
+      sidebarHeader.insertBefore(refreshBtn, closeBtn);
+      sidebarHeader.insertBefore(returnBtn, refreshBtn);
+    }
   </script>
 
   <!-- Donation System -->
@@ -6607,17 +7208,20 @@
         <section style="font-size: 0.75rem;"> Powered by <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal" style="height:0.875rem;vertical-align:middle;"/></section>
       </form>
     </div>
-    
-    <!-- Test Buttons -->
-    <button class="donation-btn" onclick="triggerDonation('donation', 5, 'Test Donation', 'Anonymous')">
-      💰 Test $5
-    </button>
-    <button class="donation-btn bits" onclick="triggerDonation('bits', 100, 'Test Bits', 'Anonymous')">
-      💎 Test 100 Bits
-    </button>
-    <button class="donation-btn channel-points" onclick="triggerDonation('points', 500, 'Test Channel Points', 'Anonymous')">
-      ⭐ Test 500 Points
-    </button>
+  </div>
+
+  <!-- Event Streams Sidebar -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="event-streams-sidebar" id="event-streams-sidebar">
+    <div class="sidebar-header">
+      <h3>Event Streams</h3>
+      <button class="close-sidebar" id="close-sidebar">&times;</button>
+    </div>
+    <div class="sidebar-content">
+      <div id="event-streams-list">
+        <!-- Event streams will be populated here -->
+      </div>
+    </div>
   </div>
 </body>
 </html>
