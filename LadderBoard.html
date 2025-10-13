@@ -809,13 +809,42 @@
           </div>
 
           <!-- Map Pool Management -->
-          <div>
+          <div style="margin-bottom: 2rem;">
             <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Map Pool Management</h3>
             <div id="adminMapPool">
               <div class="loading">
                 <div class="spinner"></div>
                 Loading map pool...
               </div>
+            </div>
+          </div>
+
+          <!-- Rules & Schedule Management -->
+          <div>
+            <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Rules & Schedule Management</h3>
+            <div style="background: var(--surface-glass); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+              <h4 style="margin-bottom: 0.5rem;">Weekly Schedule</h4>
+              <textarea class="form-textarea" id="weeklyScheduleText" placeholder="Enter weekly schedule information..." style="min-height: 80px;"></textarea>
+            </div>
+            
+            <div style="background: var(--surface-glass); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+              <h4 style="margin-bottom: 0.5rem;">Match Reporting</h4>
+              <textarea class="form-textarea" id="matchReportingText" placeholder="Enter match reporting information..." style="min-height: 80px;"></textarea>
+            </div>
+            
+            <div style="background: var(--surface-glass); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+              <h4 style="margin-bottom: 0.5rem;">Elo System</h4>
+              <textarea class="form-textarea" id="eloSystemText" placeholder="Enter Elo system information..." style="min-height: 80px;"></textarea>
+            </div>
+            
+            <div style="background: var(--surface-glass); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+              <h4 style="margin-bottom: 0.5rem;">Rankings</h4>
+              <textarea class="form-textarea" id="rankingsText" placeholder="Enter rankings information..." style="min-height: 80px;"></textarea>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+              <button class="btn btn-primary" onclick="ladderBoard.saveRules()">Save Rules</button>
+              <button class="btn btn-secondary" onclick="ladderBoard.loadRules()">Load Current Rules</button>
             </div>
           </div>
           </div>
@@ -1055,6 +1084,12 @@
         this.isAdmin = false;
         this.currentEditMatch = null;
         this.currentEditScore = null;
+        this.rules = {
+          weeklySchedule: 'The ladder refreshes every <strong>Saturday at 11:00 PM America/New_York</strong> (10:00 PM America/Chicago). At this time, Elo ratings are updated and new weekly pairings are generated.',
+          matchReporting: 'Team captains can report match results by uploading scoreboard images and entering map scores. Both teams must confirm the results for the match to be finalized. Disputed matches require admin review.',
+          eloSystem: 'Teams start with 1500 Elo. Wins and losses adjust Elo based on opponent strength. Elo changes are applied during the weekly refresh, not immediately after matches.',
+          rankings: 'Teams are ranked by Elo rating. Ties are broken by win percentage, then map differential.'
+        };
         
         this.init();
       }
@@ -1068,6 +1103,7 @@
         this.renderRankings();
         this.renderMatches();
         this.renderMapPool();
+        this.renderRules();
         this.renderAdminContent();
         
         // Setup form submission
@@ -1195,6 +1231,7 @@
             this.teams = data.teams || this.teams;
             this.currentWeek = data.currentWeek || 1;
             this.lastRefresh = data.lastRefresh ? data.lastRefresh.toDate() : new Date();
+            this.rules = data.rules || this.rules;
           }
 
           // Load matches for current week
@@ -1238,7 +1275,8 @@
             teams: this.teams,
             currentWeek: this.currentWeek,
             lastRefresh: serverTimestamp(),
-            mapPool: this.mapPool
+            mapPool: this.mapPool,
+            rules: this.rules
           });
 
           // Save matches
@@ -1655,6 +1693,30 @@
         container.appendChild(mapGrid);
       }
 
+      renderRules() {
+        // Update the rules tab content with current rules data
+        const rulesContent = document.querySelector('#rules .tab-content');
+        if (!rulesContent) return;
+
+        const weeklyScheduleEl = rulesContent.querySelector('h3:nth-of-type(1) + p');
+        const matchReportingEl = rulesContent.querySelector('h3:nth-of-type(2) + p');
+        const eloSystemEl = rulesContent.querySelector('h3:nth-of-type(3) + p');
+        const rankingsEl = rulesContent.querySelector('h3:nth-of-type(4) + p');
+
+        if (weeklyScheduleEl && this.rules.weeklySchedule) {
+          weeklyScheduleEl.innerHTML = this.rules.weeklySchedule;
+        }
+        if (matchReportingEl && this.rules.matchReporting) {
+          matchReportingEl.innerHTML = this.rules.matchReporting;
+        }
+        if (eloSystemEl && this.rules.eloSystem) {
+          eloSystemEl.innerHTML = this.rules.eloSystem;
+        }
+        if (rankingsEl && this.rules.rankings) {
+          rankingsEl.innerHTML = this.rules.rankings;
+        }
+      }
+
       reportMatch(matchId) {
         console.log('reportMatch called with:', matchId);
         console.log('Current user:', this.currentUser);
@@ -2041,6 +2103,7 @@
         this.renderAdminMatches();
         this.renderAdminTeams();
         this.renderAdminMapPool();
+        this.loadRules(); // Load current rules into admin form fields
       }
 
       renderAdminMatches() {
@@ -2180,6 +2243,38 @@
         addMapDiv.appendChild(mapInput);
         addMapDiv.appendChild(addButton);
         container.appendChild(addMapDiv);
+      }
+
+      // Rules Management
+      async saveRules() {
+        try {
+          // Get values from form fields
+          this.rules.weeklySchedule = document.getElementById('weeklyScheduleText').value;
+          this.rules.matchReporting = document.getElementById('matchReportingText').value;
+          this.rules.eloSystem = document.getElementById('eloSystemText').value;
+          this.rules.rankings = document.getElementById('rankingsText').value;
+
+          // Save to Firebase
+          await this.saveToFirebase();
+
+          // Update the rules display
+          this.renderRules();
+
+          alert('Rules have been saved successfully!');
+        } catch (error) {
+          console.error('Error saving rules:', error);
+          alert('Error saving rules. Please try again.');
+        }
+      }
+
+      loadRules() {
+        // Load current rules into the form fields
+        document.getElementById('weeklyScheduleText').value = this.rules.weeklySchedule || '';
+        document.getElementById('matchReportingText').value = this.rules.matchReporting || '';
+        document.getElementById('eloSystemText').value = this.rules.eloSystem || '';
+        document.getElementById('rankingsText').value = this.rules.rankings || '';
+
+        alert('Current rules loaded into form fields.');
       }
 
       // Season Management
