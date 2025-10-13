@@ -1872,17 +1872,19 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
       opacity: 0;
       transition: opacity var(--transition-snappy);
       z-index: 1;
+      pointer-events: none;
     }
 
     .event-stream-preview:hover .stream-preview-overlay {
-      opacity: 1;
+      opacity: 0.8;
+      pointer-events: auto;
     }
 
     .stream-preview-play-btn {
@@ -6937,13 +6939,6 @@
       
       // Add return to teams button
       addReturnToTeamsButton();
-      
-      // Set up periodic refresh of event streams
-      setInterval(() => {
-        updateEventStreamsFromLiveData();
-        renderEventStreams();
-        updateStreamCount();
-      }, 30000); // Refresh every 30 seconds
     }
 
     function closeSidebar() {
@@ -6959,9 +6954,7 @@
       
       // Get live streamers from the existing viewer data
       if (typeof viewerData !== 'undefined' && viewerData.size > 0) {
-        console.log('Event Streams: Checking viewer data for live streams...');
         viewerData.forEach((data) => {
-          console.log(`Event Streams: Checking ${data.handle} (${data.name}) - Live: ${data.isLive}, Viewers: ${data.viewers}`);
           // Only show streams that are actually live with a minimum viewer count
           if (data.isLive && data.viewers > 0) {
             eventStreams.push({
@@ -6976,14 +6969,9 @@
               startTime: new Date().toISOString(),
               handle: data.handle
             });
-            console.log(`Event Streams: Added ${data.handle} to event streams`);
           }
         });
-      } else {
-        console.log('Event Streams: No viewer data available or viewerData is empty');
       }
-      
-      console.log(`Event Streams: Found ${eventStreams.length} live streams:`, eventStreams.map(s => s.handle));
       
       // Sort by viewer count (highest first)
       eventStreams.sort((a, b) => b.viewers - a.viewers);
@@ -7009,7 +6997,7 @@
           <div style="position: relative;">
             <iframe 
               class="stream-preview-iframe" 
-              src="https://player.twitch.tv/?channel=${stream.handle}&parent=tribesprofessionalleague.com&muted=true&controls=false"
+              src="https://player.twitch.tv/?channel=${stream.handle}&parent=tribesprofessionalleague.com&autoplay=true&muted=true&controls=false"
               allowfullscreen>
             </iframe>
             <div class="stream-preview-overlay">
