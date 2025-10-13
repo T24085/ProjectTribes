@@ -6995,7 +6995,7 @@
           <div style="position: relative;">
             <iframe 
               class="stream-preview-iframe" 
-              src="${stream.streamUrl}&muted=true&controls=false"
+              src="https://player.twitch.tv/?channel=${stream.handle}&parent=tribesprofessionalleague.com&muted=true&controls=false"
               allowfullscreen>
             </iframe>
             <div class="stream-preview-overlay">
@@ -7046,15 +7046,27 @@
       // Update main stream frame with full stream (not muted, with controls)
       const streamFrame = document.getElementById('stream-frame');
       if (streamFrame) {
-        // Remove muted and controls=false for main stream
-        const mainStreamUrl = stream.streamUrl.replace('&muted=true', '').replace('&controls=false', '');
-        streamFrame.src = mainStreamUrl;
+        // Determine parent domain for Twitch embed (same logic as existing code)
+        let parentDomain = window.location.hostname;
+        if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+          parentDomain = 'tribesprofessionalleague.com';
+        }
+        
+        // Build the stream URL with proper parent domain
+        const streamUrl = `https://player.twitch.tv/?channel=${stream.handle}&parent=${parentDomain}&autoplay=false`;
+        streamFrame.src = streamUrl;
       }
 
       // Update chat if available
       const chatFrame = document.querySelector('.twitch-chat-container iframe');
       if (chatFrame && stream.chatUrl) {
-        chatFrame.src = stream.chatUrl;
+        // Also fix chat URL with proper parent domain
+        let parentDomain = window.location.hostname;
+        if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+          parentDomain = 'tribesprofessionalleague.com';
+        }
+        const chatUrl = `https://www.twitch.tv/embed/${stream.handle}/chat?parent=${parentDomain}`;
+        chatFrame.src = chatUrl;
       }
 
       // Update the spectating section title to show we're watching an event
@@ -7116,13 +7128,22 @@
       // Reset to default team stream
       const streamFrame = document.getElementById('stream-frame');
       if (streamFrame) {
-        streamFrame.src = 'https://player.twitch.tv/?channel=oo0oo_live&autoplay=false';
+        // Use the same parent domain logic as existing code
+        let parentDomain = window.location.hostname;
+        if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+          parentDomain = 'tribesprofessionalleague.com';
+        }
+        streamFrame.src = `https://player.twitch.tv/?channel=oo0oo_live&parent=${parentDomain}&autoplay=false`;
       }
 
       // Reset chat to default
       const chatFrame = document.querySelector('.twitch-chat-container iframe');
       if (chatFrame) {
-        chatFrame.src = 'https://www.twitch.tv/embed/oo0oo_live/chat';
+        let parentDomain = window.location.hostname;
+        if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+          parentDomain = 'tribesprofessionalleague.com';
+        }
+        chatFrame.src = `https://www.twitch.tv/embed/oo0oo_live/chat?parent=${parentDomain}`;
       }
 
       // Reset spectating label
