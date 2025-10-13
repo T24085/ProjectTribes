@@ -6937,6 +6937,13 @@
       
       // Add return to teams button
       addReturnToTeamsButton();
+      
+      // Set up periodic refresh of event streams
+      setInterval(() => {
+        updateEventStreamsFromLiveData();
+        renderEventStreams();
+        updateStreamCount();
+      }, 30000); // Refresh every 30 seconds
     }
 
     function closeSidebar() {
@@ -6952,7 +6959,9 @@
       
       // Get live streamers from the existing viewer data
       if (typeof viewerData !== 'undefined' && viewerData.size > 0) {
+        console.log('Event Streams: Checking viewer data for live streams...');
         viewerData.forEach((data) => {
+          console.log(`Event Streams: Checking ${data.handle} (${data.name}) - Live: ${data.isLive}, Viewers: ${data.viewers}`);
           // Only show streams that are actually live with a minimum viewer count
           if (data.isLive && data.viewers > 0) {
             eventStreams.push({
@@ -6967,9 +6976,14 @@
               startTime: new Date().toISOString(),
               handle: data.handle
             });
+            console.log(`Event Streams: Added ${data.handle} to event streams`);
           }
         });
+      } else {
+        console.log('Event Streams: No viewer data available or viewerData is empty');
       }
+      
+      console.log(`Event Streams: Found ${eventStreams.length} live streams:`, eventStreams.map(s => s.handle));
       
       // Sort by viewer count (highest first)
       eventStreams.sort((a, b) => b.viewers - a.viewers);
@@ -7197,15 +7211,19 @@
       refreshBtn.style.cssText = 'padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.5rem;';
       refreshBtn.textContent = '🔄';
       refreshBtn.title = 'Refresh live streams';
-      refreshBtn.onclick = () => {
+      refreshBtn.onclick = async () => {
+        showNotification('Refreshing live streams...');
         // Clear cached data and refresh
         if (typeof viewerData !== 'undefined') {
           viewerData.clear();
         }
         if (typeof updateViewerCounts === 'function') {
-          updateViewerCounts();
+          await updateViewerCounts();
         }
-        showNotification('Refreshing live streams...');
+        updateEventStreamsFromLiveData();
+        renderEventStreams();
+        updateStreamCount();
+        showNotification('Event streams refreshed');
       };
       
       // Insert before the close button
