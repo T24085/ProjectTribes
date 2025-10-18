@@ -528,18 +528,57 @@
       return 1;
     };
 
-    const renderKillShareCharts = (playerMetrics) => {
+    const renderKillShareCharts = (playerMetrics, playerMapStats) => {
       if (!killShareSection || !killShareSelect || !killShareChartCanvas) return 0;
 
       const teamMap = new Map();
+      
+      // First, determine each player's primary team (team with most matches)
+      const playerPrimaryTeams = new Map();
       playerMetrics.forEach(player => {
         if (!player.teams || !player.teams.size) return;
-        player.teams.forEach(teamName => {
-          if (!teamName) return;
-          const entry = teamMap.get(teamName) || { name: teamName, players: [] };
-          entry.players.push({ name: player.name, kills: player.kills });
-          teamMap.set(teamName, entry);
+        
+        // Count matches per team for this player
+        const teamMatchCounts = new Map();
+        Array.from(playerMapStats.values())
+          .filter(entry => entry.player === player.name)
+          .forEach(entry => {
+            if (entry.teams && entry.teams.size > 0) {
+              entry.teams.forEach(team => {
+                const currentCount = teamMatchCounts.get(team) || 0;
+                teamMatchCounts.set(team, currentCount + toNumber(entry.matches));
+              });
+            }
+          });
+        
+        // Find the team with the most matches
+        let primaryTeam = null;
+        let maxMatches = 0;
+        teamMatchCounts.forEach((matchCount, team) => {
+          if (matchCount > maxMatches) {
+            maxMatches = matchCount;
+            primaryTeam = team;
+          }
         });
+        
+        // Fallback to first team if no match data found
+        if (!primaryTeam && player.teams.size > 0) {
+          primaryTeam = Array.from(player.teams)[0];
+        }
+        
+        if (primaryTeam) {
+          playerPrimaryTeams.set(player.name, primaryTeam);
+        }
+      });
+
+      // Now build team map only with primary team assignments
+      playerMetrics.forEach(player => {
+        const primaryTeam = playerPrimaryTeams.get(player.name);
+        if (!primaryTeam) return;
+        
+        const entry = teamMap.get(primaryTeam) || { name: primaryTeam, players: [] };
+        entry.players.push({ name: player.name, kills: player.kills });
+        teamMap.set(primaryTeam, entry);
       });
 
       const teams = Array.from(teamMap.values())
@@ -663,11 +702,11 @@
       return cardCount;
     };
 
-    const renderCharts = (playerMetrics) => {
+    const renderCharts = (playerMetrics, playerMapStats) => {
       destroyCharts();
       const perMinuteCount = renderPerMinuteCharts(playerMetrics);
       if (perMinuteSection) perMinuteSection.style.display = perMinuteCount ? 'block' : 'none';
-      const killShareCount = renderKillShareCharts(playerMetrics);
+      const killShareCount = renderKillShareCharts(playerMetrics, playerMapStats);
       if (killShareSection) killShareSection.style.display = killShareCount ? 'block' : 'none';
       const leaderboardCount = renderLeaderboards(playerMetrics);
       if (leaderboardSection) leaderboardSection.style.display = leaderboardCount ? 'block' : 'none';
@@ -749,7 +788,7 @@
         addSummaryCard('Total Kills Logged', formatNumber(totalKills, 0), 'All kills recorded in the database.');
 
         renderTables(playerTotals, playerMapStats);
-        renderCharts(playerMetrics);
+        renderCharts(playerMetrics, playerMapStats);
       } catch (err) {
         console.error(err);
         destroyCharts();
