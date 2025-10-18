@@ -220,7 +220,7 @@
       margin: 0 auto;
       padding: 2rem;
       display: grid;
-      grid-template-columns: 1fr 350px;
+      grid-template-columns: 1fr 400px;
       gap: 2rem;
       min-height: calc(100vh - 100px);
     }
@@ -1102,7 +1102,7 @@
       position: relative;
       z-index: 10;
       isolation: isolate;
-      width: 350px;
+      width: 100%;
       height: 500px;
     }
     
@@ -1814,6 +1814,12 @@
       }
     }
 
+    @media (max-width: 1200px) {
+      .main-container {
+        grid-template-columns: 1fr 350px;
+      }
+    }
+
     @media (max-width: 768px) {
       .main-container {
         padding: 1rem;
@@ -2425,7 +2431,7 @@
               <div>Connecting to Chat...</div>
             </div>
           </div>
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 350px; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 100%; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
         </div>
         
       </div>
@@ -5883,15 +5889,41 @@
       
       // Update iframe source
       const chatUrl = `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?parent=${parentDomain}`;
-      chatIframe.src = chatUrl;
+      console.log(`Loading Twitch chat: ${chatUrl}`);
       
-      // Hide loading and show chat after a short delay
-      setTimeout(() => {
+      // Add error handling for iframe load
+      chatIframe.onload = function() {
+        console.log('Twitch chat iframe loaded successfully');
         if (chatLoading) {
           chatLoading.style.display = 'none';
         }
         chatIframe.style.display = 'block';
-      }, 1000);
+      };
+      
+      chatIframe.onerror = function() {
+        console.error('Failed to load Twitch chat iframe');
+        if (chatLoading) {
+          chatLoading.innerHTML = `
+            <div class="text-center">
+              <div class="text-red-400 mb-2">⚠️</div>
+              <div>Failed to load chat. Please try again.</div>
+            </div>
+          `;
+        }
+      };
+      
+      chatIframe.src = chatUrl;
+      
+      // Fallback timeout in case onload doesn't fire
+      setTimeout(() => {
+        if (chatIframe.style.display === 'none') {
+          console.log('Fallback: showing chat after timeout');
+          if (chatLoading) {
+            chatLoading.style.display = 'none';
+          }
+          chatIframe.style.display = 'block';
+        }
+      }, 2000);
       
       console.log(`Updated Twitch chat to channel: ${channel} with parent: ${parentDomain}`);
     }
