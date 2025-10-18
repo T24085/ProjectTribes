@@ -57,7 +57,7 @@
           <h2 id="runningTotalsTitle" class="text-2xl font-bold">Running Totals</h2>
           <p id="runningTotalsMeta" class="text-sm text-gray-300"></p>
         </div>
-        <button id="exportBtn" class="self-start md:self-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export to Excel</button>
+        <button id="exportBtn" class="self-start md:self-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded" disabled>Export All Data to Excel</button>
       </div>
       <div id="output" class="mt-6"></div>
     </div>
@@ -830,10 +830,406 @@
       }
     });
 
-    document.getElementById('exportBtn').addEventListener('click', () => {
-      const table = document.getElementById('exportTable');
-      const wb = XLSX.utils.table_to_book(table, { sheet: 'Stats' });
-      XLSX.writeFile(wb, 'match-stats.xlsx');
+    // Comprehensive Excel Export Functions
+    function createAllMatchesSheet(wb, allMatches) {
+      const data = [
+        ['Date', 'Map', 'Team 1', 'Team 2', 'Team 1 Kills', 'Team 2 Kills', 'Team 1 Score', 'Team 2 Score', 'Team 1 Time', 'Team 2 Time']
+      ];
+
+      allMatches.forEach(match => {
+        const date = match.created?.toDate ? match.created.toDate().toLocaleDateString() : 'Unknown';
+        const team1Stats = match.stats?.[match.team1]?.totals || {};
+        const team2Stats = match.stats?.[match.team2]?.totals || {};
+        
+        data.push([
+          date,
+          match.map || 'Unknown',
+          match.team1 || 'Unknown',
+          match.team2 || 'Unknown',
+          team1Stats.kills || 0,
+          team2Stats.kills || 0,
+          team1Stats.score || 0,
+          team2Stats.score || 0,
+          team1Stats.time || 0,
+          team2Stats.time || 0
+        ]);
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'All Matches');
+    }
+
+    function createPlayerStatsSheet(wb, allMatches) {
+      const playerStats = new Map();
+
+      // Aggregate all player data
+      allMatches.forEach(match => {
+        const stats = match.stats || {};
+        Object.entries(stats).forEach(([teamName, teamStats]) => {
+          const players = teamStats.players || {};
+          Object.entries(players).forEach(([playerName, playerData]) => {
+            if (!playerStats.has(playerName)) {
+              playerStats.set(playerName, {
+                name: playerName,
+                teams: new Set(),
+                matches: 0,
+                totalKills: 0,
+                totalAssists: 0,
+                totalScore: 0,
+                totalCaptures: 0,
+                totalReturns: 0,
+                totalTime: 0
+              });
+            }
+            
+            const player = playerStats.get(playerName);
+            player.teams.add(teamName);
+            player.matches += 1;
+            player.totalKills += toNumber(playerData.kills);
+            player.totalAssists += toNumber(playerData.assists);
+            player.totalScore += toNumber(playerData.score);
+            player.totalCaptures += toNumber(playerData.captures);
+            player.totalReturns += toNumber(playerData.returns);
+            player.totalTime += toNumber(playerData.time);
+          });
+        });
+      });
+
+      const data = [
+        ['Player Name', 'Teams', 'Matches', 'Total Kills', 'Total Assists', 'Total Score', 'Total Captures', 'Total Returns', 'Total Time (min)', 'KPM', 'APM', 'SPM', 'CPM', 'RPM']
+      ];
+
+      Array.from(playerStats.values())
+        .sort((a, b) => b.totalKills - a.totalKills)
+        .forEach(player => {
+          const kpm = player.totalTime > 0 ? (player.totalKills / player.totalTime).toFixed(2) : '0.00';
+          const apm = player.totalTime > 0 ? (player.totalAssists / player.totalTime).toFixed(2) : '0.00';
+          const spm = player.totalTime > 0 ? (player.totalScore / player.totalTime).toFixed(2) : '0.00';
+          const cpm = player.totalTime > 0 ? (player.totalCaptures / player.totalTime).toFixed(2) : '0.00';
+          const rpm = player.totalTime > 0 ? (player.totalReturns / player.totalTime).toFixed(2) : '0.00';
+
+          data.push([
+            player.name,
+            Array.from(player.teams).join(', '),
+            player.matches,
+            player.totalKills,
+            player.totalAssists,
+            player.totalScore,
+            player.totalCaptures,
+            player.totalReturns,
+            player.totalTime.toFixed(2),
+            kpm,
+            apm,
+            spm,
+            cpm,
+            rpm
+          ]);
+        });
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Player Stats');
+    }
+
+    function createTeamStatsSheet(wb, allMatches) {
+      const teamStats = new Map();
+
+      // Aggregate all team data
+      allMatches.forEach(match => {
+        const stats = match.stats || {};
+        Object.entries(stats).forEach(([teamName, teamData]) => {
+          if (!teamStats.has(teamName)) {
+            teamStats.set(teamName, {
+              name: teamName,
+              matches: 0,
+              totalKills: 0,
+              totalAssists: 0,
+              totalScore: 0,
+              totalCaptures: 0,
+              totalReturns: 0,
+              totalTime: 0,
+              players: new Set()
+            });
+          }
+          
+          const team = teamStats.get(teamName);
+          const totals = teamData.totals || {};
+          const players = teamData.players || {};
+          
+          team.matches += 1;
+          team.totalKills += toNumber(totals.kills);
+          team.totalAssists += toNumber(totals.assists);
+          team.totalScore += toNumber(totals.score);
+          team.totalCaptures += toNumber(totals.captures);
+          team.totalReturns += toNumber(totals.returns);
+          team.totalTime += toNumber(totals.time);
+          
+          Object.keys(players).forEach(player => team.players.add(player));
+        });
+      });
+
+      const data = [
+        ['Team Name', 'Matches', 'Unique Players', 'Total Kills', 'Total Assists', 'Total Score', 'Total Captures', 'Total Returns', 'Total Time (min)', 'KPM', 'APM', 'SPM', 'CPM', 'RPM']
+      ];
+
+      Array.from(teamStats.values())
+        .sort((a, b) => b.totalKills - a.totalKills)
+        .forEach(team => {
+          const kpm = team.totalTime > 0 ? (team.totalKills / team.totalTime).toFixed(2) : '0.00';
+          const apm = team.totalTime > 0 ? (team.totalAssists / team.totalTime).toFixed(2) : '0.00';
+          const spm = team.totalTime > 0 ? (team.totalScore / team.totalTime).toFixed(2) : '0.00';
+          const cpm = team.totalTime > 0 ? (team.totalCaptures / team.totalTime).toFixed(2) : '0.00';
+          const rpm = team.totalTime > 0 ? (team.totalReturns / team.totalTime).toFixed(2) : '0.00';
+
+          data.push([
+            team.name,
+            team.matches,
+            team.players.size,
+            team.totalKills,
+            team.totalAssists,
+            team.totalScore,
+            team.totalCaptures,
+            team.totalReturns,
+            team.totalTime.toFixed(2),
+            kpm,
+            apm,
+            spm,
+            cpm,
+            rpm
+          ]);
+        });
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Team Stats');
+    }
+
+    function createPerMinuteStatsSheet(wb, allMatches) {
+      const data = [
+        ['Player Name', 'Team', 'Match Date', 'Map', 'KPM', 'APM', 'SPM', 'CPM', 'RPM', 'Time (min)', 'Kills', 'Assists', 'Score', 'Captures', 'Returns']
+      ];
+
+      allMatches.forEach(match => {
+        const date = match.created?.toDate ? match.created.toDate().toLocaleDateString() : 'Unknown';
+        const stats = match.stats || {};
+        
+        Object.entries(stats).forEach(([teamName, teamData]) => {
+          const players = teamData.players || {};
+          Object.entries(players).forEach(([playerName, playerData]) => {
+            const time = toNumber(playerData.time);
+            const kpm = time > 0 ? (toNumber(playerData.kills) / time).toFixed(2) : '0.00';
+            const apm = time > 0 ? (toNumber(playerData.assists) / time).toFixed(2) : '0.00';
+            const spm = time > 0 ? (toNumber(playerData.score) / time).toFixed(2) : '0.00';
+            const cpm = time > 0 ? (toNumber(playerData.captures) / time).toFixed(2) : '0.00';
+            const rpm = time > 0 ? (toNumber(playerData.returns) / time).toFixed(2) : '0.00';
+
+            data.push([
+              playerName,
+              teamName,
+              date,
+              match.map || 'Unknown',
+              kpm,
+              apm,
+              spm,
+              cpm,
+              rpm,
+              time.toFixed(2),
+              toNumber(playerData.kills),
+              toNumber(playerData.assists),
+              toNumber(playerData.score),
+              toNumber(playerData.captures),
+              toNumber(playerData.returns)
+            ]);
+          });
+        });
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Per-Minute Stats');
+    }
+
+    function createMapStatsSheet(wb, allMatches) {
+      const mapStats = new Map();
+
+      // Aggregate map data
+      allMatches.forEach(match => {
+        const mapName = match.map || 'Unknown';
+        if (!mapStats.has(mapName)) {
+          mapStats.set(mapName, {
+            name: mapName,
+            matches: 0,
+            totalKills: 0,
+            totalAssists: 0,
+            totalScore: 0,
+            totalCaptures: 0,
+            totalReturns: 0,
+            totalTime: 0,
+            teams: new Set(),
+            players: new Set()
+          });
+        }
+        
+        const map = mapStats.get(mapName);
+        map.matches += 1;
+        
+        const stats = match.stats || {};
+        Object.entries(stats).forEach(([teamName, teamData]) => {
+          map.teams.add(teamName);
+          const totals = teamData.totals || {};
+          const players = teamData.players || {};
+          
+          map.totalKills += toNumber(totals.kills);
+          map.totalAssists += toNumber(totals.assists);
+          map.totalScore += toNumber(totals.score);
+          map.totalCaptures += toNumber(totals.captures);
+          map.totalReturns += toNumber(totals.returns);
+          map.totalTime += toNumber(totals.time);
+          
+          Object.keys(players).forEach(player => map.players.add(player));
+        });
+      });
+
+      const data = [
+        ['Map Name', 'Matches', 'Unique Teams', 'Unique Players', 'Total Kills', 'Total Assists', 'Total Score', 'Total Captures', 'Total Returns', 'Total Time (min)', 'Avg KPM', 'Avg APM', 'Avg SPM']
+      ];
+
+      Array.from(mapStats.values())
+        .sort((a, b) => b.matches - a.matches)
+        .forEach(map => {
+          const avgKpm = map.totalTime > 0 ? (map.totalKills / map.totalTime).toFixed(2) : '0.00';
+          const avgApm = map.totalTime > 0 ? (map.totalAssists / map.totalTime).toFixed(2) : '0.00';
+          const avgSpm = map.totalTime > 0 ? (map.totalScore / map.totalTime).toFixed(2) : '0.00';
+
+          data.push([
+            map.name,
+            map.matches,
+            map.teams.size,
+            map.players.size,
+            map.totalKills,
+            map.totalAssists,
+            map.totalScore,
+            map.totalCaptures,
+            map.totalReturns,
+            map.totalTime.toFixed(2),
+            avgKpm,
+            avgApm,
+            avgSpm
+          ]);
+        });
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Map Performance');
+    }
+
+    function createMatchDetailsSheet(wb, allMatches) {
+      const data = [
+        ['Match ID', 'Date', 'Map', 'Team 1', 'Team 2', 'Player', 'Team', 'Kills', 'Assists', 'Score', 'Captures', 'Returns', 'Time (min)', 'KPM', 'APM', 'SPM', 'CPM', 'RPM']
+      ];
+
+      allMatches.forEach(match => {
+        const date = match.created?.toDate ? match.created.toDate().toLocaleString() : 'Unknown';
+        const stats = match.stats || {};
+        
+        Object.entries(stats).forEach(([teamName, teamData]) => {
+          const players = teamData.players || {};
+          Object.entries(players).forEach(([playerName, playerData]) => {
+            const time = toNumber(playerData.time);
+            const kpm = time > 0 ? (toNumber(playerData.kills) / time).toFixed(2) : '0.00';
+            const apm = time > 0 ? (toNumber(playerData.assists) / time).toFixed(2) : '0.00';
+            const spm = time > 0 ? (toNumber(playerData.score) / time).toFixed(2) : '0.00';
+            const cpm = time > 0 ? (toNumber(playerData.captures) / time).toFixed(2) : '0.00';
+            const rpm = time > 0 ? (toNumber(playerData.returns) / time).toFixed(2) : '0.00';
+
+            data.push([
+              match.id,
+              date,
+              match.map || 'Unknown',
+              match.team1 || 'Unknown',
+              match.team2 || 'Unknown',
+              playerName,
+              teamName,
+              toNumber(playerData.kills),
+              toNumber(playerData.assists),
+              toNumber(playerData.score),
+              toNumber(playerData.captures),
+              toNumber(playerData.returns),
+              time.toFixed(2),
+              kpm,
+              apm,
+              spm,
+              cpm,
+              rpm
+            ]);
+          });
+        });
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      XLSX.utils.book_append_sheet(wb, ws, 'Match Details');
+    }
+
+    document.getElementById('exportBtn').addEventListener('click', async () => {
+      try {
+        // Show loading state
+        const exportBtn = document.getElementById('exportBtn');
+        const originalText = exportBtn.textContent;
+        exportBtn.textContent = 'Exporting...';
+        exportBtn.disabled = true;
+
+        // Get all matches data
+        const matchesSnapshot = await getDocs(collection(db, 'matches'));
+        const allMatches = [];
+        matchesSnapshot.forEach(doc => {
+          allMatches.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort matches by date (newest first)
+        allMatches.sort((a, b) => {
+          const aTime = a.created?.toDate ? a.created.toDate().getTime() : new Date(a.created || 0).getTime();
+          const bTime = b.created?.toDate ? b.created.toDate().getTime() : new Date(b.created || 0).getTime();
+          return bTime - aTime;
+        });
+
+        // Create comprehensive Excel workbook
+        const wb = XLSX.utils.book_new();
+
+        // Sheet 1: All Matches Summary
+        createAllMatchesSheet(wb, allMatches);
+
+        // Sheet 2: Individual Player Stats
+        createPlayerStatsSheet(wb, allMatches);
+
+        // Sheet 3: Team Performance
+        createTeamStatsSheet(wb, allMatches);
+
+        // Sheet 4: Per-Minute Statistics
+        createPerMinuteStatsSheet(wb, allMatches);
+
+        // Sheet 5: Map Performance
+        createMapStatsSheet(wb, allMatches);
+
+        // Sheet 6: Match Details (Raw Data)
+        createMatchDetailsSheet(wb, allMatches);
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().split('T')[0];
+        const filename = `tribes-league-stats-${timestamp}.xlsx`;
+
+        // Export the workbook
+        XLSX.writeFile(wb, filename);
+
+        // Reset button
+        exportBtn.textContent = originalText;
+        exportBtn.disabled = false;
+
+        alert(`Comprehensive stats exported successfully as ${filename}`);
+      } catch (error) {
+        console.error('Export failed:', error);
+        alert('Export failed. Please try again.');
+        
+        // Reset button
+        const exportBtn = document.getElementById('exportBtn');
+        exportBtn.textContent = 'Export All Data to Excel';
+        exportBtn.disabled = false;
+      }
     });
   </script>
   <script src="./assets/include.js" defer></script>
