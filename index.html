@@ -462,6 +462,135 @@
       border: 2px solid rgba(255, 255, 255, 0.2);
     }
 
+    /* Compact Match Display */
+    .match-display-compact {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1rem 0;
+      position: relative;
+      min-height: 60px;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border-radius: 8px;
+      overflow: hidden;
+      padding: 0.5rem;
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .match-display-compact::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.1);
+      z-index: 1;
+    }
+
+    .match-display-compact.has-background::before {
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .match-display-compact > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .team-compact {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .team-logo-compact {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .team-logo-compact img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .team-name-compact {
+      font-size: 1rem;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      color: white;
+      white-space: nowrap;
+    }
+
+    .vs-text-compact {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Header Actions */
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+
+    /* Responsive adjustments for compact layout */
+    @media (max-width: 768px) {
+      .header-actions {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+      
+      .header-actions .team-select-btn,
+      .header-actions .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+      }
+      
+      .stream-controls {
+        top: 5px;
+        right: 5px;
+        gap: 0.25rem;
+      }
+      
+      .stream-controls .team-select-btn,
+      .stream-controls .btn {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.6rem;
+      }
+      
+      .match-display-compact {
+        gap: 0.5rem;
+        padding: 0.25rem;
+      }
+      
+      .team-logo-compact {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .team-name-compact {
+        font-size: 0.9rem;
+      }
+      
+      .vs-text-compact {
+        font-size: 1rem;
+        padding: 0.2rem 0.4rem;
+      }
+    }
+
     /* Player Tabs */
     .player-tabs {
       display: flex;
@@ -542,12 +671,43 @@
       border-radius: 12px;
       overflow: hidden;
       aspect-ratio: 16/9;
+      position: relative;
     }
 
     .stream-frame {
       width: 100%;
       height: 100%;
       border: none;
+    }
+
+    /* Stream Controls */
+    .stream-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 10;
+    }
+
+    .stream-controls .team-select-btn,
+    .stream-controls .btn {
+      font-size: 0.8rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stream-controls .team-select-btn:hover,
+    .stream-controls .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+      background: rgba(0, 0, 0, 0.8);
     }
 
     /* Sidebar */
@@ -2062,31 +2222,13 @@
   <div class="main-container">
     <!-- Main Content -->
     <div class="main-content">
-      <!-- Spectating Section -->
-      <div class="spectating-section">
-        <div class="spectating-header">
-          <div class="spectating-label">Spectating</div>
-          <button class="team-select-btn" id="caster-btn" style="background: #f59e0b;">Load Caster (0o0o0)</button>
-        </div>
-        
 
-        <div class="match-display" id="match-display">
-          <div class="team-score" id="team-a-display">
-            <div class="team-logo" id="team-a-logo">
-              <img src="images/TeamDPRKLogo3.png" alt="Team A" onerror="this.style.display='none'">
-            </div>
-            <div class="team-name" id="team-a-name">Team A</div>
-          </div>
-          <div class="vs-text">VS</div>
-          <div class="team-score" id="team-b-display">
-            <div class="team-logo" id="team-b-logo">
-              <img src="images/TeamDPRKLogo3.png" alt="Team B" onerror="this.style.display='none'">
-            </div>
-            <div class="team-name" id="team-b-name">Team B</div>
-          </div>
-        </div>
-        
-        <div class="match-actions" style="text-align: center; margin-top: 1rem;">
+      <!-- Active Stream -->
+      <div class="active-stream">
+        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=oo0oo_live&autoplay=false" allowfullscreen></iframe>
+        <!-- Stream Controls -->
+        <div class="stream-controls">
+          <button class="team-select-btn" id="caster-btn" style="background: #f59e0b;">Load Caster (0o0o0)</button>
           <button id="show-team-stats-btn" class="btn btn-secondary">View Team Stats</button>
         </div>
       </div>
@@ -2096,9 +2238,21 @@
         <!-- Player tabs will be populated here -->
       </div>
 
-      <!-- Active Stream -->
-      <div class="active-stream">
-        <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=oo0oo_live&autoplay=false" allowfullscreen></iframe>
+      <!-- Match Display -->
+      <div class="match-display-compact" id="match-display">
+        <div class="team-compact" id="team-a-display">
+          <div class="team-logo-compact" id="team-a-logo">
+            <img src="images/TeamDPRKLogo3.png" alt="Team A" onerror="this.style.display='none'">
+          </div>
+          <div class="team-name-compact" id="team-a-name">Team A</div>
+        </div>
+        <div class="vs-text-compact">VS</div>
+        <div class="team-compact" id="team-b-display">
+          <div class="team-logo-compact" id="team-b-logo">
+            <img src="images/TeamDPRKLogo3.png" alt="Team B" onerror="this.style.display='none'">
+          </div>
+          <div class="team-name-compact" id="team-b-name">Team B</div>
+        </div>
       </div>
 
       <!-- Player Stats Section -->
@@ -2255,6 +2409,27 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
+      <!-- Twitch Chat Section -->
+      <div class="sidebar-section chat-section">
+        <div class="chat-header">
+          <h3>Live Chat</h3>
+          <select id="streamer-select" class="streamer-dropdown">
+            <option value="oo0oo_live">0o0o0 (Caster)</option>
+            <option value="tribesprofessionalleague">TPL Main Chat</option>
+          </select>
+        </div>
+        <div class="twitch-chat-container">
+          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
+            <div class="text-center">
+              <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
+              <div>Connecting to Chat...</div>
+            </div>
+          </div>
+          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 350px; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
+        </div>
+        
+      </div>
+
       <!-- Voting Section -->
       <div class="sidebar-section voting-section">
         <h3>Vote for Winner</h3>
@@ -2315,42 +2490,6 @@
         </div>
       </div>
 
-      <!-- Twitch Chat Section -->
-      <div class="sidebar-section chat-section">
-        <div class="chat-header">
-          <h3>Live Chat</h3>
-          <select id="streamer-select" class="streamer-dropdown">
-            <option value="oo0oo_live">0o0o0 (Caster)</option>
-            <option value="tribesprofessionalleague">TPL Main Chat</option>
-          </select>
-        </div>
-        <div class="twitch-chat-container">
-          <div class="chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
-            <div class="text-center">
-              <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
-              <div>Connecting to Chat...</div>
-            </div>
-          </div>
-          <iframe id="twitch-chat-iframe" src="about:blank" style="width: 350px; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
-        </div>
-        
-        <!-- Player Chat Section -->
-        <div class="player-chat-section" style="margin-top: 1rem;">
-          <div class="chat-header">
-            <h3>Player Chat</h3>
-            <div id="selected-player-name" class="selected-player-display" style="color: var(--text-muted); font-size: 0.9rem;">Select a player</div>
-          </div>
-          <div class="twitch-chat-container">
-            <div class="player-chat-loading" style="display: flex; align-items: center; justify-content: center; height: 500px; background: var(--surface-glass); border-radius: 0.5rem; color: var(--text-muted);">
-              <div class="text-center">
-                <div class="text-gray-400 mb-2">👤</div>
-                <div>Select a player to view their chat</div>
-              </div>
-            </div>
-            <iframe id="player-chat-iframe" src="about:blank" style="width: 350px; height: 500px; border: none; border-radius: 0.5rem; display: none; position: relative; z-index: 1;"></iframe>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -3215,10 +3354,10 @@
         loadMatchupImageWithFallbacks(teamA.folder, teamB.folder, matchDisplay);
         
         // Set team logo background pattern like in ScrimWatcher
-      console.log('Setting background images:', teamA.logo, teamB.logo);
+        console.log('Setting background images:', teamA.logo, teamB.logo);
         document.getElementById('bg-left').style.backgroundImage = `url(${teamA.logo})`;
         document.getElementById('bg-right').style.backgroundImage = `url(${teamB.logo})`;
-      console.log('Background images set successfully');
+        console.log('Background images set successfully');
       } else {
         // Clear background patterns if no teams selected
         document.getElementById('bg-left').style.backgroundImage = '';
@@ -3406,7 +3545,6 @@
           if (this.dataset.team && this.dataset.playerIndex !== undefined) {
             updateStreamForPlayer(this);
             showPlayerStatsForTab(this);
-            updatePlayerChat(this);
           }
         });
       });
@@ -5758,80 +5896,6 @@
       console.log(`Updated Twitch chat to channel: ${channel} with parent: ${parentDomain}`);
     }
 
-    // Update player chat iframe
-    function updatePlayerChat(tab) {
-      const team = tab.dataset.team;
-      const playerIndex = tab.dataset.playerIndex;
-      const teamKey = team === 'A' ? selectedTeams.teamA : selectedTeams.teamB;
-      const roster = teamRosters[teamKey] || [];
-      const player = roster[playerIndex];
-      
-      const playerChatIframe = document.getElementById('player-chat-iframe');
-      const playerChatLoading = document.querySelector('.player-chat-loading');
-      const selectedPlayerName = document.getElementById('selected-player-name');
-      
-      if (!playerChatIframe || !playerChatLoading || !selectedPlayerName) {
-        console.error('Player chat elements not found');
-        return;
-      }
-      
-      if (!player) {
-        // Reset to default state
-        selectedPlayerName.textContent = 'Select a player';
-        playerChatLoading.style.display = 'flex';
-        playerChatIframe.style.display = 'none';
-        return;
-      }
-      
-      const playerName = player.name || player.displayName;
-      const twitchHandle = getTwitchHandleForPlayer(player);
-      
-      // Update selected player display
-      selectedPlayerName.textContent = playerName || 'Unknown Player';
-      
-      if (!twitchHandle) {
-        // Show no Twitch link message
-        playerChatLoading.innerHTML = `
-          <div class="text-center">
-            <div class="text-red-400 mb-2">⚠️</div>
-            <div>No Twitch channel found for ${playerName}</div>
-          </div>
-        `;
-        playerChatLoading.style.display = 'flex';
-        playerChatIframe.style.display = 'none';
-        return;
-      }
-      
-      // Show loading state
-      playerChatLoading.innerHTML = `
-        <div class="text-center">
-          <div class="animate-spin inline-block w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full mb-2"></div>
-          <div>Loading ${playerName}'s chat...</div>
-        </div>
-      `;
-      playerChatLoading.style.display = 'flex';
-      playerChatIframe.style.display = 'none';
-      
-      // Get parent domain for Twitch embed
-      let parentDomain = window.location.hostname;
-      if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
-        parentDomain = 'tribesprofessionalleague.com';
-      }
-      
-      // Build Twitch chat embed URL
-      const chatUrl = `https://www.twitch.tv/embed/${encodeURIComponent(twitchHandle)}/chat?parent=${parentDomain}`;
-      
-      console.log('Loading player chat for:', playerName, 'with Twitch handle:', twitchHandle, 'URL:', chatUrl);
-      
-      // Set iframe source
-      playerChatIframe.src = chatUrl;
-      
-      // Hide loading and show chat after a short delay
-      setTimeout(() => {
-        playerChatLoading.style.display = 'none';
-        playerChatIframe.style.display = 'block';
-      }, 1000);
-    }
 
     // Viewer tracking variables
     let viewerData = new Map(); // Store current viewer counts
@@ -6339,7 +6403,6 @@
     window.loadRecentMatches = loadRecentMatches;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
-    window.updatePlayerChat = updatePlayerChat;
     window.initializeViewerTracking = initializeViewerTracking;
     window.updateViewerCounts = updateViewerCounts;
     window.showViewerHistory = showViewerHistory;
