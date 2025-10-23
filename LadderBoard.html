@@ -783,6 +783,7 @@
               <button class="btn btn-danger" onclick="ladderBoard.resetLadder()">Reset Ladder for New Season</button>
               <button class="btn btn-secondary" onclick="ladderBoard.advanceWeek()">Advance to Next Week</button>
               <button class="btn btn-secondary" onclick="ladderBoard.regenerateMatches()">Regenerate Current Week Matches</button>
+              <button class="btn btn-warning" onclick="ladderBoard.nuclearReset()">Nuclear Reset (Clear All Data)</button>
               <button class="btn btn-primary" onclick="ladderBoard.refreshElo()">Refresh Elo Ratings</button>
             </div>
             <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
@@ -1210,10 +1211,14 @@
 
         // Try to load data from Firebase
         await this.loadFromFirebase();
+        console.log('After loading from Firebase, matches count:', this.matches.length);
 
         // Generate weekly matches if none exist
         if (this.matches.length === 0) {
+          console.log('No matches found, generating new ones...');
           this.generateWeeklyMatches();
+        } else {
+          console.log('Found existing matches, skipping generation');
         }
 
         // Set refresh times
@@ -1242,6 +1247,9 @@
           );
           const matchesSnap = await getDocs(matchesQuery);
           
+          console.log('Loading matches from Firebase for week', this.currentWeek);
+          console.log('Found', matchesSnap.docs.length, 'matches in Firebase');
+          
           this.matches = [];
           matchesSnap.forEach(doc => {
             const matchData = doc.data();
@@ -1249,7 +1257,10 @@
             matchData.homeTeam = this.teams.find(t => t.id === matchData.homeTeamId);
             matchData.awayTeam = this.teams.find(t => t.id === matchData.awayTeamId);
             this.matches.push(matchData);
+            console.log('Loaded match:', matchData.homeTeamId, 'vs', matchData.awayTeamId);
           });
+          
+          console.log('Total matches loaded:', this.matches.length);
 
           // Load reports for matches
           for (let match of this.matches) {
@@ -2596,6 +2607,74 @@
             alert('Error regenerating matches. Please try again.');
           } finally {
             this.isRegenerating = false;
+          }
+        }
+      }
+
+      async nuclearReset() {
+        if (confirm('⚠️ NUCLEAR RESET ⚠️\n\nThis will:\n- Delete ALL matches from Firebase\n- Delete ALL reports from Firebase\n- Reset ALL team data\n- Start completely fresh\n\nThis action cannot be undone. Are you absolutely sure?')) {
+          if (confirm('Last chance! Type "NUCLEAR" to confirm this destructive action:')) {
+            const confirmation = prompt('Type "NUCLEAR" to confirm:');
+            if (confirmation !== 'NUCLEAR') {
+              alert('Nuclear reset cancelled.');
+              return;
+            }
+            
+            try {
+              console.log('Starting nuclear reset...');
+              
+              // Delete ALL matches
+              const allMatchesQuery = query(collection(db, 'ladderMatches'));
+              const allMatchesSnap = await getDocs(allMatchesQuery);
+              const deleteMatchPromises = allMatchesSnap.docs.map(doc => deleteDoc(doc.ref));
+              await Promise.all(deleteMatchPromises);
+              console.log('Deleted', allMatchesSnap.docs.length, 'matches');
+              
+              // Delete ALL reports
+              const allReportsQuery = query(collection(db, 'ladderReports'));
+              const allReportsSnap = await getDocs(allReportsQuery);
+              const deleteReportPromises = allReportsSnap.docs.map(doc => deleteDoc(doc.ref));
+              await Promise.all(deleteReportPromises);
+              console.log('Deleted', allReportsSnap.docs.length, 'reports');
+              
+              // Reset teams to clean state
+              this.teams = [
+                { id: 'av', name: 'Avalanche', tag: 'AV!', logo: 'images/aV!.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'epi', name: 'ePidemic', tag: 'EPI', logo: 'images/ePi.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'dprk', name: 'DPRK', tag: 'DPRK', logo: 'images/TeamDPRKLogo3.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'zen', name: 'Zen', tag: 'ZEN', logo: 'images/Zenlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'fps', name: 'Flag Pole Smokers', tag: 'FPS', logo: 'images/FPSlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'ft', name: 'Flying Tractors', tag: 'FT', logo: 'images/FTlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'hoe', name: 'Hegemony of Euros', tag: 'HoE', logo: 'images/HoE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'txm', name: 'Texas Militia', tag: 'TXM', logo: 'images/TXM.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'ue', name: 'Unhandled Exception', tag: 'UE', logo: 'images/UE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'wiz', name: 'Magic', tag: 'WIZ', logo: 'images/Magic.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'ktl', name: 'Kicked to Lobby', tag: 'KTL', logo: 'images/KTLlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'null', name: 'null', tag: 'Null', logo: 'images/NullLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                { id: 'ta', name: 'Toxic Aimers', tag: 'TA', logo: 'images/ToxicAimersLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' }
+              ];
+              
+              // Reset week and matches
+              this.currentWeek = 1;
+              this.matches = [];
+              
+              // Save clean state to Firebase
+              await this.saveToFirebase();
+              
+              // Generate fresh matches
+              this.generateWeeklyMatches();
+              await this.saveToFirebase();
+              
+              // Update UI
+              this.renderMatches();
+              this.renderRankings();
+              this.renderAdminContent();
+              
+              alert('Nuclear reset complete! All data has been cleared and fresh matches generated.');
+            } catch (error) {
+              console.error('Error during nuclear reset:', error);
+              alert('Error during nuclear reset. Please try again.');
+            }
           }
         }
       }
