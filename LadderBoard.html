@@ -1321,11 +1321,15 @@
       }
 
       generateWeeklyMatches() {
+        console.log('Generating weekly matches for week', this.currentWeek);
+        console.log('Teams:', this.teams.map(t => t.id));
+        
         this.matches = [];
         const teamIds = this.teams.map(t => t.id);
         
         // Use deterministic round-robin pairing based on week number
         const matches = this.generateRoundRobinPairings(teamIds, this.currentWeek);
+        console.log('Generated pairings:', matches);
         
         // Track which teams have already been assigned matches to prevent duplicates
         const assignedTeams = new Set();
@@ -1335,6 +1339,10 @@
             // Bye match - only create if team hasn't been assigned yet
             if (!assignedTeams.has(match.homeTeamId)) {
               const byeTeamData = this.teams.find(t => t.id === match.homeTeamId);
+              if (!byeTeamData) {
+                console.error('Team not found for BYE match:', match.homeTeamId);
+                return;
+              }
               this.matches.push({
                 id: `bye-${this.currentWeek}-${match.homeTeamId}`,
                 weekNumber: this.currentWeek,
@@ -1349,12 +1357,20 @@
                 reportId: null
               });
               assignedTeams.add(match.homeTeamId);
+              console.log('Added BYE match for:', match.homeTeamId);
+            } else {
+              console.log('Skipping duplicate BYE for:', match.homeTeamId);
             }
           } else {
             // Regular match - only create if both teams haven't been assigned yet
             if (!assignedTeams.has(match.homeTeamId) && !assignedTeams.has(match.awayTeamId)) {
               const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
               const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+              
+              if (!homeTeam || !awayTeam) {
+                console.error('Team not found for match:', match.homeTeamId, 'vs', match.awayTeamId);
+                return;
+              }
               
               const matchId = `match-${this.currentWeek}-${index + 1}`;
               this.matches.push({
@@ -1372,9 +1388,15 @@
               });
               assignedTeams.add(match.homeTeamId);
               assignedTeams.add(match.awayTeamId);
+              console.log('Added match:', match.homeTeamId, 'vs', match.awayTeamId);
+            } else {
+              console.log('Skipping duplicate match:', match.homeTeamId, 'vs', match.awayTeamId);
             }
           }
         });
+        
+        console.log('Final matches generated:', this.matches.length);
+        console.log('Assigned teams:', Array.from(assignedTeams));
         
         // Save to Firebase
         this.saveToFirebase();
@@ -2510,23 +2532,40 @@
       async regenerateMatches() {
         if (confirm('Are you sure you want to regenerate the current week\'s matches? This will overwrite existing matches.')) {
           try {
-            // Clear existing matches for current week from Firebase
-            const matchesQuery = query(
-              collection(db, 'ladderMatches'),
-              where('weekNumber', '==', this.currentWeek)
-            );
-            const matchesSnap = await getDocs(matchesQuery);
+            // Clear ALL existing matches from Firebase (not just current week)
+            const allMatchesQuery = query(collection(db, 'ladderMatches'));
+            const allMatchesSnap = await getDocs(allMatchesQuery);
             
-            // Delete existing matches
-            const deletePromises = matchesSnap.docs.map(doc => deleteDoc(doc.ref));
+            // Delete all existing matches
+            const deletePromises = allMatchesSnap.docs.map(doc => deleteDoc(doc.ref));
             await Promise.all(deletePromises);
+            
+            // Reset teams to the correct list (in case there's corrupted data)
+            this.teams = [
+              { id: 'av', name: 'Avalanche', tag: 'AV!', logo: 'images/aV!.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'epi', name: 'ePidemic', tag: 'EPI', logo: 'images/ePi.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'dprk', name: 'DPRK', tag: 'DPRK', logo: 'images/TeamDPRKLogo3.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'zen', name: 'Zen', tag: 'ZEN', logo: 'images/Zenlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'fps', name: 'Flag Pole Smokers', tag: 'FPS', logo: 'images/FPSlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'ft', name: 'Flying Tractors', tag: 'FT', logo: 'images/FTlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'hoe', name: 'Hegemony of Euros', tag: 'HoE', logo: 'images/HoE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'txm', name: 'Texas Militia', tag: 'TXM', logo: 'images/TXM.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'ue', name: 'Unhandled Exception', tag: 'UE', logo: 'images/UE.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'wiz', name: 'Magic', tag: 'WIZ', logo: 'images/Magic.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'ktl', name: 'Kicked to Lobby', tag: 'KTL', logo: 'images/KTLlogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'null', name: 'null', tag: 'Null', logo: 'images/NullLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+              { id: 'ta', name: 'Toxic Aimers', tag: 'TA', logo: 'images/ToxicAimersLogo.png', elo: 1500, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' }
+            ];
+            
+            // Clear local matches array
+            this.matches = [];
             
             // Generate new matches with the fixed algorithm
             this.generateWeeklyMatches();
             await this.saveToFirebase();
             this.renderMatches();
             this.renderAdminContent();
-            alert('Current week matches have been regenerated successfully!');
+            alert('All matches have been cleared and regenerated successfully!');
           } catch (error) {
             console.error('Error regenerating matches:', error);
             alert('Error regenerating matches. Please try again.');
