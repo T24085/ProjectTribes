@@ -2177,6 +2177,9 @@
       }
 
       renderAdminMatches() {
+        console.log('renderAdminMatches called - matches count:', this.matches.length);
+        console.log('Matches array:', this.matches.map(m => `${m.homeTeamId} vs ${m.awayTeamId}`));
+        
         const container = document.getElementById('adminMatchesList');
         container.innerHTML = '';
 
@@ -2186,7 +2189,8 @@
         gridContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(350px, 1fr))';
         gridContainer.style.gap = '1rem';
 
-        this.matches.forEach(match => {
+        this.matches.forEach((match, index) => {
+          console.log(`Rendering match ${index + 1}:`, match.homeTeamId, 'vs', match.awayTeamId);
           const matchCard = document.createElement('div');
           matchCard.style.background = 'var(--surface-glass)';
           matchCard.style.padding = '1rem';
