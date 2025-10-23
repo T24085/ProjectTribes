@@ -1327,42 +1327,52 @@
         // Use deterministic round-robin pairing based on week number
         const matches = this.generateRoundRobinPairings(teamIds, this.currentWeek);
         
+        // Track which teams have already been assigned matches to prevent duplicates
+        const assignedTeams = new Set();
+        
         matches.forEach((match, index) => {
           if (match.awayTeamId === 'BYE') {
-            // Bye match
-            const byeTeamData = this.teams.find(t => t.id === match.homeTeamId);
-            this.matches.push({
-              id: `bye-${this.currentWeek}-${match.homeTeamId}`,
-              weekNumber: this.currentWeek,
-              homeTeamId: match.homeTeamId,
-              awayTeamId: 'BYE',
-              homeTeam: byeTeamData,
-              awayTeam: { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
-              status: 'BYE',
-              mapSet: [],
-              scheduledAt: new Date(),
-              report: null,
-              reportId: null
-            });
+            // Bye match - only create if team hasn't been assigned yet
+            if (!assignedTeams.has(match.homeTeamId)) {
+              const byeTeamData = this.teams.find(t => t.id === match.homeTeamId);
+              this.matches.push({
+                id: `bye-${this.currentWeek}-${match.homeTeamId}`,
+                weekNumber: this.currentWeek,
+                homeTeamId: match.homeTeamId,
+                awayTeamId: 'BYE',
+                homeTeam: byeTeamData,
+                awayTeam: { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' },
+                status: 'BYE',
+                mapSet: [],
+                scheduledAt: new Date(),
+                report: null,
+                reportId: null
+              });
+              assignedTeams.add(match.homeTeamId);
+            }
           } else {
-            // Regular match
-            const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
-            const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
-            
-            const matchId = `match-${this.currentWeek}-${index + 1}`;
-            this.matches.push({
-              id: matchId,
-              weekNumber: this.currentWeek,
-              homeTeamId: match.homeTeamId,
-              awayTeamId: match.awayTeamId,
-              homeTeam: homeTeam,
-              awayTeam: awayTeam,
-              status: 'PENDING',
-              mapSet: this.generateMapSet(matchId),
-              scheduledAt: new Date(),
-              report: null,
-              reportId: null
-            });
+            // Regular match - only create if both teams haven't been assigned yet
+            if (!assignedTeams.has(match.homeTeamId) && !assignedTeams.has(match.awayTeamId)) {
+              const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
+              const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+              
+              const matchId = `match-${this.currentWeek}-${index + 1}`;
+              this.matches.push({
+                id: matchId,
+                weekNumber: this.currentWeek,
+                homeTeamId: match.homeTeamId,
+                awayTeamId: match.awayTeamId,
+                homeTeam: homeTeam,
+                awayTeam: awayTeam,
+                status: 'PENDING',
+                mapSet: this.generateMapSet(matchId),
+                scheduledAt: new Date(),
+                report: null,
+                reportId: null
+              });
+              assignedTeams.add(match.homeTeamId);
+              assignedTeams.add(match.awayTeamId);
+            }
           }
         });
         
@@ -1394,20 +1404,16 @@
           rotatedTeams.splice(1, 0, lastTeam);
         }
         
-        // Create pairs
+        // Create pairs - only create pairs where both teams are not BYE
         for (let i = 0; i < rotatedTeams.length / 2; i++) {
           const homeTeam = rotatedTeams[i];
           const awayTeam = rotatedTeams[rotatedTeams.length - 1 - i];
           
-          if (homeTeam !== 'BYE' && awayTeam !== 'BYE') {
+          // Only create a pairing if the home team is not BYE
+          if (homeTeam !== 'BYE') {
             pairings.push({
               homeTeamId: homeTeam,
-              awayTeamId: awayTeam
-            });
-          } else if (homeTeam !== 'BYE') {
-            pairings.push({
-              homeTeamId: homeTeam,
-              awayTeamId: 'BYE'
+              awayTeamId: awayTeam === 'BYE' ? 'BYE' : awayTeam
             });
           }
         }
