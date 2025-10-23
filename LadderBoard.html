@@ -1084,6 +1084,7 @@
         this.isAdmin = false;
         this.currentEditMatch = null;
         this.currentEditScore = null;
+        this.isRegenerating = false;
         this.rules = {
           weeklySchedule: 'The ladder refreshes every <strong>Saturday at 11:00 PM America/New_York</strong> (10:00 PM America/Chicago). At this time, Elo ratings are updated and new weekly pairings are generated.',
           matchReporting: 'Team captains can report match results by uploading scoreboard images and entering map scores. Both teams must confirm the results for the match to be finalized. Disputed matches require admin review.',
@@ -1321,10 +1322,16 @@
       }
 
       generateWeeklyMatches() {
+        if (this.isRegenerating) {
+          console.log('Match generation already in progress, skipping...');
+          return;
+        }
+        
         console.log('Generating weekly matches for week', this.currentWeek);
         console.log('Teams:', this.teams.map(t => t.id));
         
-        this.matches = [];
+        // Ensure matches array is completely cleared
+        this.matches.length = 0;
         const teamIds = this.teams.map(t => t.id);
         
         // Use deterministic round-robin pairing based on week number
@@ -2530,15 +2537,28 @@
       }
 
       async regenerateMatches() {
+        // Prevent multiple simultaneous regenerations
+        if (this.isRegenerating) {
+          alert('Match regeneration is already in progress. Please wait...');
+          return;
+        }
+        
         if (confirm('Are you sure you want to regenerate the current week\'s matches? This will overwrite existing matches.')) {
+          this.isRegenerating = true;
           try {
+            console.log('Starting match regeneration...');
+            
             // Clear ALL existing matches from Firebase (not just current week)
             const allMatchesQuery = query(collection(db, 'ladderMatches'));
             const allMatchesSnap = await getDocs(allMatchesQuery);
             
+            console.log('Found', allMatchesSnap.docs.length, 'existing matches to delete');
+            
             // Delete all existing matches
             const deletePromises = allMatchesSnap.docs.map(doc => deleteDoc(doc.ref));
             await Promise.all(deletePromises);
+            
+            console.log('All existing matches deleted from Firebase');
             
             // Reset teams to the correct list (in case there's corrupted data)
             this.teams = [
@@ -2559,16 +2579,23 @@
             
             // Clear local matches array
             this.matches = [];
+            console.log('Local matches array cleared');
             
             // Generate new matches with the fixed algorithm
             this.generateWeeklyMatches();
+            console.log('New matches generated:', this.matches.length);
+            
             await this.saveToFirebase();
+            console.log('Matches saved to Firebase');
+            
             this.renderMatches();
             this.renderAdminContent();
-            alert('All matches have been cleared and regenerated successfully!');
+            alert(`Match regeneration complete! Generated ${this.matches.length} matches (${this.matches.filter(m => m.status === 'BYE').length} BYE, ${this.matches.filter(m => m.status === 'PENDING').length} regular).`);
           } catch (error) {
             console.error('Error regenerating matches:', error);
             alert('Error regenerating matches. Please try again.');
+          } finally {
+            this.isRegenerating = false;
           }
         }
       }
