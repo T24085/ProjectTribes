@@ -1284,6 +1284,8 @@
 
       async saveToFirebase() {
         try {
+          console.log('Saving to Firebase - matches count:', this.matches.length);
+          
           // Save ladder data
           const ladderRef = doc(db, 'ladder', 'data');
           await setDoc(ladderRef, {
@@ -1293,9 +1295,13 @@
             mapPool: this.mapPool,
             rules: this.rules
           });
+          console.log('Ladder data saved');
 
           // Save matches
-          for (let match of this.matches) {
+          for (let i = 0; i < this.matches.length; i++) {
+            const match = this.matches[i];
+            console.log(`Saving match ${i + 1}/${this.matches.length}:`, match.homeTeamId, 'vs', match.awayTeamId);
+            
             const matchData = {
               weekNumber: match.weekNumber,
               homeTeamId: match.homeTeamId,
@@ -1313,17 +1319,22 @@
               
               if (matchSnap.exists()) {
                 await updateDoc(matchRef, matchData);
+                console.log('Updated existing match:', match.id);
               } else {
                 // Document doesn't exist, create new one
                 const newMatchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
                 match.id = newMatchRef.id;
+                console.log('Created new match with ID:', newMatchRef.id);
               }
             } else {
               // Create new match
               const matchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
               match.id = matchRef.id;
+              console.log('Created new match with ID:', matchRef.id);
             }
           }
+          
+          console.log('All matches saved to Firebase');
 
         } catch (error) {
           console.error('Error saving to Firebase:', error);
