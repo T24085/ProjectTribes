@@ -1047,7 +1047,7 @@
   <script src="./assets/include.js" defer></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -2509,11 +2509,28 @@
 
       async regenerateMatches() {
         if (confirm('Are you sure you want to regenerate the current week\'s matches? This will overwrite existing matches.')) {
-          this.generateWeeklyMatches();
-          await this.saveToFirebase();
-          this.renderMatches();
-          this.renderAdminContent();
-          alert('Current week matches have been regenerated.');
+          try {
+            // Clear existing matches for current week from Firebase
+            const matchesQuery = query(
+              collection(db, 'ladderMatches'),
+              where('weekNumber', '==', this.currentWeek)
+            );
+            const matchesSnap = await getDocs(matchesQuery);
+            
+            // Delete existing matches
+            const deletePromises = matchesSnap.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(deletePromises);
+            
+            // Generate new matches with the fixed algorithm
+            this.generateWeeklyMatches();
+            await this.saveToFirebase();
+            this.renderMatches();
+            this.renderAdminContent();
+            alert('Current week matches have been regenerated successfully!');
+          } catch (error) {
+            console.error('Error regenerating matches:', error);
+            alert('Error regenerating matches. Please try again.');
+          }
         }
       }
 
