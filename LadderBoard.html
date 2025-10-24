@@ -2386,10 +2386,7 @@
           // Reset week and matches
           this.currentWeek = 1;
           this.matches = [];
-          this.generateWeeklyMatches();
-
-          // Save to Firebase
-          await this.saveToFirebase();
+          this.generateWeeklyMatches(); // This will save to Firebase
 
           this.closeAdminResetModal();
           this.renderRankings();
@@ -2412,11 +2409,8 @@
             // Advance to next week
             this.currentWeek++;
             
-            // Generate new matches for the new week
+            // Generate new matches for the new week (this will save to Firebase)
             this.generateWeeklyMatches();
-            
-            // Save to Firebase
-            await this.saveToFirebase();
             
             // Update UI
             this.renderMatches();
@@ -2608,12 +2602,9 @@
             this.matches = [];
             console.log('Local matches array cleared');
             
-            // Generate new matches with the fixed algorithm
+            // Generate new matches with the fixed algorithm (this will save to Firebase)
             this.generateWeeklyMatches();
             console.log('New matches generated:', this.matches.length);
-            
-            await this.saveToFirebase();
-            console.log('Matches saved to Firebase');
             
             this.renderMatches();
             this.renderAdminContent();
@@ -2674,12 +2665,8 @@
               this.currentWeek = 1;
               this.matches = [];
               
-              // Save clean state to Firebase
-              await this.saveToFirebase();
-              
-              // Generate fresh matches
+              // Generate fresh matches (this will save to Firebase)
               this.generateWeeklyMatches();
-              await this.saveToFirebase();
               
               // Update UI
               this.renderMatches();
