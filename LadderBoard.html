@@ -1297,7 +1297,20 @@
           });
           console.log('Ladder data saved');
 
-          // Save matches
+          // Save matches - first delete all existing matches for this week to prevent duplicates
+          const existingMatchesQuery = query(
+            collection(db, 'ladderMatches'),
+            where('weekNumber', '==', this.currentWeek)
+          );
+          const existingMatchesSnap = await getDocs(existingMatchesQuery);
+          
+          if (existingMatchesSnap.docs.length > 0) {
+            console.log('Deleting', existingMatchesSnap.docs.length, 'existing matches for week', this.currentWeek);
+            const deletePromises = existingMatchesSnap.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(deletePromises);
+          }
+
+          // Save new matches
           for (let i = 0; i < this.matches.length; i++) {
             const match = this.matches[i];
             console.log(`Saving match ${i + 1}/${this.matches.length}:`, match.homeTeamId, 'vs', match.awayTeamId);
@@ -1312,26 +1325,10 @@
               reportId: match.reportId || null
             };
 
-            if (match.id && match.id.startsWith('match-')) {
-              // Check if document exists before updating
-              const matchRef = doc(db, 'ladderMatches', match.id);
-              const matchSnap = await getDoc(matchRef);
-              
-              if (matchSnap.exists()) {
-                await updateDoc(matchRef, matchData);
-                console.log('Updated existing match:', match.id);
-              } else {
-                // Document doesn't exist, create new one
-                const newMatchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
-                match.id = newMatchRef.id;
-                console.log('Created new match with ID:', newMatchRef.id);
-              }
-            } else {
-              // Create new match
-              const matchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
-              match.id = matchRef.id;
-              console.log('Created new match with ID:', matchRef.id);
-            }
+            // Always create new match document
+            const matchRef = await addDoc(collection(db, 'ladderMatches'), matchData);
+            match.id = matchRef.id;
+            console.log('Created new match with ID:', matchRef.id);
           }
           
           console.log('All matches saved to Firebase');
@@ -1351,6 +1348,7 @@
         
         console.log('Generating weekly matches for week', this.currentWeek);
         console.log('Teams:', this.teams.map(t => t.id));
+        console.log('Total teams:', this.teams.length);
         
         // Ensure matches array is completely cleared
         this.matches.length = 0;
@@ -1359,6 +1357,7 @@
         // Use deterministic round-robin pairing based on week number
         const matches = this.generateRoundRobinPairings(teamIds, this.currentWeek);
         console.log('Generated pairings:', matches);
+        console.log('Expected matches for 13 teams: 6 regular + 1 bye = 7 total');
         
         // Track which teams have already been assigned matches to prevent duplicates
         const assignedTeams = new Set();
@@ -1455,8 +1454,9 @@
           rotatedTeams.splice(1, 0, lastTeam);
         }
         
-        // Create pairs - only create pairs where both teams are not BYE
-        for (let i = 0; i < rotatedTeams.length / 2; i++) {
+        // Create pairs - only create pairs where the home team is not BYE
+        // This ensures we get exactly (numTeams-1)/2 matches for odd teams
+        for (let i = 0; i < Math.floor(rotatedTeams.length / 2); i++) {
           const homeTeam = rotatedTeams[i];
           const awayTeam = rotatedTeams[rotatedTeams.length - 1 - i];
           
@@ -1469,6 +1469,7 @@
           }
         }
         
+        console.log('Generated pairings for week', weekNumber, ':', pairings);
         return pairings;
       }
 
