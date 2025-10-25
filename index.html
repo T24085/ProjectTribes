@@ -1034,6 +1034,80 @@
       gap: 1rem;
     }
 
+    /* Ticker Styles */
+    .ticker-container {
+      overflow: hidden;
+      white-space: nowrap;
+      background: var(--card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      padding: 1rem 0;
+      position: relative;
+    }
+
+    .ticker-track {
+      display: inline-flex;
+      animation: ticker-scroll 60s linear infinite;
+      gap: 2rem;
+      padding: 0 1rem;
+    }
+
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes ticker-scroll {
+      0% {
+        transform: translateX(100%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .ticker-match {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--surface-glass);
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      min-width: 300px;
+      flex-shrink: 0;
+    }
+
+    .ticker-match .team-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ticker-match .team-logo-small {
+      width: 24px;
+      height: 24px;
+      border-radius: 0.25rem;
+      object-fit: cover;
+    }
+
+    .ticker-match .team-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .ticker-match .match-score {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--accent-strong);
+      margin: 0 0.5rem;
+    }
+
+    .ticker-match .match-date {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+    }
+
     .recent-match-card {
       background: var(--card-bg);
       border-radius: 0.5rem;
@@ -2406,16 +2480,11 @@
 
       <!-- Recent Matches -->
       <div class="recent-matches-section">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="section-title mb-0">Recent Matches</h3>
-          <div class="flex items-center gap-2">
-            <button id="prev-week-btn" class="btn btn-sm btn-secondary" onclick="changeWeek(-1)">←</button>
-            <span id="current-week-display" class="text-sm text-gray-300 px-3">Week 4</span>
-            <button id="next-week-btn" class="btn btn-sm btn-secondary" onclick="changeWeek(1)">→</button>
+        <h3 class="section-title">Recent Matches</h3>
+        <div class="ticker-container">
+          <div class="ticker-track" id="ticker-track">
+            <!-- Ticker matches will be populated here -->
           </div>
-        </div>
-        <div class="recent-matches-grid" id="recent-matches-grid">
-          <!-- Recent matches will be populated here -->
         </div>
       </div>
     </div>
@@ -5705,108 +5774,77 @@
       }
     }
 
-    // Global variable to track current week
-    let currentViewWeek = 4;
-
-    // Load recent matches from Firebase
-    async function loadRecentMatches(week = null) {
+    // Load recent matches from Firebase for ticker
+    async function loadRecentMatches() {
       try {
-        console.log('Loading recent matches from TPL-O league system...');
+        console.log('Loading recent matches for ticker from TPL-O league system...');
         
         // Get all league schedules
         const schedulesRef = collection(db, 'leagueSchedules');
         const querySnapshot = await getDocs(schedulesRef);
         
         const allMatches = [];
-        const targetWeek = week || currentViewWeek;
         
         // Process each schedule document
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.weeks && Array.isArray(data.weeks)) {
             data.weeks.forEach(weekData => {
-              // Show matches from the target week and previous 2 weeks
-              if (weekData.week >= targetWeek - 2 && weekData.week <= targetWeek) {
-                if (weekData.matches && Array.isArray(weekData.matches)) {
-                  weekData.matches.forEach(match => {
-                    // Only include matches with scores (completed matches)
-                    if (match.homeScore != null && match.awayScore != null) {
-                      // Use match date if available, otherwise create a date based on week
-                      let matchDate = match.date;
-                      if (!matchDate) {
-                        // Create a date based on the week (assuming each week is 7 days apart)
-                        const weekOffset = (targetWeek - weekData.week) * 7;
-                        matchDate = new Date();
-                        matchDate.setDate(matchDate.getDate() - weekOffset);
-                        matchDate = matchDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-                      }
-                      
-                      allMatches.push({
-                        teamA: match.away,
-                        teamB: match.home,
-                        scoreA: match.awayScore,
-                        scoreB: match.homeScore,
-                        date: matchDate,
-                        created: new Date(matchDate), // Use match date for sorting
-                        season: data.season,
-                        division: data.division,
-                        week: weekData.week
-                      });
+              if (weekData.matches && Array.isArray(weekData.matches)) {
+                weekData.matches.forEach(match => {
+                  // Only include matches with scores (completed matches)
+                  if (match.homeScore != null && match.awayScore != null) {
+                    // Use match date if available, otherwise create a date based on week
+                    let matchDate = match.date;
+                    if (!matchDate) {
+                      // Create a date based on the week (assuming each week is 7 days apart)
+                      const weekOffset = (4 - weekData.week) * 7; // Assuming we're in week 4
+                      matchDate = new Date();
+                      matchDate.setDate(matchDate.getDate() - weekOffset);
+                      matchDate = matchDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
                     }
-                  });
-                }
+                    
+                    allMatches.push({
+                      teamA: match.away,
+                      teamB: match.home,
+                      scoreA: match.awayScore,
+                      scoreB: match.homeScore,
+                      date: matchDate,
+                      created: new Date(matchDate), // Use match date for sorting
+                      season: data.season,
+                      division: data.division,
+                      week: weekData.week
+                    });
+                  }
+                });
               }
             });
           }
         });
         
-        // Sort by week (most recent first), then by date if available
+        // Sort by date (most recent first)
         const recentMatches = allMatches
-          .sort((a, b) => {
-            // First sort by week (higher week number first)
-            if (b.week !== a.week) return b.week - a.week;
-            // Then sort by date if both have dates
-            if (a.date && b.date) return new Date(b.date) - new Date(a.date);
-            return 0;
-          })
-          .slice(0, 6);
+          .sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        console.log('Recent matches loaded:', recentMatches);
-        displayRecentMatches(recentMatches);
+        console.log('Recent matches loaded for ticker:', recentMatches);
+        displayTickerMatches(recentMatches);
       } catch (error) {
         console.error('Error loading recent matches:', error);
         // Show placeholder if no matches found
-        displayRecentMatches([]);
+        displayTickerMatches([]);
       }
     }
 
-    // Function to change week view
-    function changeWeek(direction) {
-      currentViewWeek += direction;
-      if (currentViewWeek < 1) currentViewWeek = 1;
-      if (currentViewWeek > 12) currentViewWeek = 12; // Assuming max 12 weeks
-      
-      // Update the display
-      document.getElementById('current-week-display').textContent = `Week ${currentViewWeek}`;
-      
-      // Update button states
-      document.getElementById('prev-week-btn').disabled = currentViewWeek <= 1;
-      document.getElementById('next-week-btn').disabled = currentViewWeek >= 12;
-      
-      // Reload matches for the new week
-      loadRecentMatches(currentViewWeek);
-    }
-
-    // Display recent matches in the UI
-    function displayRecentMatches(matches) {
-      const grid = document.getElementById('recent-matches-grid');
-      if (!grid) {
-        console.error('Recent matches grid not found');
+    // Display ticker matches
+    function displayTickerMatches(matches) {
+      const tickerTrack = document.getElementById('ticker-track');
+      if (!tickerTrack) {
+        console.error('Ticker track not found');
         return;
       }
       
       if (matches.length === 0) {
-        grid.innerHTML = '<div class="recent-match-card"><div class="match-teams"><span class="team-name">No recent matches found</span></div></div>';
+        tickerTrack.innerHTML = '<div class="ticker-match"><span class="team-name">No recent matches found</span></div>';
         return;
       }
       
@@ -5858,7 +5896,8 @@
         return null; // Return null if no match found
       };
       
-      grid.innerHTML = matches.map(match => {
+      // Create ticker items - duplicate the matches to create seamless loop
+      const tickerItems = [...matches, ...matches, ...matches].map(match => {
         const teamA = match.teamA || 'Team A';
         const teamB = match.teamB || 'Team B';
         const teamAbbr = getTeamAbbr(teamA);
@@ -5873,22 +5912,22 @@
         const teamBLogo = getTeamLogo(teamB);
         
         return `
-          <div class="recent-match-card">
-            <div class="match-teams">
-              <div class="team-info">
-                ${teamALogo ? `<img src="${teamALogo}" alt="${teamA} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
-                <span class="team-name">${teamAbbr}</span>
-              </div>
-              <div class="match-score">${scoreA} - ${scoreB}</div>
-              <div class="team-info">
-                ${teamBLogo ? `<img src="${teamBLogo}" alt="${teamB} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
-                <span class="team-name">${teamBAbbr}</span>
-              </div>
+          <div class="ticker-match">
+            <div class="team-info">
+              ${teamALogo ? `<img src="${teamALogo}" alt="${teamA} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
+              <span class="team-name">${teamAbbr}</span>
+            </div>
+            <div class="match-score">${scoreA} - ${scoreB}</div>
+            <div class="team-info">
+              ${teamBLogo ? `<img src="${teamBLogo}" alt="${teamB} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
+              <span class="team-name">${teamBAbbr}</span>
             </div>
             <div class="match-date">Week ${match.week || 'N/A'} • ${dateStr}</div>
           </div>
         `;
       }).join('');
+      
+      tickerTrack.innerHTML = tickerItems;
     }
 
     // Initialize Twitch chat functionality
@@ -6482,7 +6521,6 @@
     window.hideTeamStats = hideTeamStats;
     // window.debugStatsSystem = debugStatsSystem; // Function not defined
     window.loadRecentMatches = loadRecentMatches;
-    window.changeWeek = changeWeek;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
     window.initializeViewerTracking = initializeViewerTracking;
