@@ -1116,33 +1116,6 @@
       color: #fff;
     }
 
-    /* Team form indicators */
-    .team-form {
-      display: flex;
-      gap: 0.25rem;
-      margin-top: 0.5rem;
-    }
-
-    .form-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      font-size: 0.6rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-    }
-
-    .form-indicator.win {
-      background: var(--success);
-      color: white;
-    }
-
-    .form-indicator.loss {
-      background: var(--danger);
-      color: white;
-    }
 
     /* Team ranks and match details */
     .match-details {
@@ -2601,8 +2574,8 @@
       <div class="recent-matches-section">
         <h3 class="section-title">Recent Matches</h3>
         <div class="match-filters">
-          <button class="filter-button active" data-filter="all">All Teams</button>
-          <button class="filter-button" data-filter="selected">Selected Teams Only</button>
+          <button class="filter-button" data-filter="all">All Teams</button>
+          <button class="filter-button active" data-filter="selected">Selected Teams Only</button>
           <button class="filter-button" data-filter="current-week">This Week</button>
           <button class="filter-button" data-filter="upsets">Upsets Only</button>
         </div>
@@ -5911,7 +5884,7 @@
 
     // Global variables for enhanced match display
     let allMatchesData = [];
-    let currentFilter = 'all';
+    let currentFilter = 'selected';
     let teamRankings = {}; // Will store actual team rankings from Firebase
 
     // Load recent matches from Firebase with enhanced data
@@ -5962,9 +5935,7 @@
                       division: data.division,
                       week: weekData.week,
                       isUpset: isUpset,
-                      isOvertime: isOvertime,
-                      teamAForm: generateTeamForm(match.away),
-                      teamBForm: generateTeamForm(match.home)
+                      isOvertime: isOvertime
                     });
                   }
                 });
@@ -5985,73 +5956,98 @@
       }
     }
 
-    // Load team rankings from Firebase
+    // Load team rankings from Firebase league standings
     async function loadTeamRankings() {
       try {
-        // Try to load from ladder data first
-        const ladderRef = doc(db, 'ladder', 'data');
-        const ladderSnap = await getDoc(ladderRef);
+        console.log('Loading team rankings from league standings...');
         
-        if (ladderSnap.exists()) {
-          const ladderData = ladderSnap.data();
-          if (ladderData.teams && Array.isArray(ladderData.teams)) {
-            // Sort teams by Elo rating to get rankings
-            const sortedTeams = ladderData.teams.sort((a, b) => (b.elo || 1200) - (a.elo || 1200));
+        // Get all league schedules to compute standings
+        const schedulesRef = collection(db, 'leagueSchedules');
+        const querySnapshot = await getDocs(schedulesRef);
+        
+        let allStandings = [];
+        
+        // Process each schedule document to compute standings
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.weeks && Array.isArray(data.weeks)) {
+            const teams = new Set();
             
-            // Create rankings object with tied ranks
-            let currentRank = 1;
-            let lastElo = null;
-            
-            sortedTeams.forEach((team, index) => {
-              const teamElo = team.elo || 1200;
-              
-              if (lastElo !== null && teamElo !== lastElo) {
-                currentRank = index + 1;
+            // Collect all teams from matches
+            data.weeks.forEach(weekData => {
+              if (weekData.matches && Array.isArray(weekData.matches)) {
+                weekData.matches.forEach(match => {
+                  teams.add(match.home);
+                  teams.add(match.away);
+                });
               }
-              
-              teamRankings[team.id] = {
-                rank: currentRank,
-                elo: teamElo,
-                name: team.name
-              };
-              
-              lastElo = teamElo;
             });
             
-            console.log('Team rankings loaded from ladder:', teamRankings);
-            return;
+            // Compute standings for this season/division
+            const standings = computeStandings(data.weeks, Array.from(teams));
+            allStandings = allStandings.concat(standings);
           }
-        }
+        });
         
-        // Fallback to default rankings if ladder data not available
-        const defaultRankings = {
-          'TXM': { rank: 1, elo: 1400, name: 'Texas Militia' },
-          'DPRK': { rank: 2, elo: 1350, name: 'Team DPRK' },
-          'AV!': { rank: 3, elo: 1300, name: 'Avalanche!' },
-          'EPI': { rank: 4, elo: 1250, name: 'ePidemic' },
-          'WIZ': { rank: 5, elo: 1200, name: 'Magic' },
-          'TA': { rank: 6, elo: 1150, name: 'Toxic Aimers' },
-          'HoE': { rank: 7, elo: 1100, name: 'Hegemony of Euros' },
-          'FPS': { rank: 8, elo: 1050, name: 'Flag Pole Smokers' },
-          'FT': { rank: 9, elo: 1000, name: 'Flying Tractors' },
-          'KTL': { rank: 10, elo: 950, name: 'Kicked to Lobby' },
-          'Null': { rank: 11, elo: 900, name: 'Null' },
-          'UE': { rank: 12, elo: 850, name: 'Unhandled Exception' },
-          'Zen': { rank: 13, elo: 800, name: 'Zen' }
-        };
+        // Create rankings object from computed standings
+        teamRankings = {};
+        allStandings.forEach((team, index) => {
+          teamRankings[team.team] = {
+            rank: index + 1,
+            wins: team.wins,
+            losses: team.losses,
+            winPct: team.winPct,
+            pointDiff: team.pointDiff
+          };
+        });
         
-        teamRankings = defaultRankings;
-        console.log('Using default team rankings:', teamRankings);
+        console.log('Team rankings loaded from league standings:', teamRankings);
         
       } catch (error) {
         console.error('Error loading team rankings:', error);
         // Use default rankings as fallback
         teamRankings = {
-          'TXM': { rank: 1, elo: 1400, name: 'Texas Militia' },
-          'DPRK': { rank: 2, elo: 1350, name: 'Team DPRK' },
-          'AV!': { rank: 3, elo: 1300, name: 'Avalanche!' }
+          'TXM': { rank: 1, wins: 8, losses: 2, winPct: 0.8, pointDiff: 15 },
+          'DPRK': { rank: 2, wins: 7, losses: 3, winPct: 0.7, pointDiff: 12 },
+          'AV!': { rank: 3, wins: 6, losses: 4, winPct: 0.6, pointDiff: 8 }
         };
       }
+    }
+
+    // Compute standings from weeks data (same logic as StandingsAndMatches.html)
+    function computeStandings(weeks, teams) {
+      const table = {};
+      teams.forEach(t => (table[t] = { team: t, wins: 0, losses: 0, pointsFor: 0, pointsAgainst: 0 }));
+      
+      weeks.forEach(w => {
+        if (w.phase && w.phase !== 'regular') return;
+        w.matches.forEach(m => {
+          if (m.homeScore != null && m.awayScore != null) {
+            table[m.home].pointsFor += m.homeScore;
+            table[m.home].pointsAgainst += m.awayScore;
+            table[m.away].pointsFor += m.awayScore;
+            table[m.away].pointsAgainst += m.homeScore;
+            if (m.homeScore > m.awayScore) {
+              table[m.home].wins++;
+              table[m.away].losses++;
+            } else if (m.awayScore > m.homeScore) {
+              table[m.away].wins++;
+              table[m.home].losses++;
+            }
+          }
+        });
+      });
+      
+      return Object.values(table).map(r => {
+        const games = r.wins + r.losses;
+        const winPct = games ? r.wins / games : 0;
+        const pointDiff = r.pointsFor - r.pointsAgainst;
+        return { ...r, winPct, pointDiff };
+      }).sort((a, b) => {
+        if (b.winPct !== a.winPct) return b.winPct - a.winPct;
+        if (b.pointDiff !== a.pointDiff) return b.pointDiff - a.pointDiff;
+        return a.team.localeCompare(b.team);
+      });
     }
 
     // Helper function to determine if a match is an upset
@@ -6094,11 +6090,6 @@
       }
     }
 
-    // Generate team form (W-L pattern)
-    function generateTeamForm(teamName) {
-      const forms = ['W', 'L', 'W', 'L', 'W'];
-      return forms.slice(0, Math.floor(Math.random() * 3) + 3);
-    }
 
     // Setup filter button handlers
     function setupFilterHandlers() {
@@ -6233,9 +6224,6 @@
           if (outcome !== 'neutral') cardClasses.push(outcome);
         }
         
-        // Generate team form indicators
-        const teamAForm = match.teamAForm || [];
-        const teamBForm = match.teamBForm || [];
         
         return `
           <div class="${cardClasses.join(' ')}">
@@ -6264,14 +6252,6 @@
               <div>Week ${match.week || 'N/A'} • ${dateStr}</div>
             </div>
             
-            <div class="team-form">
-              <div style="display: flex; gap: 0.25rem;">
-                ${teamAForm.map(result => `<div class="form-indicator ${result.toLowerCase()}">${result}</div>`).join('')}
-              </div>
-              <div style="display: flex; gap: 0.25rem; margin-left: auto;">
-                ${teamBForm.map(result => `<div class="form-indicator ${result.toLowerCase()}">${result}</div>`).join('')}
-              </div>
-            </div>
           </div>
         `;
       }).join('');
