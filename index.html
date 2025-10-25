@@ -5701,83 +5701,40 @@
     // Load recent matches from Firebase
     async function loadRecentMatches() {
       try {
-        console.log('Loading recent matches from ladder system...');
+        console.log('Loading recent matches from TPL-O league system...');
         
-        // Get ladder data to find current week
-        const ladderRef = doc(db, 'ladder', 'data');
-        const ladderSnap = await getDoc(ladderRef);
+        // Get all league schedules
+        const schedulesRef = collection(db, 'leagueSchedules');
+        const querySnapshot = await getDocs(schedulesRef);
         
-        let currentWeek = 4; // Default to week 4 as mentioned
-        if (ladderSnap.exists()) {
-          const ladderData = ladderSnap.data();
-          currentWeek = ladderData.currentWeek || 4;
-        }
-        
-        console.log('Current week:', currentWeek);
-        
-        // Get matches from current week and previous weeks
         const allMatches = [];
         
-        // Load matches from current week and previous 2 weeks
-        for (let week = Math.max(1, currentWeek - 2); week <= currentWeek; week++) {
-          const matchesQuery = query(
-            collection(db, 'ladderMatches'),
-            where('weekNumber', '==', week)
-          );
-          const matchesSnap = await getDocs(matchesQuery);
-          
-          // Process matches for this week
-          const weekMatches = [];
-          for (const matchDoc of matchesSnap.docs) {
-            const matchData = matchDoc.data();
-            
-            // Only include completed matches with scores
-            if (matchData.status === 'FINAL' && matchData.reportId) {
-              try {
-                const reportRef = doc(db, 'ladderReports', matchData.reportId);
-                const reportSnap = await getDoc(reportRef);
-                
-                if (reportSnap.exists()) {
-                  const report = reportSnap.data();
-                  const homeTeam = matchData.homeTeamId;
-                  const awayTeam = matchData.awayTeamId;
-                  
-                  // Skip BYE matches
-                  if (awayTeam === 'BYE') continue;
-                  
-                  // Calculate total scores from map results
-                  let homeScore = 0;
-                  let awayScore = 0;
-                  
-                  if (report.perMapScores && Array.isArray(report.perMapScores)) {
-                    report.perMapScores.forEach(mapScore => {
-                      homeScore += mapScore.home || 0;
-                      awayScore += mapScore.away || 0;
+        // Process each schedule document
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.weeks && Array.isArray(data.weeks)) {
+            data.weeks.forEach(week => {
+              if (week.matches && Array.isArray(week.matches)) {
+                week.matches.forEach(match => {
+                  // Only include matches with scores (completed matches)
+                  if (match.homeScore != null && match.awayScore != null && match.date) {
+                    allMatches.push({
+                      teamA: match.away,
+                      teamB: match.home,
+                      scoreA: match.awayScore,
+                      scoreB: match.homeScore,
+                      date: match.date,
+                      created: new Date(match.date), // Use match date for sorting
+                      season: data.season,
+                      division: data.division,
+                      week: week.week
                     });
                   }
-                  
-                  // Determine winner for score display
-                  const homeWon = report.declaredWinnerTeamId === homeTeam;
-                  const finalHomeScore = homeWon ? Math.max(homeScore, awayScore) : Math.min(homeScore, awayScore);
-                  const finalAwayScore = homeWon ? Math.min(homeScore, awayScore) : Math.max(homeScore, awayScore);
-                  
-                  weekMatches.push({
-                    teamA: homeTeam,
-                    teamB: awayTeam,
-                    scoreA: finalHomeScore,
-                    scoreB: finalAwayScore,
-                    date: matchData.scheduledAt ? matchData.scheduledAt.toDate() : new Date(),
-                    week: week
-                  });
-                }
-              } catch (reportError) {
-                console.error('Error loading report for match:', matchData.id, reportError);
+                });
               }
-            }
+            });
           }
-          
-          allMatches.push(...weekMatches);
-        }
+        });
         
         // Sort by date (most recent first) and take the 6 most recent
         const recentMatches = allMatches
@@ -5826,22 +5783,8 @@
           }
         }
         
-        // Try variations mapping (ladder system team IDs)
+        // Try variations mapping (TPL-O team names)
         const variations = {
-          'av': 'AV!',
-          'epi': 'EPI',
-          'dprk': 'DPRK',
-          'zen': 'ZEN',
-          'fps': 'FPS',
-          'ft': 'FT',
-          'hoe': 'HoE',
-          'txm': 'TXM',
-          'ue': 'UE',
-          'wiz': 'WIZ',
-          'ktl': 'KTL',
-          'null': 'Null',
-          'ta': 'TA',
-          // Also support full names
           'Avalanche!': 'AV!',
           'Avalanche': 'AV!',
           'ePidemic': 'EPI',
@@ -5855,7 +5798,9 @@
           'Magic': 'WIZ',
           'DeadStop': 'DS',
           'null': 'Null',
-          'Zen': 'ZEN'
+          'Zen': 'ZEN',
+          'Team DPRK': 'DPRK',
+          'DPRK': 'DPRK'
         };
         
         const teamKey = variations[teamName];
