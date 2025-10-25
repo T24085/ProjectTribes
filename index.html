@@ -2406,7 +2406,14 @@
 
       <!-- Recent Matches -->
       <div class="recent-matches-section">
-        <h3 class="section-title">Recent Matches</h3>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="section-title mb-0">Recent Matches</h3>
+          <div class="flex items-center gap-2">
+            <button id="prev-week-btn" class="btn btn-sm btn-secondary" onclick="changeWeek(-1)">←</button>
+            <span id="current-week-display" class="text-sm text-gray-300 px-3">Week 4</span>
+            <button id="next-week-btn" class="btn btn-sm btn-secondary" onclick="changeWeek(1)">→</button>
+          </div>
+        </div>
         <div class="recent-matches-grid" id="recent-matches-grid">
           <!-- Recent matches will be populated here -->
         </div>
@@ -5698,8 +5705,11 @@
       }
     }
 
+    // Global variable to track current week
+    let currentViewWeek = 4;
+
     // Load recent matches from Firebase
-    async function loadRecentMatches() {
+    async function loadRecentMatches(week = null) {
       try {
         console.log('Loading recent matches from TPL-O league system...');
         
@@ -5708,37 +5718,57 @@
         const querySnapshot = await getDocs(schedulesRef);
         
         const allMatches = [];
+        const targetWeek = week || currentViewWeek;
         
         // Process each schedule document
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.weeks && Array.isArray(data.weeks)) {
-            data.weeks.forEach(week => {
-              if (week.matches && Array.isArray(week.matches)) {
-                week.matches.forEach(match => {
-                  // Only include matches with scores (completed matches)
-                  if (match.homeScore != null && match.awayScore != null && match.date) {
-                    allMatches.push({
-                      teamA: match.away,
-                      teamB: match.home,
-                      scoreA: match.awayScore,
-                      scoreB: match.homeScore,
-                      date: match.date,
-                      created: new Date(match.date), // Use match date for sorting
-                      season: data.season,
-                      division: data.division,
-                      week: week.week
-                    });
-                  }
-                });
+            data.weeks.forEach(weekData => {
+              // Show matches from the target week and previous 2 weeks
+              if (weekData.week >= targetWeek - 2 && weekData.week <= targetWeek) {
+                if (weekData.matches && Array.isArray(weekData.matches)) {
+                  weekData.matches.forEach(match => {
+                    // Only include matches with scores (completed matches)
+                    if (match.homeScore != null && match.awayScore != null) {
+                      // Use match date if available, otherwise create a date based on week
+                      let matchDate = match.date;
+                      if (!matchDate) {
+                        // Create a date based on the week (assuming each week is 7 days apart)
+                        const weekOffset = (targetWeek - weekData.week) * 7;
+                        matchDate = new Date();
+                        matchDate.setDate(matchDate.getDate() - weekOffset);
+                        matchDate = matchDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+                      }
+                      
+                      allMatches.push({
+                        teamA: match.away,
+                        teamB: match.home,
+                        scoreA: match.awayScore,
+                        scoreB: match.homeScore,
+                        date: matchDate,
+                        created: new Date(matchDate), // Use match date for sorting
+                        season: data.season,
+                        division: data.division,
+                        week: weekData.week
+                      });
+                    }
+                  });
+                }
               }
             });
           }
         });
         
-        // Sort by date (most recent first) and take the 6 most recent
+        // Sort by week (most recent first), then by date if available
         const recentMatches = allMatches
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .sort((a, b) => {
+            // First sort by week (higher week number first)
+            if (b.week !== a.week) return b.week - a.week;
+            // Then sort by date if both have dates
+            if (a.date && b.date) return new Date(b.date) - new Date(a.date);
+            return 0;
+          })
           .slice(0, 6);
         
         console.log('Recent matches loaded:', recentMatches);
@@ -5748,6 +5778,23 @@
         // Show placeholder if no matches found
         displayRecentMatches([]);
       }
+    }
+
+    // Function to change week view
+    function changeWeek(direction) {
+      currentViewWeek += direction;
+      if (currentViewWeek < 1) currentViewWeek = 1;
+      if (currentViewWeek > 12) currentViewWeek = 12; // Assuming max 12 weeks
+      
+      // Update the display
+      document.getElementById('current-week-display').textContent = `Week ${currentViewWeek}`;
+      
+      // Update button states
+      document.getElementById('prev-week-btn').disabled = currentViewWeek <= 1;
+      document.getElementById('next-week-btn').disabled = currentViewWeek >= 12;
+      
+      // Reload matches for the new week
+      loadRecentMatches(currentViewWeek);
     }
 
     // Display recent matches in the UI
@@ -5838,7 +5885,7 @@
                 <span class="team-name">${teamBAbbr}</span>
               </div>
             </div>
-            <div class="match-date">${dateStr}</div>
+            <div class="match-date">Week ${match.week || 'N/A'} • ${dateStr}</div>
           </div>
         `;
       }).join('');
@@ -6435,6 +6482,7 @@
     window.hideTeamStats = hideTeamStats;
     // window.debugStatsSystem = debugStatsSystem; // Function not defined
     window.loadRecentMatches = loadRecentMatches;
+    window.changeWeek = changeWeek;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
     window.initializeViewerTracking = initializeViewerTracking;
