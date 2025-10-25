@@ -1169,36 +1169,6 @@
       font-weight: bold;
     }
 
-    /* Team filtering controls */
-    .match-filters {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .filter-button {
-      background: var(--surface-glass);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: var(--text-primary);
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 0.9rem;
-    }
-
-    .filter-button:hover {
-      background: var(--accent);
-      color: white;
-    }
-
-    .filter-button.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
 
     .recent-match-card {
       background: var(--card-bg);
@@ -2573,12 +2543,6 @@
       <!-- Recent Matches -->
       <div class="recent-matches-section">
         <h3 class="section-title">Recent Matches</h3>
-        <div class="match-filters">
-          <button class="filter-button" data-filter="all">All Teams</button>
-          <button class="filter-button active" data-filter="selected">Selected Teams Only</button>
-          <button class="filter-button" data-filter="current-week">This Week</button>
-          <button class="filter-button" data-filter="upsets">Upsets Only</button>
-        </div>
         <div class="recent-matches-grid" id="recent-matches-grid">
           <!-- Recent matches will be populated here -->
         </div>
@@ -5884,7 +5848,6 @@
 
     // Global variables for enhanced match display
     let allMatchesData = [];
-    let currentFilter = 'selected';
     let teamRankings = {}; // Will store actual team rankings from Firebase
 
     // Load recent matches from Firebase with enhanced data
@@ -5949,7 +5912,6 @@
         
         console.log('Enhanced matches loaded:', allMatchesData);
         displayRecentMatches(allMatchesData);
-        setupFilterHandlers();
       } catch (error) {
         console.error('Error loading recent matches:', error);
         displayRecentMatches([]);
@@ -6091,49 +6053,6 @@
     }
 
 
-    // Setup filter button handlers
-    function setupFilterHandlers() {
-      const filterButtons = document.querySelectorAll('.filter-button');
-      filterButtons.forEach(button => {
-        button.addEventListener('click', () => {
-          // Remove active class from all buttons
-          filterButtons.forEach(btn => btn.classList.remove('active'));
-          // Add active class to clicked button
-          button.classList.add('active');
-          
-          currentFilter = button.dataset.filter;
-          applyFilters();
-        });
-      });
-    }
-
-    // Apply filters to matches
-    function applyFilters() {
-      let filteredMatches = [...allMatchesData];
-      
-      switch (currentFilter) {
-        case 'selected':
-          // Filter to only show matches with selected teams
-          filteredMatches = filteredMatches.filter(match => 
-            selectedTeams.includes(match.teamA) || selectedTeams.includes(match.teamB)
-          );
-          break;
-        case 'current-week':
-          // Filter to current week (Week 4)
-          filteredMatches = filteredMatches.filter(match => match.week === 4);
-          break;
-        case 'upsets':
-          // Filter to only upset matches
-          filteredMatches = filteredMatches.filter(match => match.isUpset);
-          break;
-        case 'all':
-        default:
-          // Show all matches
-          break;
-      }
-      
-      displayRecentMatches(filteredMatches);
-    }
 
     // Enhanced display function with all new features
     function displayRecentMatches(matches) {
@@ -6143,8 +6062,13 @@
         return;
       }
       
-      if (matches.length === 0) {
-        grid.innerHTML = '<div class="recent-match-card"><div class="match-teams"><span class="team-name">No recent matches found</span></div></div>';
+      // Filter to only show matches with selected teams
+      const filteredMatches = matches.filter(match => 
+        selectedTeams.includes(match.teamA) || selectedTeams.includes(match.teamB)
+      );
+      
+      if (filteredMatches.length === 0) {
+        grid.innerHTML = '<div class="recent-match-card"><div class="match-teams"><span class="team-name">No matches found for selected teams</span></div></div>';
         return;
       }
       
@@ -6197,15 +6121,13 @@
         return 'neutral';
       };
       
-      grid.innerHTML = matches.map(match => {
+      grid.innerHTML = filteredMatches.map(match => {
         const teamA = match.teamA || 'Team A';
         const teamB = match.teamB || 'Team B';
         const teamAbbr = getTeamAbbr(teamA);
         const teamBAbbr = getTeamAbbr(teamB);
         const scoreA = match.scoreA || 0;
         const scoreB = match.scoreB || 0;
-        const date = match.date ? new Date(match.date) : new Date();
-        const dateStr = date.toLocaleDateString();
         
         // Get team logos and rankings
         const teamALogo = getTeamLogo(teamA);
@@ -6223,7 +6145,6 @@
           const outcome = getMatchOutcome(match, primarySelectedTeam);
           if (outcome !== 'neutral') cardClasses.push(outcome);
         }
-        
         
         return `
           <div class="${cardClasses.join(' ')}">
@@ -6249,7 +6170,7 @@
                 <div class="team-rank rank-${teamARank <= 3 ? teamARank : ''}">${getTeamRankDisplay(teamAbbr)}</div>
                 <div class="team-rank rank-${teamBRank <= 3 ? teamBRank : ''}">${getTeamRankDisplay(teamBAbbr)}</div>
               </div>
-              <div>Week ${match.week || 'N/A'} • ${dateStr}</div>
+              <div>Week ${match.week || 'N/A'}</div>
             </div>
             
           </div>
@@ -6261,7 +6182,7 @@
     function updateSelectedTeams(teams) {
       selectedTeams = teams;
       console.log('Selected teams updated:', selectedTeams);
-      applyFilters();
+      displayRecentMatches(allMatchesData);
     }
 
     // Initialize Twitch chat functionality
