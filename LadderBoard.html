@@ -606,6 +606,21 @@
       #adminPanelContent h3 {
         font-size: 1.1rem;
       }
+
+      /* Admin table responsive */
+      #adminPanelContent table {
+        font-size: 0.9rem;
+      }
+
+      #adminPanelContent table th,
+      #adminPanelContent table td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      #adminPanelContent table th:nth-child(3),
+      #adminPanelContent table td:nth-child(3) {
+        display: none;
+      }
     }
 
     @media (max-width: 480px) {
@@ -621,6 +636,22 @@
       #adminPanelContent [style*="grid-template-columns"] {
         grid-template-columns: 1fr !important;
         gap: 0.75rem !important;
+      }
+
+      /* Hide less important columns on very small screens */
+      #adminPanelContent table th:nth-child(4),
+      #adminPanelContent table td:nth-child(4) {
+        display: none;
+      }
+
+      /* Make map pool more compact on mobile */
+      #adminPanelContent [style*="flex-wrap"] {
+        gap: 0.5rem !important;
+      }
+
+      #adminPanelContent [style*="flex-wrap"] > div {
+        font-size: 0.8rem !important;
+        padding: 0.4rem 0.8rem !important;
       }
     }
   </style>
@@ -2244,124 +2275,249 @@
         const container = document.getElementById('adminMatchesList');
         container.innerHTML = '';
 
-        // Create a responsive grid container
-        const gridContainer = document.createElement('div');
-        gridContainer.style.display = 'grid';
-        gridContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(350px, 1fr))';
-        gridContainer.style.gap = '1rem';
+        // Create a more compact table-like layout for matches
+        const tableContainer = document.createElement('div');
+        tableContainer.style.background = 'var(--card-bg)';
+        tableContainer.style.borderRadius = '1rem';
+        tableContainer.style.overflow = 'hidden';
+        tableContainer.style.boxShadow = 'var(--shadow-xl)';
+        tableContainer.style.backdropFilter = 'blur(16px)';
 
+        // Create table
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
+
+        // Table header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr style="background: var(--surface-glass);">
+            <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Match</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Status</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Maps</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Actions</th>
+          </tr>
+        `;
+
+        // Table body
+        const tbody = document.createElement('tbody');
+        
         this.adminMatches.forEach((match, index) => {
           console.log(`Rendering match ${index + 1}:`, match.homeTeamId, 'vs', match.awayTeamId);
-          const matchCard = document.createElement('div');
-          matchCard.style.background = 'var(--surface-glass)';
-          matchCard.style.padding = '1rem';
-          matchCard.style.borderRadius = '0.5rem';
-          matchCard.style.border = '1px solid rgba(148, 163, 184, 0.16)';
+          const row = document.createElement('tr');
+          row.style.borderBottom = '1px solid rgba(148, 163, 184, 0.08)';
+          row.style.transition = 'background-color var(--transition-snappy)';
+          
+          // Add hover effect
+          row.addEventListener('mouseenter', () => {
+            row.style.background = 'rgba(56, 189, 248, 0.05)';
+          });
+          row.addEventListener('mouseleave', () => {
+            row.style.background = 'transparent';
+          });
 
           const statusClass = `status-${match.status.toLowerCase()}`;
           
           if (match.status === 'BYE') {
-            matchCard.innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong>${match.homeTeam.name} [${match.homeTeam.tag}] - BYE</strong>
+            row.innerHTML = `
+              <td style="padding: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" style="width: 32px; height: 32px; border-radius: 0.5rem; object-fit: cover; background: var(--surface-glass);" onerror="this.src='images/NullLogo.png'">
+                  <div>
+                    <div style="font-weight: 600; color: var(--text-primary);">${match.homeTeam.name} [${match.homeTeam.tag}]</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">BYE Week</div>
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 1rem; text-align: center;">
                 <span class="status-badge ${statusClass}">${match.status}</span>
-              </div>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button class="btn btn-secondary" onclick="ladderBoard.editMatch('${match.id}')">Edit Match</button>
-              </div>
+              </td>
+              <td style="padding: 1rem; text-align: center; color: var(--text-muted);">
+                -
+              </td>
+              <td style="padding: 1rem; text-align: center;">
+                <button class="btn btn-secondary" onclick="ladderBoard.editMatch('${match.id}')" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Edit</button>
+              </td>
             `;
           } else {
-            matchCard.innerHTML = `
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <strong>${match.homeTeam.name} [${match.homeTeam.tag}] vs ${match.awayTeam.name} [${match.awayTeam.tag}]</strong>
+            row.innerHTML = `
+              <td style="padding: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <img src="${match.homeTeam.logo}" alt="${match.homeTeam.name}" style="width: 24px; height: 24px; border-radius: 0.25rem; object-fit: cover; background: var(--surface-glass);" onerror="this.src='images/NullLogo.png'">
+                    <span style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${match.homeTeam.tag}</span>
+                  </div>
+                  <span style="color: var(--text-muted); font-weight: 600;">vs</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <img src="${match.awayTeam.logo}" alt="${match.awayTeam.name}" style="width: 24px; height: 24px; border-radius: 0.25rem; object-fit: cover; background: var(--surface-glass);" onerror="this.src='images/NullLogo.png'">
+                    <span style="font-weight: 600; color: var(--text-primary); font-size: 0.9rem;">${match.awayTeam.tag}</span>
+                  </div>
+                </div>
+              </td>
+              <td style="padding: 1rem; text-align: center;">
                 <span class="status-badge ${statusClass}">${match.status}</span>
-              </div>
-              <div style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
-                Maps: ${match.mapSet.join(', ')}
-              </div>
-              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button class="btn btn-secondary" onclick="ladderBoard.editMatch('${match.id}')">Edit Match</button>
-                <button class="btn btn-primary" onclick="ladderBoard.editScore('${match.id}')">Edit Score</button>
-              </div>
+              </td>
+              <td style="padding: 1rem; text-align: center;">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                  ${match.mapSet.slice(0, 2).join(', ')}${match.mapSet.length > 2 ? '...' : ''}
+                </div>
+              </td>
+              <td style="padding: 1rem; text-align: center;">
+                <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                  <button class="btn btn-secondary" onclick="ladderBoard.editMatch('${match.id}')" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Edit</button>
+                  <button class="btn btn-primary" onclick="ladderBoard.editScore('${match.id}')" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Score</button>
+                </div>
+              </td>
             `;
           }
           
-          gridContainer.appendChild(matchCard);
+          tbody.appendChild(row);
         });
 
-        container.appendChild(gridContainer);
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        tableContainer.appendChild(table);
+        container.appendChild(tableContainer);
       }
 
       renderAdminTeams() {
         const container = document.getElementById('adminTeamsList');
         container.innerHTML = '';
 
-        // Create a responsive grid container
-        const gridContainer = document.createElement('div');
-        gridContainer.style.display = 'grid';
-        gridContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(280px, 1fr))';
-        gridContainer.style.gap = '1rem';
+        // Create a more compact table-like layout
+        const tableContainer = document.createElement('div');
+        tableContainer.style.background = 'var(--card-bg)';
+        tableContainer.style.borderRadius = '1rem';
+        tableContainer.style.overflow = 'hidden';
+        tableContainer.style.boxShadow = 'var(--shadow-xl)';
+        tableContainer.style.backdropFilter = 'blur(16px)';
 
-        this.teams.forEach(team => {
-          const teamCard = document.createElement('div');
-          teamCard.style.background = 'var(--surface-glass)';
-          teamCard.style.padding = '1rem';
-          teamCard.style.borderRadius = '0.5rem';
-          teamCard.style.border = '1px solid rgba(148, 163, 184, 0.16)';
+        // Create table
+        const table = document.createElement('table');
+        table.style.width = '100%';
+        table.style.borderCollapse = 'collapse';
 
-          teamCard.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
-              <img src="${team.logo}" alt="${team.name}" class="team-logo" onerror="this.src='images/NullLogo.png'">
-              <div>
-                <div style="font-weight: 600;">${team.name} [${team.tag}]</div>
-                <div style="font-size: 0.9rem; color: var(--text-muted);">Elo: ${Math.round(team.elo)} | Record: ${team.wins}-${team.losses}</div>
+        // Table header
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+          <tr style="background: var(--surface-glass);">
+            <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Team</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Elo</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Record</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Maps</th>
+            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Last 5</th>
+          </tr>
+        `;
+
+        // Table body
+        const tbody = document.createElement('tbody');
+        
+        // Sort teams by Elo for admin view
+        const sortedTeams = [...this.teams].sort((a, b) => b.elo - a.elo);
+        
+        sortedTeams.forEach((team, index) => {
+          const row = document.createElement('tr');
+          row.style.borderBottom = '1px solid rgba(148, 163, 184, 0.08)';
+          row.style.transition = 'background-color var(--transition-snappy)';
+          
+          // Add hover effect
+          row.addEventListener('mouseenter', () => {
+            row.style.background = 'rgba(56, 189, 248, 0.05)';
+          });
+          row.addEventListener('mouseleave', () => {
+            row.style.background = 'transparent';
+          });
+
+          const last5Html = this.renderLastFive(team.last5);
+
+          row.innerHTML = `
+            <td style="padding: 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <img src="${team.logo}" alt="${team.name}" style="width: 32px; height: 32px; border-radius: 0.5rem; object-fit: cover; background: var(--surface-glass);" onerror="this.src='images/NullLogo.png'">
+                <div>
+                  <div style="font-weight: 600; color: var(--text-primary);">${team.name}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">[${team.tag}]</div>
+                </div>
               </div>
-            </div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">
-              Maps: ${team.mapsWon}-${team.mapsLost} | Last 5: ${team.last5 || '-'}
-            </div>
+            </td>
+            <td style="padding: 1rem; text-align: center;">
+              <span style="font-weight: 600; color: var(--accent-strong);">${Math.round(team.elo)}</span>
+            </td>
+            <td style="padding: 1rem; text-align: center;">
+              <span style="font-weight: 500;">${team.wins}-${team.losses}</span>
+            </td>
+            <td style="padding: 1rem; text-align: center;">
+              <span style="font-weight: 500;">${team.mapsWon}-${team.mapsLost}</span>
+            </td>
+            <td style="padding: 1rem; text-align: center;">
+              <div style="display: flex; gap: 0.25rem; justify-content: center;">${last5Html}</div>
+            </td>
           `;
           
-          gridContainer.appendChild(teamCard);
+          tbody.appendChild(row);
         });
 
-        container.appendChild(gridContainer);
+        table.appendChild(thead);
+        table.appendChild(tbody);
+        tableContainer.appendChild(table);
+        container.appendChild(tableContainer);
       }
 
       renderAdminMapPool() {
         const container = document.getElementById('adminMapPool');
         container.innerHTML = '';
 
-        const mapGrid = document.createElement('div');
-        mapGrid.style.display = 'grid';
-        mapGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
-        mapGrid.style.gap = '1rem';
-        mapGrid.style.marginBottom = '1rem';
+        // Create a more compact horizontal layout for maps
+        const mapContainer = document.createElement('div');
+        mapContainer.style.background = 'var(--card-bg)';
+        mapContainer.style.borderRadius = '1rem';
+        mapContainer.style.padding = '1.5rem';
+        mapContainer.style.boxShadow = 'var(--shadow-xl)';
+        mapContainer.style.backdropFilter = 'blur(16px)';
+        mapContainer.style.border = '1px solid rgba(148, 163, 184, 0.16)';
+
+        // Create a flex container for maps
+        const mapFlex = document.createElement('div');
+        mapFlex.style.display = 'flex';
+        mapFlex.style.flexWrap = 'wrap';
+        mapFlex.style.gap = '0.75rem';
+        mapFlex.style.marginBottom = '1.5rem';
 
         this.mapPool.forEach((map, index) => {
-          const mapCard = document.createElement('div');
-          mapCard.style.background = 'var(--surface-glass)';
-          mapCard.style.padding = '1rem';
-          mapCard.style.borderRadius = '0.5rem';
-          mapCard.style.textAlign = 'center';
-          mapCard.style.border = '1px solid rgba(148, 163, 184, 0.16)';
+          const mapTag = document.createElement('div');
+          mapTag.style.background = 'var(--surface-glass)';
+          mapTag.style.padding = '0.5rem 1rem';
+          mapTag.style.borderRadius = '1rem';
+          mapTag.style.border = '1px solid rgba(148, 163, 184, 0.16)';
+          mapTag.style.display = 'flex';
+          mapTag.style.alignItems = 'center';
+          mapTag.style.gap = '0.5rem';
+          mapTag.style.transition = 'all var(--transition-snappy)';
           
-          mapCard.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.5rem;">${map}</div>
-            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" onclick="ladderBoard.removeMap(${index})">Remove</button>
+          // Add hover effect
+          mapTag.addEventListener('mouseenter', () => {
+            mapTag.style.background = 'rgba(248, 113, 113, 0.1)';
+            mapTag.style.borderColor = 'rgba(248, 113, 113, 0.3)';
+          });
+          mapTag.addEventListener('mouseleave', () => {
+            mapTag.style.background = 'var(--surface-glass)';
+            mapTag.style.borderColor = 'rgba(148, 163, 184, 0.16)';
+          });
+          
+          mapTag.innerHTML = `
+            <span style="font-weight: 600; color: var(--text-primary);">${map}</span>
+            <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; border-radius: 0.5rem;" onclick="ladderBoard.removeMap(${index})">×</button>
           `;
           
-          mapGrid.appendChild(mapCard);
+          mapFlex.appendChild(mapTag);
         });
-
-        container.appendChild(mapGrid);
 
         // Add new map input
         const addMapDiv = document.createElement('div');
         addMapDiv.style.display = 'flex';
-        addMapDiv.style.gap = '0.5rem';
+        addMapDiv.style.gap = '0.75rem';
         addMapDiv.style.alignItems = 'center';
-        addMapDiv.style.maxWidth = '400px';
+        addMapDiv.style.maxWidth = '500px';
         
         const mapInput = document.createElement('input');
         mapInput.type = 'text';
@@ -2377,7 +2533,10 @@
         
         addMapDiv.appendChild(mapInput);
         addMapDiv.appendChild(addButton);
-        container.appendChild(addMapDiv);
+
+        mapContainer.appendChild(mapFlex);
+        mapContainer.appendChild(addMapDiv);
+        container.appendChild(mapContainer);
       }
 
       // Rules Management
