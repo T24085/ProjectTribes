@@ -1072,7 +1072,8 @@
     class LadderBoard {
       constructor() {
         this.teams = [];
-        this.matches = [];
+        this.matches = []; // Regular matches for public view
+        this.adminMatches = []; // Admin matches for admin panel
         this.currentWeek = 1;
         this.mapPool = [];
         this.lastRefresh = null;
@@ -1221,9 +1222,53 @@
           console.log('Found existing matches, skipping generation');
         }
 
+        // Synchronize admin matches with regular matches
+        this.syncAdminMatches();
+
         // Set refresh times
         this.lastRefresh = new Date();
         this.nextRefresh = this.getNextRefreshTime();
+      }
+
+      // Synchronize admin matches with regular matches
+      syncAdminMatches() {
+        console.log('Syncing admin matches with regular matches...');
+        console.log('Regular matches count:', this.matches.length);
+        
+        // Create a deep copy of matches for admin use
+        this.adminMatches = this.matches.map(match => ({
+          ...match,
+          homeTeam: { ...match.homeTeam },
+          awayTeam: { ...match.awayTeam },
+          report: match.report ? { ...match.report } : null
+        }));
+        
+        console.log('Admin matches count after sync:', this.adminMatches.length);
+      }
+
+      // Sync changes from admin matches back to regular matches
+      syncChangesToRegularMatches() {
+        console.log('Syncing changes from admin matches to regular matches...');
+        
+        // Update regular matches with changes from admin matches
+        this.adminMatches.forEach(adminMatch => {
+          const regularMatch = this.matches.find(m => m.id === adminMatch.id);
+          if (regularMatch) {
+            // Update all properties except the team references (which are already updated)
+            regularMatch.homeTeamId = adminMatch.homeTeamId;
+            regularMatch.awayTeamId = adminMatch.awayTeamId;
+            regularMatch.status = adminMatch.status;
+            regularMatch.mapSet = [...adminMatch.mapSet];
+            regularMatch.reportId = adminMatch.reportId;
+            
+            // Update team references
+            regularMatch.homeTeam = adminMatch.homeTeam;
+            regularMatch.awayTeam = adminMatch.awayTeam;
+            regularMatch.report = adminMatch.report;
+          }
+        });
+        
+        console.log('Changes synced to regular matches');
       }
 
       async loadFromFirebase() {
@@ -1425,6 +1470,9 @@
         
         console.log('Final matches generated:', this.matches.length);
         console.log('Assigned teams:', Array.from(assignedTeams));
+        
+        // Synchronize admin matches
+        this.syncAdminMatches();
         
         // Save to Firebase
         this.saveToFirebase();
@@ -1949,6 +1997,9 @@
               submittedBy: 'test@example.com'
             };
             
+            // Sync changes to admin matches
+            this.syncAdminMatches();
+            
             this.closeReportModal();
             this.renderMatches();
             
@@ -1983,6 +2034,9 @@
           this.currentReportMatch.status = 'REPORTED';
           this.currentReportMatch.reportId = reportRef.id;
           this.currentReportMatch.report = { id: reportRef.id, ...reportData };
+          
+          // Sync changes to admin matches
+          this.syncAdminMatches();
           
           this.closeReportModal();
           this.renderMatches();
@@ -2088,6 +2142,9 @@
             alert('Match confirmed! Waiting for the other team to confirm.');
           }
           
+          // Sync changes to admin matches
+          this.syncAdminMatches();
+          
           this.closeConfirmModal();
           this.renderMatches();
           this.renderRankings();
@@ -2121,6 +2178,9 @@
           });
           
           match.status = 'CONTESTED';
+          
+          // Sync changes to admin matches
+          this.syncAdminMatches();
           
           this.closeConfirmModal();
           this.renderMatches();
@@ -2178,8 +2238,8 @@
       }
 
       renderAdminMatches() {
-        console.log('renderAdminMatches called - matches count:', this.matches.length);
-        console.log('Matches array:', this.matches.map(m => `${m.homeTeamId} vs ${m.awayTeamId}`));
+        console.log('renderAdminMatches called - admin matches count:', this.adminMatches.length);
+        console.log('Admin matches array:', this.adminMatches.map(m => `${m.homeTeamId} vs ${m.awayTeamId}`));
         
         const container = document.getElementById('adminMatchesList');
         container.innerHTML = '';
@@ -2190,7 +2250,7 @@
         gridContainer.style.gridTemplateColumns = 'repeat(auto-fit, minmax(350px, 1fr))';
         gridContainer.style.gap = '1rem';
 
-        this.matches.forEach((match, index) => {
+        this.adminMatches.forEach((match, index) => {
           console.log(`Rendering match ${index + 1}:`, match.homeTeamId, 'vs', match.awayTeamId);
           const matchCard = document.createElement('div');
           matchCard.style.background = 'var(--surface-glass)';
@@ -2386,7 +2446,7 @@
           // Reset week and matches
           this.currentWeek = 1;
           this.matches = [];
-          this.generateWeeklyMatches(); // This will save to Firebase
+          this.generateWeeklyMatches(); // This will save to Firebase and sync admin matches
 
           this.closeAdminResetModal();
           this.renderRankings();
@@ -2409,7 +2469,7 @@
             // Advance to next week
             this.currentWeek++;
             
-            // Generate new matches for the new week (this will save to Firebase)
+            // Generate new matches for the new week (this will save to Firebase and sync admin matches)
             this.generateWeeklyMatches();
             
             // Update UI
@@ -2602,7 +2662,7 @@
             this.matches = [];
             console.log('Local matches array cleared');
             
-            // Generate new matches with the fixed algorithm (this will save to Firebase)
+            // Generate new matches with the fixed algorithm (this will save to Firebase and sync admin matches)
             this.generateWeeklyMatches();
             console.log('New matches generated:', this.matches.length);
             
@@ -2665,7 +2725,7 @@
               this.currentWeek = 1;
               this.matches = [];
               
-              // Generate fresh matches (this will save to Firebase)
+              // Generate fresh matches (this will save to Firebase and sync admin matches)
               this.generateWeeklyMatches();
               
               // Update UI
@@ -2684,7 +2744,7 @@
 
       // Match Management
       editMatch(matchId) {
-        const match = this.matches.find(m => m.id === matchId);
+        const match = this.adminMatches.find(m => m.id === matchId);
         if (!match) return;
 
         this.currentEditMatch = match;
@@ -2833,6 +2893,9 @@
             { id: 'BYE', name: 'BYE', tag: 'BYE', logo: '', elo: 0, wins: 0, losses: 0, mapsWon: 0, mapsLost: 0, last5: '' } :
             this.teams.find(t => t.id === awayTeamId);
 
+          // Sync changes back to regular matches
+          this.syncChangesToRegularMatches();
+
           // Save to Firebase
           await this.saveToFirebase();
 
@@ -2849,7 +2912,7 @@
 
       // Score Management
       editScore(matchId) {
-        const match = this.matches.find(m => m.id === matchId);
+        const match = this.adminMatches.find(m => m.id === matchId);
         if (!match) return;
 
         this.currentEditScore = match;
@@ -2963,6 +3026,9 @@
 
           // Update team stats
           await this.updateTeamStats(this.currentEditScore, reportData);
+
+          // Sync changes back to regular matches
+          this.syncChangesToRegularMatches();
 
           // Save to Firebase
           await this.saveToFirebase();
