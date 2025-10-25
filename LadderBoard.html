@@ -816,6 +816,7 @@
               <button class="btn btn-secondary" onclick="ladderBoard.regenerateMatches()">Regenerate Current Week Matches</button>
               <button class="btn btn-warning" onclick="ladderBoard.nuclearReset()">Nuclear Reset (Clear All Data)</button>
               <button class="btn btn-primary" onclick="ladderBoard.refreshElo()">Refresh Elo Ratings</button>
+              <button class="btn btn-secondary" onclick="ladderBoard.testByeDistribution()">Test BYE Distribution</button>
             </div>
             <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
               Reset will clear all team stats and start fresh. Advance Week will process finalized matches and update Elo ratings. Refresh Elo will update ratings without advancing the week.
@@ -1302,6 +1303,36 @@
         console.log('Changes synced to regular matches');
       }
 
+      // Debug method to test BYE distribution across weeks
+      testByeDistribution() {
+        console.log('Testing BYE distribution across 12 weeks...');
+        const teamIds = this.teams.map(t => t.id);
+        const byeCounts = {};
+        
+        // Initialize bye counts
+        teamIds.forEach(teamId => {
+          byeCounts[teamId] = 0;
+        });
+        
+        // Test first 12 weeks
+        for (let week = 1; week <= 12; week++) {
+          const pairings = this.generateRoundRobinPairings(teamIds, week);
+          const byePairings = pairings.filter(p => p.awayTeamId === 'BYE');
+          
+          console.log(`Week ${week}: ${byePairings.length} BYE(s)`);
+          byePairings.forEach(pairing => {
+            byeCounts[pairing.homeTeamId]++;
+            console.log(`  - ${pairing.homeTeamId} gets BYE`);
+          });
+        }
+        
+        console.log('BYE distribution summary:');
+        Object.entries(byeCounts).forEach(([teamId, count]) => {
+          const team = this.teams.find(t => t.id === teamId);
+          console.log(`  ${team.name}: ${count} BYE(s)`);
+        });
+      }
+
       async loadFromFirebase() {
         try {
           // Load ladder data from Firebase
@@ -1502,6 +1533,14 @@
         console.log('Final matches generated:', this.matches.length);
         console.log('Assigned teams:', Array.from(assignedTeams));
         
+        // Debug: Check BYE distribution
+        const byeMatches = this.matches.filter(m => m.status === 'BYE');
+        const regularMatches = this.matches.filter(m => m.status === 'PENDING');
+        console.log(`BYE matches: ${byeMatches.length}, Regular matches: ${regularMatches.length}`);
+        if (byeMatches.length > 0) {
+          console.log('Teams with BYE this week:', byeMatches.map(m => m.homeTeam.name));
+        }
+        
         // Synchronize admin matches
         this.syncAdminMatches();
         
@@ -1533,17 +1572,31 @@
           rotatedTeams.splice(1, 0, lastTeam);
         }
         
-        // Create pairs - only create pairs where the home team is not BYE
-        // This ensures we get exactly (numTeams-1)/2 matches for odd teams
+        console.log('Rotated teams for week', weekNumber, ':', rotatedTeams);
+        
+        // Create pairs - handle BYE properly
         for (let i = 0; i < Math.floor(rotatedTeams.length / 2); i++) {
           const homeTeam = rotatedTeams[i];
           const awayTeam = rotatedTeams[rotatedTeams.length - 1 - i];
           
-          // Only create a pairing if the home team is not BYE
-          if (homeTeam !== 'BYE') {
+          // Create pairing - if home team is BYE, make away team the home team
+          if (homeTeam === 'BYE') {
+            // BYE is the "home" team, so the actual team gets a BYE
+            pairings.push({
+              homeTeamId: awayTeam,
+              awayTeamId: 'BYE'
+            });
+          } else if (awayTeam === 'BYE') {
+            // BYE is the "away" team, so home team gets a BYE
             pairings.push({
               homeTeamId: homeTeam,
-              awayTeamId: awayTeam === 'BYE' ? 'BYE' : awayTeam
+              awayTeamId: 'BYE'
+            });
+          } else {
+            // Regular match
+            pairings.push({
+              homeTeamId: homeTeam,
+              awayTeamId: awayTeam
             });
           }
         }
