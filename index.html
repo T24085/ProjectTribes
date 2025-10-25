@@ -43,12 +43,13 @@
       top: 0;
       bottom: 0;
       width: 50%;
-      opacity: 0.08;
+      opacity: 0.25;
       background-size: 150px;
       background-repeat: repeat;
       pointer-events: none;
       z-index: -1;
       transition: opacity 0.3s ease;
+      filter: brightness(1.2) saturate(1.3);
     }
     #bg-left { left: 0; }
     #bg-right { right: 0; }
@@ -4649,6 +4650,18 @@
         bgLeft.style.opacity = opacity;
         bgRight.style.opacity = opacity;
         console.log(`Background opacity set to ${opacity}`);
+      }
+    }
+
+    // Function to enhance background logo vibrancy
+    function enhanceBackgroundVibrancy() {
+      const bgLeft = document.getElementById('bg-left');
+      const bgRight = document.getElementById('bg-right');
+      
+      if (bgLeft && bgRight) {
+        bgLeft.style.filter = 'brightness(1.2) saturate(1.3)';
+        bgRight.style.filter = 'brightness(1.2) saturate(1.3)';
+        console.log('Background vibrancy enhanced');
       }
     }
 
