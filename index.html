@@ -1050,6 +1050,7 @@
       animation: ticker-scroll 60s linear infinite;
       gap: 2rem;
       padding: 0 1rem;
+      width: max-content;
     }
 
     .ticker-track:hover {
@@ -1058,7 +1059,7 @@
 
     @keyframes ticker-scroll {
       0% {
-        transform: translateX(100%);
+        transform: translateX(100vw);
       }
       100% {
         transform: translateX(-100%);
@@ -2481,10 +2482,8 @@
       <!-- Recent Matches -->
       <div class="recent-matches-section">
         <h3 class="section-title">Recent Matches</h3>
-        <div class="ticker-container">
-          <div class="ticker-track" id="ticker-track">
-            <!-- Ticker matches will be populated here -->
-          </div>
+        <div class="recent-matches-grid" id="recent-matches-grid">
+          <!-- Recent matches will be populated here -->
         </div>
       </div>
     </div>
@@ -5826,25 +5825,25 @@
         const recentMatches = allMatches
           .sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        console.log('Recent matches loaded for ticker:', recentMatches);
-        displayTickerMatches(recentMatches);
+        console.log('Recent matches loaded:', recentMatches);
+        displayRecentMatches(recentMatches);
       } catch (error) {
         console.error('Error loading recent matches:', error);
         // Show placeholder if no matches found
-        displayTickerMatches([]);
+        displayRecentMatches([]);
       }
     }
 
-    // Display ticker matches
-    function displayTickerMatches(matches) {
-      const tickerTrack = document.getElementById('ticker-track');
-      if (!tickerTrack) {
-        console.error('Ticker track not found');
+    // Display recent matches in the UI
+    function displayRecentMatches(matches) {
+      const grid = document.getElementById('recent-matches-grid');
+      if (!grid) {
+        console.error('Recent matches grid not found');
         return;
       }
       
       if (matches.length === 0) {
-        tickerTrack.innerHTML = '<div class="ticker-match"><span class="team-name">No recent matches found</span></div>';
+        grid.innerHTML = '<div class="recent-match-card"><div class="match-teams"><span class="team-name">No recent matches found</span></div></div>';
         return;
       }
       
@@ -5896,8 +5895,7 @@
         return null; // Return null if no match found
       };
       
-      // Create ticker items - duplicate the matches to create seamless loop
-      const tickerItems = [...matches, ...matches, ...matches].map(match => {
+      grid.innerHTML = matches.map(match => {
         const teamA = match.teamA || 'Team A';
         const teamB = match.teamB || 'Team B';
         const teamAbbr = getTeamAbbr(teamA);
@@ -5912,22 +5910,22 @@
         const teamBLogo = getTeamLogo(teamB);
         
         return `
-          <div class="ticker-match">
-            <div class="team-info">
-              ${teamALogo ? `<img src="${teamALogo}" alt="${teamA} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
-              <span class="team-name">${teamAbbr}</span>
-            </div>
-            <div class="match-score">${scoreA} - ${scoreB}</div>
-            <div class="team-info">
-              ${teamBLogo ? `<img src="${teamBLogo}" alt="${teamB} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
-              <span class="team-name">${teamBAbbr}</span>
+          <div class="recent-match-card">
+            <div class="match-teams">
+              <div class="team-info">
+                ${teamALogo ? `<img src="${teamALogo}" alt="${teamA} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
+                <span class="team-name">${teamAbbr}</span>
+              </div>
+              <div class="match-score">${scoreA} - ${scoreB}</div>
+              <div class="team-info">
+                ${teamBLogo ? `<img src="${teamBLogo}" alt="${teamB} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
+                <span class="team-name">${teamBAbbr}</span>
+              </div>
             </div>
             <div class="match-date">Week ${match.week || 'N/A'} • ${dateStr}</div>
           </div>
         `;
       }).join('');
-      
-      tickerTrack.innerHTML = tickerItems;
     }
 
     // Initialize Twitch chat functionality
