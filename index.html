@@ -1143,7 +1143,7 @@
       color: white;
     }
 
-    /* Map names and OT indicators */
+    /* Team ranks and match details */
     .match-details {
       display: flex;
       justify-content: space-between;
@@ -1152,9 +1152,38 @@
       font-size: 0.8rem;
     }
 
-    .map-names {
-      color: var(--text-muted);
-      font-style: italic;
+    .team-ranks {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .team-rank {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--text-primary);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .team-rank.rank-1 {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+      border-color: #ffd700;
+      color: #ffd700;
+    }
+
+    .team-rank.rank-2 {
+      background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(192, 192, 192, 0.1));
+      border-color: #c0c0c0;
+      color: #c0c0c0;
+    }
+
+    .team-rank.rank-3 {
+      background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(205, 127, 50, 0.1));
+      border-color: #cd7f32;
+      color: #cd7f32;
     }
 
     .ot-indicator {
@@ -5870,11 +5899,15 @@
     // Global variables for enhanced match display
     let allMatchesData = [];
     let currentFilter = 'all';
+    let teamRankings = {}; // Will store actual team rankings from Firebase
 
     // Load recent matches from Firebase with enhanced data
     async function loadRecentMatches() {
       try {
         console.log('Loading enhanced recent matches from TPL-O league system...');
+        
+        // First, load team rankings from Firebase
+        await loadTeamRankings();
         
         // Get all league schedules
         const schedulesRef = collection(db, 'leagueSchedules');
@@ -5917,7 +5950,6 @@
                       week: weekData.week,
                       isUpset: isUpset,
                       isOvertime: isOvertime,
-                      mapNames: generateMapNames(), // Generate some sample map names
                       teamAForm: generateTeamForm(match.away),
                       teamBForm: generateTeamForm(match.home)
                     });
@@ -5940,15 +5972,79 @@
       }
     }
 
+    // Load team rankings from Firebase
+    async function loadTeamRankings() {
+      try {
+        // Try to load from ladder data first
+        const ladderRef = doc(db, 'ladder', 'data');
+        const ladderSnap = await getDoc(ladderRef);
+        
+        if (ladderSnap.exists()) {
+          const ladderData = ladderSnap.data();
+          if (ladderData.teams && Array.isArray(ladderData.teams)) {
+            // Sort teams by Elo rating to get rankings
+            const sortedTeams = ladderData.teams.sort((a, b) => (b.elo || 1200) - (a.elo || 1200));
+            
+            // Create rankings object with tied ranks
+            let currentRank = 1;
+            let lastElo = null;
+            
+            sortedTeams.forEach((team, index) => {
+              const teamElo = team.elo || 1200;
+              
+              if (lastElo !== null && teamElo !== lastElo) {
+                currentRank = index + 1;
+              }
+              
+              teamRankings[team.id] = {
+                rank: currentRank,
+                elo: teamElo,
+                name: team.name
+              };
+              
+              lastElo = teamElo;
+            });
+            
+            console.log('Team rankings loaded from ladder:', teamRankings);
+            return;
+          }
+        }
+        
+        // Fallback to default rankings if ladder data not available
+        const defaultRankings = {
+          'TXM': { rank: 1, elo: 1400, name: 'Texas Militia' },
+          'DPRK': { rank: 2, elo: 1350, name: 'Team DPRK' },
+          'AV!': { rank: 3, elo: 1300, name: 'Avalanche!' },
+          'EPI': { rank: 4, elo: 1250, name: 'ePidemic' },
+          'WIZ': { rank: 5, elo: 1200, name: 'Magic' },
+          'TA': { rank: 6, elo: 1150, name: 'Toxic Aimers' },
+          'HoE': { rank: 7, elo: 1100, name: 'Hegemony of Euros' },
+          'FPS': { rank: 8, elo: 1050, name: 'Flag Pole Smokers' },
+          'FT': { rank: 9, elo: 1000, name: 'Flying Tractors' },
+          'KTL': { rank: 10, elo: 950, name: 'Kicked to Lobby' },
+          'Null': { rank: 11, elo: 900, name: 'Null' },
+          'UE': { rank: 12, elo: 850, name: 'Unhandled Exception' },
+          'Zen': { rank: 13, elo: 800, name: 'Zen' }
+        };
+        
+        teamRankings = defaultRankings;
+        console.log('Using default team rankings:', teamRankings);
+        
+      } catch (error) {
+        console.error('Error loading team rankings:', error);
+        // Use default rankings as fallback
+        teamRankings = {
+          'TXM': { rank: 1, elo: 1400, name: 'Texas Militia' },
+          'DPRK': { rank: 2, elo: 1350, name: 'Team DPRK' },
+          'AV!': { rank: 3, elo: 1300, name: 'Avalanche!' }
+        };
+      }
+    }
+
     // Helper function to determine if a match is an upset
     function determineIfUpset(teamA, teamB, scoreA, scoreB) {
-      // Simple upset logic - can be enhanced with actual team rankings
-      const teamRankings = {
-        'TXM': 1, 'DPRK': 2, 'AV!': 3, 'EPI': 4, 'WIZ': 5, 'TA': 6, 'HoE': 7, 'FPS': 8, 'FT': 9, 'KTL': 10, 'Null': 11, 'UE': 12, 'Zen': 13
-      };
-      
-      const rankA = teamRankings[teamA] || 10;
-      const rankB = teamRankings[teamB] || 10;
+      const rankA = teamRankings[teamA]?.rank || 10;
+      const rankB = teamRankings[teamB]?.rank || 10;
       
       // If lower ranked team (higher number) beats higher ranked team (lower number)
       if (scoreA > scoreB && rankA > rankB) return true;
@@ -5957,10 +6053,32 @@
       return false;
     }
 
-    // Generate sample map names
-    function generateMapNames() {
-      const maps = ['Katabatic', 'Crossfire', 'Arx Novena', 'Drydock', 'Tartarus', 'Sunstar', 'Permafrost'];
-      return maps.slice(0, Math.floor(Math.random() * 3) + 1).join(', ');
+    // Get team rank display text (handles ties)
+    function getTeamRankDisplay(teamId) {
+      const teamData = teamRankings[teamId];
+      if (!teamData) return 'N/A';
+      
+      const rank = teamData.rank;
+      
+      // Check if there are other teams with the same rank
+      const tiedTeams = Object.values(teamRankings).filter(t => t.rank === rank);
+      
+      if (tiedTeams.length > 1) {
+        return `T-${getRankSuffix(rank)}`;
+      } else {
+        return `${rank}${getRankSuffix(rank)}`;
+      }
+    }
+
+    // Get rank suffix (1st, 2nd, 3rd, etc.)
+    function getRankSuffix(rank) {
+      if (rank >= 11 && rank <= 13) return 'th';
+      switch (rank % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
     }
 
     // Generate team form (W-L pattern)
@@ -6058,13 +6176,9 @@
         return null;
       };
 
-      // Function to get team ranking
+      // Function to get team ranking from Firebase data
       const getTeamRanking = (teamName) => {
-        const teamRankings = {
-          'TXM': 1, 'DPRK': 2, 'AV!': 3, 'EPI': 4, 'WIZ': 5, 'TA': 6, 'HoE': 7, 
-          'FPS': 8, 'FT': 9, 'KTL': 10, 'Null': 11, 'UE': 12, 'Zen': 13
-        };
-        return teamRankings[teamName] || 10;
+        return teamRankings[teamName]?.rank || 10;
       };
 
       // Function to determine match outcome for selected team
@@ -6130,7 +6244,10 @@
             </div>
             
             <div class="match-details">
-              <div class="map-names">${match.mapNames || 'Katabatic, Crossfire'}</div>
+              <div class="team-ranks">
+                <div class="team-rank rank-${teamARank <= 3 ? teamARank : ''}">${getTeamRankDisplay(teamAbbr)}</div>
+                <div class="team-rank rank-${teamBRank <= 3 ? teamBRank : ''}">${getTeamRankDisplay(teamBAbbr)}</div>
+              </div>
               <div>Week ${match.week || 'N/A'} • ${dateStr}</div>
             </div>
             
