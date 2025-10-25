@@ -1034,8 +1034,8 @@
       gap: 1rem;
     }
 
-    /* Ticker Styles */
-    .ticker-container {
+    /* Ticker Styles - Isolated to prevent affecting other elements */
+    .recent-matches-section .ticker-container {
       overflow: hidden;
       white-space: nowrap;
       background: var(--card-bg);
@@ -1043,19 +1043,22 @@
       border: 1px solid rgba(148, 163, 184, 0.2);
       padding: 1rem 0;
       position: relative;
-      z-index: 1; /* Ensure it stays below video */
+      z-index: 1;
       margin-top: 1rem;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
-    .ticker-track {
+    .recent-matches-section .ticker-track {
       display: inline-flex;
-      animation: ticker-scroll 300s linear infinite; /* Much slower - 5 minutes */
+      animation: ticker-scroll 300s linear infinite;
       gap: 3rem;
       padding: 0 2rem;
       width: max-content;
+      box-sizing: border-box;
     }
 
-    .ticker-track:hover {
+    .recent-matches-section .ticker-track:hover {
       animation-play-state: paused;
     }
 
@@ -1068,7 +1071,7 @@
       }
     }
 
-    .ticker-match {
+    .recent-matches-section .ticker-match {
       display: inline-flex;
       align-items: center;
       gap: 1rem;
@@ -1078,34 +1081,35 @@
       border: 1px solid rgba(148, 163, 184, 0.1);
       min-width: 300px;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
 
-    .ticker-match .team-info {
+    .recent-matches-section .ticker-match .team-info {
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    .ticker-match .team-logo-small {
+    .recent-matches-section .ticker-match .team-logo-small {
       width: 24px;
       height: 24px;
       border-radius: 0.25rem;
       object-fit: cover;
     }
 
-    .ticker-match .team-name {
+    .recent-matches-section .ticker-match .team-name {
       font-weight: 600;
       color: var(--text-primary);
     }
 
-    .ticker-match .match-score {
+    .recent-matches-section .ticker-match .match-score {
       font-size: 1.1rem;
       font-weight: bold;
       color: var(--accent-strong);
       margin: 0 0.5rem;
     }
 
-    .ticker-match .match-date {
+    .recent-matches-section .ticker-match .match-date {
       font-size: 0.8rem;
       color: var(--text-muted);
       margin-left: 0.5rem;
