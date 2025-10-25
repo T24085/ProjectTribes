@@ -1049,13 +1049,14 @@
 
     /* Enhanced match card styles */
     .recent-match-card {
-      background: var(--card-bg);
+      background: rgba(15, 23, 42, 0.95);
       border-radius: 0.75rem;
       padding: 1rem;
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      border: 1px solid rgba(148, 163, 184, 0.3);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
     }
 
     .recent-match-card:hover {
@@ -1066,23 +1067,23 @@
 
     /* Win/Loss background colors */
     .recent-match-card.win {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), var(--card-bg));
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(15, 23, 42, 0.95));
       border-left: 4px solid var(--success);
     }
 
     .recent-match-card.loss {
-      background: linear-gradient(135deg, rgba(248, 113, 113, 0.1), var(--card-bg));
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(15, 23, 42, 0.95));
       border-left: 4px solid var(--danger);
     }
 
     .recent-match-card.tie {
-      background: linear-gradient(135deg, rgba(156, 163, 175, 0.1), var(--card-bg));
+      background: linear-gradient(135deg, rgba(156, 163, 175, 0.2), rgba(15, 23, 42, 0.95));
       border-left: 4px solid var(--text-muted);
     }
 
     /* Upset match highlighting */
     .recent-match-card.upset {
-      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), var(--card-bg));
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(15, 23, 42, 0.95));
       border-left: 4px solid var(--accent);
       box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
     }
@@ -6047,7 +6048,19 @@
 
     // Get team rank display text (handles ties)
     function getTeamRankDisplay(teamId) {
-      const teamData = teamRankings[teamId];
+      // Try direct lookup first
+      let teamData = teamRankings[teamId];
+      
+      // If not found, try to find by team name/abbreviation
+      if (!teamData) {
+        for (const [key, data] of Object.entries(TEAM_DATA)) {
+          if (data.name === teamId || key === teamId) {
+            teamData = teamRankings[data.name] || teamRankings[key];
+            if (teamData) break;
+          }
+        }
+      }
+      
       if (!teamData) return 'N/A';
       
       const rank = teamData.rank;
@@ -6127,7 +6140,24 @@
 
       // Function to get team ranking from Firebase data
       const getTeamRanking = (teamName) => {
-        return teamRankings[teamName]?.rank || 10;
+        // Try direct lookup first
+        if (teamRankings[teamName]) {
+          return teamRankings[teamName].rank;
+        }
+        
+        // Try to find by team abbreviation
+        for (const [key, data] of Object.entries(TEAM_DATA)) {
+          if (data.name === teamName || key === teamName) {
+            if (teamRankings[data.name]) {
+              return teamRankings[data.name].rank;
+            }
+            if (teamRankings[key]) {
+              return teamRankings[key].rank;
+            }
+          }
+        }
+        
+        return 10; // Default rank
       };
 
       // Function to determine match outcome for selected team
