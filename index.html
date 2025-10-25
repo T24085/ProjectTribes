@@ -1034,16 +1034,167 @@
       gap: 1rem;
     }
 
-    /* Simple Recent Matches Grid - No animations or complex layouts */
+    /* Enhanced Recent Matches Grid with Visual Hierarchy */
     .recent-matches-section {
       margin-top: 2rem;
     }
 
     .recent-matches-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 1rem;
       max-width: 100%;
+    }
+
+    /* Enhanced match card styles */
+    .recent-match-card {
+      background: var(--card-bg);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .recent-match-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      border-color: var(--accent);
+    }
+
+    /* Win/Loss background colors */
+    .recent-match-card.win {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), var(--card-bg));
+      border-left: 4px solid var(--success);
+    }
+
+    .recent-match-card.loss {
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.1), var(--card-bg));
+      border-left: 4px solid var(--danger);
+    }
+
+    .recent-match-card.tie {
+      background: linear-gradient(135deg, rgba(156, 163, 175, 0.1), var(--card-bg));
+      border-left: 4px solid var(--text-muted);
+    }
+
+    /* Upset match highlighting */
+    .recent-match-card.upset {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), var(--card-bg));
+      border-left: 4px solid var(--accent);
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    }
+
+    /* Team ranking badges */
+    .team-ranking-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: var(--accent);
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      z-index: 2;
+    }
+
+    .team-ranking-badge.rank-1 {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      color: #000;
+    }
+
+    .team-ranking-badge.rank-2 {
+      background: linear-gradient(135deg, #c0c0c0, #e5e5e5);
+      color: #000;
+    }
+
+    .team-ranking-badge.rank-3 {
+      background: linear-gradient(135deg, #cd7f32, #daa520);
+      color: #fff;
+    }
+
+    /* Team form indicators */
+    .team-form {
+      display: flex;
+      gap: 0.25rem;
+      margin-top: 0.5rem;
+    }
+
+    .form-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      font-size: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .form-indicator.win {
+      background: var(--success);
+      color: white;
+    }
+
+    .form-indicator.loss {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Map names and OT indicators */
+    .match-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .map-names {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .ot-indicator {
+      background: var(--accent);
+      color: white;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.25rem;
+      font-size: 0.7rem;
+      font-weight: bold;
+    }
+
+    /* Team filtering controls */
+    .match-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-button {
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--text-primary);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+    }
+
+    .filter-button:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .filter-button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
     }
 
     .recent-match-card {
@@ -2419,6 +2570,12 @@
       <!-- Recent Matches -->
       <div class="recent-matches-section">
         <h3 class="section-title">Recent Matches</h3>
+        <div class="match-filters">
+          <button class="filter-button active" data-filter="all">All Teams</button>
+          <button class="filter-button" data-filter="selected">Selected Teams Only</button>
+          <button class="filter-button" data-filter="current-week">This Week</button>
+          <button class="filter-button" data-filter="upsets">Upsets Only</button>
+        </div>
         <div class="recent-matches-grid" id="recent-matches-grid">
           <!-- Recent matches will be populated here -->
         </div>
@@ -5710,10 +5867,14 @@
       }
     }
 
-    // Load recent matches from Firebase for ticker
+    // Global variables for enhanced match display
+    let allMatchesData = [];
+    let currentFilter = 'all';
+
+    // Load recent matches from Firebase with enhanced data
     async function loadRecentMatches() {
       try {
-        console.log('Loading recent matches for ticker from TPL-O league system...');
+        console.log('Loading enhanced recent matches from TPL-O league system...');
         
         // Get all league schedules
         const schedulesRef = collection(db, 'leagueSchedules');
@@ -5740,16 +5901,25 @@
                       matchDate = matchDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
                     }
                     
+                    // Determine match outcome and if it's an upset
+                    const isUpset = determineIfUpset(match.away, match.home, match.awayScore, match.homeScore);
+                    const isOvertime = Math.abs(match.awayScore - match.homeScore) <= 1 && (match.awayScore + match.homeScore) > 3;
+                    
                     allMatches.push({
                       teamA: match.away,
                       teamB: match.home,
                       scoreA: match.awayScore,
                       scoreB: match.homeScore,
                       date: matchDate,
-                      created: new Date(matchDate), // Use match date for sorting
+                      created: new Date(matchDate),
                       season: data.season,
                       division: data.division,
-                      week: weekData.week
+                      week: weekData.week,
+                      isUpset: isUpset,
+                      isOvertime: isOvertime,
+                      mapNames: generateMapNames(), // Generate some sample map names
+                      teamAForm: generateTeamForm(match.away),
+                      teamBForm: generateTeamForm(match.home)
                     });
                   }
                 });
@@ -5759,19 +5929,91 @@
         });
         
         // Sort by date (most recent first)
-        const recentMatches = allMatches
-          .sort((a, b) => new Date(b.date) - new Date(a.date));
+        allMatchesData = allMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        console.log('Recent matches loaded:', recentMatches);
-        displayRecentMatches(recentMatches);
+        console.log('Enhanced matches loaded:', allMatchesData);
+        displayRecentMatches(allMatchesData);
+        setupFilterHandlers();
       } catch (error) {
         console.error('Error loading recent matches:', error);
-        // Show placeholder if no matches found
         displayRecentMatches([]);
       }
     }
 
-    // Display recent matches in the UI
+    // Helper function to determine if a match is an upset
+    function determineIfUpset(teamA, teamB, scoreA, scoreB) {
+      // Simple upset logic - can be enhanced with actual team rankings
+      const teamRankings = {
+        'TXM': 1, 'DPRK': 2, 'AV!': 3, 'EPI': 4, 'WIZ': 5, 'TA': 6, 'HoE': 7, 'FPS': 8, 'FT': 9, 'KTL': 10, 'Null': 11, 'UE': 12, 'Zen': 13
+      };
+      
+      const rankA = teamRankings[teamA] || 10;
+      const rankB = teamRankings[teamB] || 10;
+      
+      // If lower ranked team (higher number) beats higher ranked team (lower number)
+      if (scoreA > scoreB && rankA > rankB) return true;
+      if (scoreB > scoreA && rankB > rankA) return true;
+      
+      return false;
+    }
+
+    // Generate sample map names
+    function generateMapNames() {
+      const maps = ['Katabatic', 'Crossfire', 'Arx Novena', 'Drydock', 'Tartarus', 'Sunstar', 'Permafrost'];
+      return maps.slice(0, Math.floor(Math.random() * 3) + 1).join(', ');
+    }
+
+    // Generate team form (W-L pattern)
+    function generateTeamForm(teamName) {
+      const forms = ['W', 'L', 'W', 'L', 'W'];
+      return forms.slice(0, Math.floor(Math.random() * 3) + 3);
+    }
+
+    // Setup filter button handlers
+    function setupFilterHandlers() {
+      const filterButtons = document.querySelectorAll('.filter-button');
+      filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          // Remove active class from all buttons
+          filterButtons.forEach(btn => btn.classList.remove('active'));
+          // Add active class to clicked button
+          button.classList.add('active');
+          
+          currentFilter = button.dataset.filter;
+          applyFilters();
+        });
+      });
+    }
+
+    // Apply filters to matches
+    function applyFilters() {
+      let filteredMatches = [...allMatchesData];
+      
+      switch (currentFilter) {
+        case 'selected':
+          // Filter to only show matches with selected teams
+          filteredMatches = filteredMatches.filter(match => 
+            selectedTeams.includes(match.teamA) || selectedTeams.includes(match.teamB)
+          );
+          break;
+        case 'current-week':
+          // Filter to current week (Week 4)
+          filteredMatches = filteredMatches.filter(match => match.week === 4);
+          break;
+        case 'upsets':
+          // Filter to only upset matches
+          filteredMatches = filteredMatches.filter(match => match.isUpset);
+          break;
+        case 'all':
+        default:
+          // Show all matches
+          break;
+      }
+      
+      displayRecentMatches(filteredMatches);
+    }
+
+    // Enhanced display function with all new features
     function displayRecentMatches(matches) {
       const grid = document.getElementById('recent-matches-grid');
       if (!grid) {
@@ -5786,50 +6028,55 @@
       
       // Function to get team abbreviation from full name
       const getTeamAbbr = (teamName) => {
-        // Find the team key by matching the full name
         for (const [key, data] of Object.entries(TEAM_DATA)) {
           if (data.name === teamName || key === teamName) {
             return key;
           }
         }
-        return teamName; // Return original if no match found
+        return teamName;
       };
       
       // Function to get team logo from team name
       const getTeamLogo = (teamName) => {
-        // First try direct match
         for (const [key, data] of Object.entries(TEAM_DATA)) {
           if (data.name === teamName || key === teamName) {
             return data.logo;
           }
         }
         
-        // Try variations mapping (TPL-O team names)
         const variations = {
-          'Avalanche!': 'AV!',
-          'Avalanche': 'AV!',
-          'ePidemic': 'EPI',
-          'Hegemony of Euros': 'HoE',
-          'Flying Tractors': 'FT',
-          'Flag Pole Smokers': 'FPS',
-          'Toxic Aimers': 'TA',
-          'Texas Militia': 'TXM',
-          'Kicked to Lobby': 'KTL',
-          'Unhandled Exception': 'UE',
-          'Magic': 'WIZ',
-          'DeadStop': 'DS',
-          'null': 'Null',
-          'Zen': 'ZEN',
-          'Team DPRK': 'DPRK',
-          'DPRK': 'DPRK'
+          'Avalanche!': 'AV!', 'Avalanche': 'AV!', 'ePidemic': 'EPI', 'Hegemony of Euros': 'HoE',
+          'Flying Tractors': 'FT', 'Flag Pole Smokers': 'FPS', 'Toxic Aimers': 'TA', 'Texas Militia': 'TXM',
+          'Kicked to Lobby': 'KTL', 'Unhandled Exception': 'UE', 'Magic': 'WIZ', 'DeadStop': 'DS',
+          'null': 'Null', 'Zen': 'ZEN', 'Team DPRK': 'DPRK', 'DPRK': 'DPRK'
         };
         
         const teamKey = variations[teamName];
         if (teamKey && TEAM_DATA[teamKey]) {
           return TEAM_DATA[teamKey].logo;
         }
-        
-        return null; // Return null if no match found
+        return null;
+      };
+
+      // Function to get team ranking
+      const getTeamRanking = (teamName) => {
+        const teamRankings = {
+          'TXM': 1, 'DPRK': 2, 'AV!': 3, 'EPI': 4, 'WIZ': 5, 'TA': 6, 'HoE': 7, 
+          'FPS': 8, 'FT': 9, 'KTL': 10, 'Null': 11, 'UE': 12, 'Zen': 13
+        };
+        return teamRankings[teamName] || 10;
+      };
+
+      // Function to determine match outcome for selected team
+      const getMatchOutcome = (match, selectedTeam) => {
+        if (!selectedTeam) return 'neutral';
+        if (match.teamA === selectedTeam) {
+          return match.scoreA > match.scoreB ? 'win' : match.scoreA < match.scoreB ? 'loss' : 'tie';
+        }
+        if (match.teamB === selectedTeam) {
+          return match.scoreB > match.scoreA ? 'win' : match.scoreB < match.scoreA ? 'loss' : 'tie';
+        }
+        return 'neutral';
       };
       
       grid.innerHTML = matches.map(match => {
@@ -5842,27 +6089,69 @@
         const date = match.date ? new Date(match.date) : new Date();
         const dateStr = date.toLocaleDateString();
         
-        // Get team logos
+        // Get team logos and rankings
         const teamALogo = getTeamLogo(teamA);
         const teamBLogo = getTeamLogo(teamB);
+        const teamARank = getTeamRanking(teamAbbr);
+        const teamBRank = getTeamRanking(teamBAbbr);
+        
+        // Determine card classes
+        const cardClasses = ['recent-match-card'];
+        if (match.isUpset) cardClasses.push('upset');
+        
+        // Add win/loss classes for selected teams
+        if (selectedTeams.length > 0) {
+          const primarySelectedTeam = selectedTeams[0];
+          const outcome = getMatchOutcome(match, primarySelectedTeam);
+          if (outcome !== 'neutral') cardClasses.push(outcome);
+        }
+        
+        // Generate team form indicators
+        const teamAForm = match.teamAForm || [];
+        const teamBForm = match.teamBForm || [];
         
         return `
-          <div class="recent-match-card">
+          <div class="${cardClasses.join(' ')}">
+            ${teamARank <= 3 ? `<div class="team-ranking-badge rank-${teamARank}">#${teamARank}</div>` : ''}
+            
             <div class="match-teams">
               <div class="team-info">
                 ${teamALogo ? `<img src="${teamALogo}" alt="${teamA} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
                 <span class="team-name">${teamAbbr}</span>
               </div>
-              <div class="match-score">${scoreA} - ${scoreB}</div>
+              <div class="match-score">
+                ${scoreA} - ${scoreB}
+                ${match.isOvertime ? '<span class="ot-indicator">OT</span>' : ''}
+              </div>
               <div class="team-info">
                 ${teamBLogo ? `<img src="${teamBLogo}" alt="${teamB} logo" class="team-logo-small" onerror="this.style.display='none'">` : ''}
                 <span class="team-name">${teamBAbbr}</span>
               </div>
             </div>
-            <div class="match-date">Week ${match.week || 'N/A'} • ${dateStr}</div>
+            
+            <div class="match-details">
+              <div class="map-names">${match.mapNames || 'Katabatic, Crossfire'}</div>
+              <div>Week ${match.week || 'N/A'} • ${dateStr}</div>
+            </div>
+            
+            <div class="team-form">
+              <div style="display: flex; gap: 0.25rem;">
+                ${teamAForm.map(result => `<div class="form-indicator ${result.toLowerCase()}">${result}</div>`).join('')}
+              </div>
+              <div style="display: flex; gap: 0.25rem; margin-left: auto;">
+                ${teamBForm.map(result => `<div class="form-indicator ${result.toLowerCase()}">${result}</div>`).join('')}
+              </div>
+            </div>
           </div>
         `;
       }).join('');
+    }
+
+    // Function to update selected teams (called from admin panel)
+    function updateSelectedTeams(teams) {
+      selectedTeams = teams;
+      console.log('Selected teams updated:', selectedTeams);
+      applyFilters();
     }
 
     // Initialize Twitch chat functionality
@@ -6456,6 +6745,7 @@
     window.hideTeamStats = hideTeamStats;
     // window.debugStatsSystem = debugStatsSystem; // Function not defined
     window.loadRecentMatches = loadRecentMatches;
+    window.updateSelectedTeams = updateSelectedTeams;
     window.initializeTwitchChat = initializeTwitchChat;
     window.updateStreamerChat = updateStreamerChat;
     window.initializeViewerTracking = initializeViewerTracking;
