@@ -5018,6 +5018,10 @@
             console.log('Loaded active match:', selectedTeams);
             // Update the main page display
             updateMatchDisplay();
+            
+            // Update Recent Matches with selected teams
+            updateRecentMatchesForSelectedTeams();
+            
             loadTeamRosters().then(() => {
               // Player tabs will be updated in loadTeamRosters
             });
@@ -5064,6 +5068,10 @@
         selectedTeams.teamA = teamA;
         selectedTeams.teamB = teamB;
         updateMatchDisplay();
+        
+        // Update Recent Matches with selected teams
+        updateRecentMatchesForSelectedTeams();
+        
         loadTeamRosters().then(() => {
           // Player tabs will be updated in loadTeamRosters
         });
@@ -5140,6 +5148,10 @@
         // Update the main display
         selectedTeams.teamA = teamA;
         selectedTeams.teamB = teamB;
+        
+        // Update Recent Matches with selected teams
+        updateRecentMatchesForSelectedTeams();
+        
         loadTeamRosters();
         // Auto-load team statistics
         setTimeout(() => {
@@ -5163,6 +5175,10 @@
         if (teamA && teamB && teamA !== teamB) {
           selectedTeams.teamA = teamA;
           selectedTeams.teamB = teamB;
+          
+          // Update Recent Matches with selected teams
+          updateRecentMatchesForSelectedTeams();
+          
           loadTeamRosters();
           setTimeout(() => {
             showTeamStats();
@@ -5176,6 +5192,10 @@
         if (teamA && teamB && teamA !== teamB) {
           selectedTeams.teamA = teamA;
           selectedTeams.teamB = teamB;
+          
+          // Update Recent Matches with selected teams
+          updateRecentMatchesForSelectedTeams();
+          
           loadTeamRosters();
           setTimeout(() => {
             showTeamStats();
@@ -5849,6 +5869,7 @@
     // Global variables for enhanced match display
     let allMatchesData = [];
     let teamRankings = {}; // Will store actual team rankings from Firebase
+    let recentMatchesSelectedTeams = []; // Array of team names for Recent Matches filtering
 
     // Load recent matches from Firebase with enhanced data
     async function loadRecentMatches() {
@@ -6064,7 +6085,7 @@
       
       // Filter to only show matches with selected teams
       const filteredMatches = matches.filter(match => 
-        selectedTeams.includes(match.teamA) || selectedTeams.includes(match.teamB)
+        recentMatchesSelectedTeams.includes(match.teamA) || recentMatchesSelectedTeams.includes(match.teamB)
       );
       
       if (filteredMatches.length === 0) {
@@ -6140,8 +6161,8 @@
         if (match.isUpset) cardClasses.push('upset');
         
         // Add win/loss classes for selected teams
-        if (selectedTeams.length > 0) {
-          const primarySelectedTeam = selectedTeams[0];
+        if (recentMatchesSelectedTeams.length > 0) {
+          const primarySelectedTeam = recentMatchesSelectedTeams[0];
           const outcome = getMatchOutcome(match, primarySelectedTeam);
           if (outcome !== 'neutral') cardClasses.push(outcome);
         }
@@ -6180,9 +6201,26 @@
 
     // Function to update selected teams (called from admin panel)
     function updateSelectedTeams(teams) {
-      selectedTeams = teams;
-      console.log('Selected teams updated:', selectedTeams);
+      recentMatchesSelectedTeams = teams;
+      console.log('Recent matches selected teams updated:', recentMatchesSelectedTeams);
       displayRecentMatches(allMatchesData);
+    }
+
+    // Function to update Recent Matches when teams are selected in admin panel
+    function updateRecentMatchesForSelectedTeams() {
+      if (selectedTeams.teamA && selectedTeams.teamB) {
+        // Convert team keys to team names for matching
+        const teamAName = TEAM_DATA[selectedTeams.teamA]?.name || selectedTeams.teamA;
+        const teamBName = TEAM_DATA[selectedTeams.teamB]?.name || selectedTeams.teamB;
+        
+        recentMatchesSelectedTeams = [teamAName, teamBName];
+        console.log('Updated Recent Matches for teams:', recentMatchesSelectedTeams);
+        
+        // Refresh the Recent Matches display
+        if (allMatchesData.length > 0) {
+          displayRecentMatches(allMatchesData);
+        }
+      }
     }
 
     // Initialize Twitch chat functionality
