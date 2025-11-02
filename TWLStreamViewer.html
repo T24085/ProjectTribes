@@ -1627,7 +1627,7 @@
       document.getElementById('cancel-streamer-edit').classList.add('hidden');
     });
 
-    // Admin modal close and toggle (using style.display to match index.html)
+    // Admin modal close and toggle - must use 'hidden' class to override CSS !important
     function setupCloseAdminModal(){
       const closeBtn = document.getElementById('close-admin-modal');
       if(closeBtn && !closeBtn.hasAttribute('data-close-listener')){
@@ -1635,15 +1635,11 @@
         closeBtn.addEventListener('click', (e)=>{
           e.preventDefault();
           e.stopPropagation();
-          console.log('Close button clicked'); // Debug log
           if(els.adminModal){
+            els.adminModal.classList.add('hidden');
             els.adminModal.style.display = 'none';
-            console.log('Modal hidden'); // Debug log
-          } else {
-            console.error('Admin modal not found when closing');
           }
         });
-        console.log('Close button listener attached to:', closeBtn); // Debug log
       }
     }
     // Set up close button immediately and retry if needed
@@ -1655,6 +1651,7 @@
     if(els.adminModal){
       els.adminModal.addEventListener('click', (e) => { 
         if(e.target.id === 'admin-modal') {
+          els.adminModal.classList.add('hidden');
           els.adminModal.style.display = 'none';
         }
       });
@@ -1756,6 +1753,7 @@
           e.preventDefault();
           e.stopPropagation();
           if(els.adminModal){
+            els.adminModal.classList.remove('hidden');
             els.adminModal.style.display = 'flex';
             renderTeamsList();
             renderStreamersList();
