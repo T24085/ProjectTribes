@@ -87,6 +87,31 @@
       position: relative;
       transition: all var(--transition-snappy);
       box-shadow: 0 24px 45px -30px rgba(59, 130, 246, 0.45);
+      width: 100%;
+      min-width: 0;
+    }
+    #stream-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    @media (max-width: 1280px) {
+      main {
+        padding-right: 1.5rem !important;
+      }
+    }
+    @media (max-width: 1024px) {
+      #stream-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      main {
+        padding-right: 1.5rem !important;
+      }
+    }
+    @media (max-width: 640px) {
+      #stream-grid {
+        grid-template-columns: 1fr;
+      }
     }
     .stream-card::before {
       content: '';
@@ -192,14 +217,14 @@
         <span class="text-xs text-slate-400 uppercase tracking-wider">Multi-Game Hub</span>
       </div>
       <div class="flex items-center gap-3 flex-wrap">
-        <button id="manage-teams-btn" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium transition">
-          Manage Teams
-        </button>
-        <button id="add-streamer-btn" class="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-700 text-sm font-medium transition">
-          Add Streamer
+        <button id="admin-panel-btn" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-sm font-medium transition hidden">
+          Admin Panel
         </button>
         <div id="auth-group" class="flex items-center gap-2">
           <span id="twitch-user" class="text-sm text-slate-400 hidden"></span>
+          <button id="admin-signin-btn" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-medium transition hidden">
+            Admin Sign In
+          </button>
           <button id="twitch-login-btn" class="px-4 py-2 rounded-lg bg-[#9146ff] hover:bg-[#772ce8] text-sm font-medium transition">
             Sign in with Twitch
           </button>
@@ -251,8 +276,8 @@
   </section>
 
   <!-- Stream Grid -->
-  <main class="max-w-7xl mx-auto px-6 py-6">
-    <div id="stream-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+  <main class="max-w-7xl mx-auto px-6 py-6" style="padding-right: 22rem;">
+    <div id="stream-grid" class="grid gap-6">
       <!-- Streams will be inserted here -->
     </div>
     <div id="empty-state" class="text-center py-12 hidden">
@@ -288,6 +313,7 @@
         </div>
         <div class="p-6">
           <form id="team-form" class="space-y-4 mb-6">
+            <input type="hidden" id="team-id">
             <div>
               <label class="block text-sm font-medium mb-1">Team Name</label>
               <input type="text" id="team-name" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required>
@@ -300,9 +326,14 @@
               <label class="block text-sm font-medium mb-1">Games (comma-separated)</label>
               <input type="text" id="team-games" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="Battlefield, Tribes: Ascend">
             </div>
-            <button type="submit" class="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg font-medium transition">
-              Add Team
-            </button>
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg font-medium transition">
+                Add Team
+              </button>
+              <button type="button" id="cancel-team-edit" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition hidden">
+                Cancel
+              </button>
+            </div>
           </form>
           <div id="teams-list" class="space-y-3">
             <!-- Teams will be listed here -->
@@ -322,6 +353,7 @@
         </div>
         <div class="p-6">
           <form id="streamer-form" class="space-y-4">
+            <input type="hidden" id="streamer-id">
             <div>
               <label class="block text-sm font-medium mb-1">Display Name</label>
               <input type="text" id="streamer-name" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" required>
@@ -329,6 +361,7 @@
             <div>
               <label class="block text-sm font-medium mb-1">Twitch Handle</label>
               <input type="text" id="streamer-twitch" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="username" required>
+              <p class="text-xs text-slate-400 mt-1">Update this to fix stream detection</p>
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Team</label>
@@ -340,10 +373,18 @@
               <label class="block text-sm font-medium mb-1">Default Game (optional)</label>
               <input type="text" id="streamer-game" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="Battlefield">
             </div>
-            <button type="submit" class="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg font-medium transition">
-              Add Streamer
-            </button>
+            <div class="flex gap-2">
+              <button type="submit" class="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg font-medium transition">
+                Add Streamer
+              </button>
+              <button type="button" id="cancel-streamer-edit" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition hidden">
+                Cancel
+              </button>
+            </div>
           </form>
+          <div id="streamers-list" class="mt-6 space-y-3">
+            <!-- Streamers will be listed here -->
+          </div>
         </div>
       </div>
     </div>
@@ -356,6 +397,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { 
       getFirestore, 
       collection, 
@@ -363,6 +405,7 @@
       addDoc, 
       doc, 
       deleteDoc,
+      updateDoc,
       query,
       where,
       onSnapshot 
@@ -379,7 +422,11 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getFirestore(app);
+
+    // Admin UIDs from firestore.rules
+    const ADMIN_UIDS = ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'A2ZV8vziNsXqZkyqHzAB266B9pP2'];
 
     // Separate TWL collections
     const COLLECTIONS = {
@@ -397,7 +444,10 @@
         team: '',
         liveOnly: false
       },
-      currentChatChannel: ''
+      currentChatChannel: '',
+      isAdmin: false,
+      editingTeam: null,
+      editingStreamer: null
     };
 
     // DOM Elements
@@ -407,8 +457,8 @@
       gameFilter: document.getElementById('game-filter'),
       teamFilter: document.getElementById('team-filter'),
       liveOnlyToggle: document.getElementById('live-only-toggle'),
-      manageTeamsBtn: document.getElementById('manage-teams-btn'),
-      addStreamerBtn: document.getElementById('add-streamer-btn'),
+      adminPanelBtn: document.getElementById('admin-panel-btn'),
+      adminSignInBtn: document.getElementById('admin-signin-btn'),
       twitchLoginBtn: document.getElementById('twitch-login-btn'),
       twitchUser: document.getElementById('twitch-user'),
       teamModal: document.getElementById('team-modal'),
@@ -460,6 +510,36 @@
 
     const parentQuery = getParentHosts();
 
+    // Admin Check
+    function checkAdmin(user) {
+      if (!user || !user.uid) {
+        state.isAdmin = false;
+        els.adminPanelBtn.classList.add('hidden');
+        els.adminSignInBtn.classList.remove('hidden');
+        return false;
+      }
+      state.isAdmin = ADMIN_UIDS.includes(user.uid);
+      els.adminPanelBtn.classList.toggle('hidden', !state.isAdmin);
+      els.adminSignInBtn.classList.toggle('hidden', state.isAdmin);
+      if (state.isAdmin) {
+        els.twitchUser.textContent = `Admin: ${user.email || user.displayName || 'Logged in'}`;
+        els.twitchUser.classList.remove('hidden');
+      }
+      return state.isAdmin;
+    }
+
+    async function signInAsAdmin() {
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        checkAdmin(result.user);
+        showToast('Signed in as admin');
+      } catch (err) {
+        console.error('Admin sign-in failed:', err);
+        showToast('Admin sign-in failed. Use Google account linked to admin UID.');
+      }
+    }
+
     // Firebase Operations
     async function loadTeams() {
       try {
@@ -493,6 +573,7 @@
         });
         renderStreamGrid();
         updateChatSelect();
+        renderStreamersList();
       } catch (err) {
         console.error('Error loading streamers:', err);
         showToast('Failed to load streamers');
@@ -516,7 +597,26 @@
       }
     }
 
+    async function updateTeam(teamId, data) {
+      try {
+        await updateDoc(doc(db, COLLECTIONS.TEAMS, teamId), {
+          teamName: data.teamName,
+          logoUrl: data.logoUrl || '',
+          games: data.games ? data.games.split(',').map(g => g.trim()).filter(Boolean) : [],
+          updatedAt: new Date().toISOString()
+        });
+        showToast(`Team "${data.teamName}" updated`);
+        loadTeams();
+        state.editingTeam = null;
+        els.teamForm.reset();
+      } catch (err) {
+        console.error('Error updating team:', err);
+        showToast('Failed to update team');
+      }
+    }
+
     async function deleteTeam(teamId) {
+      if (!confirm('Are you sure you want to delete this team?')) return;
       try {
         await deleteDoc(doc(db, COLLECTIONS.TEAMS, teamId));
         showToast('Team deleted');
@@ -524,6 +624,25 @@
       } catch (err) {
         console.error('Error deleting team:', err);
         showToast('Failed to delete team');
+      }
+    }
+
+    async function updateStreamer(streamerId, data) {
+      try {
+        await updateDoc(doc(db, COLLECTIONS.STREAMERS, streamerId), {
+          displayName: data.displayName,
+          twitchHandle: normalizeChannel(data.twitchHandle),
+          teamId: data.teamId || '',
+          defaultGame: data.defaultGame || '',
+          updatedAt: new Date().toISOString()
+        });
+        showToast(`Streamer "${data.displayName}" updated`);
+        loadStreamers();
+        state.editingStreamer = null;
+        els.streamerForm.reset();
+      } catch (err) {
+        console.error('Error updating streamer:', err);
+        showToast('Failed to update streamer');
       }
     }
 
@@ -546,6 +665,7 @@
     }
 
     async function deleteStreamer(streamerId) {
+      if (!confirm('Are you sure you want to remove this streamer?')) return;
       try {
         await deleteDoc(doc(db, COLLECTIONS.STREAMERS, streamerId));
         showToast('Streamer removed');
@@ -785,17 +905,35 @@
         const div = document.createElement('div');
         div.className = 'bg-slate-800 rounded-lg p-4 flex items-center justify-between';
         div.innerHTML = `
-          <div>
+          <div class="flex-1">
             <h3 class="font-semibold">${escapeHtml(team.teamName)}</h3>
-            ${team.games?.length ? `<p class="text-sm text-slate-400">Games: ${team.games.join(', ')}</p>` : ''}
+            ${team.games?.length ? `<p class="text-sm text-slate-400 mt-1">Games: ${team.games.join(', ')}</p>` : ''}
+            ${team.logoUrl ? `<p class="text-xs text-slate-500 mt-1">Logo: ${escapeHtml(team.logoUrl)}</p>` : ''}
           </div>
-          <button onclick="deleteTeam('${team.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition">
-            Delete
-          </button>
+          <div class="flex gap-2">
+            <button onclick="editTeam('${team.id}')" class="px-3 py-1 bg-violet-600 hover:bg-violet-700 rounded text-sm transition">
+              Edit
+            </button>
+            <button onclick="deleteTeam('${team.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition">
+              Delete
+            </button>
+          </div>
         `;
         els.teamsList.appendChild(div);
       });
     }
+
+    window.editTeam = function(teamId) {
+      const team = state.teams.get(teamId);
+      if (!team) return;
+      state.editingTeam = teamId;
+      document.getElementById('team-name').value = team.teamName || '';
+      document.getElementById('team-logo').value = team.logoUrl || '';
+      document.getElementById('team-games').value = (team.games || []).join(', ');
+      document.querySelector('#team-form button[type="submit"]').textContent = 'Update Team';
+      els.teamModal.classList.remove('hidden');
+      document.querySelector('#team-modal h2').textContent = 'Edit Team';
+    };
 
     function updateChatSelect() {
       els.chatSelect.innerHTML = '<option value="">Select Channel</option>';
@@ -855,6 +993,27 @@
     window.deleteTeam = deleteTeam;
     window.deleteStreamer = deleteStreamer;
 
+    function resetTeamForm() {
+      state.editingTeam = null;
+      document.getElementById('team-name').value = '';
+      document.getElementById('team-logo').value = '';
+      document.getElementById('team-games').value = '';
+      document.querySelector('#team-form button[type="submit"]').textContent = 'Add Team';
+      document.querySelector('#team-modal h2').textContent = 'Manage Teams';
+      document.getElementById('cancel-team-edit').classList.add('hidden');
+    }
+
+    function resetStreamerForm() {
+      state.editingStreamer = null;
+      document.getElementById('streamer-name').value = '';
+      document.getElementById('streamer-twitch').value = '';
+      document.getElementById('streamer-team').value = '';
+      document.getElementById('streamer-game').value = '';
+      document.querySelector('#streamer-form button[type="submit"]').textContent = 'Add Streamer';
+      document.querySelector('#streamer-modal h2').textContent = 'Add Streamer';
+      document.getElementById('cancel-streamer-edit').classList.add('hidden');
+    }
+
     els.teamForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const data = {
@@ -862,7 +1021,15 @@
         logoUrl: document.getElementById('team-logo').value,
         games: document.getElementById('team-games').value
       };
-      addTeam(data);
+      if (state.editingTeam) {
+        updateTeam(state.editingTeam, data);
+      } else {
+        addTeam(data);
+      }
+    });
+
+    document.getElementById('cancel-team-edit').addEventListener('click', () => {
+      resetTeamForm();
     });
 
     els.streamerForm.addEventListener('submit', (e) => {
@@ -873,9 +1040,72 @@
         teamId: document.getElementById('streamer-team').value || '',
         defaultGame: document.getElementById('streamer-game').value || ''
       };
-      addStreamer(data);
+      if (state.editingStreamer) {
+        updateStreamer(state.editingStreamer, data);
+      } else {
+        addStreamer(data);
+      }
+      resetStreamerForm();
+    });
+
+    document.getElementById('cancel-streamer-edit').addEventListener('click', () => {
+      resetStreamerForm();
       els.streamerModal.classList.add('hidden');
     });
+
+    window.editStreamer = function(streamerId) {
+      const streamer = state.streamers.get(streamerId);
+      if (!streamer) return;
+      state.editingStreamer = streamerId;
+      document.getElementById('streamer-name').value = streamer.displayName || '';
+      document.getElementById('streamer-twitch').value = streamer.twitchHandle || '';
+      document.getElementById('streamer-team').value = streamer.teamId || '';
+      document.getElementById('streamer-game').value = streamer.defaultGame || '';
+      document.querySelector('#streamer-form button[type="submit"]').textContent = 'Update Streamer';
+      document.querySelector('#streamer-modal h2').textContent = 'Edit Streamer';
+      document.getElementById('cancel-streamer-edit').classList.remove('hidden');
+      els.streamerModal.classList.remove('hidden');
+    };
+
+    function renderStreamersList() {
+      const listEl = document.getElementById('streamers-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      
+      if (state.streamers.size === 0) {
+        listEl.innerHTML = '<p class="text-slate-400 text-center py-4">No streamers yet. Add one above.</p>';
+        return;
+      }
+
+      Array.from(state.streamers.values()).sort((a, b) => a.displayName.localeCompare(b.displayName)).forEach(streamer => {
+        const handle = streamer.twitchHandle;
+        const liveData = state.liveStreams.get(handle);
+        const team = streamer.teamId ? state.teams.get(streamer.teamId) : null;
+        
+        const div = document.createElement('div');
+        div.className = 'bg-slate-800 rounded-lg p-4';
+        div.innerHTML = `
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="font-semibold">${escapeHtml(streamer.displayName)}</h3>
+              <p class="text-sm text-slate-400 mt-1">Twitch: @${escapeHtml(streamer.twitchHandle)}</p>
+              ${team ? `<p class="text-xs text-violet-400 mt-1">Team: ${escapeHtml(team.teamName)}</p>` : ''}
+              ${streamer.defaultGame ? `<p class="text-xs text-slate-500 mt-1">Default Game: ${escapeHtml(streamer.defaultGame)}</p>` : ''}
+              ${liveData ? `<p class="text-xs text-green-400 mt-1">● Live: Playing ${escapeHtml(liveData.game_name)}</p>` : '<p class="text-xs text-slate-500 mt-1">Offline</p>'}
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editStreamer('${streamer.id}')" class="px-3 py-1 bg-violet-600 hover:bg-violet-700 rounded text-sm transition">
+                Edit
+              </button>
+              <button onclick="deleteStreamer('${streamer.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition">
+                Delete
+              </button>
+            </div>
+          </div>
+        `;
+        listEl.appendChild(div);
+      });
+    }
 
     els.gameFilter.addEventListener('change', (e) => {
       state.filters.game = e.target.value;
@@ -900,22 +1130,128 @@
       updateChatFrame();
     });
 
-    // Modal Controls
-    els.manageTeamsBtn.addEventListener('click', () => {
+    // Admin Panel Modal
+    const adminModal = document.createElement('div');
+    adminModal.id = 'admin-modal';
+    adminModal.className = 'fixed inset-0 z-50 hidden modal-backdrop';
+    adminModal.innerHTML = `
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-slate-900 rounded-xl border border-slate-700 w-full max-w-4xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+          <div class="sticky top-0 bg-slate-900 border-b border-slate-700 p-6 flex items-center justify-between">
+            <h2 class="text-2xl font-bold">Admin Panel</h2>
+            <button id="close-admin-modal" class="text-slate-400 hover:text-white text-2xl">×</button>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-xl font-semibold mb-4">Teams</h3>
+                <button id="add-team-btn" class="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg font-medium transition mb-4">
+                  Add New Team
+                </button>
+                <div id="admin-teams-list" class="space-y-3"></div>
+              </div>
+              <div>
+                <h3 class="text-xl font-semibold mb-4">Streamers</h3>
+                <button id="add-streamer-btn" class="w-full px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg font-medium transition mb-4">
+                  Add New Streamer
+                </button>
+                <div id="admin-streamers-list" class="space-y-3 max-h-[60vh] overflow-y-auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    adminModal.onclick = (e) => {
+      if (e.target.id === 'admin-modal') adminModal.classList.add('hidden');
+    };
+    document.body.appendChild(adminModal);
+
+    els.adminPanelBtn.addEventListener('click', () => {
+      adminModal.classList.remove('hidden');
+      renderAdminTeamsList();
+      renderAdminStreamersList();
+    });
+
+    document.getElementById('close-admin-modal').addEventListener('click', () => {
+      adminModal.classList.add('hidden');
+    });
+
+    document.getElementById('add-team-btn').addEventListener('click', () => {
+      adminModal.classList.add('hidden');
+      resetTeamForm();
       els.teamModal.classList.remove('hidden');
+    });
+
+    document.getElementById('add-streamer-btn').addEventListener('click', () => {
+      adminModal.classList.add('hidden');
+      resetStreamerForm();
+      els.streamerModal.classList.remove('hidden');
     });
 
     document.getElementById('close-team-modal').addEventListener('click', () => {
       els.teamModal.classList.add('hidden');
-    });
-
-    els.addStreamerBtn.addEventListener('click', () => {
-      els.streamerModal.classList.remove('hidden');
+      resetTeamForm();
     });
 
     document.getElementById('close-streamer-modal').addEventListener('click', () => {
       els.streamerModal.classList.add('hidden');
+      resetStreamerForm();
     });
+
+    function renderAdminTeamsList() {
+      const listEl = document.getElementById('admin-teams-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      
+      if (state.teams.size === 0) {
+        listEl.innerHTML = '<p class="text-slate-400 text-sm">No teams</p>';
+        return;
+      }
+
+      Array.from(state.teams.values()).sort((a, b) => a.teamName.localeCompare(b.teamName)).forEach(team => {
+        const div = document.createElement('div');
+        div.className = 'bg-slate-800 rounded-lg p-3';
+        div.innerHTML = `
+          <h4 class="font-semibold text-sm">${escapeHtml(team.teamName)}</h4>
+          ${team.games?.length ? `<p class="text-xs text-slate-400 mt-1">${team.games.join(', ')}</p>` : ''}
+          <button onclick="editTeam('${team.id}'); document.getElementById('admin-modal').classList.add('hidden');" class="mt-2 w-full px-2 py-1 bg-violet-600 hover:bg-violet-700 rounded text-xs transition">
+            Edit
+          </button>
+        `;
+        listEl.appendChild(div);
+      });
+    }
+
+    function renderAdminStreamersList() {
+      const listEl = document.getElementById('admin-streamers-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      
+      if (state.streamers.size === 0) {
+        listEl.innerHTML = '<p class="text-slate-400 text-sm">No streamers</p>';
+        return;
+      }
+
+      Array.from(state.streamers.values()).sort((a, b) => a.displayName.localeCompare(b.displayName)).forEach(streamer => {
+        const handle = streamer.twitchHandle;
+        const liveData = state.liveStreams.get(handle);
+        const team = streamer.teamId ? state.teams.get(streamer.teamId) : null;
+        
+        const div = document.createElement('div');
+        div.className = 'bg-slate-800 rounded-lg p-3';
+        div.innerHTML = `
+          <h4 class="font-semibold text-sm">${escapeHtml(streamer.displayName)}</h4>
+          <p class="text-xs text-slate-400 mt-1">@${escapeHtml(streamer.twitchHandle)}</p>
+          ${team ? `<p class="text-xs text-violet-400 mt-1">${escapeHtml(team.teamName)}</p>` : ''}
+          ${liveData ? `<p class="text-xs text-green-400 mt-1">● Live: ${escapeHtml(liveData.game_name)}</p>` : ''}
+          <button onclick="editStreamer('${streamer.id}'); document.getElementById('admin-modal').classList.add('hidden');" class="mt-2 w-full px-2 py-1 bg-violet-600 hover:bg-violet-700 rounded text-xs transition">
+            Edit
+          </button>
+        `;
+        listEl.appendChild(div);
+      });
+    }
 
     els.chatToggle.addEventListener('click', () => {
       els.chatPanel.classList.toggle('hidden');
@@ -955,9 +1291,18 @@
 
     // Initialize
     async function init() {
+      // Check admin status on auth state change
+      onAuthStateChanged(auth, (user) => {
+        checkAdmin(user);
+      });
+
+      // Admin sign-in button
+      els.adminSignInBtn.addEventListener('click', signInAsAdmin);
+
       await loadTeams();
       await loadStreamers();
       fetchLiveStreams();
+      renderStreamersList();
       
       // Refresh live status every 60 seconds
       setInterval(fetchLiveStreams, 60000);
@@ -965,10 +1310,17 @@
       // Set up real-time listeners
       onSnapshot(collection(db, COLLECTIONS.TEAMS), () => {
         loadTeams();
+        if (document.getElementById('admin-modal') && !document.getElementById('admin-modal').classList.contains('hidden')) {
+          renderAdminTeamsList();
+        }
       });
       
       onSnapshot(collection(db, COLLECTIONS.STREAMERS), () => {
         loadStreamers();
+        renderStreamersList();
+        if (document.getElementById('admin-modal') && !document.getElementById('admin-modal').classList.contains('hidden')) {
+          renderAdminStreamersList();
+        }
       });
     }
 
