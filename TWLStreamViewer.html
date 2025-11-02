@@ -115,6 +115,14 @@
       background:#000;
       overflow:hidden;
       display:block;
+      min-width: 320px;
+      min-height: 180px;
+    }
+    .twitch-embed-container {
+      width: 100%;
+      height: 100%;
+      min-width: 320px;
+      min-height: 180px;
     }
     .stream-overlay {
       position:absolute; inset:0; pointer-events:none;
@@ -593,6 +601,9 @@
     <p id="toast-message" class="text-sm muted"></p>
   </div>
 
+  <!-- Load Twitch Embed JavaScript -->
+  <script src="https://embed.twitch.tv/embed/v1.js"></script>
+
   <!-- Scripts: Firebase + app logic (kept same logic; updated only for style/DOM structure) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1002,15 +1013,27 @@
       const isLive = !!liveData;
       const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
       const team = streamer.teamId && streamer.teamId !== '__shoutcaster__' ? state.teams.get(streamer.teamId) : null;
-      const playerUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&${parentQuery}&autoplay=false`;
+      
+      // Get parent domains for Twitch Embed
+      const parentDomains = [
+        window.location.hostname,
+        "www.tribesprofessionalleague.online",
+        "tribesprofessionalleague.online",
+        "t24085.github.io",
+        "localhost",
+        "127.0.0.1"
+      ].filter(Boolean);
 
       const card = document.createElement('div');
       card.className = 'stream-card';
       if(isShoutcaster) card.style.border = '2px solid rgba(255,215,0,0.4)';
 
+      // Create unique ID for this embed
+      const embedId = `twitch-embed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
       card.innerHTML = `
         <div class="stream-media">
-          <iframe src="${playerUrl}" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <div id="${embedId}" class="twitch-embed-container"></div>
           <div class="stream-overlay"></div>
 
           <div style="position:absolute; left:12px; top:12px; z-index:5;">
@@ -1040,6 +1063,30 @@
           </div>
         </div>
       `;
+
+      // Initialize Twitch Embed after card is added to DOM
+      setTimeout(() => {
+        const container = document.getElementById(embedId);
+        if(container && window.Twitch && window.Twitch.Embed){
+          const containerRect = container.getBoundingClientRect();
+          const width = Math.max(320, containerRect.width || 854);
+          const height = Math.max(180, containerRect.height || 480);
+          
+          try {
+            new window.Twitch.Embed(embedId, {
+              width: width,
+              height: height,
+              channel: handle,
+              parent: parentDomains,
+              autoplay: false
+            });
+          } catch(err) {
+            console.error('Failed to create Twitch embed:', err);
+            // Fallback to iframe if Embed API fails
+            container.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&${parentQuery}&autoplay=false" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+          }
+        }
+      }, 100);
 
       if(isLive) card.classList.add('glow');
       return card;
