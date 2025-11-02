@@ -256,16 +256,29 @@
     }
     #admin-modal.hidden,
     #admin-login-modal.hidden,
-    #chat-popup-modal.hidden {
+    #chat-popup-modal.hidden,
+    #filters-modal.hidden {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
       position: fixed !important;
     }
-    #admin-modal:not(.hidden),
+    #admin-modal:not(.hidden) {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      z-index: 99999 !important;
+    }
     #admin-login-modal:not(.hidden),
-    #chat-popup-modal:not(.hidden) {
+    #chat-popup-modal:not(.hidden),
+    #filters-modal:not(.hidden) {
       display: flex !important;
       visibility: visible !important;
       opacity: 1 !important;
@@ -397,8 +410,42 @@
       gap: 0.5rem;
     }
     #admin-modal .glass {
-      background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(26,26,26,0.9));
-      border: 2px solid rgba(204,51,51,0.3);
+      background: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(26,26,26,0.98));
+      border: 2px solid rgba(204,51,51,0.4);
+      border-right: none;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+    }
+    
+    /* Custom scrollbar for admin panel */
+    #admin-modal .overflow-y-auto::-webkit-scrollbar {
+      width: 8px;
+    }
+    #admin-modal .overflow-y-auto::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
+    #admin-modal .overflow-y-auto::-webkit-scrollbar-thumb {
+      background: rgba(204,51,51,0.5);
+      border-radius: 4px;
+    }
+    #admin-modal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+      background: rgba(204,51,51,0.7);
+    }
+    
+    /* Slide in from right animation */
+    #admin-modal:not(.hidden) {
+      display: flex !important;
+    }
+    #admin-modal:not(.hidden) > div {
+      animation: slideInFromRight 0.3s ease-out;
+    }
+    @keyframes slideInFromRight {
+      from {
+        transform: translateX(100%);
+      }
+      to {
+        transform: translateX(0);
+      }
     }
     #admin-modal button[type="submit"],
     #admin-modal .btn-pill[style*="background:linear-gradient"] {
@@ -462,40 +509,7 @@
   <!-- Page content container -->
   <main class="container">
 
-    <!-- Top filters + stats row - compact -->
-    <section class="glass flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style="padding: 0.75rem 1rem;">
-      <div class="flex flex-wrap items-center gap-3 filters" style="flex: 1;">
-        <div style="min-width: 150px;">
-          <label class="small">Game</label>
-          <select id="game-filter" class="select w-full rounded-md" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;"></select>
-        </div>
-        <div style="min-width: 150px;">
-          <label class="small">Team</label>
-          <select id="team-filter" class="select w-full rounded-md" style="font-size: 0.85rem; padding: 0.5rem 0.75rem;"></select>
-        </div>
-        <div class="flex items-center gap-2" style="margin-top: 1.5rem;">
-          <input id="live-only-toggle" type="checkbox" class="h-4 w-4 rounded border-slate-600" />
-          <label class="small" style="margin: 0;">Live only</label>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2" style="flex-shrink: 0;">
-        <div class="stat" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
-          <div class="faint text-xs">Total</div>
-          <div class="num" id="stat-total" style="font-size: 1rem;">0</div>
-        </div>
-        <div class="stat" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
-          <div class="faint text-xs">Live</div>
-          <div class="num" id="stat-live" style="font-size: 1rem;">0</div>
-        </div>
-        <div class="stat" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
-          <div class="faint text-xs">Games</div>
-          <div class="num" id="stat-games" style="font-size: 1rem;">0</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Main layout: stream grid + chat (right column) -->
+    <!-- Main layout: stream grid -->
     <div class="layout mt-4">
 
       <!-- Left: Stream Grid -->
@@ -542,15 +556,15 @@
     </div>
   </div>
 
-  <!-- Consolidated Admin Panel Modal (Hidden by default) -->
-  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
-    <div class="w-full max-w-5xl glass overflow-y-auto rounded-xl max-h-[90vh]">
-      <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/2 z-10">
+  <!-- Consolidated Admin Panel Modal (Hidden by default) - Slides from right -->
+  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop" style="justify-content: flex-end;">
+    <div class="w-full max-w-5xl glass rounded-l-xl h-full overflow-hidden flex flex-col" style="max-width: 90vw;">
+      <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/20 z-10 flex-shrink: 0;" style="background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(26,26,26,0.95));">
         <h2 class="text-2xl font-bold">Admin Panel</h2>
         <button id="close-admin-modal" class="text-2xl text-slate-300 hover:text-white">×</button>
       </div>
       
-      <div class="p-6 space-y-6">
+      <div class="p-6 space-y-6 overflow-y-auto flex-1" style="scrollbar-width: thin; scrollbar-color: rgba(204,51,51,0.5) rgba(0,0,0,0.3);">
         <!-- Manage Teams Section -->
         <section class="glass p-4 rounded-lg">
           <div class="flex items-center justify-between mb-4">
@@ -634,6 +648,55 @@
             </div>
           </div>
         </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Modal -->
+  <div id="filters-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-xl p-6 space-y-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold">Filters & Stats</h2>
+        <button onclick="closeFiltersModal()" class="text-2xl text-slate-300 hover:text-white">×</button>
+      </div>
+      
+      <div class="space-y-4">
+        <div>
+          <label class="small block mb-2">Filter by Game</label>
+          <select id="game-filter" class="select w-full rounded-md" style="font-size: 0.9rem; padding: 0.6rem 0.75rem;"></select>
+        </div>
+        
+        <div>
+          <label class="small block mb-2">Filter by Team</label>
+          <select id="team-filter" class="select w-full rounded-md" style="font-size: 0.9rem; padding: 0.6rem 0.75rem;"></select>
+        </div>
+        
+        <div class="flex items-center gap-2 pt-2">
+          <input id="live-only-toggle" type="checkbox" class="h-5 w-5 rounded border-slate-600" />
+          <label class="small" style="margin: 0;">Show Only Live</label>
+        </div>
+        
+        <div class="pt-4 border-t border-white/10">
+          <h3 class="text-lg font-semibold mb-3">Statistics</h3>
+          <div class="grid grid-cols-3 gap-3">
+            <div class="stat text-center" style="padding: 0.75rem 1rem; flex-direction: column;">
+              <div class="faint text-xs">Total</div>
+              <div class="num" id="filter-stat-total" style="font-size: 1.5rem;">0</div>
+            </div>
+            <div class="stat text-center" style="padding: 0.75rem 1rem; flex-direction: column;">
+              <div class="faint text-xs">Live</div>
+              <div class="num" id="filter-stat-live" style="font-size: 1.5rem;">0</div>
+            </div>
+            <div class="stat text-center" style="padding: 0.75rem 1rem; flex-direction: column;">
+              <div class="faint text-xs">Games</div>
+              <div class="num" id="filter-stat-games" style="font-size: 1.5rem;">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex gap-3 pt-4">
+        <button onclick="closeFiltersModal()" class="flex-1 px-4 py-2 rounded-md btn-pill" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:#ffffff">Close</button>
       </div>
     </div>
   </div>
@@ -987,7 +1050,9 @@
             is_live: true
           });
         });
-        renderStreamGrid(); updateStats();
+        renderStreamGrid();
+      updateStats();
+      updateFiltersModalStats();
       }catch(err){ console.error(err); }
     }
 
@@ -1284,7 +1349,6 @@
       document.getElementById('cancel-team-edit').classList.remove('hidden');
       if(els.adminModal.classList.contains('hidden')){
         els.adminModal.classList.remove('hidden');
-        els.adminModal.style.display = 'flex';
       }
     };
 
@@ -1329,7 +1393,6 @@
       document.getElementById('cancel-streamer-edit').classList.remove('hidden');
       if(els.adminModal.classList.contains('hidden')){
         els.adminModal.classList.remove('hidden');
-        els.adminModal.style.display = 'flex';
       }
     };
 
@@ -1402,16 +1465,27 @@
       const live = state.liveStreams.size;
       const games = new Set();
       state.liveStreams.forEach(s=> s.game_name && games.add(s.game_name));
-      els.stats.total.textContent = total;
-      els.stats.live.textContent = live;
-      els.stats.games.textContent = games.size;
+      if(els.stats.total) els.stats.total.textContent = total;
+      if(els.stats.live) els.stats.live.textContent = live;
+      if(els.stats.games) els.stats.games.textContent = games.size;
       updateGameFilter();
+      updateFiltersModalStats();
     }
 
     // ---------- Event wiring ----------
-    els.gameFilter.addEventListener('change', e => { state.filters.game = e.target.value; renderStreamGrid(); });
-    els.teamFilter.addEventListener('change', e => { state.filters.team = e.target.value; renderStreamGrid(); });
-    els.liveOnlyToggle.addEventListener('change', e => { state.filters.liveOnly = e.target.checked; renderStreamGrid(); });
+    if(els.gameFilter) els.gameFilter.addEventListener('change', e => { state.filters.game = e.target.value; renderStreamGrid(); });
+    if(els.teamFilter) els.teamFilter.addEventListener('change', e => { state.filters.team = e.target.value; renderStreamGrid(); });
+    if(els.liveOnlyToggle) els.liveOnlyToggle.addEventListener('change', e => { state.filters.liveOnly = e.target.checked; renderStreamGrid(); });
+    
+    // Close filters modal on backdrop click
+    const filtersModal = document.getElementById('filters-modal');
+    if(filtersModal){
+      filtersModal.addEventListener('click', (e) => {
+        if(e.target.id === 'filters-modal'){
+          closeFiltersModal();
+        }
+      });
+    }
 
     // modals/buttons
     document.getElementById('team-form').addEventListener('submit', (e) => {
@@ -1457,14 +1531,42 @@
     // Admin modal close and toggle
     document.getElementById('close-admin-modal').addEventListener('click', ()=>{
       els.adminModal.classList.add('hidden');
-      els.adminModal.style.display = 'none';
     });
     els.adminModal.addEventListener('click', (e) => { 
       if(e.target.id === 'admin-modal') {
         els.adminModal.classList.add('hidden');
-        els.adminModal.style.display = 'none';
       }
     });
+    
+    // Filters modal functionality
+    window.openFiltersModal = function(){
+      const modal = document.getElementById('filters-modal');
+      if(modal){
+        modal.classList.remove('hidden');
+        // Update stats display in modal
+        updateFiltersModalStats();
+      }
+    };
+    
+    window.closeFiltersModal = function(){
+      const modal = document.getElementById('filters-modal');
+      if(modal){
+        modal.classList.add('hidden');
+      }
+    };
+    
+    function updateFiltersModalStats(){
+      const statTotal = document.getElementById('filter-stat-total');
+      const statLive = document.getElementById('filter-stat-live');
+      const statGames = document.getElementById('filter-stat-games');
+      if(statTotal) statTotal.textContent = state.streamers.size;
+      if(statLive) statLive.textContent = state.liveStreams.size;
+      if(statGames){
+        const games = new Set();
+        state.liveStreams.forEach(s=> s.game_name && games.add(s.game_name));
+        statGames.textContent = games.size;
+      }
+    }
     
     // Admin login modal
     if(els.adminLoginForm){
@@ -1512,7 +1614,6 @@
           e.stopPropagation();
           if(els.adminModal){
             els.adminModal.classList.remove('hidden');
-            els.adminModal.style.display = 'flex';
             renderTeamsList();
             renderStreamersList();
           } else {
