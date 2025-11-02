@@ -8,52 +8,176 @@
   <script src="oauth.js"></script>
   <style>
     :root {
+      --bg-color: #030712;
       --bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 55%), 
                      radial-gradient(circle at 80% 30%, rgba(129, 140, 248, 0.12), transparent 60%), 
                      linear-gradient(220deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.94));
+      --panel-bg: rgba(15, 23, 42, 0.82);
+      --surface-glass: rgba(17, 24, 39, 0.65);
       --card-bg: rgba(13, 19, 33, 0.84);
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
       --accent: #8b5cf6;
-      --live: #22c55e;
+      --accent-strong: #38bdf8;
+      --success: #22c55e;
+      --danger: #f87171;
+      --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
     body {
-      background: var(--bg-gradient), #030712;
-      color: #e2e8f0;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-gradient), var(--bg-color);
+      color: var(--text-primary);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
+    /* Header Styling */
+    nav {
+      background: rgba(8, 11, 26, 0.85) !important;
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+    /* Game Badge Enhanced */
     .game-badge {
       display: inline-flex;
       align-items: center;
-      padding: 0.25rem 0.75rem;
+      padding: 0.35rem 0.85rem;
       border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.7rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: rgba(139, 92, 246, 0.2);
-      border: 1px solid rgba(139, 92, 246, 0.4);
+      letter-spacing: 0.1em;
+      background: rgba(139, 92, 246, 0.25);
+      border: 1px solid rgba(139, 92, 246, 0.5);
       color: #c4b5fd;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+      backdrop-filter: blur(8px);
     }
     .game-badge.live {
-      background: rgba(34, 197, 94, 0.2);
-      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.25);
+      border-color: rgba(34, 197, 94, 0.6);
       color: #bbf7d0;
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+      animation: game-badge-glow 2s ease-in-out infinite;
     }
+    @keyframes game-badge-glow {
+      0%, 100% { box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3); }
+      50% { box-shadow: 0 4px 24px rgba(34, 197, 94, 0.5); }
+    }
+    /* Live Pulse Animation */
     .live-pulse {
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      animation: pulse-strong 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    @keyframes pulse-strong {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.1); }
     }
+    /* Stream Cards - Enhanced */
     .stream-card {
-      transition: transform 0.2s, box-shadow 0.2s;
+      background: var(--card-bg);
+      border: 1px solid rgba(99, 102, 241, 0.28);
+      border-radius: 1.25rem;
+      overflow: hidden;
+      position: relative;
+      transition: all var(--transition-snappy);
+      box-shadow: 0 24px 45px -30px rgba(59, 130, 246, 0.45);
+    }
+    .stream-card::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(56, 189, 248, 0.9));
+      opacity: 0;
+      transition: opacity var(--transition-snappy);
+      z-index: 0;
+      pointer-events: none;
     }
     .stream-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 24px 60px -28px rgba(99, 102, 241, 0.45);
+      transform: translateY(-6px);
+      box-shadow: 0 32px 70px -32px rgba(99, 102, 241, 0.6);
+      border-color: rgba(129, 140, 248, 0.5);
     }
+    .stream-card:hover::before {
+      opacity: 0.15;
+    }
+    .stream-card.live {
+      border-color: rgba(34, 197, 94, 0.4);
+      box-shadow: 0 24px 50px -25px rgba(34, 197, 94, 0.35);
+    }
+    .stream-card.live::before {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(56, 189, 248, 0.9));
+    }
+    .stream-card > * {
+      position: relative;
+      z-index: 1;
+    }
+    /* Filter Panel Enhanced */
+    .filter-panel {
+      background: var(--surface-glass) !important;
+      border: 1px solid rgba(148, 163, 184, 0.18) !important;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.75);
+    }
+    /* Stats Enhanced */
+    .stat-item {
+      background: rgba(15, 23, 42, 0.58);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 1rem;
+      padding: 0.75rem 1.25rem;
+      backdrop-filter: blur(8px);
+    }
+    /* Modal Backdrop */
     .modal-backdrop {
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.75);
+    }
+    /* Buttons Enhanced */
+    button, .btn {
+      transition: all var(--transition-snappy);
+    }
+    button:hover, .btn:hover {
+      transform: translateY(-1px);
+    }
+    /* Chat Panel Enhanced */
+    #chat-panel {
+      background: rgba(9, 13, 30, 0.95) !important;
+      border: 1px solid rgba(129, 140, 248, 0.22);
+      box-shadow: 0 24px 60px -20px rgba(99, 102, 241, 0.45);
+      backdrop-filter: blur(16px);
+    }
+    /* Empty State */
+    #empty-state {
+      background: rgba(148, 163, 184, 0.08);
+      border: 1px dashed rgba(148, 163, 184, 0.22);
+      border-radius: 1.25rem;
+      padding: 3rem;
+    }
+    /* Stream Iframe Container */
+    .stream-container {
+      position: relative;
+      background: #000;
+      border-radius: 0.75rem;
+      overflow: hidden;
+    }
+    .stream-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+    /* Live Badge Enhanced */
+    .live-badge {
+      background: rgba(239, 68, 68, 0.9) !important;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
   </style>
 </head>
@@ -86,7 +210,7 @@
 
   <!-- Filters -->
   <section class="max-w-7xl mx-auto px-6 py-4">
-    <div class="bg-slate-900/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50">
+    <div class="filter-panel rounded-xl p-4">
       <div class="flex flex-wrap items-center gap-4">
         <div class="flex-1 min-w-[200px]">
           <label class="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Filter by Game</label>
@@ -109,19 +233,19 @@
   </section>
 
   <!-- Stats Banner -->
-  <section class="max-w-7xl mx-auto px-6 py-2">
-    <div class="flex flex-wrap gap-6 text-sm">
-      <div class="flex items-center gap-2">
-        <span class="text-slate-400">Total Streamers:</span>
-        <strong id="stat-total" class="text-violet-400">0</strong>
+  <section class="max-w-7xl mx-auto px-6 py-4">
+    <div class="flex flex-wrap gap-4">
+      <div class="stat-item flex items-center gap-2">
+        <span style="font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Total Streamers</span>
+        <strong id="stat-total" style="display: block; margin-left: 0.5rem; font-size: 1.55rem; font-weight: 700; color: var(--accent);">0</strong>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-slate-400">Live Now:</span>
-        <strong id="stat-live" class="text-green-400">0</strong>
+      <div class="stat-item flex items-center gap-2">
+        <span style="font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Live Now</span>
+        <strong id="stat-live" style="display: block; margin-left: 0.5rem; font-size: 1.55rem; font-weight: 700; color: var(--success);">0</strong>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="text-slate-400">Games Active:</span>
-        <strong id="stat-games" class="text-cyan-400">0</strong>
+      <div class="stat-item flex items-center gap-2">
+        <span style="font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);">Games Active</span>
+        <strong id="stat-games" style="display: block; margin-left: 0.5rem; font-size: 1.55rem; font-weight: 700; color: var(--accent-strong);">0</strong>
       </div>
     </div>
   </section>
@@ -509,13 +633,13 @@
         const team = streamer.teamId ? state.teams.get(streamer.teamId) : null;
 
         const card = document.createElement('div');
-        card.className = 'stream-card bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 overflow-hidden';
+        card.className = `stream-card ${isLive ? 'live' : ''}`;
         
         const playerUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&${parentQuery}&autoplay=false`;
         
         card.innerHTML = `
-          <div class="relative">
-            <div class="aspect-video bg-black">
+          <div class="stream-container">
+            <div class="aspect-video">
               <iframe src="${playerUrl}" 
                 class="w-full h-full" 
                 frameborder="0" 
@@ -523,36 +647,35 @@
                 allowfullscreen
                 loading="lazy"></iframe>
             </div>
+            <div class="stream-overlay"></div>
             ${isLive ? `
-              <div class="absolute top-2 left-2 flex items-center gap-2">
-                <span class="live-pulse w-3 h-3 bg-red-500 rounded-full"></span>
-                <span class="px-2 py-1 bg-red-500/80 backdrop-blur-sm rounded text-xs font-semibold">
+              <div style="position: absolute; top: 0.75rem; left: 0.75rem; z-index: 3; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="live-pulse" style="width: 0.75rem; height: 0.75rem; background: #ef4444; border-radius: 50%;"></span>
+                <span class="live-badge" style="padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: white;">
                   LIVE • ${liveData.viewer_count.toLocaleString()} viewers
                 </span>
               </div>
-              <div class="absolute top-2 right-2">
+              <div style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 3;">
                 <span class="game-badge live">${escapeHtml(gameName)}</span>
               </div>
             ` : `
-              <div class="absolute top-2 right-2">
+              <div style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 3;">
                 <span class="game-badge">${escapeHtml(gameName)}</span>
               </div>
             `}
           </div>
-          <div class="p-4">
-            <div class="flex items-start justify-between mb-2">
-              <div>
-                <h3 class="font-semibold text-lg">${escapeHtml(streamer.displayName)}</h3>
-                <p class="text-sm text-slate-400">@${escapeHtml(handle)}</p>
-                ${team ? `<p class="text-xs text-violet-400 mt-1">${escapeHtml(team.teamName)}</p>` : ''}
-              </div>
+          <div style="padding: 1.25rem;">
+            <div style="margin-bottom: 1rem;">
+              <h3 style="font-size: 1.1rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 0.25rem;">${escapeHtml(streamer.displayName)}</h3>
+              <p style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.25rem;">@${escapeHtml(handle)}</p>
+              ${team ? `<p style="font-size: 0.7rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.25rem;">${escapeHtml(team.teamName)}</p>` : ''}
             </div>
-            ${liveData?.title ? `<p class="text-sm text-slate-300 truncate mb-2" title="${escapeHtml(liveData.title)}">${escapeHtml(liveData.title)}</p>` : ''}
-            <div class="flex gap-2">
-              <button onclick="setChat('${handle}')" class="flex-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition">
+            ${liveData?.title ? `<p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.55; margin-bottom: 1rem; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" title="${escapeHtml(liveData.title)}">${escapeHtml(liveData.title)}</p>` : ''}
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button onclick="setChat('${handle}')" style="flex: 1 1 130px; border-radius: 9999px; padding: 0.55rem 1.1rem; border: 1px solid rgba(148, 163, 184, 0.25); background: rgba(15, 23, 42, 0.55); color: var(--text-primary); text-align: center; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; transition: all var(--transition-snappy);">
                 Chat
               </button>
-              <a href="https://www.twitch.tv/${handle}" target="_blank" rel="noopener" class="flex-1 px-3 py-2 bg-violet-600 hover:bg-violet-700 rounded-lg text-sm text-center transition">
+              <a href="https://www.twitch.tv/${handle}" target="_blank" rel="noopener" style="flex: 1 1 130px; border-radius: 9999px; padding: 0.55rem 1.1rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(56, 189, 248, 0.85)); border: none; color: #020617; text-align: center; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; display: inline-block; transition: all var(--transition-snappy);">
                 Watch
               </a>
             </div>
@@ -571,13 +694,20 @@
         streamers = streamers.filter(s => s.teamId === state.filters.team);
       }
 
-      // Filter by game
+      // Filter by game - exact match like Twitch
       if (state.filters.game) {
         streamers = streamers.filter(s => {
           const handle = s.twitchHandle;
           const liveData = state.liveStreams.get(handle);
-          const gameName = liveData?.game_name || s.defaultGame || '';
-          return gameName.toLowerCase().includes(state.filters.game.toLowerCase());
+          // Only show streams that are live and playing the selected game
+          if (liveData) {
+            return liveData.game_name === state.filters.game;
+          }
+          // If offline but has default game matching, show it too
+          if (!liveData && s.defaultGame === state.filters.game) {
+            return true;
+          }
+          return false;
         });
       }
 
