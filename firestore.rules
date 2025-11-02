@@ -99,5 +99,19 @@ service cloud.firestore {
       allow read: if true;
       allow create, update, delete: if isAdmin();
     }
+
+    // TWL Multi-Game Stream Viewer Collections (separate from TPL data)
+    match /twl_teams/{teamId} {
+      allow read: if true;
+      allow create: if request.resource.data.teamName is string;
+      allow update, delete: if true; // Open for demo/pitch - restrict to isAdmin() in production
+    }
+
+    match /twl_streamers/{streamerId} {
+      allow read: if true;
+      allow create: if request.resource.data.displayName is string 
+        && request.resource.data.twitchHandle is string;
+      allow update, delete: if true; // Open for demo/pitch - restrict to isAdmin() in production
+    }
   }
 }
