@@ -417,19 +417,31 @@
     }
     
     /* Custom scrollbar for admin panel */
-    #admin-modal .overflow-y-auto::-webkit-scrollbar {
-      width: 8px;
+    #admin-modal-content {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
     }
-    #admin-modal .overflow-y-auto::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.3);
-      border-radius: 4px;
+    #admin-modal-content::-webkit-scrollbar {
+      width: 12px !important;
+      display: block !important;
     }
-    #admin-modal .overflow-y-auto::-webkit-scrollbar-thumb {
-      background: rgba(204,51,51,0.5);
-      border-radius: 4px;
+    #admin-modal-content::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.4) !important;
+      border-radius: 6px !important;
+      margin: 8px 0 !important;
     }
-    #admin-modal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-      background: rgba(204,51,51,0.7);
+    #admin-modal-content::-webkit-scrollbar-thumb {
+      background: rgba(204,51,51,0.6) !important;
+      border-radius: 6px !important;
+      border: 2px solid rgba(0,0,0,0.2) !important;
+    }
+    #admin-modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(204,51,51,0.8) !important;
+    }
+    /* Force scrollbar visibility for Firefox */
+    #admin-modal-content {
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(204,51,51,0.6) rgba(0,0,0,0.4) !important;
     }
     
     /* Slide in from right animation */
@@ -559,12 +571,12 @@
   <!-- Consolidated Admin Panel Modal (Hidden by default) - Slides from right -->
   <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop" style="justify-content: flex-end;">
     <div class="w-full max-w-5xl glass rounded-l-xl h-full overflow-hidden flex flex-col" style="max-width: 90vw;">
-      <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/20 z-10 flex-shrink: 0;" style="background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(26,26,26,0.95));">
+      <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/20 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(26,26,26,0.95)); flex-shrink: 0;">
         <h2 class="text-2xl font-bold">Admin Panel</h2>
         <button id="close-admin-modal" class="text-2xl text-slate-300 hover:text-white">×</button>
       </div>
       
-      <div class="p-6 space-y-6 overflow-y-auto flex-1" style="scrollbar-width: thin; scrollbar-color: rgba(204,51,51,0.5) rgba(0,0,0,0.3);">
+      <div class="p-6 space-y-6 overflow-y-auto" id="admin-modal-content" style="flex: 1 1 0; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(204,51,51,0.5) rgba(0,0,0,0.3);">
         <!-- Manage Teams Section -->
         <section class="glass p-4 rounded-lg">
           <div class="flex items-center justify-between mb-4">
