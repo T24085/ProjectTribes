@@ -477,6 +477,65 @@
       margin-bottom: 1rem;
     }
     
+    /* Button styles for admin modal */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: inline-block;
+      pointer-events: auto !important;
+      z-index: 100000 !important;
+      position: relative;
+    }
+    .btn:hover {
+      background: rgba(204,51,51,0.3);
+      border-color: rgba(204,51,51,0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(204,51,51,0.2);
+    }
+    .btn-secondary {
+      background: rgba(26,26,26,0.8);
+      border: 1px solid rgba(204,51,51,0.4);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      background: rgba(26,26,26,1);
+      border-color: var(--twl-light-blue);
+    }
+    
+    /* Ensure close button in modal header is clickable */
+    .modal-header .btn,
+    .modal-header button {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+      z-index: 100001 !important;
+      position: relative;
+      background: rgba(204,51,51,0.2);
+      border: 1px solid rgba(204,51,51,0.4);
+      color: #ffffff;
+      padding: 0.25rem 0.75rem;
+      font-size: 1.5rem;
+      line-height: 1;
+      min-width: 2rem;
+      min-height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-header .btn:hover,
+    .modal-header button:hover {
+      background: rgba(204,51,51,0.4);
+      border-color: var(--twl-red-accent);
+      transform: scale(1.1);
+    }
+    
     /* Override modal-content width for admin panel to accommodate wider content */
     #admin-modal .modal-content {
       max-width: 800px;
@@ -1576,22 +1635,30 @@
         closeBtn.addEventListener('click', (e)=>{
           e.preventDefault();
           e.stopPropagation();
+          console.log('Close button clicked'); // Debug log
           if(els.adminModal){
             els.adminModal.style.display = 'none';
+            console.log('Modal hidden'); // Debug log
+          } else {
+            console.error('Admin modal not found when closing');
           }
         });
+        console.log('Close button listener attached to:', closeBtn); // Debug log
       }
     }
     // Set up close button immediately and retry if needed
     setupCloseAdminModal();
     setTimeout(setupCloseAdminModal, 100);
     setTimeout(setupCloseAdminModal, 500);
+    setTimeout(setupCloseAdminModal, 1000);
     
-    els.adminModal.addEventListener('click', (e) => { 
-      if(e.target.id === 'admin-modal') {
-        els.adminModal.style.display = 'none';
-      }
-    });
+    if(els.adminModal){
+      els.adminModal.addEventListener('click', (e) => { 
+        if(e.target.id === 'admin-modal') {
+          els.adminModal.style.display = 'none';
+        }
+      });
+    }
     
     // Filters modal functionality
     window.openFiltersModal = function(){
@@ -1627,35 +1694,56 @@
     if(els.adminLoginForm){
       els.adminLoginForm.addEventListener('submit', handleAdminLogin);
     }
-    document.getElementById('close-login-modal').addEventListener('click', () => {
-      els.adminLoginModal.classList.add('hidden');
-      els.adminLoginForm.reset();
-      document.getElementById('login-error').classList.add('hidden');
-    });
-    document.getElementById('cancel-login').addEventListener('click', () => {
-      els.adminLoginModal.classList.add('hidden');
-      els.adminLoginForm.reset();
-      document.getElementById('login-error').classList.add('hidden');
-    });
-    els.adminLoginModal.addEventListener('click', (e) => { 
-      if(e.target.id === 'admin-login-modal') {
+    const closeLoginBtn = document.getElementById('close-login-modal');
+    if(closeLoginBtn){
+      closeLoginBtn.addEventListener('click', () => {
         els.adminLoginModal.classList.add('hidden');
         els.adminLoginForm.reset();
-        document.getElementById('login-error').classList.add('hidden');
-      }
-    });
+        const loginError = document.getElementById('login-error');
+        if(loginError) loginError.classList.add('hidden');
+      });
+    }
+    const cancelLoginBtn = document.getElementById('cancel-login');
+    if(cancelLoginBtn){
+      cancelLoginBtn.addEventListener('click', () => {
+        els.adminLoginModal.classList.add('hidden');
+        els.adminLoginForm.reset();
+        const loginError = document.getElementById('login-error');
+        if(loginError) loginError.classList.add('hidden');
+      });
+    }
+    if(els.adminLoginModal){
+      els.adminLoginModal.addEventListener('click', (e) => { 
+        if(e.target.id === 'admin-login-modal') {
+          els.adminLoginModal.classList.add('hidden');
+          els.adminLoginForm.reset();
+          const loginError = document.getElementById('login-error');
+          if(loginError) loginError.classList.add('hidden');
+        }
+      });
+    }
     
     // Section toggle buttons (collapse/expand)
-    document.getElementById('toggle-teams-section').addEventListener('click', () => {
-      const content = document.getElementById('teams-section-content');
-      content.classList.toggle('hidden');
-      document.getElementById('toggle-teams-section').textContent = content.classList.contains('hidden') ? '+' : '×';
-    });
-    document.getElementById('toggle-streamers-section').addEventListener('click', () => {
-      const content = document.getElementById('streamers-section-content');
-      content.classList.toggle('hidden');
-      document.getElementById('toggle-streamers-section').textContent = content.classList.contains('hidden') ? '+' : '×';
-    });
+    const toggleTeamsBtn = document.getElementById('toggle-teams-section');
+    if(toggleTeamsBtn){
+      toggleTeamsBtn.addEventListener('click', () => {
+        const content = document.getElementById('teams-section-content');
+        if(content){
+          content.classList.toggle('hidden');
+          toggleTeamsBtn.textContent = content.classList.contains('hidden') ? '+' : '×';
+        }
+      });
+    }
+    const toggleStreamersBtn = document.getElementById('toggle-streamers-section');
+    if(toggleStreamersBtn){
+      toggleStreamersBtn.addEventListener('click', () => {
+        const content = document.getElementById('streamers-section-content');
+        if(content){
+          content.classList.toggle('hidden');
+          toggleStreamersBtn.textContent = content.classList.contains('hidden') ? '+' : '×';
+        }
+      });
+    }
 
     // Global chat toggle removed - only per-stream chat exists
 
