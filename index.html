@@ -2537,6 +2537,36 @@
                 </div>
               </div>
             </div>
+            
+            <div class="admin-section">
+              <h3>Shoutcaster Settings</h3>
+              <div class="shoutcaster-management">
+                <div class="current-shoutcaster">
+                  <h4>Current Shoutcaster</h4>
+                  <div id="current-shoutcaster-display">
+                    <p>No shoutcaster set</p>
+                  </div>
+                </div>
+                
+                <div class="shoutcaster-actions">
+                  <h4>Set Shoutcaster</h4>
+                  <div class="form-group">
+                    <label for="shoutcaster-select">Select Twitch Streamer:</label>
+                    <select id="shoutcaster-select" class="form-select">
+                      <option value="">Loading streamers...</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="shoutcaster-handle">Or Enter Twitch Handle:</label>
+                    <input id="shoutcaster-handle" type="text" class="form-select" placeholder="e.g., oo0oo_live">
+                  </div>
+                  <div class="admin-actions">
+                    <button id="save-shoutcaster" class="btn btn-primary">Save Shoutcaster</button>
+                    <button id="clear-shoutcaster" class="btn btn-danger">Clear Shoutcaster</button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -3474,6 +3504,203 @@
         if (totalVotesDisplay) {
           totalVotesDisplay.remove();
         }
+      }
+    }
+
+    // Shoutcaster management
+    let currentShoutcaster = null;
+
+    async function loadStreamersForShoutcaster() {
+      try {
+        const streamersRef = collection(db, 'streamers');
+        const streamersSnapshot = await getDocs(streamersRef);
+        const shoutcasterSelect = document.getElementById('shoutcaster-select');
+        
+        if (!shoutcasterSelect) return;
+        
+        // Clear existing options except the first one
+        shoutcasterSelect.innerHTML = '<option value="">Select a streamer...</option>';
+        
+        const streamers = [];
+        streamersSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.twitchHandle) {
+            streamers.push({
+              displayName: data.displayName || data.twitchHandle,
+              twitchHandle: data.twitchHandle
+            });
+          }
+        });
+        
+        // Sort by display name
+        streamers.sort((a, b) => a.displayName.localeCompare(b.displayName));
+        
+        // Add streamers to dropdown
+        streamers.forEach(streamer => {
+          const option = document.createElement('option');
+          option.value = streamer.twitchHandle;
+          option.textContent = `${streamer.displayName} (${streamer.twitchHandle})`;
+          shoutcasterSelect.appendChild(option);
+        });
+        
+        // If no streamers found, show message
+        if (streamers.length === 0) {
+          shoutcasterSelect.innerHTML = '<option value="">No streamers found in database</option>';
+        }
+      } catch (error) {
+        console.error('Error loading streamers:', error);
+        const shoutcasterSelect = document.getElementById('shoutcaster-select');
+        if (shoutcasterSelect) {
+          shoutcasterSelect.innerHTML = '<option value="">Error loading streamers</option>';
+        }
+      }
+    }
+
+    async function loadCurrentShoutcaster() {
+      try {
+        const docRef = doc(db, 'admin', 'shoutcaster');
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          currentShoutcaster = data.twitchHandle || null;
+          updateCurrentShoutcasterDisplay();
+          
+          // Update form
+          const shoutcasterSelect = document.getElementById('shoutcaster-select');
+          const shoutcasterHandle = document.getElementById('shoutcaster-handle');
+          if (shoutcasterSelect && currentShoutcaster) {
+            shoutcasterSelect.value = currentShoutcaster;
+          }
+          if (shoutcasterHandle && currentShoutcaster) {
+            shoutcasterHandle.value = currentShoutcaster;
+          }
+        } else {
+          currentShoutcaster = null;
+          updateCurrentShoutcasterDisplay();
+        }
+      } catch (error) {
+        console.error('Error loading current shoutcaster:', error);
+        currentShoutcaster = null;
+        updateCurrentShoutcasterDisplay();
+      }
+    }
+
+    function updateCurrentShoutcasterDisplay() {
+      const display = document.getElementById('current-shoutcaster-display');
+      if (!display) return;
+
+      if (currentShoutcaster) {
+        display.innerHTML = `
+          <div class="current-shoutcaster-content">
+            <p><strong>Twitch Handle:</strong> ${currentShoutcaster}</p>
+            <p><a href="https://twitch.tv/${currentShoutcaster}" target="_blank" style="color: var(--accent);">View on Twitch</a></p>
+          </div>
+        `;
+      } else {
+        display.innerHTML = '<p>No shoutcaster set</p>';
+      }
+    }
+
+    async function saveShoutcaster() {
+      try {
+        const shoutcasterSelect = document.getElementById('shoutcaster-select');
+        const shoutcasterHandle = document.getElementById('shoutcaster-handle');
+        
+        let twitchHandle = '';
+        
+        // Use dropdown selection if available, otherwise use manual input
+        if (shoutcasterSelect && shoutcasterSelect.value) {
+          twitchHandle = shoutcasterSelect.value.trim();
+        } else if (shoutcasterHandle && shoutcasterHandle.value) {
+          twitchHandle = shoutcasterHandle.value.trim().toLowerCase();
+          // Remove any twitch.tv/ prefix if user included it
+          twitchHandle = twitchHandle.replace(/^(https?:\/\/)?(www\.)?twitch\.tv\//, '');
+        }
+        
+        if (!twitchHandle) {
+          alert('Please select a streamer or enter a Twitch handle.');
+          return;
+        }
+
+        const shoutcasterData = {
+          twitchHandle: twitchHandle,
+          setAt: serverTimestamp()
+        };
+
+        await setDoc(doc(db, 'admin', 'shoutcaster'), shoutcasterData);
+        
+        currentShoutcaster = twitchHandle;
+        updateCurrentShoutcasterDisplay();
+        
+        // Sync both inputs
+        if (shoutcasterSelect) shoutcasterSelect.value = twitchHandle;
+        if (shoutcasterHandle) shoutcasterHandle.value = twitchHandle;
+        
+        alert('Shoutcaster saved successfully!');
+      } catch (error) {
+        console.error('Error saving shoutcaster:', error);
+        alert(`Failed to save shoutcaster: ${error.message}`);
+      }
+    }
+
+    async function clearShoutcaster() {
+      try {
+        if (!confirm('Are you sure you want to clear the shoutcaster?')) {
+          return;
+        }
+        
+        await setDoc(doc(db, 'admin', 'shoutcaster'), {});
+        currentShoutcaster = null;
+        updateCurrentShoutcasterDisplay();
+        
+        // Clear form
+        const shoutcasterSelect = document.getElementById('shoutcaster-select');
+        const shoutcasterHandle = document.getElementById('shoutcaster-handle');
+        if (shoutcasterSelect) shoutcasterSelect.value = '';
+        if (shoutcasterHandle) shoutcasterHandle.value = '';
+        
+        alert('Shoutcaster cleared successfully!');
+      } catch (error) {
+        console.error('Error clearing shoutcaster:', error);
+        alert('Failed to clear shoutcaster. Please try again.');
+      }
+    }
+
+    function initializeShoutcasterManagement() {
+      // Load streamers and current shoutcaster
+      loadStreamersForShoutcaster();
+      loadCurrentShoutcaster();
+
+      // Set up event listeners
+      const saveBtn = document.getElementById('save-shoutcaster');
+      const clearBtn = document.getElementById('clear-shoutcaster');
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', saveShoutcaster);
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', clearShoutcaster);
+      }
+      
+      // Sync dropdown and input
+      const shoutcasterSelect = document.getElementById('shoutcaster-select');
+      const shoutcasterHandle = document.getElementById('shoutcaster-handle');
+      
+      if (shoutcasterSelect && shoutcasterHandle) {
+        shoutcasterSelect.addEventListener('change', () => {
+          if (shoutcasterSelect.value) {
+            shoutcasterHandle.value = shoutcasterSelect.value;
+          }
+        });
+        
+        shoutcasterHandle.addEventListener('input', () => {
+          // When user types, clear the dropdown selection
+          if (shoutcasterHandle.value) {
+            shoutcasterSelect.value = '';
+          }
+        });
       }
     }
 
@@ -5209,6 +5436,9 @@
       
       // Load current poll
       loadCurrentPoll();
+      
+      // Initialize shoutcaster management
+      initializeShoutcasterManagement();
     }
 
     // Show admin panel
