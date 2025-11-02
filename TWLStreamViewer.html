@@ -400,56 +400,86 @@
       align-items: center;
       gap: 0.5rem;
     }
-    #admin-modal .glass {
-      background: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(26,26,26,0.98));
-      border: 2px solid rgba(204,51,51,0.4);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(204,51,51,0.2);
+    /* Admin Panel Styles - Matching index.html */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
     }
     
-    /* Custom scrollbar for admin panel */
-    #admin-modal-content {
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-    }
-    #admin-modal-content::-webkit-scrollbar {
-      width: 12px !important;
-      display: block !important;
-    }
-    #admin-modal-content::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.4) !important;
-      border-radius: 6px !important;
-      margin: 8px 0 !important;
-    }
-    #admin-modal-content::-webkit-scrollbar-thumb {
-      background: rgba(204,51,51,0.6) !important;
-      border-radius: 6px !important;
-      border: 2px solid rgba(0,0,0,0.2) !important;
-    }
-    #admin-modal-content::-webkit-scrollbar-thumb:hover {
-      background: rgba(204,51,51,0.8) !important;
-    }
-    /* Force scrollbar visibility for Firefox */
-    #admin-modal-content {
-      scrollbar-width: thin !important;
-      scrollbar-color: rgba(204,51,51,0.6) rgba(0,0,0,0.4) !important;
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      /* Custom scrollbar for admin panel */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(204,51,51,0.6) rgba(0,0,0,0.4);
     }
     
-    /* Fade in and scale animation for centered modal */
-    #admin-modal:not(.hidden) {
-      display: flex !important;
+    .modal-content::-webkit-scrollbar {
+      width: 12px;
+      display: block;
     }
-    #admin-modal:not(.hidden) > div {
-      animation: fadeInScale 0.3s ease-out;
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.4);
+      border-radius: 6px;
+      margin: 8px 0;
     }
-    @keyframes fadeInScale {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(204,51,51,0.6);
+      border-radius: 6px;
+      border: 2px solid rgba(0,0,0,0.2);
+    }
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(204,51,51,0.8);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .modal-header h2 {
+      color: var(--text-primary);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+    }
+
+    .admin-section {
+      margin-bottom: 2rem;
+    }
+
+    .admin-section h3 {
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+    
+    /* Override modal-content width for admin panel to accommodate wider content */
+    #admin-modal .modal-content {
+      max-width: 800px;
     }
     #admin-modal button[type="submit"],
     #admin-modal .btn-pill[style*="background:linear-gradient"] {
@@ -560,21 +590,17 @@
     </div>
   </div>
 
-  <!-- Consolidated Admin Panel Modal (Hidden by default) - Centered box -->
-  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
-    <div class="w-full max-w-5xl glass rounded-xl overflow-hidden flex flex-col" style="max-width: 90vw; max-height: 90vh;">
-      <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/20 z-10" style="background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(26,26,26,0.95)); flex-shrink: 0;">
-        <h2 class="text-2xl font-bold">Admin Panel</h2>
-        <button id="close-admin-modal" class="text-2xl text-slate-300 hover:text-white">×</button>
+  <!-- Consolidated Admin Panel Modal (Hidden by default) - Matching index.html structure -->
+  <div id="admin-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Admin Panel</h2>
+        <button id="close-admin-modal" class="btn btn-secondary">&times;</button>
       </div>
-      
-      <div class="p-6 space-y-6 overflow-y-auto" id="admin-modal-content" style="flex: 1 1 0; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(204,51,51,0.5) rgba(0,0,0,0.3);">
+      <div class="modal-body">
         <!-- Manage Teams Section -->
-        <section class="glass p-4 rounded-lg">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Manage Teams</h3>
-            <button id="toggle-teams-section" class="text-slate-300 hover:text-white text-xl">×</button>
-          </div>
+        <div class="admin-section">
+          <h3>Manage Teams</h3>
           <div id="teams-section-content">
             <form id="team-form" class="space-y-4 mb-6">
               <input type="hidden" id="team-id" />
@@ -605,14 +631,11 @@
               <!-- teams listed here -->
             </div>
           </div>
-        </section>
+        </div>
 
         <!-- Add Streamer Section -->
-        <section class="glass p-4 rounded-lg">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold">Add Streamer</h3>
-            <button id="toggle-streamers-section" class="text-slate-300 hover:text-white text-xl">×</button>
-          </div>
+        <div class="admin-section">
+          <h3>Add Streamer</h3>
           <div id="streamers-section-content">
             <form id="streamer-form" class="space-y-4 mb-6">
               <input type="hidden" id="streamer-id" />
@@ -651,7 +674,7 @@
               <!-- streamers listed here -->
             </div>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   </div>
@@ -1612,7 +1635,7 @@
           e.preventDefault();
           e.stopPropagation();
           if(els.adminModal){
-            els.adminModal.classList.remove('hidden');
+            els.adminModal.style.display = 'flex';
             renderTeamsList();
             renderStreamersList();
           } else {
@@ -1766,8 +1789,8 @@
 
       setInterval(fetchLiveStreams, 60000);
 
-      onSnapshot(collection(db, COLLECTIONS.TEAMS), ()=>{ loadTeams(); if(els.adminModal && !els.adminModal.classList.contains('hidden')) renderTeamsList(); });
-      onSnapshot(collection(db, COLLECTIONS.STREAMERS), ()=>{ loadStreamers(); if(els.adminModal && !els.adminModal.classList.contains('hidden')) renderStreamersList(); });
+      onSnapshot(collection(db, COLLECTIONS.TEAMS), ()=>{ loadTeams(); if(els.adminModal && els.adminModal.style.display !== 'none') renderTeamsList(); });
+      onSnapshot(collection(db, COLLECTIONS.STREAMERS), ()=>{ loadStreamers(); if(els.adminModal && els.adminModal.style.display !== 'none') renderStreamersList(); });
     }
 
     init();
