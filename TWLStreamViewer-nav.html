@@ -1,21 +1,31 @@
 <!-- TWLStreamViewer-nav.html — Navbar for TWL Stream Viewer -->
 <style>
   :root {
-    --bg-color: #030712;
+    --twl-maroon: #330000;
+    --twl-dark-red: #4d0000;
+    --twl-black: #000000;
+    --twl-dark-grey: #1a1a1a;
+    --twl-grey: #2d2d2d;
+    --twl-light-grey: #4a4a4a;
+    --twl-yellow: #ffd700;
+    --twl-light-blue: #87ceeb;
+    --twl-red-accent: #cc3333;
+    --bg-color: var(--twl-dark-grey);
     --text-primary: #e2e8f0;
     --text-muted: #94a3b8;
-    --accent: #8b5cf6;
-    --accent-strong: #38bdf8;
+    --accent: var(--twl-red-accent);
+    --accent-strong: var(--twl-light-blue);
   }
 
   nav#twl-header {
     position: sticky;
     top: 0;
     z-index: 40;
-    background: rgba(8, 11, 26, 0.85);
-    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    background: linear-gradient(180deg, rgba(51,0,0,0.95), rgba(26,26,26,0.98));
+    border-bottom: 2px solid rgba(204,51,51,0.3);
     backdrop-filter: blur(16px);
     padding: 1rem 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
   }
 
   .header-container {
@@ -37,9 +47,9 @@
     height: 46px;
     width: auto;
     border-radius: 0.75rem;
-    background: rgba(30, 41, 59, 0.65);
+    background: rgba(26,26,26,0.8);
     padding: 0.35rem 0.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    border: 1px solid rgba(204,51,51,0.3);
   }
 
   .brand-title {
@@ -79,21 +89,32 @@
   }
 
   .btn:hover {
-    background: rgba(129, 140, 248, 0.3);
-    border-color: rgba(129, 140, 248, 0.5);
+    background: rgba(204,51,51,0.3);
+    border-color: rgba(204,51,51,0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(204,51,51,0.2);
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, rgba(129, 140, 248, 0.9), rgba(56, 189, 248, 0.9));
+    background: linear-gradient(90deg, var(--twl-red-accent), #ff4444);
     border: none;
-    color: #020617;
+    color: #ffffff;
     font-weight: 700;
+    box-shadow: 0 4px 15px rgba(204,51,51,0.4);
+  }
+  .btn-primary:hover {
+    background: linear-gradient(90deg, #ff4444, #ff6666);
+    box-shadow: 0 6px 20px rgba(204,51,51,0.6);
   }
 
   .btn-secondary {
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(26,26,26,0.8);
+    border: 1px solid rgba(204,51,51,0.4);
     color: var(--text-primary);
+  }
+  .btn-secondary:hover {
+    background: rgba(26,26,26,1);
+    border-color: var(--twl-light-blue);
   }
 
   #twitch-user {

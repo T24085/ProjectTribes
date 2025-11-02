@@ -168,8 +168,14 @@
 
     /* Modal backdrop */
     .modal-backdrop { 
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
       backdrop-filter: blur(8px); 
       background: linear-gradient(180deg, rgba(51,0,0,0.85), rgba(26,0,0,0.9)); 
+      z-index: 99999 !important;
     }
     #admin-modal.hidden,
     #admin-login-modal.hidden {
@@ -177,6 +183,7 @@
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
+      position: fixed !important;
     }
     #admin-modal:not(.hidden),
     #admin-login-modal:not(.hidden) {
@@ -184,6 +191,12 @@
       visibility: visible !important;
       opacity: 1 !important;
       pointer-events: auto !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      z-index: 99999 !important;
     }
     
     #admin-login-modal .glass {
@@ -223,7 +236,69 @@
     /* TWL Theme adjustments */
     .muted { color: #999999; }
     #admin-modal {
-      z-index: 9999;
+      z-index: 99999 !important;
+    }
+    
+    /* Autocomplete/selectable game input */
+    .game-input-wrapper {
+      position: relative;
+    }
+    .game-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.95), rgba(26,26,26,0.98));
+      border: 1px solid rgba(204,51,51,0.3);
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      margin-top: 4px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+    .game-suggestion-item {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.2s;
+    }
+    .game-suggestion-item:hover {
+      background: rgba(204,51,51,0.2);
+    }
+    .game-suggestion-item:last-child {
+      border-bottom: none;
+    }
+    
+    /* Shoutcaster badge */
+    .shoutcaster-badge {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--twl-yellow), #ffed4e);
+      color: #000;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 0.5rem;
+      box-shadow: 0 0 10px rgba(255,215,0,0.5);
+    }
+    
+    /* Shoutcaster section header */
+    .shoutcasters-header {
+      background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(255,215,0,0.05));
+      border: 1px solid rgba(255,215,0,0.3);
+      padding: 1rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .shoutcasters-header h3 {
+      color: var(--twl-yellow);
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
     #admin-modal .glass {
       background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(26,26,26,0.9));
@@ -422,8 +497,14 @@
                 <input id="team-logo" class="w-full px-3 py-2 rounded-md input" placeholder="https://..." />
               </div>
               <div>
-                <label class="text-sm muted">Games (comma-separated)</label>
-                <input id="team-games" class="w-full px-3 py-2 rounded-md input" placeholder="Battlefield, Tribes: Ascend" />
+                <label class="text-sm muted">Games (comma-separated or select)</label>
+                <div class="game-input-wrapper">
+                  <input id="team-games" class="w-full px-3 py-2 rounded-md input" placeholder="Type or select games..." list="team-games-datalist" autocomplete="off" />
+                  <datalist id="team-games-datalist">
+                  </datalist>
+                  <div id="team-games-suggestions" class="game-suggestions hidden"></div>
+                </div>
+                <div class="text-xs muted mt-1">Tip: Type to filter or select from preloaded games</div>
               </div>
               <div class="flex gap-3">
                 <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Save</button>
@@ -455,14 +536,21 @@
                 <div class="text-xs muted mt-1">Update this to fix stream detection</div>
               </div>
               <div>
-                <label class="text-sm muted">Team</label>
-                <select id="streamer-team" class="w-full px-3 py-2 rounded-md select">
-                  <option value="">No Team</option>
+                <label class="text-sm muted">Team <span class="text-xs text-red-400">*</span></label>
+                <select id="streamer-team" class="w-full px-3 py-2 rounded-md select" required>
+                  <option value="">Select Team or Shoutcaster</option>
+                  <option value="__shoutcaster__">Shoutcaster (No Team)</option>
                 </select>
+                <div class="text-xs muted mt-1">Streamers must be associated with a team unless they are shoutcasters</div>
               </div>
               <div>
                 <label class="text-sm muted">Default Game (optional)</label>
-                <input id="streamer-game" class="w-full px-3 py-2 rounded-md input" placeholder="Battlefield" />
+                <div class="game-input-wrapper">
+                  <input id="streamer-game" class="w-full px-3 py-2 rounded-md input" placeholder="Type or select game..." list="streamer-game-datalist" autocomplete="off" />
+                  <datalist id="streamer-game-datalist">
+                  </datalist>
+                  <div id="streamer-game-suggestions" class="game-suggestions hidden"></div>
+                </div>
               </div>
               <div class="flex gap-3">
                 <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Save</button>
@@ -508,6 +596,18 @@
     const ADMIN_UIDS = ['DkBHsCzLK5a9KiX50g0pHJrEqGq2', 'A2ZV8vziNsXqZkyqHzAB266B9pP2'];
 
     const COLLECTIONS = { TEAMS: 'twl_teams', STREAMERS: 'twl_streamers' };
+
+    // Preloaded ladder games
+    const PRELOADED_GAMES = [
+      'Battlefield 6 2v2 Tanks',
+      'Battlefield 6 10v10 EU',
+      'Battlefield 6 10v10 NA',
+      'Battlefield 6 6v6 Infantry-only 30+',
+      'Modern Warships 2v2 NA',
+      'Paintballers 5v5 NA',
+      'Test Ladder',
+      'DIRT 2.0'
+    ];
 
     // ---------- State ----------
     const state = {
@@ -667,12 +767,14 @@
             displayName: data.displayName||'',
             twitchHandle: normalizeChannel(data.twitchHandle||''),
             teamId: data.teamId||'',
-            defaultGame: data.defaultGame||''
+            defaultGame: data.defaultGame||'',
+            isShoutcaster: data.teamId === '__shoutcaster__' || data.isShoutcaster
           });
         });
         renderStreamGrid();
         updateChatSelect();
         renderStreamersList();
+        updateGameDatalists();
       }catch(err){ console.error(err); showToast('Failed to load streamers'); }
     }
 
@@ -712,35 +814,47 @@
     }
 
     async function addStreamer(data){
+      if(!data.teamId || data.teamId === ''){
+        showToast('Please select a team or mark as shoutcaster');
+        return;
+      }
       try{
         await addDoc(collection(db, COLLECTIONS.STREAMERS), {
           displayName: data.displayName,
           twitchHandle: normalizeChannel(data.twitchHandle),
-          teamId: data.teamId||'',
+          teamId: data.teamId === '__shoutcaster__' ? '__shoutcaster__' : data.teamId,
           defaultGame: data.defaultGame||'',
+          isShoutcaster: data.teamId === '__shoutcaster__',
           createdAt: new Date().toISOString()
         });
         showToast(`Streamer "${data.displayName}" added`);
         loadStreamers();
         els.streamerForm.reset();
+        document.getElementById('streamer-team').value = '';
         document.getElementById('cancel-streamer-edit').classList.add('hidden');
         document.querySelector('#streamer-form button[type="submit"]').textContent = 'Save';
         state.editingStreamer = null;
       }catch(err){ console.error(err); showToast('Failed to add streamer'); }
     }
     async function updateStreamer(streamerId, data){
+      if(!data.teamId || data.teamId === ''){
+        showToast('Please select a team or mark as shoutcaster');
+        return;
+      }
       try{
         await updateDoc(doc(db, COLLECTIONS.STREAMERS, streamerId), {
           displayName: data.displayName,
           twitchHandle: normalizeChannel(data.twitchHandle),
-          teamId: data.teamId||'',
+          teamId: data.teamId === '__shoutcaster__' ? '__shoutcaster__' : data.teamId,
           defaultGame: data.defaultGame||'',
+          isShoutcaster: data.teamId === '__shoutcaster__',
           updatedAt: new Date().toISOString()
         });
         showToast(`Streamer "${data.displayName}" updated`);
         loadStreamers();
         state.editingStreamer = null;
         els.streamerForm.reset();
+        document.getElementById('streamer-team').value = '';
       }catch(err){ console.error(err); showToast('Failed to update streamer'); }
     }
     async function deleteStreamer(streamerId){
@@ -804,12 +918,17 @@
       }
       if(state.filters.liveOnly) streamers = streamers.filter(s => state.liveStreams.has(s.twitchHandle));
 
-      // sort live first then alpha
+      // Sort: shoutcasters first, then live, then alphabetical
       streamers.sort((a,b)=>{
+        const aShoutcaster = a.isShoutcaster || a.teamId === '__shoutcaster__';
+        const bShoutcaster = b.isShoutcaster || b.teamId === '__shoutcaster__';
+        if(aShoutcaster !== bShoutcaster) return aShoutcaster ? -1 : 1;
+        
         const aLive = state.liveStreams.has(a.twitchHandle);
         const bLive = state.liveStreams.has(b.twitchHandle);
-        if(aLive === bLive) return a.displayName.localeCompare(b.displayName);
-        return aLive ? -1 : 1;
+        if(aLive !== bLive) return aLive ? -1 : 1;
+        
+        return a.displayName.localeCompare(b.displayName);
       });
       return streamers;
     }
@@ -822,49 +941,83 @@
         return;
       }
       els.emptyState.classList.add('hidden');
+      
+      // Separate shoutcasters from regular streamers
+      const shoutcasters = visible.filter(s => s.isShoutcaster || s.teamId === '__shoutcaster__');
+      const regularStreamers = visible.filter(s => !s.isShoutcaster && s.teamId !== '__shoutcaster__');
+      
       els.streamGrid.innerHTML = '';
-
-      visible.forEach(streamer=>{
-        const handle = streamer.twitchHandle;
-        const liveData = state.liveStreams.get(handle);
-        const isLive = !!liveData;
-        const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
-        const team = streamer.teamId ? state.teams.get(streamer.teamId) : null;
-        const playerUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&${parentQuery}&autoplay=false`;
-
-        const card = document.createElement('div');
-        card.className = 'stream-card';
-
-        card.innerHTML = `
-          <div class="stream-media">
-            <iframe src="${playerUrl}" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-            <div class="stream-overlay"></div>
-
-            <div style="position:absolute; left:12px; top:12px; z-index:5;">
-              ${ isLive ? `<span class="live-pill"><span style="width:8px;height:8px;background:#ff7a7a;border-radius:50%;display:inline-block;box-shadow:0 0 8px rgba(255,120,120,0.7);margin-right:6px"></span>LIVE • ${liveData.viewer_count.toLocaleString()} </span>` : `<span class="faint px-3 py-1 rounded-full" style="background:rgba(255,255,255,0.02)">${escapeHtml(gameName)}</span>` }
-            </div>
-
-            <div style="position:absolute; right:12px; top:12px; z-index:5;">
-              <span class="neon-game">${escapeHtml(gameName)}</span>
-            </div>
-          </div>
-
-          <div class="meta">
-            <div class="display-name">${escapeHtml(streamer.displayName)}</div>
-            <div class="handle">@${escapeHtml(handle)}</div>
-            ${ team ? `<div class="muted text-xs mt-2">${escapeHtml(team.teamName)}</div>` : '' }
-            ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
-
-            <div class="card-actions">
-              <button class="btn-chat btn-pill" onclick="setChat('${handle}')">Chat</button>
-              <a class="btn-watch btn-pill" href="https://www.twitch.tv/${encodeURIComponent(handle)}" target="_blank" rel="noopener">Watch</a>
-            </div>
-          </div>
-        `;
-
-        if(isLive) card.classList.add('glow');
-        els.streamGrid.appendChild(card);
+      
+      // Render shoutcasters section if any exist
+      if(shoutcasters.length > 0){
+        const shoutcasterSection = document.createElement('div');
+        shoutcasterSection.className = 'shoutcasters-header';
+        shoutcasterSection.innerHTML = `<h3>🎙️ Shoutcasters</h3>`;
+        els.streamGrid.appendChild(shoutcasterSection);
+        
+        shoutcasters.forEach(streamer => {
+          els.streamGrid.appendChild(createStreamCard(streamer, true));
+        });
+        
+        // Add separator if there are regular streamers too
+        if(regularStreamers.length > 0){
+          const separator = document.createElement('div');
+          separator.className = 'mt-6 mb-4';
+          separator.innerHTML = '<h3 class="text-lg font-semibold mb-2" style="color: var(--twl-light-blue);">Players</h3>';
+          els.streamGrid.appendChild(separator);
+        }
+      }
+      
+      // Render regular streamers
+      regularStreamers.forEach(streamer => {
+        els.streamGrid.appendChild(createStreamCard(streamer, false));
       });
+    }
+    
+    function createStreamCard(streamer, isShoutcaster){
+      const handle = streamer.twitchHandle;
+      const liveData = state.liveStreams.get(handle);
+      const isLive = !!liveData;
+      const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
+      const team = streamer.teamId && streamer.teamId !== '__shoutcaster__' ? state.teams.get(streamer.teamId) : null;
+      const playerUrl = `https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&${parentQuery}&autoplay=false`;
+
+      const card = document.createElement('div');
+      card.className = 'stream-card';
+      if(isShoutcaster) card.style.border = '2px solid rgba(255,215,0,0.4)';
+
+      card.innerHTML = `
+        <div class="stream-media">
+          <iframe src="${playerUrl}" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+          <div class="stream-overlay"></div>
+
+          <div style="position:absolute; left:12px; top:12px; z-index:5;">
+            ${ isLive ? `<span class="live-pill"><span style="width:8px;height:8px;background:#ff7a7a;border-radius:50%;display:inline-block;box-shadow:0 0 8px rgba(255,120,120,0.7);margin-right:6px"></span>LIVE • ${liveData.viewer_count.toLocaleString()} </span>` : `<span class="faint px-3 py-1 rounded-full" style="background:rgba(255,255,255,0.02)">${escapeHtml(gameName)}</span>` }
+          </div>
+
+          <div style="position:absolute; right:12px; top:12px; z-index:5;">
+            <span class="neon-game">${escapeHtml(gameName)}</span>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div class="display-name">
+            ${escapeHtml(streamer.displayName)}
+            ${ isShoutcaster ? '<span class="shoutcaster-badge">Shoutcaster</span>' : '' }
+          </div>
+          <div class="handle">@${escapeHtml(handle)}</div>
+          ${ team ? `<div class="muted text-xs mt-2">${escapeHtml(team.teamName)}</div>` : '' }
+          ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
+
+          <div class="card-actions">
+            <button class="btn-chat btn-pill" onclick="setChat('${handle}')">Chat</button>
+            <a class="btn-watch btn-pill" href="https://www.twitch.tv/${encodeURIComponent(handle)}" target="_blank" rel="noopener">Watch</a>
+          </div>
+        </div>
+      `;
+
+      if(isLive) card.classList.add('glow');
+      return card;
     }
 
     function updateTeamFilter(){
@@ -878,21 +1031,57 @@
 
     function updateGameFilter(){
       const games = new Set();
+      // Add preloaded games
+      PRELOADED_GAMES.forEach(g => games.add(g));
+      // Add games from streamers
       state.streamers.forEach(s=>{
         const live = state.liveStreams.get(s.twitchHandle);
         if(live?.game_name) games.add(live.game_name);
         if(s.defaultGame) games.add(s.defaultGame);
       });
+      // Add games from teams
       state.teams.forEach(team=> (team.games||[]).forEach(g => games.add(g)));
       els.gameFilter.innerHTML = '<option value="">All Games</option>';
       Array.from(games).sort().forEach(game=>{
         const o = document.createElement('option'); o.value = game; o.textContent = game; els.gameFilter.appendChild(o);
       });
     }
+    
+    function updateGameDatalists(){
+      const allGames = new Set();
+      PRELOADED_GAMES.forEach(g => allGames.add(g));
+      state.teams.forEach(team=> (team.games||[]).forEach(g => allGames.add(g)));
+      state.streamers.forEach(s=>{
+        if(s.defaultGame) allGames.add(s.defaultGame);
+        const live = state.liveStreams.get(s.twitchHandle);
+        if(live?.game_name) allGames.add(live.game_name);
+      });
+      
+      const teamDatalist = document.getElementById('team-games-datalist');
+      const streamerDatalist = document.getElementById('streamer-game-datalist');
+      
+      if(teamDatalist){
+        teamDatalist.innerHTML = '';
+        Array.from(allGames).sort().forEach(game=>{
+          const opt = document.createElement('option');
+          opt.value = game;
+          teamDatalist.appendChild(opt);
+        });
+      }
+      
+      if(streamerDatalist){
+        streamerDatalist.innerHTML = '';
+        Array.from(allGames).sort().forEach(game=>{
+          const opt = document.createElement('option');
+          opt.value = game;
+          streamerDatalist.appendChild(opt);
+        });
+      }
+    }
 
     function updateStreamerFormTeams(){
       if(!els.streamerTeam) return;
-      els.streamerTeam.innerHTML = '<option value="">No Team</option>';
+      els.streamerTeam.innerHTML = '<option value="">Select Team or Shoutcaster</option><option value="__shoutcaster__">Shoutcaster (No Team)</option>';
       state.teams.forEach(team=>{
         const o = document.createElement('option'); o.value = team.id; o.textContent = team.teamName;
         els.streamerTeam.appendChild(o);
@@ -1028,10 +1217,16 @@
     });
     document.getElementById('streamer-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      const teamSelect = document.getElementById('streamer-team');
+      if(!teamSelect.value || teamSelect.value === ''){
+        showToast('Please select a team or mark as shoutcaster');
+        teamSelect.focus();
+        return;
+      }
       const data = {
         displayName: document.getElementById('streamer-name').value,
         twitchHandle: document.getElementById('streamer-twitch').value,
-        teamId: document.getElementById('streamer-team').value || '',
+        teamId: teamSelect.value,
         defaultGame: document.getElementById('streamer-game').value || ''
       };
       if(state.editingStreamer) updateStreamer(state.editingStreamer, data); else addStreamer(data);
@@ -1266,6 +1461,8 @@
       await loadStreamers();
       fetchLiveStreams();
       renderStreamersList();
+      updateGameDatalists();
+      updateGameFilter(); // Initialize game filter with preloaded games
 
       setInterval(fetchLiveStreams, 60000);
 
