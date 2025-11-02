@@ -115,14 +115,14 @@
       background:#000;
       overflow:hidden;
       display:block;
-      min-width: 320px;
-      min-height: 180px;
+      min-width: 854px;
+      min-height: 480px;
     }
     .twitch-embed-container {
       width: 100%;
       height: 100%;
-      min-width: 320px;
-      min-height: 180px;
+      min-width: 854px;
+      min-height: 480px;
     }
     .stream-overlay {
       position:absolute; inset:0; pointer-events:none;
@@ -1069,8 +1069,8 @@
         const container = document.getElementById(embedId);
         if(container && window.Twitch && window.Twitch.Embed){
           const containerRect = container.getBoundingClientRect();
-          const width = Math.max(320, containerRect.width || 854);
-          const height = Math.max(180, containerRect.height || 480);
+          const width = Math.max(854, containerRect.width || 854);
+          const height = Math.max(480, containerRect.height || 480);
           
           try {
             new window.Twitch.Embed(embedId, {
