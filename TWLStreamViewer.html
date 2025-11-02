@@ -475,14 +475,23 @@
         showToast('Signed in as admin');
       }catch(err){ 
         console.error('Firebase Admin Sign-In Error:', err);
+        let errorMsg = '';
+        
         if(err.code === 'auth/unauthorized-domain'){
           const domain = window.location.hostname;
-          const errorMsg = `Domain "${domain}" not authorized in Firebase. Please add it to Firebase Console → Authentication → Settings → Authorized domains.`;
-          console.error(errorMsg);
+          errorMsg = `Domain "${domain}" not authorized in Firebase.\n\nTo fix:\n1. Go to Firebase Console → Authentication → Settings\n2. Click "Authorized domains" tab\n3. Add "${domain}" to the list`;
           showToast('Admin sign-in failed: Domain not authorized. Check console for details.');
-          alert(`Firebase Authentication Error:\n\n${errorMsg}\n\nYou need to add "${domain}" to the authorized domains in your Firebase project settings.`);
+        } else if(err.code === 'auth/operation-not-allowed'){
+          errorMsg = `Google Sign-In is not enabled in Firebase.\n\nTo fix:\n1. Go to Firebase Console → Authentication → Sign-in method\n2. Find "Google" in the list\n3. Click "Enable"\n4. Add a support email and click "Save"`;
+          showToast('Admin sign-in failed: Google Sign-In not enabled. Check console for details.');
         } else {
+          errorMsg = `Admin sign-in failed: ${err.message || 'Unknown error'}\n\nError code: ${err.code || 'N/A'}`;
           showToast(`Admin sign-in failed: ${err.message || 'Unknown error'}`);
+        }
+        
+        if(errorMsg){
+          console.error('Firebase Error Details:', errorMsg);
+          alert(`Firebase Authentication Error:\n\n${errorMsg}`);
         }
       }
     }
