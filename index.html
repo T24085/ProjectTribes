@@ -2371,7 +2371,13 @@
         <iframe class="stream-frame" id="stream-frame" src="https://player.twitch.tv/?channel=oo0oo_live&autoplay=false" allowfullscreen></iframe>
         <!-- Stream Controls -->
         <div class="stream-controls">
-          <button class="team-select-btn" id="caster-btn" style="background: #f59e0b;">Load Caster (0o0o0)</button>
+          <div class="caster-dropdown-container" style="position: relative; display: inline-block;">
+            <button class="team-select-btn" id="caster-btn" style="background: #f59e0b;">Load Caster ▼</button>
+            <div id="caster-dropdown" class="caster-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem; min-width: 200px; max-height: 300px; overflow-y: auto; z-index: 1000; margin-top: 0.25rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+              <div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">Select Shoutcaster:</div>
+              <div id="caster-options-list"></div>
+            </div>
+          </div>
           <button id="show-team-stats-btn" class="btn btn-secondary">View Team Stats</button>
         </div>
       </div>
@@ -2682,7 +2688,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -2976,7 +2982,14 @@
       // Set up real-time poll updates
       setInterval(loadCurrentPollForMainPage, 5000); // Update every 5 seconds
       
-      initializeTwitchPlayer();
+      // Load shoutcaster first, then initialize Twitch player
+      loadShoutcaster().then(() => {
+        initializeTwitchPlayer();
+      });
+      // Set up real-time listener for shoutcaster changes
+      setupShoutcasterListener();
+      // Load available shoutcasters for the dropdown
+      loadAvailableShoutcasters();
       initializePlayerStats();
       initializeTeamStats();
       loadRecentMatches();
@@ -3564,6 +3577,7 @@
         if (docSnap.exists()) {
           const data = docSnap.data();
           currentShoutcaster = data.twitchHandle || null;
+          currentShoutcasterHandle = currentShoutcaster || 'oo0oo_live'; // Update global variable
           updateCurrentShoutcasterDisplay();
           
           // Update form
@@ -3577,6 +3591,7 @@
           }
         } else {
           currentShoutcaster = null;
+          currentShoutcasterHandle = 'oo0oo_live'; // Use default
           updateCurrentShoutcasterDisplay();
         }
       } catch (error) {
@@ -3631,11 +3646,15 @@
         await setDoc(doc(db, 'admin', 'shoutcaster'), shoutcasterData);
         
         currentShoutcaster = twitchHandle;
+        currentShoutcasterHandle = twitchHandle; // Update global variable
         updateCurrentShoutcasterDisplay();
         
         // Sync both inputs
         if (shoutcasterSelect) shoutcasterSelect.value = twitchHandle;
         if (shoutcasterHandle) shoutcasterHandle.value = twitchHandle;
+        
+        // Update the main stream to show the new shoutcaster
+        updateStreamToShoutcaster();
         
         alert('Shoutcaster saved successfully!');
       } catch (error) {
@@ -3652,6 +3671,7 @@
         
         await setDoc(doc(db, 'admin', 'shoutcaster'), {});
         currentShoutcaster = null;
+        currentShoutcasterHandle = 'oo0oo_live'; // Reset to default
         updateCurrentShoutcasterDisplay();
         
         // Clear form
@@ -3659,6 +3679,9 @@
         const shoutcasterHandle = document.getElementById('shoutcaster-handle');
         if (shoutcasterSelect) shoutcasterSelect.value = '';
         if (shoutcasterHandle) shoutcasterHandle.value = '';
+        
+        // Reset stream to default
+        updateStreamToShoutcaster();
         
         alert('Shoutcaster cleared successfully!');
       } catch (error) {
@@ -3671,6 +3694,8 @@
       // Load streamers and current shoutcaster
       loadStreamersForShoutcaster();
       loadCurrentShoutcaster();
+      // Also reload available shoutcasters when admin panel opens (in case new ones were added)
+      loadAvailableShoutcasters();
 
       // Set up event listeners
       const saveBtn = document.getElementById('save-shoutcaster');
@@ -5215,8 +5240,10 @@
 
     // Admin System
     let activeMatch = null;
+    let currentShoutcasterHandle = 'oo0oo_live'; // Default shoutcaster
     let isAdmin = false;
     let livePlayers = new Set();
+    let availableShoutcasters = []; // List of all shoutcasters from database
 
     // Check if user is admin using Firebase Auth
     function checkAdminStatus() {
@@ -5262,6 +5289,162 @@
         console.error('Error loading active match:', error);
         setDefaultMatch();
       }
+    }
+
+    // Load shoutcaster from Firebase and update stream
+    async function loadShoutcaster() {
+      try {
+        const docRef = doc(db, 'admin', 'shoutcaster');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.twitchHandle) {
+            currentShoutcasterHandle = data.twitchHandle;
+            console.log('Loaded shoutcaster:', currentShoutcasterHandle);
+            updateStreamToShoutcaster();
+          }
+        } else {
+          // Use default if not set
+          console.log('No shoutcaster set, using default:', currentShoutcasterHandle);
+          updateStreamToShoutcaster();
+        }
+      } catch (error) {
+        console.error('Error loading shoutcaster:', error);
+        // Use default on error
+        updateStreamToShoutcaster();
+      }
+    }
+
+    // Set up real-time listener for shoutcaster changes
+    function setupShoutcasterListener() {
+      try {
+        const docRef = doc(db, 'admin', 'shoutcaster');
+        onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.twitchHandle && data.twitchHandle !== currentShoutcasterHandle) {
+              currentShoutcasterHandle = data.twitchHandle;
+              console.log('Shoutcaster updated in real-time:', currentShoutcasterHandle);
+              updateStreamToShoutcaster();
+            }
+          } else {
+            // Reset to default if cleared
+            if (currentShoutcasterHandle !== 'oo0oo_live') {
+              currentShoutcasterHandle = 'oo0oo_live';
+              console.log('Shoutcaster cleared, resetting to default');
+              updateStreamToShoutcaster();
+            }
+          }
+        }, (error) => {
+          console.error('Error in shoutcaster listener:', error);
+        });
+      } catch (error) {
+        console.error('Error setting up shoutcaster listener:', error);
+      }
+    }
+
+    // Update the main stream player to show the shoutcaster
+    function updateStreamToShoutcaster(shoutcasterHandle = null) {
+      const streamFrame = document.getElementById('stream-frame');
+      if (streamFrame) {
+        const handleToUse = shoutcasterHandle || currentShoutcasterHandle;
+        let parentDomain = window.location.hostname;
+        if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
+          parentDomain = 'tribesprofessionalleague.com';
+        }
+        streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(handleToUse)}&parent=${parentDomain}&autoplay=false`;
+        console.log('Updated stream to shoutcaster:', handleToUse);
+        
+        // Also update chat
+        updateStreamerChat(handleToUse);
+      }
+    }
+
+    // Load all available shoutcasters from database
+    async function loadAvailableShoutcasters() {
+      try {
+        const streamersRef = collection(db, 'streamers');
+        const streamersSnapshot = await getDocs(streamersRef);
+        
+        availableShoutcasters = [];
+        streamersSnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          // Check if it's a shoutcaster (either isShoutcaster flag or teamId is __shoutcaster__)
+          const isShoutcaster = data.isShoutcaster === true || data.teamId === '__shoutcaster__';
+          if (isShoutcaster && data.twitchHandle) {
+            availableShoutcasters.push({
+              displayName: data.displayName || data.twitchHandle,
+              twitchHandle: data.twitchHandle
+            });
+          }
+        });
+        
+        // Sort by display name
+        availableShoutcasters.sort((a, b) => a.displayName.localeCompare(b.displayName));
+        
+        // Populate dropdown
+        populateCasterDropdown();
+        
+        console.log('Loaded shoutcasters:', availableShoutcasters.length);
+      } catch (error) {
+        console.error('Error loading shoutcasters:', error);
+        availableShoutcasters = [];
+        populateCasterDropdown();
+      }
+    }
+
+    // Populate the caster dropdown menu
+    function populateCasterDropdown() {
+      const casterOptionsList = document.getElementById('caster-options-list');
+      if (!casterOptionsList) return;
+      
+      casterOptionsList.innerHTML = '';
+      
+      if (availableShoutcasters.length === 0) {
+        casterOptionsList.innerHTML = '<div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">No shoutcasters found</div>';
+        return;
+      }
+      
+      availableShoutcasters.forEach((shoutcaster) => {
+        const option = document.createElement('div');
+        option.className = 'caster-option';
+        option.style.cssText = 'padding: 0.75rem; cursor: pointer; border-radius: 0.25rem; transition: background 0.2s;';
+        option.style.color = 'var(--text-primary)';
+        option.innerHTML = `
+          <div style="font-weight: 500;">${shoutcaster.displayName}</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">${shoutcaster.twitchHandle}</div>
+        `;
+        
+        // Hover effect
+        option.addEventListener('mouseenter', () => {
+          option.style.background = 'var(--surface-glass)';
+        });
+        option.addEventListener('mouseleave', () => {
+          option.style.background = 'transparent';
+        });
+        
+        // Click handler
+        option.addEventListener('click', () => {
+          updateStreamToShoutcaster(shoutcaster.twitchHandle);
+          // Update button text
+          const casterBtn = document.getElementById('caster-btn');
+          if (casterBtn) {
+            casterBtn.textContent = `Load Caster ▼`;
+          }
+          // Close dropdown
+          const casterDropdown = document.getElementById('caster-dropdown');
+          if (casterDropdown) {
+            casterDropdown.style.display = 'none';
+          }
+          // Update chat dropdown if it exists
+          const streamerSelect = document.getElementById('streamer-select');
+          if (streamerSelect) {
+            streamerSelect.value = shoutcaster.twitchHandle;
+          }
+        });
+        
+        casterOptionsList.appendChild(option);
+      });
     }
 
     // Set default match (first two teams)
@@ -6073,28 +6256,30 @@
         showBtn.addEventListener('click', showTeamStats);
       }
       
-      // Add caster button functionality
+      // Load available shoutcasters for dropdown
+      loadAvailableShoutcasters();
+      
+      // Add caster button functionality with dropdown
       const casterBtn = document.getElementById('caster-btn');
+      const casterDropdown = document.getElementById('caster-dropdown');
+      
       if (casterBtn) {
-        casterBtn.addEventListener('click', () => {
-          const streamFrame = document.getElementById('stream-frame');
-          if (streamFrame) {
-            let parentDomain = window.location.hostname;
-            if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
-              parentDomain = 'tribesprofessionalleague.com';
-            }
-            streamFrame.src = `https://player.twitch.tv/?channel=oo0oo_live&parent=${parentDomain}&autoplay=false`;
-            console.log('Loaded caster stream: oo0oo_live');
-          }
-          
-          // Also update chat to caster
-          updateStreamerChat('oo0oo_live');
-          const streamerSelect = document.getElementById('streamer-select');
-          if (streamerSelect) {
-            streamerSelect.value = 'oo0oo_live';
+        casterBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (casterDropdown) {
+            const isVisible = casterDropdown.style.display !== 'none';
+            casterDropdown.style.display = isVisible ? 'none' : 'block';
           }
         });
       }
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        const container = document.querySelector('.caster-dropdown-container');
+        if (container && !container.contains(e.target) && casterDropdown) {
+          casterDropdown.style.display = 'none';
+        }
+      });
     }
 
     // Global variables for enhanced match display
@@ -6502,12 +6687,18 @@
         updateStreamerChat(selectedChannel);
       });
       
-      // Initialize with default chat (caster)
-      updateStreamerChat('oo0oo_live');
+      // Initialize with shoutcaster chat (will be updated when shoutcaster loads)
+      loadShoutcaster().then(() => {
+        updateStreamerChat(currentShoutcasterHandle);
+      });
     }
 
     // Update streamer chat iframe
-    function updateStreamerChat(channel = 'oo0oo_live') {
+    function updateStreamerChat(channel = null) {
+      // Use shoutcaster if no channel specified
+      if (!channel) {
+        channel = currentShoutcasterHandle;
+      }
       const chatIframe = document.getElementById('twitch-chat-iframe');
       const chatLoading = document.querySelector('.chat-loading');
       
@@ -7921,17 +8112,17 @@
         if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
           parentDomain = 'tribesprofessionalleague.com';
         }
-        streamFrame.src = `https://player.twitch.tv/?channel=oo0oo_live&parent=${parentDomain}&autoplay=false`;
+        streamFrame.src = `https://player.twitch.tv/?channel=${encodeURIComponent(currentShoutcasterHandle)}&parent=${parentDomain}&autoplay=false`;
       }
 
-      // Reset chat to default
+      // Reset chat to shoutcaster
       const chatFrame = document.querySelector('.twitch-chat-container iframe');
       if (chatFrame) {
         let parentDomain = window.location.hostname;
         if (parentDomain === 'localhost' || parentDomain === '127.0.0.1' || parentDomain.includes('192.168')) {
           parentDomain = 'tribesprofessionalleague.com';
         }
-        chatFrame.src = `https://www.twitch.tv/embed/oo0oo_live/chat?parent=${parentDomain}`;
+        chatFrame.src = `https://www.twitch.tv/embed/${encodeURIComponent(currentShoutcasterHandle)}/chat?parent=${parentDomain}`;
       }
 
       // Reset spectating label
