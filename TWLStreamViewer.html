@@ -58,9 +58,11 @@
 
     /* Main layout */
     .container {
-      max-width: 1800px;
+      max-width: 95vw;
+      width: 100%;
       margin: 1.25rem auto;
-      padding: 0 5rem;
+      padding: 0 2rem;
+      overflow-x: visible;
     }
     @media (max-width: 1400px) {
       .container {
@@ -126,31 +128,35 @@
     /* Stream grid */
     #stream-grid {
       display:grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
       gap:1.25rem;
       margin-top:1rem;
     }
-    @media (max-width:1100px){ #stream-grid{grid-template-columns:repeat(2,1fr)} }
-    @media (max-width:640px){ #stream-grid{grid-template-columns:1fr} }
+    @media (min-width: 1400px) {
+      #stream-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width:1100px){ 
+      #stream-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width:640px){ 
+      #stream-grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
     .stream-card{
       border-radius:8px;
-      overflow:hidden;
+      overflow: visible;
       position:relative;
       transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s;
       border: 1px solid rgba(255,255,255,0.1);
       background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(26,26,26,0.8));
       display: flex;
       flex-direction: column;
-    }
-    .stream-card-with-chat {
-      flex-direction: row;
-      align-items: flex-start;
-    }
-    @media (max-width: 768px) {
-      .stream-card-with-chat {
-        flex-direction: column;
-      }
     }
 
     .stream-card:hover{
@@ -175,10 +181,6 @@
         min-width: 100%;
       }
     }
-    .stream-card-with-chat .stream-media {
-      min-width: 0;
-      flex: 1 1 auto;
-    }
     .twitch-embed-container {
       width: 100%;
       height: 100%;
@@ -187,37 +189,7 @@
     }
     .stream-media-wrapper {
       position: relative;
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-    .stream-card-with-chat .stream-media-wrapper {
-      flex: 2;
-    }
-    .stream-chat-wrapper {
-      display: none;
-      flex: 0 0 auto;
-      width: 320px;
-      background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(26,26,26,0.85));
-      border-left: 1px solid rgba(255,255,255,0.1);
-      height: 100%;
-      align-self: stretch;
-      position: relative;
-      z-index: 10;
-    }
-    @media (max-width: 768px) {
-      .stream-chat-wrapper {
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid rgba(255,255,255,0.1);
-        min-height: 300px;
-      }
-    }
-    .stream-card-with-chat {
-      align-items: stretch;
-    }
-    .stream-card-with-chat .stream-chat-wrapper {
+      width: 100%;
       display: flex;
       flex-direction: column;
     }
@@ -322,7 +294,8 @@
       z-index: 99999 !important;
     }
     #admin-modal.hidden,
-    #admin-login-modal.hidden {
+    #admin-login-modal.hidden,
+    #chat-popup-modal.hidden {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
@@ -330,7 +303,8 @@
       position: fixed !important;
     }
     #admin-modal:not(.hidden),
-    #admin-login-modal:not(.hidden) {
+    #admin-login-modal:not(.hidden),
+    #chat-popup-modal:not(.hidden) {
       display: flex !important;
       visibility: visible !important;
       opacity: 1 !important;
@@ -341,6 +315,12 @@
       right: 0 !important;
       bottom: 0 !important;
       z-index: 99999 !important;
+    }
+    
+    #chat-popup-modal .glass {
+      background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(26,26,26,0.95));
+      border: 2px solid rgba(204,51,51,0.4);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(204,51,51,0.2);
     }
     
     #admin-login-modal .glass {
@@ -693,6 +673,19 @@
             </div>
           </div>
         </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Popup Modal -->
+  <div id="chat-popup-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-xl overflow-hidden" style="max-height: 80vh; display: flex; flex-direction: column;">
+      <div class="flex items-center justify-between p-4 border-b border-white/10">
+        <h2 id="chat-popup-title" class="text-xl font-bold">Twitch Chat</h2>
+        <button onclick="closeChatPopup()" class="text-2xl text-slate-300 hover:text-white">×</button>
+      </div>
+      <div class="flex-1 overflow-hidden" style="min-height: 400px;">
+        <iframe id="chat-popup-iframe" src="about:blank" class="w-full h-full" frameborder="0"></iframe>
       </div>
     </div>
   </div>
@@ -1159,8 +1152,6 @@
         const existingCard = document.getElementById(embedId)?.closest('.stream-card');
         if(existingCard) return existingCard;
       }
-
-      const chatContainerId = `chat-${embedId}`;
       
       card.innerHTML = `
         <div class="stream-media-wrapper">
@@ -1190,38 +1181,13 @@
             ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
 
             <div class="card-actions">
-              <button class="btn-chat btn-pill" onclick="toggleStreamChat('${handle}', '${chatContainerId}')">Chat</button>
+              <button class="btn-chat btn-pill" onclick="openChatPopup('${handle}', '${escapeHtml(streamer.displayName)}')">Chat</button>
               <a class="btn-watch btn-pill" href="https://www.twitch.tv/${encodeURIComponent(handle)}" target="_blank" rel="noopener">Watch</a>
             </div>
           </div>
         </div>
-
-        <div id="${chatContainerId}" class="stream-chat-wrapper hidden" style="display: none;">
-          <div class="stream-chat-header">
-            <span class="text-sm">Chat</span>
-            <button class="stream-chat-close" onclick="toggleStreamChat('${handle}', '${chatContainerId}')" aria-label="Close chat">×</button>
-          </div>
-          <iframe class="stream-chat-iframe" src="https://www.twitch.tv/embed/${encodeURIComponent(handle)}/chat?${parentQuery}" frameborder="0"></iframe>
-        </div>
       `;
       
-      // Set chat wrapper to match video height when visible
-      setTimeout(() => {
-        const chatWrapper = document.getElementById(chatContainerId);
-        const streamMedia = card.querySelector('.stream-media');
-        if(chatWrapper && streamMedia){
-          const updateChatHeight = () => {
-            if(!chatWrapper.classList.contains('hidden')){
-              chatWrapper.style.height = streamMedia.offsetHeight + 'px';
-            }
-          };
-          updateChatHeight();
-          // Update on window resize
-          window.addEventListener('resize', updateChatHeight);
-          // Store cleanup function on card
-          card._cleanupChatResize = () => window.removeEventListener('resize', updateChatHeight);
-        }
-      }, 200);
 
       // Initialize Twitch Embed after card is added to DOM - only if not already created
       if(!existingEmbeds.has(embedId)){
@@ -1406,35 +1372,67 @@
       }
     };
 
-    // Chat helpers - global chat removed, only per-stream chat remains
-    
-    window.toggleStreamChat = function(handle, chatContainerId){
-      const container = document.getElementById(chatContainerId);
-      if(!container) return;
+    // Chat popup functionality
+    window.openChatPopup = function(handle, displayName){
+      state.currentChatChannel = normalizeChannel(handle);
+      const modal = document.getElementById('chat-popup-modal');
+      const chatIframe = document.getElementById('chat-popup-iframe');
+      const chatTitle = document.getElementById('chat-popup-title');
+      const chatBtn = document.getElementById('chat-popup-btn');
       
-      const card = container.closest('.stream-card');
-      if(!card) return;
-      
-      const streamMedia = card.querySelector('.stream-media');
-      
-      const isVisible = container.style.display !== 'none' && !container.classList.contains('hidden');
-      
-      if(isVisible){
-        container.style.display = 'none';
-        container.classList.add('hidden');
-        card.classList.remove('stream-card-with-chat');
-      } else {
-        container.style.display = 'flex';
-        container.classList.remove('hidden');
-        card.classList.add('stream-card-with-chat');
-        
-        // Match chat height to video height
-        if(streamMedia){
-          container.style.height = streamMedia.offsetHeight + 'px';
-          container.style.alignSelf = 'flex-start';
-        }
+      if(modal && chatIframe && chatTitle){
+        chatTitle.textContent = `${displayName} (@${handle})`;
+        chatIframe.src = `https://www.twitch.tv/embed/${encodeURIComponent(handle)}/chat?${parentQuery}`;
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        if(chatBtn) chatBtn.style.display = 'inline-block';
       }
     };
+    
+    window.closeChatPopup = function(){
+      const modal = document.getElementById('chat-popup-modal');
+      const chatIframe = document.getElementById('chat-popup-iframe');
+      const chatBtn = document.getElementById('chat-popup-btn');
+      if(modal){
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        if(chatIframe) chatIframe.src = 'about:blank';
+        state.currentChatChannel = '';
+        if(chatBtn) chatBtn.style.display = 'none';
+      }
+    };
+    
+    // Set up nav chat button
+    setTimeout(() => {
+      const chatBtn = document.getElementById('chat-popup-btn');
+      if(chatBtn){
+        chatBtn.addEventListener('click', () => {
+          if(state.currentChatChannel){
+            const modal = document.getElementById('chat-popup-modal');
+            if(modal && modal.classList.contains('hidden')){
+              // Reopen with last channel
+              const visible = getVisibleStreamers();
+              const streamer = visible.find(s => normalizeChannel(s.twitchHandle) === state.currentChatChannel);
+              if(streamer){
+                openChatPopup(streamer.twitchHandle, streamer.displayName);
+              }
+            } else {
+              closeChatPopup();
+            }
+          }
+        });
+      }
+      
+      // Close modal on backdrop click
+      const modal = document.getElementById('chat-popup-modal');
+      if(modal){
+        modal.addEventListener('click', (e) => {
+          if(e.target.id === 'chat-popup-modal'){
+            closeChatPopup();
+          }
+        });
+      }
+    }, 1500);
 
     // Global chat functions removed - only per-stream chat exists now
 
