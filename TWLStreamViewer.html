@@ -125,24 +125,15 @@
     }
     label.small { font-size: 0.72rem; color: var(--muted); letter-spacing:0.08em; text-transform:uppercase }
 
-    /* Stream grid */
+    /* Stream grid - 2x2 max layout */
     #stream-grid {
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap:1.25rem;
       margin-top:1rem;
+      max-width: 100%;
     }
-    @media (min-width: 1400px) {
-      #stream-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-    @media (max-width:1100px){ 
-      #stream-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    @media (max-width:640px){ 
+    @media (max-width:900px){ 
       #stream-grid {
         grid-template-columns: 1fr;
       }
@@ -1110,9 +1101,21 @@
       }
       els.emptyState.classList.add('hidden');
       
+      // Separate shoutcasters and players
+      const shoutcasters = visible.filter(s => s.isShoutcaster || s.teamId === '__shoutcaster__');
+      const players = visible.filter(s => !(s.isShoutcaster || s.teamId === '__shoutcaster__'));
+      
+      // Limit to max 4 total (prioritize shoutcasters, then players)
+      const maxShoutcasters = Math.min(shoutcasters.length, 4);
+      const maxPlayers = Math.min(players.length, 4 - maxShoutcasters);
+      const limitedVisible = [
+        ...shoutcasters.slice(0, maxShoutcasters),
+        ...players.slice(0, maxPlayers)
+      ];
+      
       // Build map of current streamers by handle
       const currentStreamers = new Map();
-      visible.forEach(s => {
+      limitedVisible.forEach(s => {
         currentStreamers.set(s.twitchHandle, s);
       });
       
@@ -1133,29 +1136,17 @@
         }
       });
       
-      // Add new cards or update existing ones
-      visible.forEach(streamer => {
-        const isShoutcaster = streamer.isShoutcaster || streamer.teamId === '__shoutcaster__';
-        const existingCard = Array.from(els.streamGrid.children).find(card => {
-          const handleEl = card.querySelector('.handle');
-          if(handleEl){
-            const cardHandle = handleEl.textContent.replace('@', '').trim().toLowerCase();
-            return cardHandle === streamer.twitchHandle.toLowerCase();
-          }
-          return false;
-        });
-        
-        if(existingCard){
-          // Update existing card classes if shoutcaster status changed
-          if(isShoutcaster && !existingCard.classList.contains('shoutcaster')){
-            existingCard.classList.add('shoutcaster');
-          } else if(!isShoutcaster && existingCard.classList.contains('shoutcaster')){
-            existingCard.classList.remove('shoutcaster');
-          }
-        } else {
-          // Create new card
-          els.streamGrid.appendChild(createStreamCard(streamer, isShoutcaster));
-        }
+      // Clear grid and rebuild in correct order (shoutcasters first, then players)
+      els.streamGrid.innerHTML = '';
+      
+      // Add shoutcasters first
+      shoutcasters.slice(0, maxShoutcasters).forEach(streamer => {
+        els.streamGrid.appendChild(createStreamCard(streamer, true));
+      });
+      
+      // Add players below shoutcasters
+      players.slice(0, maxPlayers).forEach(streamer => {
+        els.streamGrid.appendChild(createStreamCard(streamer, false));
       });
     }
     
