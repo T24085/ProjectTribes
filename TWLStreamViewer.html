@@ -171,17 +171,25 @@
       backdrop-filter: blur(8px); 
       background: linear-gradient(180deg, rgba(51,0,0,0.85), rgba(26,0,0,0.9)); 
     }
-    #admin-modal.hidden {
+    #admin-modal.hidden,
+    #admin-login-modal.hidden {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
     }
-    #admin-modal:not(.hidden) {
+    #admin-modal:not(.hidden),
+    #admin-login-modal:not(.hidden) {
       display: flex !important;
       visibility: visible !important;
       opacity: 1 !important;
       pointer-events: auto !important;
+    }
+    
+    #admin-login-modal .glass {
+      background: linear-gradient(180deg, rgba(0,0,0,0.9), rgba(26,26,26,0.95));
+      border: 2px solid rgba(204,51,51,0.4);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(204,51,51,0.2);
     }
 
     /* small helpers */
@@ -362,8 +370,33 @@
     💬
   </button>
 
+  <!-- Admin Login Modal -->
+  <div id="admin-login-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+    <div class="w-full max-w-md glass rounded-xl p-6 space-y-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold">Admin Login</h2>
+        <button id="close-login-modal" class="text-2xl text-slate-300 hover:text-white">×</button>
+      </div>
+      <form id="admin-login-form" class="space-y-4">
+        <div>
+          <label class="text-sm muted block mb-2">Email</label>
+          <input type="email" id="login-email" class="w-full px-3 py-2 rounded-md input" required autocomplete="email" placeholder="admin@example.com" />
+        </div>
+        <div>
+          <label class="text-sm muted block mb-2">Password</label>
+          <input type="password" id="login-password" class="w-full px-3 py-2 rounded-md input" required autocomplete="current-password" placeholder="Enter password" />
+        </div>
+        <div id="login-error" class="text-red-400 text-sm hidden"></div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" class="flex-1 px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Sign In</button>
+          <button type="button" id="cancel-login" class="px-4 py-2 rounded-md btn-pill text-sm" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:#ffffff">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Consolidated Admin Panel Modal (Hidden by default) -->
-  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4" style="display: none !important;">
+  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
     <div class="w-full max-w-5xl glass overflow-y-auto rounded-xl max-h-[90vh]">
       <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/2 z-10">
         <h2 class="text-2xl font-bold">Admin Panel</h2>
@@ -500,6 +533,8 @@
       twitchLoginBtn: null, // Will be set after nav loads
       twitchUser: null, // Will be set after nav loads
       adminModal: document.getElementById('admin-modal'),
+      adminLoginModal: document.getElementById('admin-login-modal'),
+      adminLoginForm: document.getElementById('admin-login-form'),
       teamForm: document.getElementById('team-form'),
       streamerForm: document.getElementById('streamer-form'),
       teamsList: document.getElementById('teams-list'),
@@ -561,24 +596,52 @@
       return state.isAdmin;
     }
     async function signInAsAdmin(){
-      const email = prompt('Enter your admin email:');
-      if(!email) return;
-      const password = prompt('Enter your password:');
-      if(!password) return;
+      if(els.adminLoginModal){
+        els.adminLoginModal.classList.remove('hidden');
+        document.getElementById('login-email').focus();
+      }
+    }
+    
+    async function handleAdminLogin(e){
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errorEl = document.getElementById('login-error');
+      
+      if(!email || !password){
+        errorEl.textContent = 'Please enter both email and password';
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      
+      errorEl.classList.add('hidden');
       
       try{
         const result = await signInWithEmailAndPassword(auth, email, password);
         checkAdmin(result.user);
         if(state.isAdmin){
           showToast('Signed in as admin');
+          els.adminLoginModal.classList.add('hidden');
+          els.adminLoginForm.reset();
+          errorEl.classList.add('hidden');
         } else {
-          showToast('Access denied - not an admin account');
+          errorEl.textContent = 'Access denied - not an admin account';
+          errorEl.classList.remove('hidden');
           await signOut(auth);
         }
       }catch(err){ 
         console.error('Firebase Admin Sign-In Error:', err);
-        showToast(`Admin sign-in failed: ${err.message || 'Unknown error'}`);
-        alert(`Admin Sign-In Failed:\n\n${err.message || 'Unknown error'}\n\nError code: ${err.code || 'N/A'}`);
+        let errorMsg = err.message || 'Unknown error';
+        if(err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password'){
+          errorMsg = 'Invalid email or password';
+        } else if(err.code === 'auth/too-many-requests'){
+          errorMsg = 'Too many failed attempts. Please try again later.';
+        } else if(err.code === 'auth/network-request-failed'){
+          errorMsg = 'Network error. Please check your connection.';
+        }
+        errorEl.textContent = errorMsg;
+        errorEl.classList.remove('hidden');
+        showToast(`Admin sign-in failed: ${errorMsg}`);
       }
     }
 
@@ -867,6 +930,7 @@
       document.getElementById('cancel-team-edit').classList.remove('hidden');
       if(els.adminModal.classList.contains('hidden')){
         els.adminModal.classList.remove('hidden');
+        els.adminModal.style.display = 'flex';
       }
     };
 
@@ -908,6 +972,7 @@
       document.getElementById('cancel-streamer-edit').classList.remove('hidden');
       if(els.adminModal.classList.contains('hidden')){
         els.adminModal.classList.remove('hidden');
+        els.adminModal.style.display = 'flex';
       }
     };
 
@@ -991,8 +1056,38 @@
     });
 
     // Admin modal close and toggle
-    document.getElementById('close-admin-modal').addEventListener('click', ()=>els.adminModal.classList.add('hidden'));
-    els.adminModal.addEventListener('click', (e) => { if(e.target.id === 'admin-modal') els.adminModal.classList.add('hidden'); });
+    document.getElementById('close-admin-modal').addEventListener('click', ()=>{
+      els.adminModal.classList.add('hidden');
+      els.adminModal.style.display = 'none';
+    });
+    els.adminModal.addEventListener('click', (e) => { 
+      if(e.target.id === 'admin-modal') {
+        els.adminModal.classList.add('hidden');
+        els.adminModal.style.display = 'none';
+      }
+    });
+    
+    // Admin login modal
+    if(els.adminLoginForm){
+      els.adminLoginForm.addEventListener('submit', handleAdminLogin);
+    }
+    document.getElementById('close-login-modal').addEventListener('click', () => {
+      els.adminLoginModal.classList.add('hidden');
+      els.adminLoginForm.reset();
+      document.getElementById('login-error').classList.add('hidden');
+    });
+    document.getElementById('cancel-login').addEventListener('click', () => {
+      els.adminLoginModal.classList.add('hidden');
+      els.adminLoginForm.reset();
+      document.getElementById('login-error').classList.add('hidden');
+    });
+    els.adminLoginModal.addEventListener('click', (e) => { 
+      if(e.target.id === 'admin-login-modal') {
+        els.adminLoginModal.classList.add('hidden');
+        els.adminLoginForm.reset();
+        document.getElementById('login-error').classList.add('hidden');
+      }
+    });
     
     // Section toggle buttons (collapse/expand)
     document.getElementById('toggle-teams-section').addEventListener('click', () => {
@@ -1020,12 +1115,11 @@
         adminBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log('Admin panel button clicked');
           if(els.adminModal){
             els.adminModal.classList.remove('hidden');
+            els.adminModal.style.display = 'flex';
             renderTeamsList();
             renderStreamersList();
-            console.log('Admin modal opened');
           } else {
             console.error('Admin modal element not found');
           }
@@ -1158,7 +1252,15 @@
 
     // ---------- init ----------
     async function init(){
-      onAuthStateChanged(auth, (user)=>{ checkAdmin(user); });
+      // Set up auth state listener first to persist login
+      onAuthStateChanged(auth, (user) => { 
+        checkAdmin(user);
+        // Update logout button visibility
+        const logoutBtn = document.getElementById('admin-logout-btn');
+        if(logoutBtn){
+          logoutBtn.style.display = state.isAdmin ? 'inline-block' : 'none';
+        }
+      });
 
       await loadTeams();
       await loadStreamers();
@@ -1167,8 +1269,8 @@
 
       setInterval(fetchLiveStreams, 60000);
 
-      onSnapshot(collection(db, COLLECTIONS.TEAMS), ()=>{ loadTeams(); if(!els.adminModal.classList.contains('hidden')) renderTeamsList(); });
-      onSnapshot(collection(db, COLLECTIONS.STREAMERS), ()=>{ loadStreamers(); if(!els.adminModal.classList.contains('hidden')) renderStreamersList(); });
+      onSnapshot(collection(db, COLLECTIONS.TEAMS), ()=>{ loadTeams(); if(els.adminModal && !els.adminModal.classList.contains('hidden')) renderTeamsList(); });
+      onSnapshot(collection(db, COLLECTIONS.STREAMERS), ()=>{ loadStreamers(); if(els.adminModal && !els.adminModal.classList.contains('hidden')) renderStreamersList(); });
     }
 
     init();
