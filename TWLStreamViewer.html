@@ -1404,6 +1404,8 @@
       const card = container.closest('.stream-card');
       if(!card) return;
       
+      const streamMedia = card.querySelector('.stream-media');
+      
       const isVisible = container.style.display !== 'none' && !container.classList.contains('hidden');
       
       if(isVisible){
@@ -1414,6 +1416,12 @@
         container.style.display = 'flex';
         container.classList.remove('hidden');
         card.classList.add('stream-card-with-chat');
+        
+        // Match chat height to video height
+        if(streamMedia){
+          container.style.height = streamMedia.offsetHeight + 'px';
+          container.style.alignSelf = 'flex-start';
+        }
       }
     };
 
