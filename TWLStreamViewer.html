@@ -368,7 +368,7 @@
   <!-- Scripts: Firebase + app logic (kept same logic; updated only for style/DOM structure) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
       getFirestore, collection, getDocs, addDoc, doc, deleteDoc, updateDoc, query, where, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -465,34 +465,31 @@
         twitchUser.textContent = `Admin: ${user.email || user.displayName || 'Logged in'}`;
         twitchUser.style.display = 'inline';
       }
+      // If user is signed in but not admin, sign them out
+      if(user && !state.isAdmin){
+        signOut(auth).catch(err => console.error('Sign out error:', err));
+      }
       return state.isAdmin;
     }
     async function signInAsAdmin(){
+      const email = prompt('Enter your admin email:');
+      if(!email) return;
+      const password = prompt('Enter your password:');
+      if(!password) return;
+      
       try{
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(auth, provider);
+        const result = await signInWithEmailAndPassword(auth, email, password);
         checkAdmin(result.user);
-        showToast('Signed in as admin');
+        if(state.isAdmin){
+          showToast('Signed in as admin');
+        } else {
+          showToast('Access denied - not an admin account');
+          await signOut(auth);
+        }
       }catch(err){ 
         console.error('Firebase Admin Sign-In Error:', err);
-        let errorMsg = '';
-        
-        if(err.code === 'auth/unauthorized-domain'){
-          const domain = window.location.hostname;
-          errorMsg = `Domain "${domain}" not authorized in Firebase.\n\nTo fix:\n1. Go to Firebase Console → Authentication → Settings\n2. Click "Authorized domains" tab\n3. Add "${domain}" to the list`;
-          showToast('Admin sign-in failed: Domain not authorized. Check console for details.');
-        } else if(err.code === 'auth/operation-not-allowed'){
-          errorMsg = `Google Sign-In is not enabled in Firebase.\n\nTo fix:\n1. Go to Firebase Console → Authentication → Sign-in method\n2. Find "Google" in the list\n3. Click "Enable"\n4. Add a support email and click "Save"`;
-          showToast('Admin sign-in failed: Google Sign-In not enabled. Check console for details.');
-        } else {
-          errorMsg = `Admin sign-in failed: ${err.message || 'Unknown error'}\n\nError code: ${err.code || 'N/A'}`;
-          showToast(`Admin sign-in failed: ${err.message || 'Unknown error'}`);
-        }
-        
-        if(errorMsg){
-          console.error('Firebase Error Details:', errorMsg);
-          alert(`Firebase Authentication Error:\n\n${errorMsg}`);
-        }
+        showToast(`Admin sign-in failed: ${err.message || 'Unknown error'}`);
+        alert(`Admin Sign-In Failed:\n\n${err.message || 'Unknown error'}\n\nError code: ${err.code || 'N/A'}`);
       }
     }
 
@@ -940,6 +937,35 @@
       if(signInBtn){
         signInBtn.addEventListener('click', signInAsAdmin);
       }
+      
+      // Add logout functionality
+      const logoutBtn = document.createElement('button');
+      logoutBtn.textContent = 'Logout';
+      logoutBtn.className = 'btn btn-secondary';
+      logoutBtn.id = 'admin-logout-btn';
+      logoutBtn.style.display = 'none';
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          await signOut(auth);
+          showToast('Logged out');
+        } catch(err) {
+          console.error('Logout error:', err);
+          showToast('Logout failed');
+        }
+      });
+      // Insert logout button after sign in button
+      if(signInBtn && signInBtn.parentNode){
+        signInBtn.parentNode.insertBefore(logoutBtn, signInBtn.nextSibling);
+      }
+      
+      // Update logout button visibility
+      onAuthStateChanged(auth, (user) => {
+        if(user && state.isAdmin){
+          logoutBtn.style.display = 'inline-block';
+        } else {
+          logoutBtn.style.display = 'none';
+        }
+      });
     }
     setTimeout(setupAdminButton, 1500);
 
