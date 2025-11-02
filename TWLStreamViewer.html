@@ -1434,7 +1434,8 @@
       document.getElementById('team-games').value = (team.games||[]).join(', ');
       document.querySelector('#team-form button[type="submit"]').textContent = 'Update Team';
       document.getElementById('cancel-team-edit').classList.remove('hidden');
-      if(els.adminModal.style.display === 'none' || els.adminModal.style.display === ''){
+      if(els.adminModal.classList.contains('hidden') || els.adminModal.style.display === 'none' || els.adminModal.style.display === ''){
+        els.adminModal.classList.remove('hidden');
         els.adminModal.style.display = 'flex';
       }
       // Ensure teams section is visible when editing
@@ -1484,7 +1485,8 @@
       document.getElementById('streamer-game').value = streamer.defaultGame || '';
       document.querySelector('#streamer-form button[type="submit"]').textContent = 'Update Streamer';
       document.getElementById('cancel-streamer-edit').classList.remove('hidden');
-      if(els.adminModal.style.display === 'none' || els.adminModal.style.display === ''){
+      if(els.adminModal.classList.contains('hidden') || els.adminModal.style.display === 'none' || els.adminModal.style.display === ''){
+        els.adminModal.classList.remove('hidden');
         els.adminModal.style.display = 'flex';
       }
       // Ensure streamers section is visible when editing
