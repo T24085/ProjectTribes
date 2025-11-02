@@ -1217,11 +1217,6 @@
               <span>${escapeHtml(team.teamName)}</span>
             </div>` : '' }
             ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
-
-            <div class="card-actions">
-              <button class="btn-chat btn-pill" onclick="openChatPopup('${handle}', '${escapeHtml(streamer.displayName)}')">Chat</button>
-              <a class="btn-watch btn-pill" href="https://www.twitch.tv/${encodeURIComponent(handle)}" target="_blank" rel="noopener">Watch</a>
-            </div>
           </div>
         </div>
       `;
