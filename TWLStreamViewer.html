@@ -1550,13 +1550,13 @@
       document.getElementById('cancel-streamer-edit').classList.add('hidden');
     });
 
-    // Admin modal close and toggle
+    // Admin modal close and toggle (using style.display to match index.html)
     document.getElementById('close-admin-modal').addEventListener('click', ()=>{
-      els.adminModal.classList.add('hidden');
+      els.adminModal.style.display = 'none';
     });
     els.adminModal.addEventListener('click', (e) => { 
       if(e.target.id === 'admin-modal') {
-        els.adminModal.classList.add('hidden');
+        els.adminModal.style.display = 'none';
       }
     });
     
