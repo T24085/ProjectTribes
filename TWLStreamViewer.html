@@ -14,30 +14,44 @@
   <!-- Custom fonts (system fallback otherwise) -->
   <style>
     :root{
-      --bg-1:#03020a;
-      --bg-2:#071022;
-      --glass: rgba(255,255,255,0.04);
-      --glass-strong: rgba(255,255,255,0.06);
-      --neon-violet: 139,92,246;
-      --neon-cyan: 56,189,248;
-      --accent: linear-gradient(90deg, rgba(var(--neon-violet),0.95), rgba(var(--neon-cyan),0.95));
-      --card-shadow: 0 10px 30px rgba(2,6,23,0.6), 0 1px 0 rgba(255,255,255,0.02) inset;
-      --glass-border: rgba(255,255,255,0.04);
-      --glass-highlight: rgba(255,255,255,0.02);
-      --muted: #94a3b8;
+      /* TWL Theme Colors - Dark red/maroon, black, greys with yellow and light blue accents */
+      --twl-maroon: #330000;
+      --twl-dark-red: #4d0000;
+      --twl-black: #000000;
+      --twl-dark-grey: #1a1a1a;
+      --twl-grey: #2d2d2d;
+      --twl-light-grey: #4a4a4a;
+      --twl-yellow: #ffd700;
+      --twl-light-blue: #87ceeb;
+      --twl-red-accent: #cc3333;
+      
+      --bg-1: var(--twl-maroon);
+      --bg-2: var(--twl-dark-red);
+      --glass: rgba(0,0,0,0.4);
+      --glass-strong: rgba(0,0,0,0.6);
+      --accent: linear-gradient(90deg, var(--twl-red-accent), #ff4444);
+      --card-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.05) inset;
+      --glass-border: rgba(255,255,255,0.1);
+      --glass-highlight: rgba(255,255,255,0.05);
+      --muted: #999999;
+      
+      /* TWL specific accents */
+      --twl-yellow-glow: rgba(255,215,0,0.3);
+      --twl-blue-glow: rgba(135,206,235,0.3);
     }
 
     html,body{height:100%}
     body{
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
       background:
-        radial-gradient(600px 300px at 10% 10%, rgba(var(--neon-cyan),0.06), transparent 12%),
-        radial-gradient(600px 300px at 90% 20%, rgba(var(--neon-violet),0.04), transparent 15%),
-        linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      color:#e6eef8;
+        radial-gradient(800px 400px at 20% 20%, rgba(204,51,51,0.15), transparent 25%),
+        radial-gradient(800px 400px at 80% 30%, rgba(135,206,235,0.1), transparent 30%),
+        linear-gradient(180deg, var(--bg-1), var(--bg-2));
+      color:#ffffff;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
       padding-bottom:6rem;
+      min-height: 100vh;
     }
 
     /* Header handled by nav */
@@ -49,9 +63,9 @@
       padding: 0 1rem;
     }
     .glass {
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      background: linear-gradient(180deg, rgba(0,0,0,0.5), rgba(26,26,26,0.7));
       border: 1px solid var(--glass-border);
-      border-radius: 14px;
+      border-radius: 8px;
       padding: 1rem;
       box-shadow: var(--card-shadow);
       backdrop-filter: blur(10px) saturate(120%);
@@ -59,10 +73,14 @@
 
     /* Filters & stats area */
     .filters .select, .filters .input {
-      background: rgba(6,10,20,0.6);
-      border: 1px solid rgba(255,255,255,0.03);
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
       outline: none;
-      color: #e6eef8;
+      color: #ffffff;
+    }
+    .filters .select:focus, .filters .input:focus {
+      border-color: var(--twl-red-accent);
+      box-shadow: 0 0 8px rgba(204,51,51,0.3);
     }
     label.small { font-size: 0.72rem; color: var(--muted); letter-spacing:0.08em; text-transform:uppercase }
 
@@ -77,17 +95,18 @@
     @media (max-width:640px){ #stream-grid{grid-template-columns:1fr} }
 
     .stream-card{
-      border-radius:12px;
+      border-radius:8px;
       overflow:hidden;
       position:relative;
       transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s;
-      border: 1px solid rgba(255,255,255,0.03);
-      background: linear-gradient(180deg, rgba(3,7,18,0.6), rgba(2,6,16,0.6));
+      border: 1px solid rgba(255,255,255,0.1);
+      background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(26,26,26,0.8));
     }
 
     .stream-card:hover{
       transform: translateY(-8px);
-      box-shadow: 0 24px 60px rgba(8,10,30,0.55), 0 0 36px rgba(var(--neon-violet),0.06);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 36px rgba(204,51,51,0.2);
+      border-color: var(--twl-red-accent);
     }
 
     .stream-media{
@@ -105,13 +124,13 @@
     .live-pill{
       display:inline-flex; align-items:center; gap:0.5rem; padding:6px 10px; border-radius:999px;
       font-weight:700; font-size:0.75rem; text-transform:uppercase;
-      background: linear-gradient(90deg, rgba(239,68,68,0.95), rgba(255,110,110,0.9));
-      color:white; box-shadow: 0 6px 20px rgba(239,68,68,0.18);
+      background: linear-gradient(90deg, var(--twl-red-accent), #ff6666);
+      color:white; box-shadow: 0 6px 20px rgba(204,51,51,0.4);
     }
     .neon-game{
       padding:6px 10px; border-radius:999px; font-weight:700; font-size:0.72rem;
-      background: linear-gradient(90deg, rgba(var(--neon-violet),0.12), rgba(var(--neon-cyan),0.12));
-      color: #dbeafe; border: 1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(90deg, rgba(135,206,235,0.2), rgba(135,206,235,0.15));
+      color: var(--twl-light-blue); border: 1px solid rgba(135,206,235,0.3);
       backdrop-filter: blur(6px);
     }
 
@@ -124,8 +143,10 @@
     .btn-pill{
       flex:1 1 0; text-align:center; padding:8px 12px; border-radius:999px; font-weight:700; text-transform:uppercase; font-size:0.78rem;
     }
-    .btn-chat { background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.03); color: #e6eef8; }
-    .btn-watch { background: var(--accent); color:#041024; border:none; box-shadow: 0 8px 30px rgba(var(--neon-violet),0.08); }
+    .btn-chat { background: rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.2); color: #ffffff; }
+    .btn-chat:hover { background: rgba(0,0,0,0.6); border-color: var(--twl-light-blue); }
+    .btn-watch { background: var(--accent); color:#ffffff; border:none; box-shadow: 0 8px 30px rgba(204,51,51,0.3); }
+    .btn-watch:hover { background: linear-gradient(90deg, #ff4444, #ff6666); box-shadow: 0 8px 30px rgba(204,51,51,0.5); }
 
     /* Left column / right chat layout on wide screens */
     main.layout {
@@ -146,29 +167,93 @@
     aside .embed { flex:1; border-top:1px solid rgba(255,255,255,0.02); background: #000 }
 
     /* Modal backdrop */
-    .modal-backdrop { backdrop-filter: blur(6px); background: linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.75)); }
+    .modal-backdrop { 
+      backdrop-filter: blur(8px); 
+      background: linear-gradient(180deg, rgba(51,0,0,0.85), rgba(26,0,0,0.9)); 
+    }
+    #admin-modal.hidden {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    #admin-modal:not(.hidden) {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
 
     /* small helpers */
     .muted { color:var(--muted) }
     .stat {
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-      border: 1px solid rgba(255,255,255,0.02);
-      border-radius:10px; padding:0.75rem 1rem; display:flex; align-items:center; gap:0.75rem;
+      background: linear-gradient(180deg, rgba(0,0,0,0.4), rgba(26,26,26,0.6));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius:8px; padding:0.75rem 1rem; display:flex; align-items:center; gap:0.75rem;
     }
-    .stat .num { font-weight:800; color: #cffafe; font-size:1.25rem }
-    .faint { color: rgba(255,255,255,0.06) }
+    .stat .num { font-weight:800; color: var(--twl-light-blue); font-size:1.25rem }
+    .faint { color: rgba(255,255,255,0.4) }
 
     /* toast */
-    #toast{ transition: all .28s; transform:translateY(20px); opacity:0; }
+    #toast{ 
+      transition: all .28s; 
+      transform:translateY(20px); 
+      opacity:0;
+      background: rgba(0,0,0,0.9) !important;
+      border: 1px solid rgba(204,51,51,0.4) !important;
+    }
     #toast.show{ transform:translateY(0); opacity:1; }
 
     /* small animated glow */
     @keyframes subtleGlow {
-      0%{ box-shadow: 0 0 0 rgba(var(--neon-violet),0.03) }
-      50%{ box-shadow: 0 0 30px rgba(var(--neon-violet),0.06) }
-      100%{ box-shadow: 0 0 0 rgba(var(--neon-violet),0.03) }
+      0%{ box-shadow: 0 0 0 rgba(204,51,51,0.2) }
+      50%{ box-shadow: 0 0 30px rgba(204,51,51,0.4) }
+      100%{ box-shadow: 0 0 0 rgba(204,51,51,0.2) }
     }
     .glow { animation: subtleGlow 3.6s infinite; }
+    
+    /* TWL Theme adjustments */
+    .muted { color: #999999; }
+    #admin-modal {
+      z-index: 9999;
+    }
+    #admin-modal .glass {
+      background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(26,26,26,0.9));
+      border: 2px solid rgba(204,51,51,0.3);
+    }
+    #admin-modal button[type="submit"],
+    #admin-modal .btn-pill[style*="background:linear-gradient"] {
+      background: linear-gradient(90deg, var(--twl-red-accent), #ff4444) !important;
+      color: #ffffff !important;
+      border: none;
+    }
+    
+    /* Edit and Delete buttons in lists */
+    #teams-list button, #streamers-list button {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #ffffff;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+    #teams-list button:hover, #streamers-list button:hover {
+      background: rgba(0,0,0,0.8);
+      border-color: var(--twl-light-blue);
+    }
+    #teams-list button:last-child, #streamers-list button:last-child {
+      border-color: rgba(204,51,51,0.5);
+    }
+    #teams-list button:last-child:hover, #streamers-list button:last-child:hover {
+      border-color: var(--twl-red-accent);
+      background: rgba(204,51,51,0.2);
+    }
+    
+    /* Status badges using TWL colors */
+    .text-green-300 { color: #4ade80 !important; }
+    .text-indigo-300 { color: var(--twl-light-blue) !important; }
 
   </style>
 </head>
@@ -273,12 +358,12 @@
   </main>
 
   <!-- Floating mobile chat button -->
-  <button id="chat-toggle-mobile" class="lg:hidden fixed right-5 bottom-6 bg-violet-500 rounded-full w-14 h-14 flex items-center justify-center text-xl shadow-2xl">
+  <button id="chat-toggle-mobile" class="lg:hidden fixed right-5 bottom-6 rounded-full w-14 h-14 flex items-center justify-center text-xl shadow-2xl" style="background: linear-gradient(135deg, var(--twl-red-accent), #ff4444); color: white;">
     💬
   </button>
 
-  <!-- Consolidated Admin Panel Modal -->
-  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+  <!-- Consolidated Admin Panel Modal (Hidden by default) -->
+  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4" style="display: none !important;">
     <div class="w-full max-w-5xl glass overflow-y-auto rounded-xl max-h-[90vh]">
       <div class="sticky top-0 bg-transparent p-4 flex items-center justify-between border-b border-white/2 z-10">
         <h2 class="text-2xl font-bold">Admin Panel</h2>
@@ -308,8 +393,8 @@
                 <input id="team-games" class="w-full px-3 py-2 rounded-md input" placeholder="Battlefield, Tribes: Ascend" />
               </div>
               <div class="flex gap-3">
-                <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,#7c3aed,#06b6d4); color:#031029">Save</button>
-                <button type="button" id="cancel-team-edit" class="px-4 py-2 rounded-md btn-pill bg-slate-800 text-sm hidden">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Save</button>
+                <button type="button" id="cancel-team-edit" class="px-4 py-2 rounded-md btn-pill text-sm hidden" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:#ffffff">Cancel</button>
               </div>
             </form>
             <div id="teams-list" class="space-y-3">
@@ -347,8 +432,8 @@
                 <input id="streamer-game" class="w-full px-3 py-2 rounded-md input" placeholder="Battlefield" />
               </div>
               <div class="flex gap-3">
-                <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,#7c3aed,#06b6d4); color:#031029">Save</button>
-                <button type="button" id="cancel-streamer-edit" class="px-4 py-2 rounded-md btn-pill bg-slate-800 text-sm hidden">Cancel</button>
+                <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Save</button>
+                <button type="button" id="cancel-streamer-edit" class="px-4 py-2 rounded-md btn-pill text-sm hidden" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:#ffffff">Cancel</button>
               </div>
             </form>
             <div id="streamers-list" class="space-y-3">
@@ -468,6 +553,10 @@
       // If user is signed in but not admin, sign them out
       if(user && !state.isAdmin){
         signOut(auth).catch(err => console.error('Sign out error:', err));
+      }
+      // Set up admin button after admin check
+      if(state.isAdmin){
+        setTimeout(setupAdminButton, 100);
       }
       return state.isAdmin;
     }
@@ -926,48 +1015,58 @@
     // Admin panel button - set up after nav loads
     function setupAdminButton(){
       const adminBtn = document.getElementById('admin-panel-btn');
-      if(adminBtn){
-        adminBtn.addEventListener('click', () => {
-          els.adminModal.classList.remove('hidden');
-          renderTeamsList();
-          renderStreamersList();
+      if(adminBtn && !adminBtn.hasAttribute('data-listener')){
+        adminBtn.setAttribute('data-listener', 'true');
+        adminBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log('Admin panel button clicked');
+          if(els.adminModal){
+            els.adminModal.classList.remove('hidden');
+            renderTeamsList();
+            renderStreamersList();
+            console.log('Admin modal opened');
+          } else {
+            console.error('Admin modal element not found');
+          }
         });
       }
       const signInBtn = document.getElementById('admin-signin-btn');
-      if(signInBtn){
+      if(signInBtn && !signInBtn.hasAttribute('data-listener')){
+        signInBtn.setAttribute('data-listener', 'true');
         signInBtn.addEventListener('click', signInAsAdmin);
       }
       
       // Add logout functionality
-      const logoutBtn = document.createElement('button');
-      logoutBtn.textContent = 'Logout';
-      logoutBtn.className = 'btn btn-secondary';
-      logoutBtn.id = 'admin-logout-btn';
-      logoutBtn.style.display = 'none';
-      logoutBtn.addEventListener('click', async () => {
-        try {
-          await signOut(auth);
-          showToast('Logged out');
-        } catch(err) {
-          console.error('Logout error:', err);
-          showToast('Logout failed');
+      let logoutBtn = document.getElementById('admin-logout-btn');
+      if(!logoutBtn){
+        logoutBtn = document.createElement('button');
+        logoutBtn.textContent = 'Logout';
+        logoutBtn.className = 'btn btn-secondary';
+        logoutBtn.id = 'admin-logout-btn';
+        logoutBtn.style.display = 'none';
+        logoutBtn.addEventListener('click', async () => {
+          try {
+            await signOut(auth);
+            showToast('Logged out');
+          } catch(err) {
+            console.error('Logout error:', err);
+            showToast('Logout failed');
+          }
+        });
+        // Insert logout button after sign in button or admin panel button
+        const container = signInBtn?.parentNode || adminBtn?.parentNode;
+        if(container){
+          container.insertBefore(logoutBtn, signInBtn?.nextSibling || adminBtn?.nextSibling);
         }
-      });
-      // Insert logout button after sign in button
-      if(signInBtn && signInBtn.parentNode){
-        signInBtn.parentNode.insertBefore(logoutBtn, signInBtn.nextSibling);
       }
-      
-      // Update logout button visibility
-      onAuthStateChanged(auth, (user) => {
-        if(user && state.isAdmin){
-          logoutBtn.style.display = 'inline-block';
-        } else {
-          logoutBtn.style.display = 'none';
-        }
-      });
     }
+    
+    // Try to set up immediately, then retry if nav not loaded
+    setupAdminButton();
+    setTimeout(setupAdminButton, 500);
     setTimeout(setupAdminButton, 1500);
+    setTimeout(setupAdminButton, 3000);
 
     // Twitch OAuth handling - update after nav loads
     function setupOAuth(){
