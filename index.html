@@ -2373,8 +2373,8 @@
         <div class="stream-controls">
           <div class="caster-dropdown-container" style="position: relative; display: inline-block;">
             <button class="team-select-btn" id="caster-btn" style="background: #f59e0b;">Load Caster ▼</button>
-            <div id="caster-dropdown" class="caster-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.5rem; min-width: 200px; max-height: 300px; overflow-y: auto; z-index: 1000; margin-top: 0.25rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-              <div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">Select Shoutcaster:</div>
+            <div id="caster-dropdown" class="caster-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; background: #1e293b; border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 0.5rem; padding: 0.5rem; min-width: 250px; max-height: 400px; overflow-y: auto; z-index: 9999; margin-top: 0.25rem; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+              <div style="padding: 0.5rem; color: #94a3b8; font-size: 0.875rem; border-bottom: 1px solid rgba(148, 163, 184, 0.2); margin-bottom: 0.5rem;">Select Shoutcaster:</div>
               <div id="caster-options-list"></div>
             </div>
           </div>
@@ -5367,8 +5367,19 @@
         const streamersSnapshot = await getDocs(streamersRef);
         
         availableShoutcasters = [];
+        let totalStreamers = 0;
         streamersSnapshot.forEach((docSnap) => {
+          totalStreamers++;
           const data = docSnap.data();
+          // Debug: log all streamers to see what we're getting
+          console.log('Streamer found:', {
+            id: docSnap.id,
+            displayName: data.displayName,
+            twitchHandle: data.twitchHandle,
+            isShoutcaster: data.isShoutcaster,
+            teamId: data.teamId
+          });
+          
           // Check if it's a shoutcaster (either isShoutcaster flag or teamId is __shoutcaster__)
           const isShoutcaster = data.isShoutcaster === true || data.teamId === '__shoutcaster__';
           if (isShoutcaster && data.twitchHandle) {
@@ -5376,8 +5387,11 @@
               displayName: data.displayName || data.twitchHandle,
               twitchHandle: data.twitchHandle
             });
+            console.log('Added shoutcaster:', data.displayName || data.twitchHandle);
           }
         });
+        
+        console.log(`Processed ${totalStreamers} total streamers, found ${availableShoutcasters.length} shoutcasters`);
         
         // Sort by display name
         availableShoutcasters.sort((a, b) => a.displayName.localeCompare(b.displayName));
@@ -5385,7 +5399,10 @@
         // Populate dropdown
         populateCasterDropdown();
         
-        console.log('Loaded shoutcasters:', availableShoutcasters.length);
+        console.log('Loaded shoutcasters:', availableShoutcasters.length, availableShoutcasters);
+        
+        // Debug: log what we're looking for
+        console.log('Looking for streamers with isShoutcaster=true or teamId=__shoutcaster__');
       } catch (error) {
         console.error('Error loading shoutcasters:', error);
         availableShoutcasters = [];
@@ -5401,23 +5418,26 @@
       casterOptionsList.innerHTML = '';
       
       if (availableShoutcasters.length === 0) {
-        casterOptionsList.innerHTML = '<div style="padding: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">No shoutcasters found</div>';
+        casterOptionsList.innerHTML = '<div style="padding: 0.75rem; color: #94a3b8; font-size: 0.875rem; text-align: center;">No shoutcasters found. Make sure shoutcasters are marked with "isShoutcaster: true" or teamId: "__shoutcaster__" in the database.</div>';
+        console.warn('No shoutcasters available to display');
         return;
       }
+      
+      console.log('Populating dropdown with', availableShoutcasters.length, 'shoutcasters');
       
       availableShoutcasters.forEach((shoutcaster) => {
         const option = document.createElement('div');
         option.className = 'caster-option';
-        option.style.cssText = 'padding: 0.75rem; cursor: pointer; border-radius: 0.25rem; transition: background 0.2s;';
-        option.style.color = 'var(--text-primary)';
+        option.style.cssText = 'padding: 0.75rem; cursor: pointer; border-radius: 0.25rem; transition: background 0.2s; margin-bottom: 0.25rem;';
+        option.style.color = '#f1f5f9';
         option.innerHTML = `
           <div style="font-weight: 500;">${shoutcaster.displayName}</div>
-          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">${shoutcaster.twitchHandle}</div>
+          <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem;">${shoutcaster.twitchHandle}</div>
         `;
         
         // Hover effect
         option.addEventListener('mouseenter', () => {
-          option.style.background = 'var(--surface-glass)';
+          option.style.background = 'rgba(148, 163, 184, 0.15)';
         });
         option.addEventListener('mouseleave', () => {
           option.style.background = 'transparent';
@@ -6263,14 +6283,23 @@
       const casterBtn = document.getElementById('caster-btn');
       const casterDropdown = document.getElementById('caster-dropdown');
       
-      if (casterBtn) {
+      if (casterBtn && casterDropdown) {
         casterBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (casterDropdown) {
-            const isVisible = casterDropdown.style.display !== 'none';
-            casterDropdown.style.display = isVisible ? 'none' : 'block';
+          e.preventDefault();
+          console.log('Caster button clicked, available shoutcasters:', availableShoutcasters.length);
+          const isVisible = casterDropdown.style.display !== 'none' && casterDropdown.style.display !== '';
+          casterDropdown.style.display = isVisible ? 'none' : 'block';
+          console.log('Dropdown display set to:', casterDropdown.style.display);
+          
+          // If opening and no shoutcasters loaded yet, try loading again
+          if (!isVisible && availableShoutcasters.length === 0) {
+            console.log('No shoutcasters found, reloading...');
+            loadAvailableShoutcasters();
           }
         });
+      } else {
+        console.error('Caster button or dropdown not found', { casterBtn: !!casterBtn, casterDropdown: !!casterDropdown });
       }
       
       // Close dropdown when clicking outside
