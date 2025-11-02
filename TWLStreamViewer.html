@@ -101,6 +101,16 @@
       transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s;
       border: 1px solid rgba(255,255,255,0.1);
       background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(26,26,26,0.8));
+      display: flex;
+      flex-direction: column;
+    }
+    .stream-card-with-chat {
+      flex-direction: row;
+    }
+    @media (max-width: 768px) {
+      .stream-card-with-chat {
+        flex-direction: column;
+      }
     }
 
     .stream-card:hover{
@@ -118,11 +128,86 @@
       min-width: 854px;
       min-height: 480px;
     }
+    @media (max-width: 1100px) {
+      .stream-media {
+        min-width: 100%;
+      }
+      .stream-card-with-chat .stream-media {
+        min-width: 0;
+      }
+    }
     .twitch-embed-container {
       width: 100%;
       height: 100%;
       min-width: 854px;
       min-height: 480px;
+    }
+    .stream-media-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+    .stream-card-with-chat .stream-media-wrapper {
+      flex: 2;
+    }
+    .stream-chat-wrapper {
+      display: none;
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(26,26,26,0.85));
+      border-left: 1px solid rgba(255,255,255,0.1);
+    }
+    @media (max-width: 768px) {
+      .stream-chat-wrapper {
+        max-width: 100%;
+        border-left: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        min-height: 300px;
+      }
+    }
+    .stream-card-with-chat .stream-chat-wrapper {
+      display: flex;
+      flex-direction: column;
+    }
+    .stream-chat-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+    }
+    .stream-chat-header .text-sm {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+    .stream-chat-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+    .stream-chat-close:hover {
+      color: #ffffff;
+    }
+    .stream-chat-iframe {
+      flex: 1;
+      width: 100%;
+      min-height: 300px;
+      border: none;
+      background: #000;
     }
     .stream-overlay {
       position:absolute; inset:0; pointer-events:none;
@@ -1031,36 +1116,48 @@
       // Create unique ID for this embed
       const embedId = `twitch-embed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+      const chatContainerId = `chat-${embedId}`;
+      
       card.innerHTML = `
-        <div class="stream-media">
-          <div id="${embedId}" class="twitch-embed-container"></div>
-          <div class="stream-overlay"></div>
+        <div class="stream-media-wrapper">
+          <div class="stream-media">
+            <div id="${embedId}" class="twitch-embed-container"></div>
+            <div class="stream-overlay"></div>
 
-          <div style="position:absolute; left:12px; top:12px; z-index:5;">
-            ${ isLive ? `<span class="live-pill"><span style="width:8px;height:8px;background:#ff7a7a;border-radius:50%;display:inline-block;box-shadow:0 0 8px rgba(255,120,120,0.7);margin-right:6px"></span>LIVE • ${liveData.viewer_count.toLocaleString()} </span>` : `<span class="faint px-3 py-1 rounded-full" style="background:rgba(255,255,255,0.02)">${escapeHtml(gameName)}</span>` }
+            <div style="position:absolute; left:12px; top:12px; z-index:5;">
+              ${ isLive ? `<span class="live-pill"><span style="width:8px;height:8px;background:#ff7a7a;border-radius:50%;display:inline-block;box-shadow:0 0 8px rgba(255,120,120,0.7);margin-right:6px"></span>LIVE • ${liveData.viewer_count.toLocaleString()} </span>` : `<span class="faint px-3 py-1 rounded-full" style="background:rgba(255,255,255,0.02)">${escapeHtml(gameName)}</span>` }
+            </div>
+
+            <div style="position:absolute; right:12px; top:12px; z-index:5;">
+              <span class="neon-game">${escapeHtml(gameName)}</span>
+            </div>
           </div>
 
-          <div style="position:absolute; right:12px; top:12px; z-index:5;">
-            <span class="neon-game">${escapeHtml(gameName)}</span>
+          <div class="meta">
+            <div class="display-name">
+              ${escapeHtml(streamer.displayName)}
+              ${ isShoutcaster ? '<span class="shoutcaster-badge">Shoutcaster</span>' : '' }
+            </div>
+            <div class="handle">@${escapeHtml(handle)}</div>
+            ${ team ? `<div class="team-info muted text-xs mt-2">
+              ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo" onerror="this.style.display='none'" />` : '' }
+              <span>${escapeHtml(team.teamName)}</span>
+            </div>` : '' }
+            ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
+
+            <div class="card-actions">
+              <button class="btn-chat btn-pill" onclick="toggleStreamChat('${handle}', '${chatContainerId}')">Chat</button>
+              <a class="btn-watch btn-pill" href="https://www.twitch.tv/${encodeURIComponent(handle)}" target="_blank" rel="noopener">Watch</a>
+            </div>
           </div>
         </div>
 
-        <div class="meta">
-          <div class="display-name">
-            ${escapeHtml(streamer.displayName)}
-            ${ isShoutcaster ? '<span class="shoutcaster-badge">Shoutcaster</span>' : '' }
+        <div id="${chatContainerId}" class="stream-chat-wrapper">
+          <div class="stream-chat-header">
+            <span class="text-sm">Chat</span>
+            <button class="stream-chat-close" onclick="toggleStreamChat('${handle}', '${chatContainerId}')" aria-label="Close chat">×</button>
           </div>
-          <div class="handle">@${escapeHtml(handle)}</div>
-          ${ team ? `<div class="team-info muted text-xs mt-2">
-            ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo" onerror="this.style.display='none'" />` : '' }
-            <span>${escapeHtml(team.teamName)}</span>
-          </div>` : '' }
-          ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
-
-          <div class="card-actions">
-            <button class="btn-chat btn-pill" onclick="setChat('${handle}')">Chat</button>
-            <a class="btn-watch btn-pill" href="https://www.twitch.tv/${encodeURIComponent(handle)}" target="_blank" rel="noopener">Watch</a>
-          </div>
+          <iframe class="stream-chat-iframe" src="https://www.twitch.tv/embed/${encodeURIComponent(handle)}/chat?${parentQuery}" frameborder="0"></iframe>
         </div>
       `;
 
@@ -1250,6 +1347,26 @@
       updateChatFrame();
       els.chatPanel.classList.remove('hidden');
       if(window.innerWidth < 1024) els.chatPanel.classList.add('fixed', 'inset-0', 'w-full', 'h-full');
+    };
+    
+    window.toggleStreamChat = function(handle, chatContainerId){
+      const container = document.getElementById(chatContainerId);
+      if(!container) return;
+      
+      const card = container.closest('.stream-card');
+      if(!card) return;
+      
+      const isVisible = container.style.display !== 'none' && !container.classList.contains('hidden');
+      
+      if(isVisible){
+        container.style.display = 'none';
+        container.classList.add('hidden');
+        card.classList.remove('stream-card-with-chat');
+      } else {
+        container.style.display = 'flex';
+        container.classList.remove('hidden');
+        card.classList.add('stream-card-with-chat');
+      }
     };
 
     function updateChatSelect(){
