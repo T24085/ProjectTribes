@@ -1,0 +1,146 @@
+<!-- TWLStreamViewer-nav.html — Navbar for TWL Stream Viewer -->
+<style>
+  :root {
+    --bg-color: #030712;
+    --text-primary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #8b5cf6;
+    --accent-strong: #38bdf8;
+  }
+
+  nav#twl-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(8, 11, 26, 0.85);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    backdrop-filter: blur(16px);
+    padding: 1rem 2rem;
+  }
+
+  .header-container {
+    max-width: 1440px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-brand img {
+    height: 46px;
+    width: auto;
+    border-radius: 0.75rem;
+    background: rgba(30, 41, 59, 0.65);
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .brand-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .brand-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(15, 23, 42, 0.6);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .btn:hover {
+    background: rgba(129, 140, 248, 0.3);
+    border-color: rgba(129, 140, 248, 0.5);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, rgba(129, 140, 248, 0.9), rgba(56, 189, 248, 0.9));
+    border: none;
+    color: #020617;
+    font-weight: 700;
+  }
+
+  .btn-secondary {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    color: var(--text-primary);
+  }
+
+  #twitch-user {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    nav#twl-header {
+      padding: 0.75rem 1rem;
+    }
+    .header-container {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .auth-buttons {
+      width: 100%;
+      flex-direction: column;
+    }
+    .btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
+<nav id="twl-header">
+  <div class="header-container">
+    <div class="header-brand">
+      <img src="Tribes Professional League.png" alt="Tribes Professional League logo" onerror="this.style.display='none'">
+      <div>
+        <h1 class="brand-title">TWL Stream Viewer</h1>
+        <p class="brand-subtitle">Multi-Game Hub</p>
+      </div>
+    </div>
+    <div class="auth-buttons">
+      <span id="twitch-user"></span>
+      <button id="twitch-login-btn" class="btn btn-primary">Sign in with Twitch</button>
+      <button id="admin-panel-btn" class="btn btn-secondary hidden">Admin Panel</button>
+      <button id="admin-signin-btn" class="btn btn-secondary hidden">Admin Sign In</button>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // This nav will be integrated with the main page's OAuth and admin logic
+</script>
+

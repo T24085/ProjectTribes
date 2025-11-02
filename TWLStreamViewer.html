@@ -7,6 +7,9 @@
 
   <!-- Tailwind (remains same CDN for convenience) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css" rel="stylesheet">
+  
+  <!-- OAuth script - must load before page scripts -->
+  <script src="oauth.js"></script>
 
   <!-- Custom fonts (system fallback otherwise) -->
   <style>
@@ -37,23 +40,7 @@
       padding-bottom:6rem;
     }
 
-    /* Header */
-    nav.app-header{
-      backdrop-filter: blur(8px);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-      box-shadow: 0 6px 30px rgba(2,6,23,0.5);
-    }
-    .brand {
-      font-weight:800;
-      letter-spacing: -0.02em;
-      font-size:1.4rem;
-      background: linear-gradient(90deg, #c084fc, #67e8f9);
-      -webkit-background-clip: text;
-      background-clip:text;
-      color:transparent;
-    }
-    .sub-brand { font-size: 0.75rem; color: var(--muted); margin-left:0.45rem; }
+    /* Header handled by nav */
 
     /* Main layout */
     .container {
@@ -187,26 +174,26 @@
 </head>
 <body>
 
-  <!-- Header -->
-  <nav class="app-header sticky top-0 z-40">
-    <div class="container flex items-center justify-between py-3">
-      <div class="flex items-center">
-        <div class="brand">TWL Stream Viewer</div>
-        <div class="sub-brand">Multi-Game Hub</div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <button id="admin-panel-btn" class="hidden px-4 py-2 rounded-lg text-sm font-semibold ring-1 ring-violet-500/20 glow">Admin Panel</button>
-        <div id="auth-group" class="flex items-center gap-2">
-          <span id="twitch-user" class="text-sm muted hidden"></span>
-          <button id="admin-signin-btn" class="hidden px-3 py-2 rounded-md text-sm bg-slate-800">Admin Sign In</button>
-          <button id="twitch-login-btn" class="px-4 py-2 rounded-md text-sm font-semibold" style="background:linear-gradient(90deg,#7c3aed,#06b6d4); color:#031029;">
-            Sign in with Twitch
-          </button>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <!-- Navigation loaded via JS -->
+  <div id="nav-container"></div>
+  
+  <script>
+    // Load nav HTML
+    fetch('TWLStreamViewer-nav.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('nav-container').innerHTML = html;
+        // Re-run nav scripts after loading
+        const scripts = document.getElementById('nav-container').querySelectorAll('script');
+        scripts.forEach(oldScript => {
+          const newScript = document.createElement('script');
+          Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+          newScript.textContent = oldScript.textContent;
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        });
+      })
+      .catch(err => console.error('Failed to load nav:', err));
+  </script>
 
   <!-- Page content container -->
   <main class="container">
@@ -423,10 +410,10 @@
       gameFilter: document.getElementById('game-filter'),
       teamFilter: document.getElementById('team-filter'),
       liveOnlyToggle: document.getElementById('live-only-toggle'),
-      adminPanelBtn: document.getElementById('admin-panel-btn'),
-      adminSignInBtn: document.getElementById('admin-signin-btn'),
-      twitchLoginBtn: document.getElementById('twitch-login-btn'),
-      twitchUser: document.getElementById('twitch-user'),
+      adminPanelBtn: null, // Will be set after nav loads
+      adminSignInBtn: null, // Will be set after nav loads
+      twitchLoginBtn: null, // Will be set after nav loads
+      twitchUser: null, // Will be set after nav loads
       adminModal: document.getElementById('admin-modal'),
       teamForm: document.getElementById('team-form'),
       streamerForm: document.getElementById('streamer-form'),
@@ -460,13 +447,23 @@
 
     // ---------- Admin check ----------
     function checkAdmin(user){
-      if(!user || !user.uid){ state.isAdmin=false; els.adminModalBtn.classList.add('hidden'); els.adminSignInBtn.classList.remove('hidden'); return false; }
+      if(!user || !user.uid){ 
+        state.isAdmin=false; 
+        const adminBtn = document.getElementById('admin-panel-btn');
+        const signInBtn = document.getElementById('admin-signin-btn');
+        if(adminBtn) adminBtn.classList.add('hidden');
+        if(signInBtn) signInBtn.classList.remove('hidden');
+        return false;
+      }
       state.isAdmin = ADMIN_UIDS.includes(user.uid);
-      els.adminModalBtn.classList.toggle('hidden', !state.isAdmin);
-      els.adminSignInBtn.classList.toggle('hidden', state.isAdmin);
-      if(state.isAdmin){
-        els.twitchUser.textContent = `Admin: ${user.email || user.displayName || 'Logged in'}`;
-        els.twitchUser.classList.remove('hidden');
+      const adminBtn = document.getElementById('admin-panel-btn');
+      const signInBtn = document.getElementById('admin-signin-btn');
+      const twitchUser = document.getElementById('twitch-user');
+      if(adminBtn) adminBtn.classList.toggle('hidden', !state.isAdmin);
+      if(signInBtn) signInBtn.classList.toggle('hidden', state.isAdmin);
+      if(state.isAdmin && twitchUser){
+        twitchUser.textContent = `Admin: ${user.email || user.displayName || 'Logged in'}`;
+        twitchUser.style.display = 'inline';
       }
       return state.isAdmin;
     }
@@ -909,27 +906,114 @@
     });
     els.closeChat.addEventListener('click', ()=> els.chatPanel.classList.add('hidden'));
 
-    // Admin panel button
-    els.adminPanelBtn.addEventListener('click', () => {
-      els.adminModal.classList.remove('hidden');
-      renderTeamsList();
-      renderStreamersList();
-    });
-
-    // Twitch OAuth handling (keeps compatibility with external twitchOAuth object)
-    if(window.twitchOAuth){
-      els.twitchLoginBtn.addEventListener('click', ()=> window.twitchOAuth.login() );
-      if(window.twitchOAuth.getToken()){
-        window.twitchOAuth.fetchUser().then(user=>{
-          if(user){ els.twitchUser.textContent = user.display_name || user.login; els.twitchUser.classList.remove('hidden'); els.twitchLoginBtn.textContent = 'Sign Out'; els.twitchLoginBtn.onclick = ()=> { window.twitchOAuth.logout(); els.twitchUser.classList.add('hidden'); els.twitchLoginBtn.textContent = 'Sign in with Twitch'; state.liveStreams.clear(); renderStreamGrid(); } }
+    // Admin panel button - set up after nav loads
+    function setupAdminButton(){
+      const adminBtn = document.getElementById('admin-panel-btn');
+      if(adminBtn){
+        adminBtn.addEventListener('click', () => {
+          els.adminModal.classList.remove('hidden');
+          renderTeamsList();
+          renderStreamersList();
         });
       }
+      const signInBtn = document.getElementById('admin-signin-btn');
+      if(signInBtn){
+        signInBtn.addEventListener('click', signInAsAdmin);
+      }
+    }
+    setTimeout(setupAdminButton, 1500);
+
+    // Twitch OAuth handling - update after nav loads
+    function setupOAuth(){
+      const twitchLoginBtn = document.getElementById('twitch-login-btn');
+      const twitchUser = document.getElementById('twitch-user');
+      const adminPanelBtn = document.getElementById('admin-panel-btn');
+      const adminSignInBtn = document.getElementById('admin-signin-btn');
+      
+      if(!window.twitchOAuth){
+        console.warn('twitchOAuth not available yet, retrying...');
+        setTimeout(setupOAuth, 500);
+        return;
+      }
+      
+      // Override redirect to come back to this page
+      const originalLogin = window.twitchOAuth.login;
+      window.twitchOAuth.login = function(){
+        const basePath = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/');
+        const REDIRECT_URI = `${basePath}TWLStreamViewer.html`;
+        const CLIENT_ID = 'meabi1n42pccff5rz9ujpno7ky9vlt';
+        const scopes = 'user:read:email';
+        const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=${encodeURIComponent(scopes)}`;
+        window.location.href = authUrl;
+      };
+      
+      if(twitchLoginBtn){
+        twitchLoginBtn.addEventListener('click', ()=> {
+          if(window.twitchOAuth.getToken()){
+            // Logout
+            window.twitchOAuth.logout();
+            if(twitchUser) twitchUser.style.display = 'none';
+            twitchLoginBtn.textContent = 'Sign in with Twitch';
+            state.liveStreams.clear();
+            renderStreamGrid();
+          } else {
+            // Login
+            window.twitchOAuth.login();
+          }
+        });
+      }
+      
+      // Update UI based on token state
+      function updateOAuthUI(){
+        const token = window.twitchOAuth.getToken();
+        if(token){
+          twitchLoginBtn.textContent = 'Sign Out';
+          window.twitchOAuth.fetchUser().then(user=>{
+            if(user && twitchUser){
+              twitchUser.textContent = `Signed in as ${user.display_name || user.login}`;
+              twitchUser.style.display = 'inline';
+            }
+          }).catch(()=>{
+            // Token might be invalid
+            localStorage.removeItem('twitch_token');
+            updateOAuthUI();
+          });
+        } else {
+          if(twitchLoginBtn) twitchLoginBtn.textContent = 'Sign in with Twitch';
+          if(twitchUser) twitchUser.style.display = 'none';
+        }
+        fetchLiveStreams();
+      }
+      
+      // Check for OAuth redirect token
+      if(window.location.hash.includes('access_token')){
+        const params = new URLSearchParams(window.location.hash.slice(1));
+        const token = params.get('access_token');
+        if(token){
+          localStorage.setItem('twitch_token', token);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+      
+      updateOAuthUI();
+      
+      // Update admin button visibility
+      if(adminPanelBtn) adminPanelBtn.classList.toggle('hidden', !state.isAdmin);
+      if(adminSignInBtn) adminSignInBtn.classList.toggle('hidden', state.isAdmin);
+    }
+    
+    // Wait for both nav and oauth to be ready
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', ()=>{
+        setTimeout(setupOAuth, 1000);
+      });
+    } else {
+      setTimeout(setupOAuth, 1000);
     }
 
     // ---------- init ----------
     async function init(){
       onAuthStateChanged(auth, (user)=>{ checkAdmin(user); });
-      els.adminSignInBtn.addEventListener('click', signInAsAdmin);
 
       await loadTeams();
       await loadStreamers();
