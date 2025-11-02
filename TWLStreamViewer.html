@@ -473,7 +473,18 @@
         const result = await signInWithPopup(auth, provider);
         checkAdmin(result.user);
         showToast('Signed in as admin');
-      }catch(err){ console.error(err); showToast('Admin sign-in failed'); }
+      }catch(err){ 
+        console.error('Firebase Admin Sign-In Error:', err);
+        if(err.code === 'auth/unauthorized-domain'){
+          const domain = window.location.hostname;
+          const errorMsg = `Domain "${domain}" not authorized in Firebase. Please add it to Firebase Console → Authentication → Settings → Authorized domains.`;
+          console.error(errorMsg);
+          showToast('Admin sign-in failed: Domain not authorized. Check console for details.');
+          alert(`Firebase Authentication Error:\n\n${errorMsg}\n\nYou need to add "${domain}" to the authorized domains in your Firebase project settings.`);
+        } else {
+          showToast(`Admin sign-in failed: ${err.message || 'Unknown error'}`);
+        }
+      }
     }
 
     // ---------- Firestore read/write ----------
