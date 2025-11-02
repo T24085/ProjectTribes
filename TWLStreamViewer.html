@@ -1569,9 +1569,24 @@
     });
 
     // Admin modal close and toggle (using style.display to match index.html)
-    document.getElementById('close-admin-modal').addEventListener('click', ()=>{
-      els.adminModal.style.display = 'none';
-    });
+    function setupCloseAdminModal(){
+      const closeBtn = document.getElementById('close-admin-modal');
+      if(closeBtn && !closeBtn.hasAttribute('data-close-listener')){
+        closeBtn.setAttribute('data-close-listener', 'true');
+        closeBtn.addEventListener('click', (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+          if(els.adminModal){
+            els.adminModal.style.display = 'none';
+          }
+        });
+      }
+    }
+    // Set up close button immediately and retry if needed
+    setupCloseAdminModal();
+    setTimeout(setupCloseAdminModal, 100);
+    setTimeout(setupCloseAdminModal, 500);
+    
     els.adminModal.addEventListener('click', (e) => { 
       if(e.target.id === 'admin-modal') {
         els.adminModal.style.display = 'none';
