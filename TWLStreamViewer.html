@@ -300,6 +300,28 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
     }
+    
+    /* Team logo styling */
+    .team-logo {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      vertical-align: middle;
+      margin-right: 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .team-logo-lg {
+      width: 40px;
+      height: 40px;
+    }
+    .team-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
     #admin-modal .glass {
       background: linear-gradient(180deg, rgba(0,0,0,0.85), rgba(26,26,26,0.9));
       border: 2px solid rgba(204,51,51,0.3);
@@ -1006,7 +1028,10 @@
             ${ isShoutcaster ? '<span class="shoutcaster-badge">Shoutcaster</span>' : '' }
           </div>
           <div class="handle">@${escapeHtml(handle)}</div>
-          ${ team ? `<div class="muted text-xs mt-2">${escapeHtml(team.teamName)}</div>` : '' }
+          ${ team ? `<div class="team-info muted text-xs mt-2">
+            ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo" onerror="this.style.display='none'" />` : '' }
+            <span>${escapeHtml(team.teamName)}</span>
+          </div>` : '' }
           ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
 
           <div class="card-actions">
@@ -1097,9 +1122,12 @@
       state.teams.forEach(team=>{
         const d = document.createElement('div');
         d.className = 'glass p-3 rounded-md flex items-center justify-between';
-        d.innerHTML = `<div>
-                        <div class="font-semibold">${escapeHtml(team.teamName)}</div>
-                        ${ team.games?.length ? `<div class="muted text-xs">${escapeHtml((team.games||[]).join(', '))}</div>` : '' }
+        d.innerHTML = `<div class="flex items-center gap-3">
+                        ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo-lg" onerror="this.style.display='none'" />` : '<div class="team-logo-lg bg-gray-700 border border-gray-600"></div>' }
+                        <div>
+                          <div class="font-semibold">${escapeHtml(team.teamName)}</div>
+                          ${ team.games?.length ? `<div class="muted text-xs">${escapeHtml((team.games||[]).join(', '))}</div>` : '' }
+                        </div>
                        </div>
                        <div class="flex gap-2">
                          <button class="px-3 py-1 rounded-md" onclick="editTeam('${team.id}')">Edit</button>
@@ -1137,7 +1165,10 @@
                           <div>
                             <div class="font-semibold">${escapeHtml(streamer.displayName)}</div>
                             <div class="muted text-xs">@${escapeHtml(streamer.twitchHandle)}</div>
-                            ${ team ? `<div class="text-xs text-indigo-300 mt-1">${escapeHtml(team.teamName)}</div>` : '' }
+                            ${ team ? `<div class="team-info text-xs text-indigo-300 mt-1">
+                              ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo" onerror="this.style.display='none'" />` : '' }
+                              <span>${escapeHtml(team.teamName)}</span>
+                            </div>` : '' }
                             ${ streamer.defaultGame ? `<div class="text-xs muted mt-1">Default: ${escapeHtml(streamer.defaultGame)}</div>` : '' }
                             ${ liveData ? `<div class="text-xs text-green-300 mt-1">● Live: ${escapeHtml(liveData.game_name)}</div>` : '<div class="text-xs muted mt-1">Offline</div>' }
                           </div>
