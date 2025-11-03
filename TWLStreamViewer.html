@@ -1050,7 +1050,7 @@
         els.teamForm.reset();
       }catch(err){ console.error(err); showToast('Failed to update team'); }
     }
-    async function deleteTeam(teamId){
+    window.deleteTeam = async function(teamId){
       if(!confirm('Are you sure you want to delete this team?')) return;
       try{ await deleteDoc(doc(db, COLLECTIONS.TEAMS, teamId)); showToast('Team deleted'); loadTeams(); } catch(err){ console.error(err); showToast('Failed to delete team'); }
     }
@@ -1099,7 +1099,7 @@
         document.getElementById('streamer-team').value = '';
       }catch(err){ console.error(err); showToast('Failed to update streamer'); }
     }
-    async function deleteStreamer(streamerId){
+    window.deleteStreamer = async function(streamerId){
       if(!confirm('Are you sure you want to remove this streamer?')) return;
       try{ await deleteDoc(doc(db, COLLECTIONS.STREAMERS, streamerId)); showToast('Streamer removed'); loadStreamers(); }catch(err){ console.error(err); showToast('Failed to remove streamer'); }
     }
