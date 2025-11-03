@@ -2688,7 +2688,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -3644,6 +3644,48 @@
         };
 
         await setDoc(doc(db, 'admin', 'shoutcaster'), shoutcasterData);
+        
+        // If it's a manually entered handle (not from dropdown), check if it exists in streamers collection
+        // If not, add it as a shoutcaster entry
+        if (!shoutcasterSelect?.value && shoutcasterHandle?.value) {
+          const streamersRef = collection(db, 'streamers');
+          const streamersSnapshot = await getDocs(streamersRef);
+          
+          // Check if this twitchHandle already exists in streamers
+          let exists = false;
+          streamersSnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            if (data.twitchHandle && data.twitchHandle.toLowerCase() === twitchHandle.toLowerCase()) {
+              exists = true;
+            }
+          });
+          
+          // If it doesn't exist, add it to the streamers collection as a shoutcaster
+          if (!exists) {
+            try {
+              await addDoc(collection(db, 'streamers'), {
+                displayName: twitchHandle, // Use handle as display name if no other name provided
+                twitchHandle: twitchHandle,
+                teamId: '__shoutcaster__',
+                isShoutcaster: true,
+                createdAt: serverTimestamp()
+              });
+              console.log('Added new shoutcaster to streamers collection:', twitchHandle);
+              
+              // Reload the dropdown to include the new shoutcaster
+              loadStreamersForShoutcaster();
+            } catch (addError) {
+              console.error('Error adding shoutcaster to streamers collection:', addError);
+              // Continue anyway - the shoutcaster is still saved to admin/shoutcaster
+            }
+          } else {
+            // If it exists, reload dropdown in case it wasn't showing before
+            loadStreamersForShoutcaster();
+          }
+        } else {
+          // If selected from dropdown, just reload to refresh
+          loadStreamersForShoutcaster();
+        }
         
         currentShoutcaster = twitchHandle;
         currentShoutcasterHandle = twitchHandle; // Update global variable
