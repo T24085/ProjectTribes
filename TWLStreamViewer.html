@@ -921,6 +921,11 @@
         const signInBtn = document.getElementById('admin-signin-btn');
         if(adminBtn) adminBtn.classList.add('hidden');
         if(signInBtn) signInBtn.classList.remove('hidden');
+        // Close admin modal if open
+        if(els.adminModal && (els.adminModal.style.display !== 'none' || !els.adminModal.classList.contains('hidden'))){
+          els.adminModal.classList.add('hidden');
+          els.adminModal.style.display = 'none';
+        }
         return false;
       }
       state.isAdmin = ADMIN_UIDS.includes(user.uid);
@@ -935,6 +940,11 @@
       }
       // If user is signed in but not admin, sign them out
       if(user && !state.isAdmin){
+        // Close admin modal if open
+        if(els.adminModal && (els.adminModal.style.display !== 'none' || !els.adminModal.classList.contains('hidden'))){
+          els.adminModal.classList.add('hidden');
+          els.adminModal.style.display = 'none';
+        }
         signOut(auth).catch(err => console.error('Sign out error:', err));
       }
       // Set up admin button after admin check
@@ -1698,6 +1708,11 @@
     }
 
     window.editTeam = function(teamId){
+      // Security check: Only allow editing if user is admin
+      if(!state.isAdmin){
+        showToast('Access denied - Admin login required');
+        return;
+      }
       const team = state.teams.get(teamId); if(!team) return;
       state.editingTeam = teamId;
       document.getElementById('team-name').value = team.teamName || '';
@@ -1749,6 +1764,11 @@
     }
 
     window.editStreamer = function(streamerId){
+      // Security check: Only allow editing if user is admin
+      if(!state.isAdmin){
+        showToast('Access denied - Admin login required');
+        return;
+      }
       const streamer = state.streamers.get(streamerId); if(!streamer) return;
       state.editingStreamer = streamerId;
       document.getElementById('streamer-name').value = streamer.displayName || '';
@@ -2036,6 +2056,11 @@
         adminBtn.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
+          // Security check: Only allow opening if user is admin
+          if(!state.isAdmin){
+            showToast('Access denied - Admin login required');
+            return;
+          }
           if(els.adminModal){
             els.adminModal.classList.remove('hidden');
             els.adminModal.style.display = 'flex';
@@ -2062,6 +2087,11 @@
         logoutBtn.style.display = 'none';
         logoutBtn.addEventListener('click', async () => {
           try {
+            // Close admin modal before logging out
+            if(els.adminModal && (els.adminModal.style.display !== 'none' || !els.adminModal.classList.contains('hidden'))){
+              els.adminModal.classList.add('hidden');
+              els.adminModal.style.display = 'none';
+            }
             await signOut(auth);
             showToast('Logged out');
           } catch(err) {
