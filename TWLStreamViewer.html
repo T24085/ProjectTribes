@@ -1184,8 +1184,9 @@
       return streamers;
     }
 
-    // Track existing embed IDs to prevent re-creation
+    // Track existing embed IDs and cards to prevent re-creation
     const existingEmbeds = new Map();
+    const existingCards = new Map(); // Map of handle -> card element
 
     function renderStreamGrid(){
       const visible = getVisibleStreamers();
@@ -1193,6 +1194,7 @@
         els.streamGrid.innerHTML = '';
         els.emptyState.classList.remove('hidden');
         existingEmbeds.clear();
+        existingCards.clear();
         return;
       }
       els.emptyState.classList.add('hidden');
@@ -1209,45 +1211,178 @@
         ...players.slice(0, maxPlayers)
       ];
       
-      // Build map of current streamers by handle
+      // Build map of current streamers by normalized handle
       const currentStreamers = new Map();
       limitedVisible.forEach(s => {
-        currentStreamers.set(s.twitchHandle, s);
+        currentStreamers.set(normalizeChannel(s.twitchHandle), s);
       });
       
       // Remove cards for streamers no longer visible
+      const cardsToRemove = [];
       Array.from(els.streamGrid.children).forEach(card => {
-        const embedContainer = card.querySelector('.twitch-embed-container');
-        if(embedContainer && embedContainer.id){
-          const embedId = embedContainer.id;
-          const handle = embedId.split('-').slice(2).join('-'); // Extract handle from embedId if stored
-          // Check if this card should still exist by checking all visible handles
-          const shouldExist = Array.from(currentStreamers.keys()).some(h => 
-            embedId.includes(h.toLowerCase().replace(/\s/g, ''))
-          );
-          if(!shouldExist){
-            card.remove();
-            existingEmbeds.delete(embedId);
+        // Find the handle by checking existingCards map
+        let handle = null;
+        for(const [h, c] of existingCards.entries()){
+          if(c === card){
+            handle = h;
+            break;
           }
+        }
+        
+        // If no handle found, try to extract from embed ID
+        if(!handle){
+          const embedContainer = card.querySelector('.twitch-embed-container');
+          if(embedContainer && embedContainer.id){
+            const embedId = embedContainer.id;
+            // Extract handle from consistent embed ID format
+            const handleMatch = embedId.match(/twitch-embed-(.+)$/);
+            if(handleMatch){
+              handle = handleMatch[1].replace(/-/g, '').toLowerCase();
+            }
+          }
+        }
+        
+        if(handle){
+          const normalizedHandle = normalizeChannel(handle);
+          if(!currentStreamers.has(normalizedHandle)){
+            cardsToRemove.push({card, handle: normalizedHandle, embedId: existingEmbeds.get(normalizedHandle)});
+          }
+        } else {
+          // If we can't identify the handle, and it's not in current streamers, remove it
+          cardsToRemove.push({card, handle: null, embedId: null});
         }
       });
       
-      // Clear grid and rebuild in correct order (shoutcasters first, then players)
-      els.streamGrid.innerHTML = '';
-
-      // Add shoutcasters first
-      shoutcasters.slice(0, maxShoutcasters).forEach(streamer => {
-        els.streamGrid.appendChild(createStreamCard(streamer, true));
+      // Actually remove the cards
+      cardsToRemove.forEach(({card, handle, embedId}) => {
+        card.remove();
+        if(handle) {
+          existingCards.delete(handle);
+          if(embedId) existingEmbeds.delete(embedId);
+          existingEmbeds.delete(handle); // Remove handle mapping too
+        }
       });
       
-      // Add players below shoutcasters
-      players.slice(0, maxPlayers).forEach(streamer => {
-        els.streamGrid.appendChild(createStreamCard(streamer, false));
+      // Update or create cards for visible streamers
+      const orderedStreamers = [
+        ...shoutcasters.slice(0, maxShoutcasters),
+        ...players.slice(0, maxPlayers)
+      ];
+      
+      orderedStreamers.forEach((streamer, index) => {
+        const handle = normalizeChannel(streamer.twitchHandle);
+        const existingCard = existingCards.get(handle);
+        
+        if(existingCard && existingCard.parentNode){
+          // Card exists - just update the content without touching the embed
+          updateStreamCardContent(existingCard, streamer, shoutcasters.slice(0, maxShoutcasters).includes(streamer));
+          // Ensure correct order by moving if needed
+          const currentIndex = Array.from(els.streamGrid.children).indexOf(existingCard);
+          if(currentIndex !== index){
+            els.streamGrid.insertBefore(existingCard, els.streamGrid.children[index] || null);
+          }
+        } else {
+          // Card doesn't exist - create new one
+          const newCard = createStreamCard(streamer, shoutcasters.slice(0, maxShoutcasters).includes(streamer));
+          existingCards.set(handle, newCard);
+          // Insert at correct position
+          const insertBefore = els.streamGrid.children[index] || null;
+          if(insertBefore){
+            els.streamGrid.insertBefore(newCard, insertBefore);
+          } else {
+            els.streamGrid.appendChild(newCard);
+          }
+        }
       });
     }
     
+    function updateStreamCardContent(card, streamer, isShoutcaster){
+      const handle = streamer.twitchHandle;
+      const liveData = state.liveStreams.get(handle);
+      const isLive = !!liveData;
+      const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
+      const team = streamer.teamId && streamer.teamId !== '__shoutcaster__' ? state.teams.get(streamer.teamId) : null;
+      
+      // Update shoutcaster class
+      if(isShoutcaster){
+        card.classList.add('shoutcaster');
+      } else {
+        card.classList.remove('shoutcaster');
+      }
+      
+      // Update live glow
+      if(isLive){
+        card.classList.add('glow');
+      } else {
+        card.classList.remove('glow');
+      }
+      
+      // Update overlay content (live indicator, game name)
+      const overlayLeft = card.querySelector('.stream-media > div[style*="left:12px"]');
+      if(overlayLeft){
+        overlayLeft.innerHTML = isLive 
+          ? `<span class="live-pill"><span style="width:8px;height:8px;background:#ff7a7a;border-radius:50%;display:inline-block;box-shadow:0 0 8px rgba(255,120,120,0.7);margin-right:6px"></span>LIVE • ${liveData.viewer_count.toLocaleString()} </span>`
+          : `<span class="faint px-3 py-1 rounded-full" style="background:rgba(255,255,255,0.02)">${escapeHtml(gameName)}</span>`;
+      }
+      
+      const overlayRight = card.querySelector('.stream-media > div[style*="right:12px"]');
+      if(overlayRight){
+        overlayRight.innerHTML = `<span class="neon-game">${escapeHtml(gameName)}</span>`;
+      }
+      
+      // Update meta section
+      const meta = card.querySelector('.meta');
+      if(meta){
+        const displayNameEl = meta.querySelector('.display-name');
+        if(displayNameEl){
+          displayNameEl.innerHTML = `${escapeHtml(streamer.displayName)}${isShoutcaster ? '<span class="shoutcaster-badge">Shoutcaster</span>' : ''}`;
+        }
+        
+        const handleEl = meta.querySelector('.handle');
+        if(handleEl){
+          handleEl.textContent = `@${escapeHtml(handle)}`;
+        }
+        
+        // Update team info
+        let teamInfo = meta.querySelector('.team-info');
+        if(team && !teamInfo){
+          // Create team info if it doesn't exist
+          teamInfo = document.createElement('div');
+          teamInfo.className = 'team-info muted text-xs mt-2';
+          const handleEl = meta.querySelector('.handle');
+          if(handleEl && handleEl.nextSibling) {
+            meta.insertBefore(teamInfo, handleEl.nextSibling);
+          } else {
+            meta.appendChild(teamInfo);
+          }
+        }
+        if(teamInfo){
+          if(team){
+            teamInfo.innerHTML = `${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo" onerror="this.style.display='none'" />` : '' }<span>${escapeHtml(team.teamName)}</span>`;
+            teamInfo.style.display = '';
+          } else {
+            teamInfo.style.display = 'none';
+          }
+        }
+        
+        // Update title
+        let titleEl = meta.querySelector('.title');
+        if(liveData?.title){
+          if(!titleEl){
+            titleEl = document.createElement('div');
+            titleEl.className = 'title';
+            meta.appendChild(titleEl);
+          }
+          titleEl.textContent = liveData.title;
+          titleEl.style.display = '';
+        } else if(titleEl){
+          titleEl.style.display = 'none';
+        }
+      }
+    }
+    
     function createStreamCard(streamer, isShoutcaster){
-        const handle = streamer.twitchHandle;
+        const handle = normalizeChannel(streamer.twitchHandle);
         const liveData = state.liveStreams.get(handle);
         const isLive = !!liveData;
         const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
@@ -1269,13 +1404,15 @@
         card.classList.add('shoutcaster');
       }
 
-      // Create unique ID for this embed - use handle to prevent re-creation
-      const embedId = `twitch-embed-${handle.replace(/[^a-z0-9]/gi, '-')}-${Math.random().toString(36).substr(2, 6)}`;
+      // Create consistent ID for this embed based on normalized handle
+      const embedId = `twitch-embed-${handle.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`;
       
-      // Prevent re-creating embed if it already exists
-      if(existingEmbeds.has(embedId)){
-        const existingCard = document.getElementById(embedId)?.closest('.stream-card');
-        if(existingCard) return existingCard;
+      // Check if we already have a card for this streamer (should not happen since we check before calling this)
+      if(existingCards.has(handle)){
+        const existingCard = existingCards.get(handle);
+        if(existingCard && existingCard.parentNode){
+          return existingCard;
+        }
       }
 
         card.innerHTML = `
@@ -1298,7 +1435,7 @@
               ${escapeHtml(streamer.displayName)}
               ${ isShoutcaster ? '<span class="shoutcaster-badge">Shoutcaster</span>' : '' }
             </div>
-            <div class="handle">@${escapeHtml(handle)}</div>
+            <div class="handle">@${escapeHtml(streamer.twitchHandle)}</div>
             ${ team ? `<div class="team-info muted text-xs mt-2">
               ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo" onerror="this.style.display='none'" />` : '' }
               <span>${escapeHtml(team.teamName)}</span>
@@ -1322,16 +1459,18 @@
               new window.Twitch.Embed(embedId, {
                 width: width,
                 height: height,
-                channel: handle,
+                channel: streamer.twitchHandle, // Use original handle for Twitch API
                 parent: parentDomains,
                 autoplay: false
               });
               existingEmbeds.set(embedId, true);
+              existingEmbeds.set(handle, embedId); // Also track by handle for easy lookup
             } catch(err) {
               console.error('Failed to create Twitch embed:', err);
               // Fallback to iframe if Embed API fails
               container.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${encodeURIComponent(handle)}&${parentQuery}&autoplay=false" class="w-full h-full" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
               existingEmbeds.set(embedId, true);
+              existingEmbeds.set(handle, embedId);
             }
           }
         }, 100);
