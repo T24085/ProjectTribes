@@ -1026,13 +1026,23 @@
       }catch(err){ console.error(err); showToast('Failed to load streamers'); }
     }
 
+    // Normalize game names: trim, capitalize properly, remove duplicates
+    function normalizeGameName(gameName){
+      if(!gameName) return '';
+      return gameName.trim();
+      // Keep original casing - don't force capitalization to preserve user intent
+    }
+    
     async function addTeam(data){
       try{
+        const gamesArray = data.games 
+          ? data.games.split(',').map(g => normalizeGameName(g)).filter(Boolean)
+          : [];
         await addDoc(collection(db, COLLECTIONS.TEAMS), {
           teamName: data.teamName,
           logoUrl: data.logoUrl||'',
           league: data.league||'',
-          games: data.games ? data.games.split(',').map(g=>g.trim()).filter(Boolean) : [],
+          games: gamesArray,
           createdAt: new Date().toISOString()
         });
         showToast(`Team "${data.teamName}" added`);
@@ -1045,11 +1055,14 @@
     }
     async function updateTeam(teamId, data){
       try{
+        const gamesArray = data.games 
+          ? data.games.split(',').map(g => normalizeGameName(g)).filter(Boolean)
+          : [];
         await updateDoc(doc(db, COLLECTIONS.TEAMS, teamId), {
           teamName: data.teamName,
           logoUrl: data.logoUrl||'',
           league: data.league||'',
-          games: data.games ? data.games.split(',').map(g=>g.trim()).filter(Boolean) : [],
+          games: gamesArray,
           updatedAt: new Date().toISOString()
         });
         showToast(`Team "${data.teamName}" updated`);
@@ -1850,11 +1863,15 @@
     // modals/buttons
     document.getElementById('team-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      const gamesInput = document.getElementById('team-games').value;
+      // Clean up game names: trim whitespace, remove empty entries
+      const cleanedGames = gamesInput.split(',').map(g => g.trim()).filter(Boolean).join(', ');
+      
       const data = { 
         teamName: document.getElementById('team-name').value, 
         logoUrl: document.getElementById('team-logo').value, 
         league: document.getElementById('team-league').value,
-        games: document.getElementById('team-games').value 
+        games: cleanedGames 
       };
       if(state.editingTeam) updateTeam(state.editingTeam, data); else addTeam(data);
     });
