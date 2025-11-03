@@ -1557,6 +1557,7 @@
                         ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo-lg" onerror="this.style.display='none'" />` : '<div class="team-logo-lg bg-gray-700 border border-gray-600"></div>' }
                         <div>
                         <div class="font-semibold">${escapeHtml(team.teamName)}</div>
+                        ${ team.league ? `<div class="text-xs" style="color: var(--twl-light-blue);">${escapeHtml(team.league)}</div>` : '' }
                         ${ team.games?.length ? `<div class="muted text-xs">${escapeHtml((team.games||[]).join(', '))}</div>` : '' }
                         </div>
                        </div>
