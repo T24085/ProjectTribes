@@ -610,10 +610,6 @@
         <div id="stream-grid">
           <!-- stream cards inserted here -->
         </div>
-
-        <div id="empty-state" class="glass text-center py-10 hidden mt-6">
-          <div class="text-slate-400">No streams to display. Add streamers or adjust filters.</div>
-        </div>
       </section>
 
       <!-- Right: Chat Panel - REMOVED per user request -->
@@ -872,7 +868,6 @@
     // ---------- DOM refs (updated) ----------
     const els = {
       streamGrid: document.getElementById('stream-grid'),
-      emptyState: document.getElementById('empty-state'),
       gameFilter: document.getElementById('game-filter'),
       teamFilter: document.getElementById('team-filter'),
       liveOnlyToggle: document.getElementById('live-only-toggle'),
@@ -1192,12 +1187,10 @@
       const visible = getVisibleStreamers();
       if(visible.length === 0){
         els.streamGrid.innerHTML = '';
-        els.emptyState.classList.remove('hidden');
         existingEmbeds.clear();
         existingCards.clear();
         return;
       }
-      els.emptyState.classList.add('hidden');
       
       // Separate shoutcasters and players
       const shoutcasters = visible.filter(s => s.isShoutcaster || s.teamId === '__shoutcaster__');
