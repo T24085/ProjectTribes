@@ -7,7 +7,7 @@
 
   <!-- Tailwind (remains same CDN for convenience) -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.10/dist/tailwind.min.css" rel="stylesheet">
-  
+
   <!-- OAuth script - must load before page scripts -->
   <script src="oauth.js"></script>
 
@@ -81,7 +81,7 @@
     }
     @media (max-width: 640px) {
       .container {
-        padding: 0 1rem;
+      padding: 0 1rem;
       }
     }
     .glass {
@@ -665,15 +665,20 @@
           </div>
           <div id="teams-section-content">
             <form id="team-form" class="space-y-4 mb-6">
-              <input type="hidden" id="team-id" />
-              <div>
-                <label class="text-sm muted">Team Name</label>
-                <input id="team-name" class="w-full px-3 py-2 rounded-md input" required />
-              </div>
-              <div>
-                <label class="text-sm muted">Team Logo URL</label>
-                <input id="team-logo" class="w-full px-3 py-2 rounded-md input" placeholder="https://..." />
-              </div>
+          <input type="hidden" id="team-id" />
+          <div>
+            <label class="text-sm muted">Team Name</label>
+            <input id="team-name" class="w-full px-3 py-2 rounded-md input" required />
+          </div>
+          <div>
+            <label class="text-sm muted">Team Logo URL</label>
+            <input id="team-logo" class="w-full px-3 py-2 rounded-md input" placeholder="https://..." />
+          </div>
+          <div>
+                <label class="text-sm muted">League</label>
+                <input id="team-league" class="w-full px-3 py-2 rounded-md input" placeholder="e.g., Battlefield 6 2v2 Tanks" />
+                <div class="text-xs muted mt-1">League/ladder this team participates in</div>
+          </div>
               <div>
                 <label class="text-sm muted">Games (comma-separated or select)</label>
                 <div class="game-input-wrapper">
@@ -684,59 +689,59 @@
                 </div>
                 <div class="text-xs muted mt-1">Tip: Type to filter or select from preloaded games</div>
               </div>
-              <div class="flex gap-3">
+          <div class="flex gap-3">
                 <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Save</button>
                 <button type="button" id="cancel-team-edit" class="px-4 py-2 rounded-md btn-pill text-sm hidden" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:#ffffff">Cancel</button>
-              </div>
-            </form>
-            <div id="teams-list" class="space-y-3">
-              <!-- teams listed here -->
-            </div>
           </div>
-        </div>
+        </form>
+            <div id="teams-list" class="space-y-3">
+          <!-- teams listed here -->
+      </div>
+    </div>
+  </div>
 
         <!-- Add Streamer Section -->
         <div class="admin-section">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h3>Add Streamer</h3>
             <button id="toggle-streamers-section" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 1.2rem;">×</button>
-          </div>
+      </div>
           <div id="streamers-section-content">
             <form id="streamer-form" class="space-y-4 mb-6">
-              <input type="hidden" id="streamer-id" />
-              <div>
-                <label class="text-sm muted">Display Name</label>
-                <input id="streamer-name" class="w-full px-3 py-2 rounded-md input" required />
-              </div>
-              <div>
-                <label class="text-sm muted">Twitch Handle</label>
-                <input id="streamer-twitch" class="w-full px-3 py-2 rounded-md input" placeholder="username" required />
-                <div class="text-xs muted mt-1">Update this to fix stream detection</div>
-              </div>
-              <div>
+          <input type="hidden" id="streamer-id" />
+          <div>
+            <label class="text-sm muted">Display Name</label>
+            <input id="streamer-name" class="w-full px-3 py-2 rounded-md input" required />
+          </div>
+          <div>
+            <label class="text-sm muted">Twitch Handle</label>
+            <input id="streamer-twitch" class="w-full px-3 py-2 rounded-md input" placeholder="username" required />
+            <div class="text-xs muted mt-1">Update this to fix stream detection</div>
+          </div>
+          <div>
                 <label class="text-sm muted">Team <span class="text-xs text-red-400">*</span></label>
                 <select id="streamer-team" class="w-full px-3 py-2 rounded-md select" required>
                   <option value="">Select Team or Shoutcaster</option>
                   <option value="__shoutcaster__">Shoutcaster (No Team)</option>
-                </select>
+            </select>
                 <div class="text-xs muted mt-1">Streamers must be associated with a team unless they are shoutcasters</div>
-              </div>
-              <div>
-                <label class="text-sm muted">Default Game (optional)</label>
+          </div>
+          <div>
+            <label class="text-sm muted">Default Game (optional)</label>
                 <div class="game-input-wrapper">
                   <input id="streamer-game" class="w-full px-3 py-2 rounded-md input" placeholder="Type or select game..." list="streamer-game-datalist" autocomplete="off" />
                   <datalist id="streamer-game-datalist">
                   </datalist>
                   <div id="streamer-game-suggestions" class="game-suggestions hidden"></div>
-                </div>
+          </div>
               </div>
-              <div class="flex gap-3">
+          <div class="flex gap-3">
                 <button type="submit" class="px-4 py-2 rounded-md btn-pill" style="background:linear-gradient(90deg,var(--twl-red-accent),#ff4444); color:#ffffff">Save</button>
                 <button type="button" id="cancel-streamer-edit" class="px-4 py-2 rounded-md btn-pill text-sm hidden" style="background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.2); color:#ffffff">Cancel</button>
-              </div>
-            </form>
+          </div>
+        </form>
             <div id="streamers-list" class="space-y-3">
-              <!-- streamers listed here -->
+          <!-- streamers listed here -->
             </div>
           </div>
         </div>
@@ -963,7 +968,7 @@
         const result = await signInWithEmailAndPassword(auth, email, password);
         checkAdmin(result.user);
         if(state.isAdmin){
-          showToast('Signed in as admin');
+        showToast('Signed in as admin');
           els.adminLoginModal.classList.add('hidden');
           els.adminLoginForm.reset();
           errorEl.classList.add('hidden');
@@ -1025,6 +1030,7 @@
         await addDoc(collection(db, COLLECTIONS.TEAMS), {
           teamName: data.teamName,
           logoUrl: data.logoUrl||'',
+          league: data.league||'',
           games: data.games ? data.games.split(',').map(g=>g.trim()).filter(Boolean) : [],
           createdAt: new Date().toISOString()
         });
@@ -1041,6 +1047,7 @@
         await updateDoc(doc(db, COLLECTIONS.TEAMS, teamId), {
           teamName: data.teamName,
           logoUrl: data.logoUrl||'',
+          league: data.league||'',
           games: data.games ? data.games.split(',').map(g=>g.trim()).filter(Boolean) : [],
           updatedAt: new Date().toISOString()
         });
@@ -1179,7 +1186,7 @@
 
     // Track existing embed IDs to prevent re-creation
     const existingEmbeds = new Map();
-    
+
     function renderStreamGrid(){
       const visible = getVisibleStreamers();
       if(visible.length === 0){
@@ -1227,7 +1234,7 @@
       
       // Clear grid and rebuild in correct order (shoutcasters first, then players)
       els.streamGrid.innerHTML = '';
-      
+
       // Add shoutcasters first
       shoutcasters.slice(0, maxShoutcasters).forEach(streamer => {
         els.streamGrid.appendChild(createStreamCard(streamer, true));
@@ -1240,10 +1247,10 @@
     }
     
     function createStreamCard(streamer, isShoutcaster){
-      const handle = streamer.twitchHandle;
-      const liveData = state.liveStreams.get(handle);
-      const isLive = !!liveData;
-      const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
+        const handle = streamer.twitchHandle;
+        const liveData = state.liveStreams.get(handle);
+        const isLive = !!liveData;
+        const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
       const team = streamer.teamId && streamer.teamId !== '__shoutcaster__' ? state.teams.get(streamer.teamId) : null;
       
       // Get parent domains for Twitch Embed
@@ -1256,8 +1263,8 @@
         "127.0.0.1"
       ].filter(Boolean);
 
-      const card = document.createElement('div');
-      card.className = 'stream-card';
+        const card = document.createElement('div');
+        card.className = 'stream-card';
       if(isShoutcaster) {
         card.classList.add('shoutcaster');
       }
@@ -1270,8 +1277,8 @@
         const existingCard = document.getElementById(embedId)?.closest('.stream-card');
         if(existingCard) return existingCard;
       }
-      
-      card.innerHTML = `
+
+        card.innerHTML = `
         <div class="stream-media-wrapper">
           <div class="stream-media">
             <div id="${embedId}" class="twitch-embed-container"></div>
@@ -1297,10 +1304,10 @@
               <span>${escapeHtml(team.teamName)}</span>
             </div>` : '' }
             ${ liveData?.title ? `<div class="title">${escapeHtml(liveData.title)}</div>` : '' }
+            </div>
           </div>
-        </div>
-      `;
-      
+        `;
+
 
       // Initialize Twitch Embed after card is added to DOM - only if not already created
       if(!existingEmbeds.has(embedId)){
@@ -1397,7 +1404,11 @@
       if(!els.streamerTeam) return;
       els.streamerTeam.innerHTML = '<option value="">Select Team or Shoutcaster</option><option value="__shoutcaster__">Shoutcaster (No Team)</option>';
       state.teams.forEach(team=>{
-        const o = document.createElement('option'); o.value = team.id; o.textContent = team.teamName;
+        const o = document.createElement('option'); 
+        o.value = team.id;
+        // Display team name with league if available: "Team Name - League"
+        const displayText = team.league ? `${team.teamName} - ${team.league}` : team.teamName;
+        o.textContent = displayText;
         els.streamerTeam.appendChild(o);
       });
     }
@@ -1414,8 +1425,8 @@
         d.innerHTML = `<div class="flex items-center gap-3">
                         ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" class="team-logo-lg" onerror="this.style.display='none'" />` : '<div class="team-logo-lg bg-gray-700 border border-gray-600"></div>' }
                         <div>
-                          <div class="font-semibold">${escapeHtml(team.teamName)}</div>
-                          ${ team.games?.length ? `<div class="muted text-xs">${escapeHtml((team.games||[]).join(', '))}</div>` : '' }
+                        <div class="font-semibold">${escapeHtml(team.teamName)}</div>
+                        ${ team.games?.length ? `<div class="muted text-xs">${escapeHtml((team.games||[]).join(', '))}</div>` : '' }
                         </div>
                        </div>
                        <div class="flex gap-2">
@@ -1431,6 +1442,7 @@
       state.editingTeam = teamId;
       document.getElementById('team-name').value = team.teamName || '';
       document.getElementById('team-logo').value = team.logoUrl || '';
+      document.getElementById('team-league').value = team.league || '';
       document.getElementById('team-games').value = (team.games||[]).join(', ');
       document.querySelector('#team-form button[type="submit"]').textContent = 'Update Team';
       document.getElementById('cancel-team-edit').classList.remove('hidden');
@@ -1536,7 +1548,7 @@
             const modal = document.getElementById('chat-popup-modal');
             if(modal && modal.classList.contains('hidden')){
               // Reopen with last channel
-              const visible = getVisibleStreamers();
+      const visible = getVisibleStreamers();
               const streamer = visible.find(s => normalizeChannel(s.twitchHandle) === state.currentChatChannel);
               if(streamer){
                 openChatPopup(streamer.twitchHandle, streamer.displayName);
@@ -1591,7 +1603,12 @@
     // modals/buttons
     document.getElementById('team-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const data = { teamName: document.getElementById('team-name').value, logoUrl: document.getElementById('team-logo').value, games: document.getElementById('team-games').value };
+      const data = { 
+        teamName: document.getElementById('team-name').value, 
+        logoUrl: document.getElementById('team-logo').value, 
+        league: document.getElementById('team-league').value,
+        games: document.getElementById('team-games').value 
+      };
       if(state.editingTeam) updateTeam(state.editingTeam, data); else addTeam(data);
     });
     document.getElementById('streamer-form').addEventListener('submit', (e) => {
@@ -1615,6 +1632,7 @@
       state.editingTeam = null;
       document.getElementById('team-name').value = '';
       document.getElementById('team-logo').value = '';
+      document.getElementById('team-league').value = '';
       document.getElementById('team-games').value = '';
       document.querySelector('#team-form button[type="submit"]').textContent = 'Save';
       document.getElementById('cancel-team-edit').classList.add('hidden');
@@ -1827,7 +1845,7 @@
       
       if(twitchLoginBtn){
         twitchLoginBtn.addEventListener('click', ()=> {
-          if(window.twitchOAuth.getToken()){
+      if(window.twitchOAuth.getToken()){
             // Logout
             window.twitchOAuth.logout();
             if(twitchUser) twitchUser.style.display = 'none';
@@ -1846,7 +1864,7 @@
         const token = window.twitchOAuth.getToken();
         if(token){
           twitchLoginBtn.textContent = 'Sign Out';
-          window.twitchOAuth.fetchUser().then(user=>{
+        window.twitchOAuth.fetchUser().then(user=>{
             if(user && twitchUser){
               twitchUser.textContent = `Signed in as ${user.display_name || user.login}`;
               twitchUser.style.display = 'inline';
