@@ -43,6 +43,15 @@
     gap: 1rem;
   }
 
+  .header-brand a {
+    display: inline-block;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .header-brand a:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+  }
   .header-brand img {
     height: 46px;
     width: auto;
@@ -50,6 +59,11 @@
     background: rgba(26,26,26,0.8);
     padding: 0.35rem 0.5rem;
     border: 1px solid rgba(204,51,51,0.3);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .header-brand a:hover img {
+    border-color: rgba(204,51,51,0.6);
+    box-shadow: 0 4px 12px rgba(204,51,51,0.3);
   }
 
   .brand-title {
@@ -146,14 +160,15 @@
 <nav id="twl-header">
   <div class="header-container">
     <div class="header-brand">
-      <img src="https://github.com/T24085/ProjectTribes/blob/main/TWL-TPL3.png?raw=true" alt="TWL Logo" onerror="this.style.display='none'">
+      <a href="https://teamwarfare.net/" target="_blank" style="display: inline-block; text-decoration: none;">
+        <img src="https://github.com/T24085/ProjectTribes/blob/main/TWL-TPL3.png?raw=true" alt="TWL Logo" onerror="this.style.display='none'">
+      </a>
       <div>
         <h1 class="brand-title">TWL Stream Viewer</h1>
         <p class="brand-subtitle">Multi-Game Hub</p>
       </div>
     </div>
     <div class="auth-buttons">
-      <a href="https://teamwarfare.net/" target="_blank" class="btn btn-secondary">TWL Website</a>
       <span id="twitch-user"></span>
       <button id="chat-popup-btn" class="btn btn-secondary" style="display: none;">💬 Chat</button>
       <button id="twitch-login-btn" class="btn btn-primary">Sign in with Twitch</button>
