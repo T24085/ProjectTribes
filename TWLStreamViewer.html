@@ -860,7 +860,7 @@
       teams: new Map(),
       streamers: new Map(),
       liveStreams: new Map(),
-      filters: { game:'', team:'', liveOnly:false },
+      filters: { game:'', team:'', selectedTeams: new Set(), liveOnly:false },
       currentChatChannel:'',
       isAdmin:false,
       editingTeam:null,
@@ -999,6 +999,7 @@
         updateTeamFilter();
         updateStreamerFormTeams();
         renderTeamsList();
+        updateTeamDropdown();
       }catch(err){ console.error(err); showToast('Failed to load teams'); }
     }
     async function loadStreamers(){
@@ -1155,7 +1156,25 @@
     // ---------- Rendering ----------
     function getVisibleStreamers(){
       let streamers = Array.from(state.streamers.values());
-      if(state.filters.team) streamers = streamers.filter(s=>s.teamId === state.filters.team);
+      
+      // Always show shoutcasters, then filter players by selected teams
+      const shoutcasters = streamers.filter(s => s.isShoutcaster || s.teamId === '__shoutcaster__');
+      let players = streamers.filter(s => !(s.isShoutcaster || s.teamId === '__shoutcaster__'));
+      
+      // Filter players by selected teams (if any teams are selected)
+      if(state.filters.selectedTeams.size > 0){
+        players = players.filter(s => s.teamId && state.filters.selectedTeams.has(s.teamId));
+      }
+      
+      // Legacy single team filter support (if used)
+      if(state.filters.team && !state.filters.selectedTeams.size) {
+        players = players.filter(s=>s.teamId === state.filters.team);
+      }
+      
+      // Combine shoutcasters (always visible) with filtered players
+      streamers = [...shoutcasters, ...players];
+      
+      // Game filter
       if(state.filters.game) {
         streamers = streamers.filter(s=>{
           const live = state.liveStreams.get(s.twitchHandle);
@@ -1164,6 +1183,8 @@
           return false;
         });
       }
+      
+      // Live only filter
       if(state.filters.liveOnly) streamers = streamers.filter(s => state.liveStreams.has(s.twitchHandle));
 
       // Sort: shoutcasters first, then live, then alphabetical
@@ -1482,6 +1503,88 @@
         els.teamFilter.appendChild(opt);
       });
     }
+    
+    function updateTeamDropdown(){
+      const listEl = document.getElementById('team-checkbox-list');
+      if(!listEl) return;
+      listEl.innerHTML = '';
+      
+      // Sort teams alphabetically
+      const sortedTeams = Array.from(state.teams.values()).sort((a,b) => {
+        const nameA = a.teamName || '';
+        const nameB = b.teamName || '';
+        return nameA.localeCompare(nameB);
+      });
+      
+      sortedTeams.forEach(team => {
+        const item = document.createElement('label');
+        item.className = 'team-checkbox-item';
+        const checkboxId = `team-checkbox-${team.id}`;
+        const isChecked = state.filters.selectedTeams.has(team.id);
+        
+        item.innerHTML = `
+          <input type="checkbox" id="${checkboxId}" data-team-id="${team.id}" ${isChecked ? 'checked' : ''}>
+          ${ team.logoUrl ? `<img src="${escapeHtml(team.logoUrl)}" alt="${escapeHtml(team.teamName)} logo" onerror="this.style.display='none'">` : '<div style="width:32px;height:32px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:0.375rem;"></div>' }
+          <div style="flex:1;">
+            <div class="team-name">${escapeHtml(team.teamName)}</div>
+            ${ team.league ? `<div class="team-league">${escapeHtml(team.league)}</div>` : '' }
+          </div>
+        `;
+        
+        // Add click handler to toggle checkbox
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', () => {
+          if(checkbox.checked){
+            state.filters.selectedTeams.add(team.id);
+          } else {
+            state.filters.selectedTeams.delete(team.id);
+          }
+        });
+        
+        // Click anywhere on item to toggle
+        item.addEventListener('click', (e) => {
+          if(e.target.tagName !== 'INPUT'){
+            checkbox.checked = !checkbox.checked;
+            checkbox.dispatchEvent(new Event('change'));
+          }
+        });
+        
+        listEl.appendChild(item);
+      });
+    }
+    
+    // Hamburger menu functions
+    window.openTeamDropdown = function(){
+      const dropdown = document.getElementById('team-dropdown');
+      if(dropdown){
+        dropdown.classList.add('show');
+      }
+    };
+    
+    window.closeTeamDropdown = function(){
+      const dropdown = document.getElementById('team-dropdown');
+      if(dropdown){
+        dropdown.classList.remove('show');
+      }
+    };
+    
+    window.selectAllTeams = function(){
+      state.teams.forEach(team => {
+        state.filters.selectedTeams.add(team.id);
+      });
+      updateTeamDropdown();
+    };
+    
+    window.deselectAllTeams = function(){
+      state.filters.selectedTeams.clear();
+      updateTeamDropdown();
+    };
+    
+    window.applyTeamFilter = function(){
+      closeTeamDropdown();
+      renderStreamGrid();
+      showToast(state.filters.selectedTeams.size > 0 ? `${state.filters.selectedTeams.size} team(s) selected` : 'Showing all teams');
+    };
 
     function updateGameFilter(){
       const games = new Set();
@@ -2059,11 +2162,35 @@
       renderStreamersList();
       updateGameDatalists();
       updateGameFilter(); // Initialize game filter with preloaded games
+      
+      // Set up hamburger menu
+      setupHamburgerMenu();
 
       setInterval(fetchLiveStreams, 60000);
 
       onSnapshot(collection(db, COLLECTIONS.TEAMS), ()=>{ loadTeams(); if(els.adminModal && els.adminModal.style.display !== 'none') renderTeamsList(); });
       onSnapshot(collection(db, COLLECTIONS.STREAMERS), ()=>{ loadStreamers(); if(els.adminModal && els.adminModal.style.display !== 'none') renderStreamersList(); });
+    }
+
+    function setupHamburgerMenu(){
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      const teamDropdown = document.getElementById('team-dropdown');
+      
+      if(hamburgerBtn){
+        hamburgerBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if(teamDropdown){
+            teamDropdown.classList.toggle('show');
+          }
+        });
+      }
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if(teamDropdown && !teamDropdown.contains(e.target) && hamburgerBtn && !hamburgerBtn.contains(e.target)){
+          teamDropdown.classList.remove('show');
+        }
+      });
     }
 
     init();
