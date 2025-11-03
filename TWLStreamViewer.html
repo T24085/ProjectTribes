@@ -125,7 +125,7 @@
     }
     label.small { font-size: 0.72rem; color: var(--muted); letter-spacing:0.08em; text-transform:uppercase }
 
-    /* Stream grid - 2x2 max layout */
+    /* Stream grid - 2 column layout with unlimited rows */
     #stream-grid {
       display:grid;
       grid-template-columns: repeat(2, 1fr);
@@ -1196,17 +1196,15 @@
       const shoutcasters = visible.filter(s => s.isShoutcaster || s.teamId === '__shoutcaster__');
       const players = visible.filter(s => !(s.isShoutcaster || s.teamId === '__shoutcaster__'));
       
-      // Limit to max 4 total (prioritize shoutcasters, then players)
-      const maxShoutcasters = Math.min(shoutcasters.length, 4);
-      const maxPlayers = Math.min(players.length, 4 - maxShoutcasters);
-      const limitedVisible = [
-        ...shoutcasters.slice(0, maxShoutcasters),
-        ...players.slice(0, maxPlayers)
+      // Combine all visible streamers (shoutcasters first, then players) for 2xN grid
+      const allVisible = [
+        ...shoutcasters,
+        ...players
       ];
       
       // Build map of current streamers by normalized handle
       const currentStreamers = new Map();
-      limitedVisible.forEach(s => {
+      allVisible.forEach(s => {
         currentStreamers.set(normalizeChannel(s.twitchHandle), s);
       });
       
@@ -1256,19 +1254,20 @@
         }
       });
       
-      // Update or create cards for visible streamers
+      // Update or create cards for visible streamers (shoutcasters first, then players)
       const orderedStreamers = [
-        ...shoutcasters.slice(0, maxShoutcasters),
-        ...players.slice(0, maxPlayers)
+        ...shoutcasters,
+        ...players
       ];
       
       orderedStreamers.forEach((streamer, index) => {
         const handle = normalizeChannel(streamer.twitchHandle);
         const existingCard = existingCards.get(handle);
+        const isShoutcaster = shoutcasters.includes(streamer);
         
         if(existingCard && existingCard.parentNode){
           // Card exists - just update the content without touching the embed
-          updateStreamCardContent(existingCard, streamer, shoutcasters.slice(0, maxShoutcasters).includes(streamer));
+          updateStreamCardContent(existingCard, streamer, isShoutcaster);
           // Ensure correct order by moving if needed
           const currentIndex = Array.from(els.streamGrid.children).indexOf(existingCard);
           if(currentIndex !== index){
@@ -1276,7 +1275,7 @@
           }
         } else {
           // Card doesn't exist - create new one
-          const newCard = createStreamCard(streamer, shoutcasters.slice(0, maxShoutcasters).includes(streamer));
+          const newCard = createStreamCard(streamer, isShoutcaster);
           existingCards.set(handle, newCard);
           // Insert at correct position
           const insertBefore = els.streamGrid.children[index] || null;
