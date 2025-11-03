@@ -1297,7 +1297,7 @@
     }
     
     function updateStreamCardContent(card, streamer, isShoutcaster){
-      const handle = streamer.twitchHandle;
+      const handle = normalizeChannel(streamer.twitchHandle);
       const liveData = state.liveStreams.get(handle);
       const isLive = !!liveData;
       const gameName = liveData?.game_name || streamer.defaultGame || 'Offline';
@@ -1340,7 +1340,7 @@
         
         const handleEl = meta.querySelector('.handle');
         if(handleEl){
-          handleEl.textContent = `@${escapeHtml(handle)}`;
+          handleEl.textContent = `@${escapeHtml(streamer.twitchHandle)}`;
         }
         
         // Update team info
