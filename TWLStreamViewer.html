@@ -1287,31 +1287,34 @@
       const counterRef = doc(db, 'site_stats', 'visitor_count');
       const counterValueEl = document.getElementById('counter-value');
       
+      if (!counterValueEl) {
+        console.warn('Counter value element not found');
+        return;
+      }
+      
       try {
         const counterDoc = await getDoc(counterRef);
         if (counterDoc.exists()) {
           const count = counterDoc.data().count || 0;
-          if (counterValueEl) {
-            const oldValue = counterValueEl.textContent;
-            counterValueEl.textContent = count.toLocaleString();
-            
-            // Add animation if count changed
-            if (oldValue !== count.toLocaleString()) {
-              counterValueEl.classList.add('updated');
-              setTimeout(() => {
-                counterValueEl.classList.remove('updated');
-              }, 500);
-            }
+          const oldValue = counterValueEl.textContent;
+          counterValueEl.textContent = count.toLocaleString();
+          
+          // Add animation if count changed
+          if (oldValue !== count.toLocaleString() && oldValue !== '0' && oldValue !== '') {
+            counterValueEl.classList.add('updated');
+            setTimeout(() => {
+              counterValueEl.classList.remove('updated');
+            }, 500);
           }
         } else {
-          if (counterValueEl) {
-            counterValueEl.textContent = '0';
-          }
+          // Document doesn't exist yet - show 0
+          counterValueEl.textContent = '0';
         }
       } catch (error) {
         console.error('Error displaying visitor count:', error);
+        // Show 0 instead of ? for better UX, but log the error
         if (counterValueEl) {
-          counterValueEl.textContent = '?';
+          counterValueEl.textContent = '0';
         }
       }
     }
@@ -1321,24 +1324,34 @@
       const counterRef = doc(db, 'site_stats', 'visitor_count');
       const counterValueEl = document.getElementById('counter-value');
       
+      if (!counterValueEl) {
+        console.warn('Counter value element not found for listener');
+        return;
+      }
+      
       onSnapshot(counterRef, (doc) => {
         if (doc.exists()) {
           const count = doc.data().count || 0;
-          if (counterValueEl) {
-            const oldValue = counterValueEl.textContent;
-            counterValueEl.textContent = count.toLocaleString();
-            
-            // Add animation if count changed
-            if (oldValue !== count.toLocaleString() && oldValue !== '0' && oldValue !== '') {
-              counterValueEl.classList.add('updated');
-              setTimeout(() => {
-                counterValueEl.classList.remove('updated');
-              }, 500);
-            }
+          const oldValue = counterValueEl.textContent;
+          counterValueEl.textContent = count.toLocaleString();
+          
+          // Add animation if count changed
+          if (oldValue !== count.toLocaleString() && oldValue !== '0' && oldValue !== '') {
+            counterValueEl.classList.add('updated');
+            setTimeout(() => {
+              counterValueEl.classList.remove('updated');
+            }, 500);
           }
+        } else {
+          // Document doesn't exist yet
+          counterValueEl.textContent = '0';
         }
       }, (error) => {
         console.error('Error listening to visitor count:', error);
+        // Show 0 instead of ? if there's an error
+        if (counterValueEl) {
+          counterValueEl.textContent = '0';
+        }
       });
     }
 
