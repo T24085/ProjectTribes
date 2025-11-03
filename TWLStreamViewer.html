@@ -1082,6 +1082,11 @@
       }catch(err){ console.error(err); showToast('Failed to update team'); }
     }
     window.deleteTeam = async function(teamId){
+      // Security check: Only allow deleting if user is admin
+      if(!state.isAdmin){
+        showToast('Access denied - Admin login required');
+        return;
+      }
       if(!confirm('Are you sure you want to delete this team?')) return;
       try{ await deleteDoc(doc(db, COLLECTIONS.TEAMS, teamId)); showToast('Team deleted'); loadTeams(); } catch(err){ console.error(err); showToast('Failed to delete team'); }
     }
@@ -1131,6 +1136,11 @@
       }catch(err){ console.error(err); showToast('Failed to update streamer'); }
     }
     window.deleteStreamer = async function(streamerId){
+      // Security check: Only allow deleting if user is admin
+      if(!state.isAdmin){
+        showToast('Access denied - Admin login required');
+        return;
+      }
       if(!confirm('Are you sure you want to remove this streamer?')) return;
       try{ await deleteDoc(doc(db, COLLECTIONS.STREAMERS, streamerId)); showToast('Streamer removed'); loadStreamers(); }catch(err){ console.error(err); showToast('Failed to remove streamer'); }
     }
@@ -1883,6 +1893,11 @@
     // modals/buttons
     document.getElementById('team-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      // Security check: Only allow form submission if user is admin
+      if(!state.isAdmin){
+        showToast('Access denied - Admin login required');
+        return;
+      }
       const gamesInput = document.getElementById('team-games').value;
       // Clean up game names: trim whitespace, remove empty entries
       const cleanedGames = gamesInput.split(',').map(g => g.trim()).filter(Boolean).join(', ');
@@ -1897,6 +1912,11 @@
     });
     document.getElementById('streamer-form').addEventListener('submit', (e) => {
       e.preventDefault();
+      // Security check: Only allow form submission if user is admin
+      if(!state.isAdmin){
+        showToast('Access denied - Admin login required');
+        return;
+      }
       const teamSelect = document.getElementById('streamer-team');
       if(!teamSelect.value || teamSelect.value === ''){
         showToast('Please select a team or mark as shoutcaster');
