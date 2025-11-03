@@ -6840,10 +6840,15 @@
     let peakViewersToday = 0;
     let totalViewTime = 0; // in minutes
     let sessionStartTime = Date.now();
+    let cumulativeViewerTotal = 0; // Running total of all viewers over time
+    let lastViewerUpdate = null; // Timestamp of last update to calculate increment
 
     // Initialize viewer tracking
-    function initializeViewerTracking() {
+    async function initializeViewerTracking() {
       console.log('Initializing viewer tracking...');
+      
+      // Load cumulative total from Firestore
+      await loadCumulativeViewerTotal();
       
       // Check for tracking prevention issues
       checkTrackingPrevention();
@@ -6860,6 +6865,63 @@
         updateViewerCounts();
       }, 1000);
     }
+
+    // Load cumulative viewer total from Firestore
+    async function loadCumulativeViewerTotal() {
+      try {
+        const docRef = doc(db, 'stats', 'viewerTotals');
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          cumulativeViewerTotal = data.cumulativeTotal || 0;
+          lastViewerUpdate = data.lastUpdateMs || null;
+          console.log('Loaded cumulative viewer total:', cumulativeViewerTotal);
+          
+          // Update display immediately
+          updateCumulativeViewerDisplay();
+        } else {
+          console.log('No existing viewer totals found, starting from 0');
+          cumulativeViewerTotal = 0;
+          lastViewerUpdate = null;
+        }
+      } catch (error) {
+        console.error('Error loading cumulative viewer total:', error);
+        cumulativeViewerTotal = 0;
+      }
+    }
+
+    // Save cumulative viewer total to Firestore
+    async function saveCumulativeViewerTotal() {
+      try {
+        const docRef = doc(db, 'stats', 'viewerTotals');
+        await setDoc(docRef, {
+          cumulativeTotal: cumulativeViewerTotal,
+          lastUpdate: serverTimestamp(),
+          lastUpdateMs: Date.now()
+        }, { merge: true });
+        console.log('Saved cumulative viewer total:', cumulativeViewerTotal);
+      } catch (error) {
+        console.error('Error saving cumulative viewer total:', error);
+      }
+    }
+
+    // Update the cumulative viewer display
+    function updateCumulativeViewerDisplay() {
+      const totalViewerCount = document.getElementById('total-viewer-count');
+      if (totalViewerCount) {
+        // Format as whole number (round down since we're accumulating viewer-minutes)
+        const displayValue = Math.floor(cumulativeViewerTotal);
+        animateNumber(totalViewerCount, displayValue);
+      }
+    }
+
+    // Save cumulative total when page unloads
+    window.addEventListener('beforeunload', () => {
+      if (typeof saveCumulativeViewerTotal === 'function') {
+        saveCumulativeViewerTotal().catch(err => console.error('Error saving on unload:', err));
+      }
+    });
     
     // Check for tracking prevention issues
     function checkTrackingPrevention() {
@@ -7091,32 +7153,67 @@
         // Update the UI
         updateViewerDisplay();
         
-        // Track viewer history
-        trackViewerHistory();
+        // Track viewer history and accumulate totals
+        await trackViewerHistory();
         
       } catch (error) {
         console.error('Error updating viewer counts:', error);
       }
     }
 
-    // Track viewer history
-    function trackViewerHistory() {
-      let totalViewers = 0;
+    // Track viewer history and accumulate totals
+    async function trackViewerHistory() {
+      let currentTotalViewers = 0;
       viewerData.forEach((data) => {
         if (data.isLive && data.viewers > 0) {
-          totalViewers += data.viewers;
+          currentTotalViewers += data.viewers;
         }
       });
       
       // Update peak viewers
-      if (totalViewers > peakViewersToday) {
-        peakViewersToday = totalViewers;
+      if (currentTotalViewers > peakViewersToday) {
+        peakViewersToday = currentTotalViewers;
       }
+      
+      // Calculate increment since last update (approximate using time difference)
+      // If we have a previous update, estimate the cumulative increment
+      // This is approximate - we're adding viewers based on how long streams were up
+      if (lastViewerUpdate !== null) {
+        const timeSinceLastUpdate = Date.now() - (lastViewerUpdate || Date.now());
+        const minutesSinceUpdate = timeSinceLastUpdate / (1000 * 60); // Convert to minutes
+        
+        // Add current viewers to cumulative total (accumulating over time)
+        // This represents viewers watching during this time period
+        // We'll add the average between previous and current viewers, times minutes elapsed
+        const previousTotal = previousViewerData.size > 0 
+          ? Array.from(previousViewerData.values()).reduce((sum, data) => sum + (data.viewers || 0), 0)
+          : 0;
+        
+        const averageViewers = (previousTotal + currentTotalViewers) / 2;
+        const viewerMinutes = averageViewers * minutesSinceUpdate;
+        
+        cumulativeViewerTotal += viewerMinutes;
+        
+        // Save to Firestore periodically (every 2 minutes of tracking)
+        if (timeSinceLastUpdate > 2 * 60 * 1000) {
+          await saveCumulativeViewerTotal();
+        }
+      } else {
+        // First update - just set the baseline
+        lastViewerUpdate = Date.now();
+      }
+      
+      // Update last update time
+      lastViewerUpdate = Date.now();
+      
+      // Update display with cumulative total
+      updateCumulativeViewerDisplay();
       
       // Add to history
       viewerHistory.push({
         timestamp: Date.now(),
-        totalViewers: totalViewers,
+        totalViewers: currentTotalViewers,
+        cumulativeTotal: cumulativeViewerTotal,
         streamers: Array.from(viewerData.values()).filter(data => data.isLive)
       });
       
@@ -7198,11 +7295,13 @@
         }
       });
       
-      console.log('Total viewers calculated:', totalViewers);
+      console.log('Current viewers calculated:', totalViewers);
+      console.log('Cumulative total:', cumulativeViewerTotal);
       console.log('Live streamers:', liveStreamers);
       
-      // Update total viewer count with animation
-      animateNumber(totalViewerCount, totalViewers);
+      // Update total viewer count with cumulative total (not just current snapshot)
+      // The cumulative total is updated in trackViewerHistory()
+      updateCumulativeViewerDisplay();
       
       // Update individual streamer viewer counts
       streamerViewersList.innerHTML = '';
