@@ -41,7 +41,7 @@
     }
 
     html{
-      zoom: 0.75;
+      zoom: 0.98;
     }
     html,body{height:100%}
     body{
@@ -1646,8 +1646,14 @@
       state.teams.forEach(team=>{
         const o = document.createElement('option'); 
         o.value = team.id;
-        // Display team name with league if available: "Team Name - League"
-        const displayText = team.league ? `${team.teamName} - ${team.league}` : team.teamName;
+        // Display team name with league and games if available: "Team Name - League (Game1, Game2)"
+        let displayText = team.teamName;
+        if(team.league) {
+          displayText += ` - ${team.league}`;
+        }
+        if(team.games?.length) {
+          displayText += ` (${team.games.join(', ')})`;
+        }
         o.textContent = displayText;
         els.streamerTeam.appendChild(o);
       });
