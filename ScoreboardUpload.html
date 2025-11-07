@@ -211,62 +211,69 @@
       const team1 = [];
       const team2 = [];
       
-      // Find lines that look like stat rows (have 5+ numbers)
+      // Find ALL lines that have numbers - be very lenient
       const statRows = [];
       
       lines.forEach((line, idx) => {
         const trimmed = line.trim();
-        if (trimmed.length < 3) return;
+        if (trimmed.length < 2) return; // Even shorter lines might have stats
         
-        // Extract all numbers from the line
+        // Extract all numbers from the line - be very lenient
         const numberMatches = [...trimmed.matchAll(/\d+/g)];
-        if (!numberMatches || numberMatches.length < 3) return;
+        if (!numberMatches || numberMatches.length < 2) return; // Changed from 3 to 2
         
         // Convert to numbers
         const numbers = numberMatches.map(m => parseInt(m[0], 10));
         
         // Find the score (typically the largest number, usually 1000+)
+        // But also handle smaller scores
         const sortedByValue = [...numbers].sort((a, b) => b - a);
         let score = sortedByValue[0];
         
-        // If largest is small, look for first number > 100
-        if (score < 100) {
-          score = numbers.find(n => n > 100) || numbers[0];
+        // If largest is small, look for first number > 50 (more lenient)
+        if (score < 50) {
+          score = numbers.find(n => n > 50) || numbers[0];
         }
         
         const scoreIndex = numbers.indexOf(score);
         
         // Try to extract 5 stats: Score, Kills, Assists, Captures, Returns
-        // Pattern: [score] [kills] [assists] [captures] [returns]
+        // Be flexible about the order and position
         let kills = 0, assists = 0, captures = 0, returns = 0;
         
-        // Strategy 1: 4 numbers after score
+        // Strategy 1: 4 consecutive numbers after score
         if (scoreIndex < numbers.length - 4) {
           kills = numbers[scoreIndex + 1] || 0;
           assists = numbers[scoreIndex + 2] || 0;
           captures = numbers[scoreIndex + 3] || 0;
           returns = numbers[scoreIndex + 4] || 0;
         } else if (numbers.length >= 5) {
-          // Strategy 2: Take last 4 numbers (excluding score if it's not last)
-          const allButScore = numbers.filter(n => n !== score || numbers.indexOf(n) !== scoreIndex);
+          // Strategy 2: Take last 4 numbers (excluding score)
+          const allButScore = numbers.filter((n, i) => i !== scoreIndex);
           if (allButScore.length >= 4) {
             const lastFour = allButScore.slice(-4);
             kills = lastFour[0] || 0;
             assists = lastFour[1] || 0;
             captures = lastFour[2] || 0;
             returns = lastFour[3] || 0;
-          } else {
-            // Strategy 3: Use what we have
-            const statsOnly = numbers.filter((n, i) => i !== scoreIndex);
-            if (statsOnly.length >= 1) kills = statsOnly[0];
-            if (statsOnly.length >= 2) assists = statsOnly[1];
-            if (statsOnly.length >= 3) captures = statsOnly[2];
-            if (statsOnly.length >= 4) returns = statsOnly[3];
+          } else if (allButScore.length > 0) {
+            // Strategy 3: Use what we have, fill in order
+            if (allButScore.length >= 1) kills = allButScore[0];
+            if (allButScore.length >= 2) assists = allButScore[1];
+            if (allButScore.length >= 3) captures = allButScore[2];
+            if (allButScore.length >= 4) returns = allButScore[3];
           }
+        } else if (numbers.length >= 3) {
+          // Strategy 4: Even with just 3 numbers, try to extract
+          const allButScore = numbers.filter((n, i) => i !== scoreIndex);
+          if (allButScore.length >= 1) kills = allButScore[0];
+          if (allButScore.length >= 2) assists = allButScore[1];
+          if (allButScore.length >= 3) captures = allButScore[2];
         }
         
-        // Only add if we have at least a score and some stats
-        if (score > 0 || (kills + assists + captures + returns) > 0) {
+        // Be very lenient - add if we have at least 2 numbers total
+        // This will catch more rows even if incomplete
+        if (numbers.length >= 2) {
           statRows.push({
             score: score,
             kills: kills,
@@ -274,21 +281,34 @@
             captures: captures,
             returns: returns,
             time: 0,
-            lineIndex: idx
+            lineIndex: idx,
+            rawNumbers: numbers // Keep for debugging
           });
         }
       });
       
-      // Split stat rows roughly in half (assuming equal teams)
-      const splitIndex = Math.ceil(statRows.length / 2);
+      // Filter out obvious non-stat rows (like single digit numbers, timestamps, etc.)
+      const filteredRows = statRows.filter(row => {
+        // Must have a score > 50 or at least 3 numbers
+        return row.score > 50 || row.rawNumbers.length >= 3;
+      });
       
-      statRows.forEach((row, idx) => {
+      // Split stat rows roughly in half (assuming equal teams)
+      const splitIndex = Math.ceil(filteredRows.length / 2);
+      
+      filteredRows.forEach((row, idx) => {
+        // Remove rawNumbers before adding
+        const { rawNumbers, ...cleanRow } = row;
         if (idx < splitIndex) {
-          team1.push(row);
+          team1.push(cleanRow);
         } else {
-          team2.push(row);
+          team2.push(cleanRow);
         }
       });
+      
+      console.log(`OCR extracted ${team1.length} rows for team 1, ${team2.length} rows for team 2`);
+      console.log('Team 1 rows:', team1);
+      console.log('Team 2 rows:', team2);
       
       return { team1, team2 };
     }
@@ -327,6 +347,7 @@
           await worker.setParameters({
             tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,- ',
             tessedit_pageseg_mode: '6', // Assume uniform block of text
+            tessedit_ocr_engine_mode: '1', // Use LSTM OCR engine
           });
         }
 
@@ -342,7 +363,7 @@
 
         // Run OCR on preprocessed image
         // Note: Logger removed to avoid DataCloneError - functions with closures can't be serialized to workers
-        const { data: { text } } = await worker.recognize(canvas);
+        const { data: { text, words } } = await worker.recognize(canvas);
         
         // Clear progress animation
         if (progressInterval) {
@@ -352,6 +373,11 @@
 
         progressBar.style.width = '95%';
         progressText.textContent = 'Parsing results...';
+
+        // Log OCR results for debugging
+        console.log('OCR Raw Text:', text);
+        console.log('OCR Words:', words);
+        console.log('Text lines:', text.split('\n').length);
 
         // Parse OCR text
         const parsed = parseOCRText(text);
