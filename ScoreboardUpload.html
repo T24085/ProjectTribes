@@ -947,47 +947,151 @@
       });
     }
 
+    // Get all unique players from all teams
+    function getAllPlayers() {
+      const allPlayers = new Set();
+      teamsData.forEach(team => {
+        if (team.players) {
+          team.players.forEach(p => {
+            const playerName = typeof p === 'string' ? p : p.name;
+            if (playerName) allPlayers.add(playerName);
+          });
+        }
+        if (team.benchPlayers) {
+          team.benchPlayers.forEach(p => {
+            const playerName = typeof p === 'string' ? p : p.name;
+            if (playerName) allPlayers.add(playerName);
+          });
+        }
+      });
+      return Array.from(allPlayers).sort();
+    }
+
     function addPlayerRow(teamNum, team) {
-      const name = prompt('Enter substitute player name:');
-      if (!name || !name.trim()) return;
+      // Get all players from all teams
+      const allPlayers = getAllPlayers();
       
-      const newPlayer = {
-        player: name.trim(),
-        score: 0,
-        kills: 0,
-        assists: 0,
-        captures: 0,
-        returns: 0,
-        time: 0,
-        isOCR: false
-      };
+      // Create modal for player selection
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center';
+      modal.id = 'addPlayerModal';
+      
+      modal.innerHTML = `
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+          <h3 class="text-xl font-bold mb-4">Add Substitute Player</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm mb-2">Select Player from Database</label>
+              <select id="playerSelect" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded">
+                <option value="">-- Select a player --</option>
+                ${allPlayers.map(p => `<option value="${p}">${p}</option>`).join('')}
+                <option value="__CUSTOM__">+ Add New Player (Custom Name)</option>
+              </select>
+            </div>
+            <div id="customPlayerInput" class="hidden">
+              <label class="block text-sm mb-2">Enter Custom Player Name</label>
+              <input type="text" id="customPlayerName" 
+                     class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded" 
+                     placeholder="Enter player name">
+            </div>
+            <div class="flex gap-3 justify-end">
+              <button id="cancelAddPlayer" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded">Cancel</button>
+              <button id="confirmAddPlayer" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded">Add Player</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      const playerSelect = document.getElementById('playerSelect');
+      const customInput = document.getElementById('customPlayerInput');
+      const customNameInput = document.getElementById('customPlayerName');
+      
+      // Show/hide custom input based on selection
+      playerSelect.addEventListener('change', (e) => {
+        if (e.target.value === '__CUSTOM__') {
+          customInput.classList.remove('hidden');
+          customNameInput.focus();
+        } else {
+          customInput.classList.add('hidden');
+          customNameInput.value = '';
+        }
+      });
+      
+      // Handle cancel
+      document.getElementById('cancelAddPlayer').addEventListener('click', () => {
+        document.body.removeChild(modal);
+      });
+      
+      // Handle confirm
+      document.getElementById('confirmAddPlayer').addEventListener('click', () => {
+        let playerName = '';
+        
+        if (playerSelect.value === '__CUSTOM__') {
+          playerName = customNameInput.value.trim();
+        } else {
+          playerName = playerSelect.value;
+        }
+        
+        if (!playerName) {
+          alert('Please select a player or enter a custom name');
+          return;
+        }
+        
+        // Remove modal
+        document.body.removeChild(modal);
+        
+        // Add the player
+        const newPlayer = {
+          player: playerName,
+          score: 0,
+          kills: 0,
+          assists: 0,
+          captures: 0,
+          returns: 0,
+          time: 0,
+          isOCR: false
+        };
 
-      if (teamNum === 1) {
-        team1Entries.push(newPlayer);
-      } else {
-        team2Entries.push(newPlayer);
-      }
+        if (teamNum === 1) {
+          team1Entries.push(newPlayer);
+        } else {
+          team2Entries.push(newPlayer);
+        }
 
-      // Re-render to show new player
-      const results = {
-        team1: team1Entries.filter(e => e.isOCR).map(e => ({
-          score: e.score,
-          kills: e.kills,
-          assists: e.assists,
-          captures: e.captures,
-          returns: e.returns,
-          time: e.time
-        })),
-        team2: team2Entries.filter(e => e.isOCR).map(e => ({
-          score: e.score,
-          kills: e.kills,
-          assists: e.assists,
-          captures: e.captures,
-          returns: e.returns,
-          time: e.time
-        }))
+        // Re-render to show new player
+        const results = {
+          team1: team1Entries.filter(e => e.isOCR).map(e => ({
+            score: e.score,
+            kills: e.kills,
+            assists: e.assists,
+            captures: e.captures,
+            returns: e.returns,
+            time: e.time
+          })),
+          team2: team2Entries.filter(e => e.isOCR).map(e => ({
+            score: e.score,
+            kills: e.kills,
+            assists: e.assists,
+            captures: e.captures,
+            returns: e.returns,
+            time: e.time
+          }))
+        };
+        displayResults(results);
+      });
+      
+      // Close on escape key
+      const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+          if (document.getElementById('addPlayerModal')) {
+            document.body.removeChild(modal);
+            document.removeEventListener('keydown', handleEscape);
+          }
+        }
       };
-      displayResults(results);
+      document.addEventListener('keydown', handleEscape);
     }
 
     async function submitForReview() {
