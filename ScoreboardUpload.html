@@ -274,39 +274,49 @@
         let kills = 0, assists = 0, captures = 0, returns = 0;
         
         // Strategy: Look for 4 consecutive numbers after the score
-        // These should be the stats in order
+        // Scoreboard format: Name | Score | Kills | Assists | Captures | Returns
+        // The score is typically the largest number, followed by 4 smaller stats
+        
+        // Try to find stats in order after the score
         if (scoreIndex < numbers.length - 4) {
-          // Perfect case: score followed by 4 stats
-          kills = numbers[scoreIndex + 1].value;
-          assists = numbers[scoreIndex + 2].value;
-          captures = numbers[scoreIndex + 3].value;
-          returns = numbers[scoreIndex + 4].value;
-        } else if (scoreIndex >= 4) {
-          // Score might be at the end, stats before it
-          kills = numbers[scoreIndex - 4].value;
-          assists = numbers[scoreIndex - 3].value;
-          captures = numbers[scoreIndex - 2].value;
-          returns = numbers[scoreIndex - 1].value;
-        } else {
-          // Try to find the best 4-number sequence
-          // Look for numbers that are reasonable for kills/assists (0-50 typically)
-          const candidateStats = numbers.filter(n => 
-            n.value !== score && n.value <= 100 && n.index > scoreEntry.index
+          // Perfect case: score followed by 4 stats in order
+          const nextFour = numbers.slice(scoreIndex + 1, scoreIndex + 5);
+          if (nextFour.length === 4) {
+            kills = nextFour[0].value;
+            assists = nextFour[1].value;
+            captures = nextFour[2].value;
+            returns = nextFour[3].value;
+          }
+        }
+        
+        // If we didn't get all 4 stats, try alternative approaches
+        if (kills === 0 && assists === 0 && captures === 0 && returns === 0) {
+          // Look for numbers that appear after the score position in the text
+          const statsAfterScore = numbers.filter(n => 
+            n.index > scoreEntry.index && n.value !== score
           );
           
-          if (candidateStats.length >= 4) {
-            kills = candidateStats[0].value;
-            assists = candidateStats[1].value;
-            captures = candidateStats[2].value;
-            returns = candidateStats[3].value;
+          if (statsAfterScore.length >= 4) {
+            // Take first 4 numbers after score
+            kills = statsAfterScore[0].value;
+            assists = statsAfterScore[1].value;
+            captures = statsAfterScore[2].value;
+            returns = statsAfterScore[3].value;
           } else if (numbers.length >= 5) {
-            // Fallback: use last 4 numbers excluding score
-            const statsOnly = numbers.filter(n => n.value !== score);
-            if (statsOnly.length >= 4) {
-              kills = statsOnly[0].value;
-              assists = statsOnly[1].value;
-              captures = statsOnly[2].value;
-              returns = statsOnly[3].value;
+            // Fallback: use all numbers except score, take last 4
+            const allButScore = numbers.filter(n => n.value !== score);
+            if (allButScore.length >= 4) {
+              const lastFour = allButScore.slice(-4);
+              kills = lastFour[0].value;
+              assists = lastFour[1].value;
+              captures = lastFour[2].value;
+              returns = lastFour[3].value;
+            } else if (allButScore.length > 0) {
+              // Use what we have
+              if (allButScore.length >= 1) kills = allButScore[0].value;
+              if (allButScore.length >= 2) assists = allButScore[1].value;
+              if (allButScore.length >= 3) captures = allButScore[2].value;
+              if (allButScore.length >= 4) returns = allButScore[3].value;
             }
           }
         }
@@ -344,10 +354,11 @@
           .trim();
         
         // Skip if name is too short or looks like garbage
-        if (nameText.length < 2 || /^\d+$/.test(nameText)) return;
+        if (nameText.length < 1 || /^\d+$/.test(nameText)) return;
         
-        // Skip if stats don't make sense (all zeros or score too low)
-        if (score === 0 && kills === 0 && assists === 0) return;
+        // Be more lenient - don't skip if we have at least a score
+        // Some players might have low stats but still played
+        if (score === 0 && numbers.length < 3) return;
         
         const playerData = {
           player: nameText,
@@ -525,6 +536,10 @@
       return matrix[str2.length][str1.length];
     }
 
+    // Store player entries for each team
+    let team1Entries = [];
+    let team2Entries = [];
+
     function displayResults(results) {
       const team1Div = document.getElementById('team1Results');
       const team2Div = document.getElementById('team2Results');
@@ -542,27 +557,110 @@
         document.getElementById('team2Name').textContent = `${opponentTeam.name} (Red)`;
       }
 
-      // Display team 1 results with roster matching
+      // Merge OCR results with full roster
+      // Start with OCR results, then add any roster players not found in OCR
+      const team1Roster = selectedTeam ? [...selectedTeam.players, ...selectedTeam.benchPlayers] : [];
+      const team2Roster = opponentTeam ? [...opponentTeam.players, ...opponentTeam.benchPlayers] : [];
+
+      // Create a map of OCR results by matched player name
+      const ocrTeam1Map = new Map();
+      results.team1.forEach(player => {
+        const matched = selectedTeam ? fuzzyMatchPlayer(player.player, team1Roster) : null;
+        if (matched) {
+          ocrTeam1Map.set(matched, player);
+        }
+      });
+
+      const ocrTeam2Map = new Map();
+      results.team2.forEach(player => {
+        const matched = opponentTeam ? fuzzyMatchPlayer(player.player, team2Roster) : null;
+        if (matched) {
+          ocrTeam2Map.set(matched, player);
+        }
+      });
+
+      // Build combined list: OCR results first, then roster players without OCR data
+      team1Entries = [];
+      team2Entries = [];
+
+      // Team 1: Add OCR results first
       results.team1.forEach((player, idx) => {
-        const matchedName = selectedTeam ? fuzzyMatchPlayer(player.player, [...selectedTeam.players, ...selectedTeam.benchPlayers]) : null;
+        team1Entries.push({ ...player, isOCR: true, originalIdx: idx });
+      });
+
+      // Team 1: Add roster players not in OCR
+      team1Roster.forEach(playerName => {
+        const playerNameStr = typeof playerName === 'string' ? playerName : playerName.name;
+        if (!ocrTeam1Map.has(playerNameStr)) {
+          team1Entries.push({
+            player: playerNameStr,
+            score: 0,
+            kills: 0,
+            assists: 0,
+            captures: 0,
+            returns: 0,
+            time: 0,
+            isOCR: false
+          });
+        }
+      });
+
+      // Team 2: Add OCR results first
+      results.team2.forEach((player, idx) => {
+        team2Entries.push({ ...player, isOCR: true, originalIdx: idx });
+      });
+
+      // Team 2: Add roster players not in OCR
+      team2Roster.forEach(playerName => {
+        const playerNameStr = typeof playerName === 'string' ? playerName : playerName.name;
+        if (!ocrTeam2Map.has(playerNameStr)) {
+          team2Entries.push({
+            player: playerNameStr,
+            score: 0,
+            kills: 0,
+            assists: 0,
+            captures: 0,
+            returns: 0,
+            time: 0,
+            isOCR: false
+          });
+        }
+      });
+
+      // Display team 1 entries
+      team1Entries.forEach((player, idx) => {
+        const matchedName = selectedTeam ? fuzzyMatchPlayer(player.player, team1Roster) : player.player;
+        const isMatched = team1Roster.some(p => {
+          const pName = typeof p === 'string' ? p : p.name;
+          return pName === matchedName;
+        });
         
         const div = document.createElement('div');
-        div.className = 'p-3 bg-gray-800 rounded border border-gray-700';
+        div.className = `p-3 bg-gray-800 rounded border ${player.isOCR ? 'border-blue-500' : 'border-gray-700'}`;
+        div.dataset.entryIndex = idx;
         div.innerHTML = `
           <div class="flex items-center gap-2 mb-2">
             <input type="text" class="flex-1 px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm" 
                    value="${player.player || ''}" data-team="1" data-index="${idx}" 
-                   placeholder="Player name from OCR" id="ocr-name-1-${idx}">
+                   placeholder="Player name" id="ocr-name-1-${idx}">
             <select class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm roster-match" 
                     data-team="1" data-index="${idx}" id="roster-match-1-${idx}">
               <option value="">Match to roster</option>
-              ${selectedTeam ? [...selectedTeam.players, ...selectedTeam.benchPlayers].map(p => {
+              ${selectedTeam ? team1Roster.map(p => {
                 const playerName = typeof p === 'string' ? p : p.name;
                 return `<option value="${playerName}" ${matchedName === playerName ? 'selected' : ''}>${playerName}</option>`;
               }).join('') : ''}
+              <option value="__CUSTOM__">Add Custom Player</option>
             </select>
+            ${!player.isOCR ? `<button type="button" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs remove-player" data-team="1" data-index="${idx}">Remove</button>` : ''}
           </div>
           <div class="grid grid-cols-6 gap-1 text-xs">
+            <label class="text-xs text-gray-400 text-center">Time</label>
+            <label class="text-xs text-gray-400 text-center">Score</label>
+            <label class="text-xs text-gray-400 text-center">Kills</label>
+            <label class="text-xs text-gray-400 text-center">Assists</label>
+            <label class="text-xs text-gray-400 text-center">Captures</label>
+            <label class="text-xs text-gray-400 text-center">Returns</label>
             <input type="number" placeholder="Time" value="${player.time || 0}" 
                    class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="time" data-team="1" data-index="${idx}">
             <input type="number" placeholder="Score" value="${player.score || 0}" 
@@ -580,27 +678,48 @@
         team1Div.appendChild(div);
       });
 
-      // Display team 2 results
-      results.team2.forEach((player, idx) => {
-        const matchedName = opponentTeam ? fuzzyMatchPlayer(player.player, [...opponentTeam.players, ...opponentTeam.benchPlayers]) : null;
+      // Add "Add Player" button for team 1
+      const addPlayer1Btn = document.createElement('button');
+      addPlayer1Btn.type = 'button';
+      addPlayer1Btn.className = 'mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-sm';
+      addPlayer1Btn.textContent = '+ Add Substitute Player';
+      addPlayer1Btn.addEventListener('click', () => addPlayerRow(1, selectedTeam));
+      team1Div.appendChild(addPlayer1Btn);
+
+      // Display team 2 entries
+      team2Entries.forEach((player, idx) => {
+        const matchedName = opponentTeam ? fuzzyMatchPlayer(player.player, team2Roster) : player.player;
+        const isMatched = team2Roster.some(p => {
+          const pName = typeof p === 'string' ? p : p.name;
+          return pName === matchedName;
+        });
         
         const div = document.createElement('div');
-        div.className = 'p-3 bg-gray-800 rounded border border-gray-700';
+        div.className = `p-3 bg-gray-800 rounded border ${player.isOCR ? 'border-blue-500' : 'border-gray-700'}`;
+        div.dataset.entryIndex = idx;
         div.innerHTML = `
           <div class="flex items-center gap-2 mb-2">
             <input type="text" class="flex-1 px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm" 
                    value="${player.player || ''}" data-team="2" data-index="${idx}" 
-                   placeholder="Player name from OCR" id="ocr-name-2-${idx}">
+                   placeholder="Player name" id="ocr-name-2-${idx}">
             <select class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm roster-match" 
                     data-team="2" data-index="${idx}" id="roster-match-2-${idx}">
               <option value="">Match to roster</option>
-              ${opponentTeam ? [...opponentTeam.players, ...opponentTeam.benchPlayers].map(p => {
+              ${opponentTeam ? team2Roster.map(p => {
                 const playerName = typeof p === 'string' ? p : p.name;
                 return `<option value="${playerName}" ${matchedName === playerName ? 'selected' : ''}>${playerName}</option>`;
               }).join('') : ''}
+              <option value="__CUSTOM__">Add Custom Player</option>
             </select>
+            ${!player.isOCR ? `<button type="button" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs remove-player" data-team="2" data-index="${idx}">Remove</button>` : ''}
           </div>
           <div class="grid grid-cols-6 gap-1 text-xs">
+            <label class="text-xs text-gray-400 text-center">Time</label>
+            <label class="text-xs text-gray-400 text-center">Score</label>
+            <label class="text-xs text-gray-400 text-center">Kills</label>
+            <label class="text-xs text-gray-400 text-center">Assists</label>
+            <label class="text-xs text-gray-400 text-center">Captures</label>
+            <label class="text-xs text-gray-400 text-center">Returns</label>
             <input type="number" placeholder="Time" value="${player.time || 0}" 
                    class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="time" data-team="2" data-index="${idx}">
             <input type="number" placeholder="Score" value="${player.score || 0}" 
@@ -617,6 +736,84 @@
         `;
         team2Div.appendChild(div);
       });
+
+      // Add "Add Player" button for team 2
+      const addPlayer2Btn = document.createElement('button');
+      addPlayer2Btn.type = 'button';
+      addPlayer2Btn.className = 'mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-sm';
+      addPlayer2Btn.textContent = '+ Add Substitute Player';
+      addPlayer2Btn.addEventListener('click', () => addPlayerRow(2, opponentTeam));
+      team2Div.appendChild(addPlayer2Btn);
+
+      // Add event listeners for remove buttons and roster match changes
+      document.querySelectorAll('.remove-player').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const team = this.dataset.team;
+          const idx = parseInt(this.dataset.index);
+          if (team === '1') {
+            team1Entries.splice(idx, 1);
+          } else {
+            team2Entries.splice(idx, 1);
+          }
+          displayResults(results); // Re-render
+        });
+      });
+
+      // Handle roster match dropdown changes
+      document.querySelectorAll('.roster-match').forEach(select => {
+        select.addEventListener('change', function() {
+          if (this.value === '__CUSTOM__') {
+            const nameInput = document.getElementById(`ocr-name-${this.dataset.team}-${this.dataset.index}`);
+            nameInput.focus();
+            this.value = '';
+          } else if (this.value) {
+            const nameInput = document.getElementById(`ocr-name-${this.dataset.team}-${this.dataset.index}`);
+            nameInput.value = this.value;
+          }
+        });
+      });
+    }
+
+    function addPlayerRow(teamNum, team) {
+      const newPlayer = {
+        player: '',
+        score: 0,
+        kills: 0,
+        assists: 0,
+        captures: 0,
+        returns: 0,
+        time: 0,
+        isOCR: false
+      };
+
+      if (teamNum === 1) {
+        team1Entries.push(newPlayer);
+      } else {
+        team2Entries.push(newPlayer);
+      }
+
+      // Re-render to show new player
+      const results = {
+        team1: team1Entries.filter(e => e.isOCR).map(e => ({
+          player: e.player,
+          score: e.score,
+          kills: e.kills,
+          assists: e.assists,
+          captures: e.captures,
+          returns: e.returns,
+          time: e.time
+        })),
+        team2: team2Entries.filter(e => e.isOCR).map(e => ({
+          player: e.player,
+          score: e.score,
+          kills: e.kills,
+          assists: e.assists,
+          captures: e.captures,
+          returns: e.returns,
+          time: e.time
+        }))
+      };
+      displayResults(results);
     }
 
     async function submitForReview() {
