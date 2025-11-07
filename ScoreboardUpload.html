@@ -210,56 +210,147 @@
       const team1 = [];
       const team2 = [];
       
-      // Try to identify team split (look for common patterns)
+      // Find team split by looking for patterns or counting players
+      // Scoreboards typically have similar number of players per team
       let splitIndex = -1;
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].toLowerCase();
-        // Look for indicators of team split
-        if (line.includes('red') || line.includes('team 2') || i > lines.length / 2) {
-          splitIndex = i;
-          break;
+      const playerLines = lines.filter(line => {
+        // A player line should have multiple numbers (at least 3-5 stats)
+        const numbers = line.match(/\d+/g);
+        return numbers && numbers.length >= 3;
+      });
+      
+      // If we have player lines, split roughly in the middle
+      if (playerLines.length > 0) {
+        splitIndex = Math.ceil(playerLines.length / 2);
+      } else {
+        // Fallback: look for keywords or use line count
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].toLowerCase();
+          if (line.includes('red') || line.includes('team 2') || 
+              (i > 0 && i >= lines.length / 2)) {
+            splitIndex = i;
+            break;
+          }
+        }
+        if (splitIndex === -1) {
+          splitIndex = Math.floor(lines.length / 2);
         }
       }
       
-      // If no clear split, assume middle
-      if (splitIndex === -1) {
-        splitIndex = Math.floor(lines.length / 2);
-      }
-      
-      // Parse each line
+      // Parse each line more intelligently
       lines.forEach((line, idx) => {
         const trimmed = line.trim();
         if (trimmed.length < 3) return;
         
-        // Try to extract player name and stats
-        // Pattern: Name followed by numbers (score, kills, assists, captures, returns)
-        const parts = trimmed.split(/\s+/);
-        if (parts.length < 2) return;
+        // Extract all numbers from the line with their positions
+        const numberMatches = [...trimmed.matchAll(/\d+/g)];
+        if (!numberMatches || numberMatches.length < 3) return;
         
-        // First part is likely player name, rest are numbers
-        const nameParts = [];
-        const numberParts = [];
+        // Convert to numbers with positions
+        const numbers = numberMatches.map(m => ({
+          value: parseInt(m[0], 10),
+          index: m.index,
+          length: m[0].length
+        }));
         
-        for (const part of parts) {
-          const cleaned = part.replace(/[^A-Za-z0-9]/g, '');
-          if (/^\d+$/.test(cleaned)) {
-            numberParts.push(parseInt(cleaned, 10));
-          } else if (cleaned.length > 0) {
-            nameParts.push(part);
+        // Find the score - it's typically the largest number (usually 1000+)
+        // and appears in a consistent position (after player name)
+        const sortedByValue = [...numbers].sort((a, b) => b.value - a.value);
+        let scoreEntry = sortedByValue[0];
+        
+        // If the largest number is small (<100), might be a low-scoring game
+        // Look for the first number > 100 as score
+        if (scoreEntry.value < 100) {
+          scoreEntry = numbers.find(n => n.value > 100) || numbers[0];
+        }
+        
+        const score = scoreEntry.value;
+        const scoreIndex = numbers.indexOf(scoreEntry);
+        
+        // Stats pattern: Score (large), then Kills, Assists, Captures, Returns (smaller)
+        // Find the sequence of 5 numbers: [score] [kills] [assists] [captures] [returns]
+        // The score is the anchor point
+        
+        let kills = 0, assists = 0, captures = 0, returns = 0;
+        
+        // Strategy: Look for 4 consecutive numbers after the score
+        // These should be the stats in order
+        if (scoreIndex < numbers.length - 4) {
+          // Perfect case: score followed by 4 stats
+          kills = numbers[scoreIndex + 1].value;
+          assists = numbers[scoreIndex + 2].value;
+          captures = numbers[scoreIndex + 3].value;
+          returns = numbers[scoreIndex + 4].value;
+        } else if (scoreIndex >= 4) {
+          // Score might be at the end, stats before it
+          kills = numbers[scoreIndex - 4].value;
+          assists = numbers[scoreIndex - 3].value;
+          captures = numbers[scoreIndex - 2].value;
+          returns = numbers[scoreIndex - 1].value;
+        } else {
+          // Try to find the best 4-number sequence
+          // Look for numbers that are reasonable for kills/assists (0-50 typically)
+          const candidateStats = numbers.filter(n => 
+            n.value !== score && n.value <= 100 && n.index > scoreEntry.index
+          );
+          
+          if (candidateStats.length >= 4) {
+            kills = candidateStats[0].value;
+            assists = candidateStats[1].value;
+            captures = candidateStats[2].value;
+            returns = candidateStats[3].value;
+          } else if (numbers.length >= 5) {
+            // Fallback: use last 4 numbers excluding score
+            const statsOnly = numbers.filter(n => n.value !== score);
+            if (statsOnly.length >= 4) {
+              kills = statsOnly[0].value;
+              assists = statsOnly[1].value;
+              captures = statsOnly[2].value;
+              returns = statsOnly[3].value;
+            }
           }
         }
         
-        if (nameParts.length === 0 || numberParts.length < 5) return;
+        // Extract player name - everything before the score number
+        // Use the actual position of the score in the string
+        let nameText = trimmed;
         
-        const playerName = nameParts.join(' ').trim();
-        const score = numberParts[0] || 0;
-        const kills = numberParts[1] || 0;
-        const assists = numberParts[2] || 0;
-        const captures = numberParts[3] || 0;
-        const returns = numberParts[4] || 0;
+        // Find where the score number appears in the text
+        const scoreStr = score.toString();
+        const scorePos = nameText.indexOf(scoreStr, scoreEntry.index);
+        
+        if (scorePos > 0) {
+          nameText = nameText.substring(0, scorePos).trim();
+        } else {
+          // Fallback: take text before the score entry position
+          if (scoreEntry.index > 0) {
+            nameText = nameText.substring(0, scoreEntry.index).trim();
+          } else {
+            // Last resort: take text before first number
+            const firstNumPos = nameText.search(/\d/);
+            if (firstNumPos > 0) {
+              nameText = nameText.substring(0, firstNumPos).trim();
+            }
+          }
+        }
+        
+        // Clean up player name - remove common OCR artifacts
+        nameText = nameText
+          .replace(/\s+/g, ' ') // Multiple spaces to single
+          .replace(/[^\w\s.-]/g, '') // Remove special chars except . and -
+          .replace(/\b(w|ww|vv|r|sr|S|V)\b/gi, '') // Remove common OCR artifacts
+          .replace(/^\d+\s+/, '') // Remove leading numbers
+          .replace(/\s+\d+$/, '') // Remove trailing numbers
+          .trim();
+        
+        // Skip if name is too short or looks like garbage
+        if (nameText.length < 2 || /^\d+$/.test(nameText)) return;
+        
+        // Skip if stats don't make sense (all zeros or score too low)
+        if (score === 0 && kills === 0 && assists === 0) return;
         
         const playerData = {
-          player: playerName,
+          player: nameText,
           score: score,
           kills: kills,
           assists: assists,
@@ -268,7 +359,12 @@
           time: 0 // Will be calculated or entered manually
         };
         
-        if (idx < splitIndex) {
+        // Determine which team based on split index
+        // Count actual player entries to determine split
+        const currentTeam1Count = team1.length;
+        const currentTeam2Count = team2.length;
+        
+        if (currentTeam1Count < splitIndex) {
           team1.push(playerData);
         } else {
           team2.push(playerData);
