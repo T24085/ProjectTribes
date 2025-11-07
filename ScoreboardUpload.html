@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Scoreboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="nav.html"></div>
+
+  <div class="container mx-auto px-4 mt-8 max-w-6xl">
+    <h1 class="text-3xl font-bold mb-6">Upload Scoreboard</h1>
+    <p class="text-gray-400 mb-6">Upload a screenshot of the match scoreboard. The system will extract player stats using OCR and match them to your team roster.</p>
+    
+    <div id="uploadSection" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm mb-2">Select Your Team</label>
+          <select id="teamSelect" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700">
+            <option value="">Loading teams...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm mb-2">Select Opponent Team</label>
+          <select id="opponentSelect" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700">
+            <option value="">Loading teams...</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-2">Map</label>
+        <select id="mapSelect" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700">
+          <option value="">Select Map</option>
+          <option value="Dry Dock">Dry Dock</option>
+          <option value="Raindance">Raindance</option>
+          <option value="Hollow">Hollow</option>
+          <option value="Dangerous Crossing">Dangerous Crossing</option>
+          <option value="Torment">Torment</option>
+          <option value="Katabatic">Katabatic</option>
+          <option value="Wave Mist">Wave Mist</option>
+          <option value="Moonrise">Moonrise</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm mb-2">Upload Scoreboard Image</label>
+        <input type="file" id="imageInput" accept="image/*" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700">
+        <p class="text-xs text-gray-400 mt-1">Upload a screenshot of the match scoreboard (PNG, JPG, etc.)</p>
+      </div>
+
+      <div id="previewSection" class="hidden">
+        <img id="imagePreview" class="max-w-full h-auto rounded border border-gray-700" />
+      </div>
+
+      <button id="processBtn" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+        Process Image with OCR
+      </button>
+
+      <div id="processingStatus" class="hidden text-center space-y-2">
+        <p class="text-gray-300">Processing image with OCR...</p>
+        <div class="bg-gray-800 rounded-full h-3">
+          <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+        <p id="progressText" class="text-sm text-gray-400">Initializing...</p>
+      </div>
+    </div>
+
+    <div id="resultsSection" class="hidden mt-8 space-y-6">
+      <h2 class="text-2xl font-bold">OCR Results - Review & Match Players</h2>
+      <p class="text-gray-400 text-sm">Review the extracted stats and match OCR player names to your roster. You can edit any values before submitting.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 id="team1Name" class="text-lg font-semibold mb-3">Team 1 (Blue)</h3>
+          <div id="team1Results" class="space-y-3"></div>
+        </div>
+        <div>
+          <h3 id="team2Name" class="text-lg font-semibold mb-3">Team 2 (Red)</h3>
+          <div id="team2Results" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button id="submitBtn" class="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded">
+          Submit for Admin Review
+        </button>
+        <button id="cancelBtn" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <div id="successMessage" class="hidden mt-6 p-4 bg-green-900 border border-green-700 rounded">
+      <p class="text-green-200 font-semibold">✓ Scoreboard submitted successfully!</p>
+      <p class="text-green-300 text-sm mt-2">Your submission is pending admin approval. You'll be notified once it's reviewed.</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, getDocs, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+
+    let teamsData = [];
+    let currentUserId = null;
+    let currentUserEmail = null;
+    let ocrResults = { team1: [], team2: [] };
+    let worker = null;
+
+    // Load teams
+    async function loadTeams() {
+      try {
+        const snap = await getDocs(collection(db, 'teams'));
+        teamsData = snap.docs
+          .filter(d => d.data().approved !== false)
+          .map(d => ({
+            id: d.id,
+            name: d.data().teamName,
+            players: (d.data().players || []).map(p => typeof p === 'string' ? p : p.name),
+            benchPlayers: d.data().benchPlayers || []
+          }));
+
+        const teamSelect = document.getElementById('teamSelect');
+        const opponentSelect = document.getElementById('opponentSelect');
+        
+        teamSelect.innerHTML = '<option value="">Select Your Team</option>';
+        opponentSelect.innerHTML = '<option value="">Select Opponent</option>';
+        
+        teamsData.forEach(t => {
+          const opt1 = document.createElement('option');
+          opt1.value = t.id;
+          opt1.textContent = t.name;
+          teamSelect.appendChild(opt1);
+          
+          const opt2 = document.createElement('option');
+          opt2.value = t.id;
+          opt2.textContent = t.name;
+          opponentSelect.appendChild(opt2);
+        });
+      } catch (error) {
+        console.error('Error loading teams:', error);
+        alert('Failed to load teams. Please refresh the page.');
+      }
+    }
+
+    // Image preprocessing - crop to ROI and enhance
+    function preprocessImage(img, canvas) {
+      const ctx = canvas.getContext('2d');
+      const H = img.height;
+      const W = img.width;
+      
+      // ROI configuration (matching Python script defaults)
+      const roiTop = 0.27;
+      const roiBottom = 0.80;
+      const roiLeft = 0.06;
+      const roiRight = 0.94;
+      
+      const y0 = Math.floor(roiTop * H);
+      const y1 = Math.floor(roiBottom * H);
+      const x0 = Math.floor(roiLeft * W);
+      const x1 = Math.floor(roiRight * W);
+      
+      // Upscale factor
+      const upscale = 2.0;
+      const cropWidth = x1 - x0;
+      const cropHeight = y1 - y0;
+      
+      canvas.width = cropWidth * upscale;
+      canvas.height = cropHeight * upscale;
+      
+      // Draw cropped and upscaled image
+      ctx.drawImage(img, x0, y0, cropWidth, cropHeight, 0, 0, canvas.width, canvas.height);
+      
+      // Apply image enhancement
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      // Enhance contrast and brightness
+      for (let i = 0; i < data.length; i += 4) {
+        // Increase contrast
+        data[i] = Math.min(255, Math.max(0, (data[i] - 128) * 1.5 + 128));
+        data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - 128) * 1.5 + 128));
+        data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - 128) * 1.5 + 128));
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      return canvas;
+    }
+
+    // Parse OCR text into structured data
+    function parseOCRText(text) {
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      const team1 = [];
+      const team2 = [];
+      
+      // Try to identify team split (look for common patterns)
+      let splitIndex = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].toLowerCase();
+        // Look for indicators of team split
+        if (line.includes('red') || line.includes('team 2') || i > lines.length / 2) {
+          splitIndex = i;
+          break;
+        }
+      }
+      
+      // If no clear split, assume middle
+      if (splitIndex === -1) {
+        splitIndex = Math.floor(lines.length / 2);
+      }
+      
+      // Parse each line
+      lines.forEach((line, idx) => {
+        const trimmed = line.trim();
+        if (trimmed.length < 3) return;
+        
+        // Try to extract player name and stats
+        // Pattern: Name followed by numbers (score, kills, assists, captures, returns)
+        const parts = trimmed.split(/\s+/);
+        if (parts.length < 2) return;
+        
+        // First part is likely player name, rest are numbers
+        const nameParts = [];
+        const numberParts = [];
+        
+        for (const part of parts) {
+          const cleaned = part.replace(/[^A-Za-z0-9]/g, '');
+          if (/^\d+$/.test(cleaned)) {
+            numberParts.push(parseInt(cleaned, 10));
+          } else if (cleaned.length > 0) {
+            nameParts.push(part);
+          }
+        }
+        
+        if (nameParts.length === 0 || numberParts.length < 5) return;
+        
+        const playerName = nameParts.join(' ').trim();
+        const score = numberParts[0] || 0;
+        const kills = numberParts[1] || 0;
+        const assists = numberParts[2] || 0;
+        const captures = numberParts[3] || 0;
+        const returns = numberParts[4] || 0;
+        
+        const playerData = {
+          player: playerName,
+          score: score,
+          kills: kills,
+          assists: assists,
+          captures: captures,
+          returns: returns,
+          time: 0 // Will be calculated or entered manually
+        };
+        
+        if (idx < splitIndex) {
+          team1.push(playerData);
+        } else {
+          team2.push(playerData);
+        }
+      });
+      
+      return { team1, team2 };
+    }
+
+    // OCR Processing
+    async function processImage(imageFile) {
+      const statusEl = document.getElementById('processingStatus');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
+      statusEl.classList.remove('hidden');
+      progressBar.style.width = '0%';
+
+      try {
+        // Create image element
+        const img = new Image();
+        const imageUrl = URL.createObjectURL(imageFile);
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = imageUrl;
+        });
+
+        // Preprocess image
+        const canvas = document.createElement('canvas');
+        preprocessImage(img, canvas);
+        
+        progressText.textContent = 'Running OCR...';
+        progressBar.style.width = '30%';
+
+        // Initialize Tesseract worker
+        if (!worker) {
+          worker = await Tesseract.createWorker('eng');
+          await worker.setParameters({
+            tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,- ',
+            tessedit_pageseg_mode: '6', // Assume uniform block of text
+          });
+        }
+
+        progressBar.style.width = '50%';
+
+        // Run OCR on preprocessed image
+        const { data: { text } } = await worker.recognize(canvas, {
+          logger: m => {
+            if (m.status === 'recognizing text') {
+              const progress = 50 + Math.round(m.progress * 40);
+              progressBar.style.width = `${progress}%`;
+              progressText.textContent = `Recognizing text... ${Math.round(m.progress * 100)}%`;
+            }
+          }
+        });
+
+        progressBar.style.width = '95%';
+        progressText.textContent = 'Parsing results...';
+
+        // Parse OCR text
+        const parsed = parseOCRText(text);
+        ocrResults = parsed;
+        
+        progressBar.style.width = '100%';
+        progressText.textContent = 'Complete!';
+        
+        setTimeout(() => {
+          statusEl.classList.add('hidden');
+          displayResults(parsed);
+          document.getElementById('resultsSection').classList.remove('hidden');
+        }, 500);
+        
+        URL.revokeObjectURL(imageUrl);
+      } catch (error) {
+        console.error('OCR Error:', error);
+        alert('Failed to process image. Please ensure the image is clear and try again.');
+        statusEl.classList.add('hidden');
+      }
+    }
+
+    // Fuzzy match player name to roster
+    function fuzzyMatchPlayer(ocrName, roster) {
+      if (!ocrName || !roster || roster.length === 0) return null;
+      
+      const ocrLower = ocrName.toLowerCase().trim();
+      
+      // Exact match
+      for (const player of roster) {
+        const playerName = typeof player === 'string' ? player : player.name;
+        if (playerName.toLowerCase() === ocrLower) {
+          return playerName;
+        }
+      }
+      
+      // Partial match (contains)
+      for (const player of roster) {
+        const playerName = typeof player === 'string' ? player : player.name;
+        const playerLower = playerName.toLowerCase();
+        if (ocrLower.includes(playerLower) || playerLower.includes(ocrLower)) {
+          return playerName;
+        }
+      }
+      
+      // Levenshtein distance match (simple)
+      let bestMatch = null;
+      let bestScore = Infinity;
+      
+      for (const player of roster) {
+        const playerName = typeof player === 'string' ? player : player.name;
+        const playerLower = playerName.toLowerCase();
+        const distance = levenshteinDistance(ocrLower, playerLower);
+        if (distance < bestScore && distance < Math.max(3, playerLower.length / 2)) {
+          bestScore = distance;
+          bestMatch = playerName;
+        }
+      }
+      
+      return bestMatch;
+    }
+
+    // Simple Levenshtein distance
+    function levenshteinDistance(str1, str2) {
+      const matrix = [];
+      for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+      }
+      for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+      }
+      for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+          if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              matrix[i][j - 1] + 1,
+              matrix[i - 1][j] + 1
+            );
+          }
+        }
+      }
+      return matrix[str2.length][str1.length];
+    }
+
+    function displayResults(results) {
+      const team1Div = document.getElementById('team1Results');
+      const team2Div = document.getElementById('team2Results');
+      
+      team1Div.innerHTML = '';
+      team2Div.innerHTML = '';
+
+      const selectedTeam = teamsData.find(t => t.id === document.getElementById('teamSelect').value);
+      const opponentTeam = teamsData.find(t => t.id === document.getElementById('opponentSelect').value);
+
+      if (selectedTeam) {
+        document.getElementById('team1Name').textContent = `${selectedTeam.name} (Blue)`;
+      }
+      if (opponentTeam) {
+        document.getElementById('team2Name').textContent = `${opponentTeam.name} (Red)`;
+      }
+
+      // Display team 1 results with roster matching
+      results.team1.forEach((player, idx) => {
+        const matchedName = selectedTeam ? fuzzyMatchPlayer(player.player, [...selectedTeam.players, ...selectedTeam.benchPlayers]) : null;
+        
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-gray-800 rounded border border-gray-700';
+        div.innerHTML = `
+          <div class="flex items-center gap-2 mb-2">
+            <input type="text" class="flex-1 px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm" 
+                   value="${player.player || ''}" data-team="1" data-index="${idx}" 
+                   placeholder="Player name from OCR" id="ocr-name-1-${idx}">
+            <select class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm roster-match" 
+                    data-team="1" data-index="${idx}" id="roster-match-1-${idx}">
+              <option value="">Match to roster</option>
+              ${selectedTeam ? [...selectedTeam.players, ...selectedTeam.benchPlayers].map(p => {
+                const playerName = typeof p === 'string' ? p : p.name;
+                return `<option value="${playerName}" ${matchedName === playerName ? 'selected' : ''}>${playerName}</option>`;
+              }).join('') : ''}
+            </select>
+          </div>
+          <div class="grid grid-cols-6 gap-1 text-xs">
+            <input type="number" placeholder="Time" value="${player.time || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="time" data-team="1" data-index="${idx}">
+            <input type="number" placeholder="Score" value="${player.score || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="score" data-team="1" data-index="${idx}">
+            <input type="number" placeholder="Kills" value="${player.kills || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="kills" data-team="1" data-index="${idx}">
+            <input type="number" placeholder="Assists" value="${player.assists || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="assists" data-team="1" data-index="${idx}">
+            <input type="number" placeholder="Captures" value="${player.captures || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="captures" data-team="1" data-index="${idx}">
+            <input type="number" placeholder="Returns" value="${player.returns || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="returns" data-team="1" data-index="${idx}">
+          </div>
+        `;
+        team1Div.appendChild(div);
+      });
+
+      // Display team 2 results
+      results.team2.forEach((player, idx) => {
+        const matchedName = opponentTeam ? fuzzyMatchPlayer(player.player, [...opponentTeam.players, ...opponentTeam.benchPlayers]) : null;
+        
+        const div = document.createElement('div');
+        div.className = 'p-3 bg-gray-800 rounded border border-gray-700';
+        div.innerHTML = `
+          <div class="flex items-center gap-2 mb-2">
+            <input type="text" class="flex-1 px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm" 
+                   value="${player.player || ''}" data-team="2" data-index="${idx}" 
+                   placeholder="Player name from OCR" id="ocr-name-2-${idx}">
+            <select class="px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm roster-match" 
+                    data-team="2" data-index="${idx}" id="roster-match-2-${idx}">
+              <option value="">Match to roster</option>
+              ${opponentTeam ? [...opponentTeam.players, ...opponentTeam.benchPlayers].map(p => {
+                const playerName = typeof p === 'string' ? p : p.name;
+                return `<option value="${playerName}" ${matchedName === playerName ? 'selected' : ''}>${playerName}</option>`;
+              }).join('') : ''}
+            </select>
+          </div>
+          <div class="grid grid-cols-6 gap-1 text-xs">
+            <input type="number" placeholder="Time" value="${player.time || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="time" data-team="2" data-index="${idx}">
+            <input type="number" placeholder="Score" value="${player.score || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="score" data-team="2" data-index="${idx}">
+            <input type="number" placeholder="Kills" value="${player.kills || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="kills" data-team="2" data-index="${idx}">
+            <input type="number" placeholder="Assists" value="${player.assists || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="assists" data-team="2" data-index="${idx}">
+            <input type="number" placeholder="Captures" value="${player.captures || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="captures" data-team="2" data-index="${idx}">
+            <input type="number" placeholder="Returns" value="${player.returns || 0}" 
+                   class="px-1 py-1 bg-gray-900 border border-gray-700 rounded" data-stat="returns" data-team="2" data-index="${idx}">
+          </div>
+        `;
+        team2Div.appendChild(div);
+      });
+    }
+
+    async function submitForReview() {
+      const teamId = document.getElementById('teamSelect').value;
+      const opponentId = document.getElementById('opponentSelect').value;
+      const map = document.getElementById('mapSelect').value;
+
+      if (!teamId || !opponentId || !map) {
+        alert('Please fill in all fields (Team, Opponent, and Map)');
+        return;
+      }
+
+      if (!currentUserId) {
+        alert('Please sign in to submit a scoreboard');
+        return;
+      }
+
+      const team = teamsData.find(t => t.id === teamId);
+      const opponent = teamsData.find(t => t.id === opponentId);
+
+      if (!team || !opponent) {
+        alert('Invalid team selection');
+        return;
+      }
+
+      // Collect final stats from the form
+      const stats = {
+        [team.name]: { players: {}, totals: { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 } },
+        [opponent.name]: { players: {}, totals: { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 } }
+      };
+
+      // Process team 1
+      document.querySelectorAll('[data-team="1"]').forEach(input => {
+        const idx = input.dataset.index;
+        const stat = input.dataset.stat;
+        const rosterSelect = document.getElementById(`roster-match-1-${idx}`);
+        const playerName = rosterSelect?.value || document.getElementById(`ocr-name-1-${idx}`)?.value;
+        
+        if (!playerName || !stat) return;
+        
+        if (!stats[team.name].players[playerName]) {
+          stats[team.name].players[playerName] = { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 };
+        }
+        
+        const value = parseFloat(input.value) || 0;
+        stats[team.name].players[playerName][stat] = value;
+        stats[team.name].totals[stat] += value;
+      });
+
+      // Process team 2
+      document.querySelectorAll('[data-team="2"]').forEach(input => {
+        const idx = input.dataset.index;
+        const stat = input.dataset.stat;
+        const rosterSelect = document.getElementById(`roster-match-2-${idx}`);
+        const playerName = rosterSelect?.value || document.getElementById(`ocr-name-2-${idx}`)?.value;
+        
+        if (!playerName || !stat) return;
+        
+        if (!stats[opponent.name].players[playerName]) {
+          stats[opponent.name].players[playerName] = { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 };
+        }
+        
+        const value = parseFloat(input.value) || 0;
+        stats[opponent.name].players[playerName][stat] = value;
+        stats[opponent.name].totals[stat] += value;
+      });
+
+      // Calculate per-minute rates
+      Object.keys(stats).forEach(teamName => {
+        const teamStats = stats[teamName];
+        Object.keys(teamStats.players).forEach(playerName => {
+          const player = teamStats.players[playerName];
+          const time = player.time || 0;
+          player.kpm = time > 0 ? (player.kills / time).toFixed(2) : '0';
+          player.apm = time > 0 ? (player.assists / time).toFixed(2) : '0';
+          player.spm = time > 0 ? (player.score / time).toFixed(2) : '0';
+          player.cpm = time > 0 ? (player.captures / time).toFixed(2) : '0';
+          player.rpm = time > 0 ? (player.returns / time).toFixed(2) : '0';
+        });
+        
+        const totals = teamStats.totals;
+        const totalTime = totals.time || 0;
+        totals.kpm = totalTime > 0 ? (totals.kills / totalTime).toFixed(2) : '0';
+        totals.apm = totalTime > 0 ? (totals.assists / totalTime).toFixed(2) : '0';
+        totals.spm = totalTime > 0 ? (totals.score / totalTime).toFixed(2) : '0';
+        totals.cpm = totalTime > 0 ? (totals.captures / totalTime).toFixed(2) : '0';
+        totals.rpm = totalTime > 0 ? (totals.returns / totalTime).toFixed(2) : '0';
+      });
+
+      try {
+        // Submit to pendingMatches
+        const pendingMatch = {
+          submittedBy: currentUserId,
+          submittedByEmail: currentUserEmail,
+          submittedAt: serverTimestamp(),
+          team1: team.name,
+          team2: opponent.name,
+          team1Id: teamId,
+          team2Id: opponentId,
+          map: map,
+          stats: stats,
+          status: 'pending',
+          ocrResults: ocrResults
+        };
+
+        await addDoc(collection(db, 'pendingMatches'), pendingMatch);
+        
+        document.getElementById('uploadSection').classList.add('hidden');
+        document.getElementById('resultsSection').classList.add('hidden');
+        document.getElementById('successMessage').classList.remove('hidden');
+        
+        // Reset form
+        setTimeout(() => {
+          location.reload();
+        }, 3000);
+      } catch (error) {
+        console.error('Error submitting:', error);
+        alert('Failed to submit scoreboard. Please try again.');
+      }
+    }
+
+    // Event listeners
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const preview = document.getElementById('imagePreview');
+        preview.src = URL.createObjectURL(file);
+        document.getElementById('previewSection').classList.remove('hidden');
+        document.getElementById('processBtn').disabled = false;
+      }
+    });
+
+    document.getElementById('processBtn').addEventListener('click', () => {
+      const file = document.getElementById('imageInput').files[0];
+      if (file) {
+        processImage(file);
+      }
+    });
+
+    document.getElementById('submitBtn').addEventListener('click', submitForReview);
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('resultsSection').classList.add('hidden');
+      document.getElementById('uploadSection').classList.remove('hidden');
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      currentUserId = user?.uid || null;
+      currentUserEmail = user?.email || null;
+      
+      if (!user) {
+        const notice = document.createElement('div');
+        notice.className = 'mb-4 p-3 bg-yellow-900 border border-yellow-700 rounded';
+        notice.innerHTML = '<p class="text-yellow-200 text-sm">Please sign in with Firebase to submit scoreboards. You can still view the upload form, but submissions require authentication.</p>';
+        document.getElementById('uploadSection').prepend(notice);
+      }
+    });
+
+    loadTeams();
+  </script>
+  <script src="./assets/include.js" defer></script>
+</body>
+</html>
+

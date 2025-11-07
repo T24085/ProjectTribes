@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pending Matches Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div id="nav-placeholder" data-include="nav.html"></div>
+
+  <div id="loginDiv" class="max-w-sm mx-auto mt-10 space-y-4">
+    <h1 class="text-2xl font-bold text-center">Admin Login</h1>
+    <input id="email" type="email" placeholder="Email" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <input id="password" type="password" placeholder="Password" class="w-full px-3 py-2 rounded bg-gray-800 border border-gray-700" />
+    <button id="loginBtn" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded">Login</button>
+  </div>
+
+  <div id="adminPanel" class="hidden container mx-auto px-4 mt-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">Pending Matches Review</h1>
+      <button id="logoutBtn" class="py-2 px-4 bg-red-600 hover:bg-red-700 rounded">Logout</button>
+    </div>
+
+    <div id="pendingMatchesList" class="space-y-4"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, getDocs, doc, deleteDoc, addDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB_ksHlcP2P9cT5jbo2IAGxbQ4zgEODkyM",
+      authDomain: "team-sign-up-b5646.firebaseapp.com",
+      projectId: "team-sign-up-b5646",
+      storageBucket: "team-sign-up-b5646.firebasestorage.app",
+      messagingSenderId: "951471144681",
+      appId: "1:951471144681:web:a2458675ce73ce9ad9ba78"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth();
+    const ADMIN_UIDS = [
+      'DkBHsCzLK5a9KiX50g0pHJrEqGq2',
+      'A2ZV8vziNsXqZkyqHzAB266B9pP2'
+    ];
+
+    const loginDiv = document.getElementById('loginDiv');
+    const adminPanel = document.getElementById('adminPanel');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const toNumber = (value) => {
+      const num = parseFloat(value);
+      return Number.isFinite(num) ? num : 0;
+    };
+
+    // Rebuild public stats function (from MatchStatsAdmin.html)
+    async function rebuildPublicStats(existingSnapshot = null) {
+      const snap = existingSnapshot || await getDocs(collection(db, 'matches'));
+      const playerTotals = new Map();
+      const playerMapStats = new Map();
+      const teamTotals = new Map();
+      let totalMatches = 0;
+
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const stats = data.stats || {};
+        const teams = Object.keys(stats);
+        if (!teams.length) return;
+        totalMatches += 1;
+        const mapName = data.map || 'Unknown';
+
+        teams.forEach(teamName => {
+          const teamStats = stats[teamName];
+          if (!teamStats) return;
+
+          const totals = teamStats.totals || {};
+          const teamEntry = teamTotals.get(teamName) || {
+            name: teamName,
+            matches: 0,
+            time: 0,
+            kills: 0,
+            assists: 0,
+            score: 0,
+            captures: 0,
+            returns: 0
+          };
+          teamEntry.matches += 1;
+          teamEntry.time += toNumber(totals.time);
+          teamEntry.kills += toNumber(totals.kills);
+          teamEntry.assists += toNumber(totals.assists);
+          teamEntry.score += toNumber(totals.score);
+          teamEntry.captures += toNumber(totals.captures);
+          teamEntry.returns += toNumber(totals.returns);
+          teamTotals.set(teamName, teamEntry);
+
+          const players = teamStats.players || {};
+          Object.entries(players).forEach(([playerName, rawStats]) => {
+            const kills = toNumber(rawStats.kills);
+            const assists = toNumber(rawStats.assists);
+            const score = toNumber(rawStats.score);
+            const captures = toNumber(rawStats.captures);
+            const returns = toNumber(rawStats.returns);
+            const time = toNumber(rawStats.time);
+
+            const totalEntry = playerTotals.get(playerName) || {
+              name: playerName,
+              teams: new Set(),
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            totalEntry.teams.add(teamName);
+            totalEntry.matches += 1;
+            totalEntry.time += time;
+            totalEntry.kills += kills;
+            totalEntry.assists += assists;
+            totalEntry.score += score;
+            totalEntry.captures += captures;
+            totalEntry.returns += returns;
+            playerTotals.set(playerName, totalEntry);
+
+            const mapKey = `${playerName}__${mapName}`;
+            const mapEntry = playerMapStats.get(mapKey) || {
+              player: playerName,
+              teams: new Set(),
+              map: mapName,
+              matches: 0,
+              time: 0,
+              kills: 0,
+              assists: 0,
+              score: 0,
+              captures: 0,
+              returns: 0
+            };
+            mapEntry.teams.add(teamName);
+            mapEntry.matches += 1;
+            mapEntry.time += time;
+            mapEntry.kills += kills;
+            mapEntry.assists += assists;
+            mapEntry.score += score;
+            mapEntry.captures += captures;
+            mapEntry.returns += returns;
+            playerMapStats.set(mapKey, mapEntry);
+          });
+        });
+      });
+
+      const serializePlayerTotals = Array.from(playerTotals.values()).map(entry => ({
+        name: entry.name,
+        teams: Array.from(entry.teams),
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const serializePlayerMapStats = Array.from(playerMapStats.values()).map(entry => ({
+        player: entry.player,
+        teams: Array.from(entry.teams),
+        map: entry.map,
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const serializeTeamTotals = Array.from(teamTotals.values()).map(entry => ({
+        name: entry.name,
+        matches: entry.matches,
+        time: Number(entry.time.toFixed(4)),
+        kills: entry.kills,
+        assists: entry.assists,
+        score: entry.score,
+        captures: entry.captures,
+        returns: entry.returns
+      }));
+
+      const payload = {
+        generatedAt: serverTimestamp(),
+        totalMatches,
+        playerTotals: serializePlayerTotals,
+        playerMapStats: serializePlayerMapStats,
+        teamTotals: serializeTeamTotals
+      };
+
+      await setDoc(doc(db, 'publicStats', 'aggregates'), payload);
+    }
+
+    loginBtn.addEventListener('click', () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      signInWithEmailAndPassword(auth, email, password).catch(err => alert(err.message));
+    });
+
+    logoutBtn.addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, user => {
+      if (user && ADMIN_UIDS.includes(user.uid)) {
+        loginDiv.classList.add('hidden');
+        adminPanel.classList.remove('hidden');
+        loadPendingMatches();
+      } else {
+        loginDiv.classList.remove('hidden');
+        adminPanel.classList.add('hidden');
+        if (user) {
+          alert('Access denied.');
+          signOut(auth);
+        }
+      }
+    });
+
+    async function loadPendingMatches() {
+      try {
+        const snap = await getDocs(collection(db, 'pendingMatches'));
+        const listDiv = document.getElementById('pendingMatchesList');
+        listDiv.innerHTML = '';
+
+        if (snap.empty) {
+          listDiv.innerHTML = '<p class="text-gray-400">No pending matches.</p>';
+          return;
+        }
+
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          const matchCard = document.createElement('div');
+          matchCard.className = 'p-6 bg-gray-800 rounded-lg border border-gray-700';
+          
+          const submittedDate = data.submittedAt?.toDate ? data.submittedAt.toDate().toLocaleString() : 'Unknown';
+          const submittedBy = data.submittedByEmail || data.submittedBy || 'Unknown';
+          
+          // Format stats for display
+          const formatStats = (stats) => {
+            if (!stats) return 'No stats';
+            const teams = Object.keys(stats);
+            return teams.map(teamName => {
+              const teamStats = stats[teamName];
+              const players = Object.keys(teamStats.players || {});
+              const totals = teamStats.totals || {};
+              return `${teamName}: ${players.length} players, ${totals.kills || 0} kills, ${totals.score || 0} score`;
+            }).join('<br>');
+          };
+          
+          matchCard.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <h3 class="text-xl font-bold">${data.team1} vs ${data.team2}</h3>
+                <p class="text-sm text-gray-400">Map: ${data.map}</p>
+                <p class="text-sm text-gray-400">Submitted: ${submittedDate}</p>
+                <p class="text-sm text-gray-400">By: ${submittedBy}</p>
+              </div>
+              <div class="flex gap-2">
+                <button class="approve-btn px-4 py-2 bg-green-600 hover:bg-green-700 rounded" data-id="${docSnap.id}">
+                  Approve
+                </button>
+                <button class="reject-btn px-4 py-2 bg-red-600 hover:bg-red-700 rounded" data-id="${docSnap.id}">
+                  Reject
+                </button>
+              </div>
+            </div>
+            <div class="mt-4 space-y-2">
+              <h4 class="font-semibold">Stats Summary:</h4>
+              <div class="text-sm text-gray-300">${formatStats(data.stats)}</div>
+            </div>
+            <details class="mt-4">
+              <summary class="cursor-pointer text-sm text-gray-400 hover:text-gray-300">View Full Stats JSON</summary>
+              <pre class="mt-2 text-xs bg-gray-900 p-3 rounded overflow-auto max-h-64">${JSON.stringify(data.stats, null, 2)}</pre>
+            </details>
+          `;
+
+          matchCard.querySelector('.approve-btn').addEventListener('click', () => approveMatch(docSnap.id, data));
+          matchCard.querySelector('.reject-btn').addEventListener('click', () => rejectMatch(docSnap.id));
+          
+          listDiv.appendChild(matchCard);
+        });
+      } catch (error) {
+        console.error('Error loading pending matches:', error);
+        const listDiv = document.getElementById('pendingMatchesList');
+        listDiv.innerHTML = '<p class="text-red-400">Error loading pending matches. Please refresh the page.</p>';
+      }
+    }
+
+    async function approveMatch(pendingId, matchData) {
+      if (!confirm('Approve this match? It will be added to the matches collection and public stats will be rebuilt.')) return;
+
+      try {
+        // Add to matches collection (same format as MatchStatsAdmin)
+        const matchDoc = {
+          map: matchData.map,
+          team1: matchData.team1,
+          team2: matchData.team2,
+          created: serverTimestamp(),
+          stats: matchData.stats
+        };
+
+        await addDoc(collection(db, 'matches'), matchDoc);
+        
+        // Delete from pendingMatches
+        await deleteDoc(doc(db, 'pendingMatches', pendingId));
+        
+        // Rebuild public stats
+        try {
+          await rebuildPublicStats();
+          alert('Match approved! Public stats have been refreshed.');
+        } catch (rebuildError) {
+          console.error('Error rebuilding stats:', rebuildError);
+          alert('Match approved, but failed to rebuild public stats. You may need to rebuild manually.');
+        }
+        
+        loadPendingMatches();
+      } catch (error) {
+        console.error('Error approving match:', error);
+        alert('Failed to approve match. Please try again.');
+      }
+    }
+
+    async function rejectMatch(pendingId) {
+      if (!confirm('Reject this match submission? It will be permanently deleted.')) return;
+      
+      try {
+        await deleteDoc(doc(db, 'pendingMatches', pendingId));
+        alert('Match rejected and removed.');
+        loadPendingMatches();
+      } catch (error) {
+        console.error('Error rejecting match:', error);
+        alert('Failed to reject match. Please try again.');
+      }
+    }
+  </script>
+  <script src="./assets/include.js" defer></script>
+</body>
+</html>
+

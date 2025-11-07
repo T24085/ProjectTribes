@@ -55,6 +55,18 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /pendingMatches/{pendingId} {
+      allow read: if isAdmin();
+      allow create: if request.auth != null &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.team1 is string &&
+        request.resource.data.team2 is string &&
+        request.resource.data.map is string &&
+        request.resource.data.stats is map &&
+        request.resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
     // Ladder system rules (consolidated - removed duplicates)
     match /ladder/{docId} {
       allow read: if true;
