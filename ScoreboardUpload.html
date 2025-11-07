@@ -231,93 +231,184 @@
       
       lines.forEach((line, idx) => {
         const trimmed = line.trim();
-        if (trimmed.length < 2) return; // Even shorter lines might have stats
+        if (trimmed.length < 2) return;
         
-        // Extract all numbers from the line - be very lenient
+        // Extract all numbers from the line with their positions
         const numberMatches = [...trimmed.matchAll(/\d+/g)];
-        if (!numberMatches || numberMatches.length < 2) return; // Changed from 3 to 2
+        if (!numberMatches || numberMatches.length < 2) return;
         
-        // Convert to numbers
-        const numbers = numberMatches.map(m => parseInt(m[0], 10));
+        // Convert to numbers with positions
+        const numbers = numberMatches.map(m => ({
+          value: parseInt(m[0], 10),
+          index: m.index,
+          length: m[0].length
+        }));
         
-        // Find the score (typically the largest number, usually 1000+)
-        // But also handle smaller scores
-        const sortedByValue = [...numbers].sort((a, b) => b - a);
-        let score = sortedByValue[0];
+        // Check if this line contains TWO player stat sets (side-by-side teams)
+        // Look for two large scores (typically 1000+) which indicates two players
+        const largeScores = numbers.filter(n => n.value > 500);
         
-        // If largest is small, look for first number > 50 (more lenient)
-        if (score < 50) {
-          score = numbers.find(n => n > 50) || numbers[0];
-        }
-        
-        const scoreIndex = numbers.indexOf(score);
-        
-        // Try to extract 5 stats: Score, Kills, Assists, Captures, Returns
-        // Be flexible about the order and position
-        let kills = 0, assists = 0, captures = 0, returns = 0;
-        
-        // Strategy 1: 4 consecutive numbers after score
-        if (scoreIndex < numbers.length - 4) {
-          kills = numbers[scoreIndex + 1] || 0;
-          assists = numbers[scoreIndex + 2] || 0;
-          captures = numbers[scoreIndex + 3] || 0;
-          returns = numbers[scoreIndex + 4] || 0;
-        } else if (numbers.length >= 5) {
-          // Strategy 2: Take last 4 numbers (excluding score)
-          const allButScore = numbers.filter((n, i) => i !== scoreIndex);
-          if (allButScore.length >= 4) {
-            const lastFour = allButScore.slice(-4);
-            kills = lastFour[0] || 0;
-            assists = lastFour[1] || 0;
-            captures = lastFour[2] || 0;
-            returns = lastFour[3] || 0;
-          } else if (allButScore.length > 0) {
-            // Strategy 3: Use what we have, fill in order
+        if (largeScores.length >= 2) {
+          // This line has TWO players - split it!
+          // Find the two largest scores as anchors
+          const sortedScores = [...largeScores].sort((a, b) => b.value - a.value);
+          const score1 = sortedScores[0];
+          const score2 = sortedScores[1];
+          
+          // Split numbers into two groups based on score positions
+          const midpoint = (score1.index + score2.index) / 2;
+          const team1Numbers = numbers.filter(n => n.index < midpoint);
+          const team2Numbers = numbers.filter(n => n.index >= midpoint);
+          
+          // Extract stats for first player (left side)
+          if (team1Numbers.length >= 3) {
+            const nums1 = team1Numbers.map(n => n.value);
+            const score1Val = score1.value;
+            const score1Idx = nums1.indexOf(score1Val);
+            
+            let kills1 = 0, assists1 = 0, captures1 = 0, returns1 = 0;
+            if (score1Idx < nums1.length - 4) {
+              kills1 = nums1[score1Idx + 1] || 0;
+              assists1 = nums1[score1Idx + 2] || 0;
+              captures1 = nums1[score1Idx + 3] || 0;
+              returns1 = nums1[score1Idx + 4] || 0;
+            } else if (nums1.length >= 5) {
+              const allButScore1 = nums1.filter((n, i) => i !== score1Idx);
+              if (allButScore1.length >= 4) {
+                const lastFour = allButScore1.slice(-4);
+                kills1 = lastFour[0] || 0;
+                assists1 = lastFour[1] || 0;
+                captures1 = lastFour[2] || 0;
+                returns1 = lastFour[3] || 0;
+              }
+            }
+            
+            statRows.push({
+              score: score1Val,
+              kills: kills1,
+              assists: assists1,
+              captures: captures1,
+              returns: returns1,
+              time: 0,
+              lineIndex: idx,
+              rawNumbers: nums1,
+              team: 1
+            });
+          }
+          
+          // Extract stats for second player (right side)
+          if (team2Numbers.length >= 3) {
+            const nums2 = team2Numbers.map(n => n.value);
+            const score2Val = score2.value;
+            const score2Idx = nums2.indexOf(score2Val);
+            
+            let kills2 = 0, assists2 = 0, captures2 = 0, returns2 = 0;
+            if (score2Idx < nums2.length - 4) {
+              kills2 = nums2[score2Idx + 1] || 0;
+              assists2 = nums2[score2Idx + 2] || 0;
+              captures2 = nums2[score2Idx + 3] || 0;
+              returns2 = nums2[score2Idx + 4] || 0;
+            } else if (nums2.length >= 5) {
+              const allButScore2 = nums2.filter((n, i) => i !== score2Idx);
+              if (allButScore2.length >= 4) {
+                const lastFour = allButScore2.slice(-4);
+                kills2 = lastFour[0] || 0;
+                assists2 = lastFour[1] || 0;
+                captures2 = lastFour[2] || 0;
+                returns2 = lastFour[3] || 0;
+              }
+            }
+            
+            statRows.push({
+              score: score2Val,
+              kills: kills2,
+              assists: assists2,
+              captures: captures2,
+              returns: returns2,
+              time: 0,
+              lineIndex: idx,
+              rawNumbers: nums2,
+              team: 2
+            });
+          }
+        } else {
+          // Single player on this line - process normally
+          const nums = numbers.map(n => n.value);
+          const sortedByValue = [...nums].sort((a, b) => b - a);
+          let score = sortedByValue[0];
+          
+          if (score < 50) {
+            score = nums.find(n => n > 50) || nums[0];
+          }
+          
+          const scoreIndex = nums.indexOf(score);
+          let kills = 0, assists = 0, captures = 0, returns = 0;
+          
+          if (scoreIndex < nums.length - 4) {
+            kills = nums[scoreIndex + 1] || 0;
+            assists = nums[scoreIndex + 2] || 0;
+            captures = nums[scoreIndex + 3] || 0;
+            returns = nums[scoreIndex + 4] || 0;
+          } else if (nums.length >= 5) {
+            const allButScore = nums.filter((n, i) => i !== scoreIndex);
+            if (allButScore.length >= 4) {
+              const lastFour = allButScore.slice(-4);
+              kills = lastFour[0] || 0;
+              assists = lastFour[1] || 0;
+              captures = lastFour[2] || 0;
+              returns = lastFour[3] || 0;
+            } else if (allButScore.length > 0) {
+              if (allButScore.length >= 1) kills = allButScore[0];
+              if (allButScore.length >= 2) assists = allButScore[1];
+              if (allButScore.length >= 3) captures = allButScore[2];
+              if (allButScore.length >= 4) returns = allButScore[3];
+            }
+          } else if (nums.length >= 3) {
+            const allButScore = nums.filter((n, i) => i !== scoreIndex);
             if (allButScore.length >= 1) kills = allButScore[0];
             if (allButScore.length >= 2) assists = allButScore[1];
             if (allButScore.length >= 3) captures = allButScore[2];
-            if (allButScore.length >= 4) returns = allButScore[3];
           }
-        } else if (numbers.length >= 3) {
-          // Strategy 4: Even with just 3 numbers, try to extract
-          const allButScore = numbers.filter((n, i) => i !== scoreIndex);
-          if (allButScore.length >= 1) kills = allButScore[0];
-          if (allButScore.length >= 2) assists = allButScore[1];
-          if (allButScore.length >= 3) captures = allButScore[2];
-        }
-        
-        // Be very lenient - add if we have at least 2 numbers total
-        // This will catch more rows even if incomplete
-        if (numbers.length >= 2) {
-          statRows.push({
-            score: score,
-            kills: kills,
-            assists: assists,
-            captures: captures,
-            returns: returns,
-            time: 0,
-            lineIndex: idx,
-            rawNumbers: numbers // Keep for debugging
-          });
+          
+          if (nums.length >= 2) {
+            statRows.push({
+              score: score,
+              kills: kills,
+              assists: assists,
+              captures: captures,
+              returns: returns,
+              time: 0,
+              lineIndex: idx,
+              rawNumbers: nums
+            });
+          }
         }
       });
       
-      // Filter out obvious non-stat rows (like single digit numbers, timestamps, etc.)
+      // Filter out obvious non-stat rows
       const filteredRows = statRows.filter(row => {
         // Must have a score > 50 or at least 3 numbers
-        return row.score > 50 || row.rawNumbers.length >= 3;
+        return row.score > 50 || (row.rawNumbers && row.rawNumbers.length >= 3);
       });
       
-      // Split stat rows roughly in half (assuming equal teams)
-      const splitIndex = Math.ceil(filteredRows.length / 2);
-      
-      filteredRows.forEach((row, idx) => {
-        // Remove rawNumbers before adding
-        const { rawNumbers, ...cleanRow } = row;
-        if (idx < splitIndex) {
+      // Split rows - use team assignment if available, otherwise split by position
+      filteredRows.forEach((row) => {
+        // Remove rawNumbers and team before adding
+        const { rawNumbers, team, ...cleanRow } = row;
+        
+        if (team === 1) {
           team1.push(cleanRow);
-        } else {
+        } else if (team === 2) {
           team2.push(cleanRow);
+        } else {
+          // No team assigned - split by position (roughly half)
+          // This handles single-player lines that weren't part of a dual-line
+          const currentTotal = team1.length + team2.length;
+          if (team1.length <= team2.length) {
+            team1.push(cleanRow);
+          } else {
+            team2.push(cleanRow);
+          }
         }
       });
       
