@@ -70,8 +70,23 @@
     </div>
 
     <div id="resultsSection" class="hidden mt-8 space-y-6">
-      <h2 class="text-2xl font-bold">OCR Results - Review & Match Players</h2>
-      <p class="text-gray-400 text-sm">Review the extracted stats and match OCR player names to your roster. You can edit any values before submitting.</p>
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-2xl font-bold">OCR Results - Review & Match Players</h2>
+          <p class="text-gray-400 text-sm">Review the extracted stats and match them to players from your roster. You can edit any values before submitting.</p>
+        </div>
+        <button id="showRawOCR" class="px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded text-sm">Show Raw OCR Text</button>
+      </div>
+      
+      <div id="rawOCRModal" class="hidden fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-4xl max-h-96 overflow-auto">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold">Raw OCR Text</h3>
+            <button id="closeRawOCR" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded">Close</button>
+          </div>
+          <pre id="rawOCRText" class="text-xs text-gray-300 whitespace-pre-wrap bg-gray-900 p-4 rounded"></pre>
+        </div>
+      </div>
       
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
@@ -378,6 +393,9 @@
         console.log('OCR Raw Text:', text);
         console.log('OCR Words:', words);
         console.log('Text lines:', text.split('\n').length);
+
+        // Store raw OCR text for display
+        window.rawOCRText = text;
 
         // Parse OCR text
         const parsed = parseOCRText(text);
@@ -1017,6 +1035,23 @@
     document.getElementById('cancelBtn').addEventListener('click', () => {
       document.getElementById('resultsSection').classList.add('hidden');
       document.getElementById('uploadSection').classList.remove('hidden');
+    });
+
+    // Show/hide raw OCR text modal
+    document.getElementById('showRawOCR')?.addEventListener('click', () => {
+      const modal = document.getElementById('rawOCRModal');
+      const textArea = document.getElementById('rawOCRText');
+      if (modal && textArea && window.rawOCRText) {
+        textArea.textContent = window.rawOCRText;
+        modal.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('closeRawOCR')?.addEventListener('click', () => {
+      const modal = document.getElementById('rawOCRModal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
     });
 
     onAuthStateChanged(auth, (user) => {
