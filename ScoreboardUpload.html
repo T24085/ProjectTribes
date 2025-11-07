@@ -233,8 +233,20 @@
         const trimmed = line.trim();
         if (trimmed.length < 2) return;
         
+        // First, handle comma-separated numbers (e.g., "3,650" -> 3650)
+        // Replace comma-separated numbers with their numeric equivalent
+        let processedLine = trimmed.replace(/(\d{1,3}),(\d{3})/g, (match, p1, p2) => {
+          return (parseInt(p1) * 1000 + parseInt(p2)).toString();
+        });
+        
+        // Look for team separators (common patterns: "w FPS", "wv FPS", etc.)
+        const teamSeparatorPattern = /(?:wv?\s*FPS[.,]?|FPS[.,]?\s*)/i;
+        const hasSeparator = teamSeparatorPattern.test(processedLine);
+        const separatorMatch = processedLine.match(teamSeparatorPattern);
+        const separatorIndex = separatorMatch ? separatorMatch.index : -1;
+        
         // Extract all numbers from the line with their positions
-        const numberMatches = [...trimmed.matchAll(/\d+/g)];
+        const numberMatches = [...processedLine.matchAll(/\d+/g)];
         if (!numberMatches || numberMatches.length < 2) return;
         
         // Convert to numbers with positions
@@ -248,17 +260,91 @@
         // Look for two large scores (typically 1000+) which indicates two players
         const largeScores = numbers.filter(n => n.value > 500);
         
-        if (largeScores.length >= 2) {
+        if (largeScores.length >= 2 || hasSeparator) {
           // This line has TWO players - split it!
-          // Find the two largest scores as anchors
-          const sortedScores = [...largeScores].sort((a, b) => b.value - a.value);
-          const score1 = sortedScores[0];
-          const score2 = sortedScores[1];
+          let score1, score2;
+          let midpoint;
           
-          // Split numbers into two groups based on score positions
-          const midpoint = (score1.index + score2.index) / 2;
+          if (hasSeparator && separatorIndex > 0) {
+            // Use the separator as the split point
+            midpoint = separatorIndex;
+            // Find largest score on each side of separator
+            const leftScores = largeScores.filter(n => n.index < midpoint);
+            const rightScores = largeScores.filter(n => n.index >= midpoint);
+            score1 = leftScores.length > 0 ? leftScores.sort((a, b) => b.value - a.value)[0] : null;
+            score2 = rightScores.length > 0 ? rightScores.sort((a, b) => b.value - a.value)[0] : null;
+          } else {
+            // Fall back to finding two largest scores
+            const sortedScores = [...largeScores].sort((a, b) => b.value - a.value);
+            score1 = sortedScores[0];
+            score2 = sortedScores[1];
+            midpoint = (score1.index + score2.index) / 2;
+          }
+          
+          if (!score1 || !score2) return; // Need both scores to split
+          
+          // Split numbers into two groups based on midpoint
           const team1Numbers = numbers.filter(n => n.index < midpoint);
           const team2Numbers = numbers.filter(n => n.index >= midpoint);
+          
+          // Helper function to extract and validate stats
+          function extractStats(numbers, scoreValue, scoreIndex) {
+            let kills = 0, assists = 0, captures = 0, returns = 0;
+            
+            // Try to find 4 consecutive numbers after the score
+            if (scoreIndex < numbers.length - 4) {
+              const candidateKills = numbers[scoreIndex + 1];
+              const candidateAssists = numbers[scoreIndex + 2];
+              const candidateCaptures = numbers[scoreIndex + 3];
+              const candidateReturns = numbers[scoreIndex + 4];
+              
+              // Validate: stats should be much smaller than score (typically < 100)
+              // If a number is > 500, it's probably a misread score, not a stat
+              if (candidateKills < 500 && candidateAssists < 500 && 
+                  candidateCaptures < 500 && candidateReturns < 500) {
+                kills = candidateKills || 0;
+                assists = candidateAssists || 0;
+                captures = candidateCaptures || 0;
+                returns = candidateReturns || 0;
+                return { kills, assists, captures, returns };
+              }
+            }
+            
+            // Fallback: find the 4 largest numbers that are smaller than the score
+            const allButScore = numbers.filter((n, i) => i !== scoreIndex && n < scoreValue);
+            if (allButScore.length >= 4) {
+              // Take the 4 largest numbers that are reasonable stats (< 200)
+              const reasonableStats = allButScore.filter(n => n < 200).sort((a, b) => b - a);
+              if (reasonableStats.length >= 4) {
+                const lastFour = reasonableStats.slice(0, 4).sort((a, b) => {
+                  // Try to maintain order - prefer numbers that appear after the score
+                  const aIdx = numbers.indexOf(a);
+                  const bIdx = numbers.indexOf(b);
+                  return aIdx - bIdx;
+                });
+                kills = lastFour[0] || 0;
+                assists = lastFour[1] || 0;
+                captures = lastFour[2] || 0;
+                returns = lastFour[3] || 0;
+              } else {
+                // Use what we have
+                const lastFour = allButScore.slice(-4);
+                kills = lastFour[0] || 0;
+                assists = lastFour[1] || 0;
+                captures = lastFour[2] || 0;
+                returns = lastFour[3] || 0;
+              }
+            } else if (allButScore.length > 0) {
+              // Use what we have, filtering out unreasonable values
+              const validStats = allButScore.filter(n => n < 200);
+              if (validStats.length >= 1) kills = validStats[0];
+              if (validStats.length >= 2) assists = validStats[1];
+              if (validStats.length >= 3) captures = validStats[2];
+              if (validStats.length >= 4) returns = validStats[3];
+            }
+            
+            return { kills, assists, captures, returns };
+          }
           
           // Extract stats for first player (left side)
           if (team1Numbers.length >= 3) {
@@ -266,29 +352,14 @@
             const score1Val = score1.value;
             const score1Idx = nums1.indexOf(score1Val);
             
-            let kills1 = 0, assists1 = 0, captures1 = 0, returns1 = 0;
-            if (score1Idx < nums1.length - 4) {
-              kills1 = nums1[score1Idx + 1] || 0;
-              assists1 = nums1[score1Idx + 2] || 0;
-              captures1 = nums1[score1Idx + 3] || 0;
-              returns1 = nums1[score1Idx + 4] || 0;
-            } else if (nums1.length >= 5) {
-              const allButScore1 = nums1.filter((n, i) => i !== score1Idx);
-              if (allButScore1.length >= 4) {
-                const lastFour = allButScore1.slice(-4);
-                kills1 = lastFour[0] || 0;
-                assists1 = lastFour[1] || 0;
-                captures1 = lastFour[2] || 0;
-                returns1 = lastFour[3] || 0;
-              }
-            }
+            const stats1 = extractStats(nums1, score1Val, score1Idx);
             
             statRows.push({
               score: score1Val,
-              kills: kills1,
-              assists: assists1,
-              captures: captures1,
-              returns: returns1,
+              kills: stats1.kills,
+              assists: stats1.assists,
+              captures: stats1.captures,
+              returns: stats1.returns,
               time: 0,
               lineIndex: idx,
               rawNumbers: nums1,
@@ -302,29 +373,14 @@
             const score2Val = score2.value;
             const score2Idx = nums2.indexOf(score2Val);
             
-            let kills2 = 0, assists2 = 0, captures2 = 0, returns2 = 0;
-            if (score2Idx < nums2.length - 4) {
-              kills2 = nums2[score2Idx + 1] || 0;
-              assists2 = nums2[score2Idx + 2] || 0;
-              captures2 = nums2[score2Idx + 3] || 0;
-              returns2 = nums2[score2Idx + 4] || 0;
-            } else if (nums2.length >= 5) {
-              const allButScore2 = nums2.filter((n, i) => i !== score2Idx);
-              if (allButScore2.length >= 4) {
-                const lastFour = allButScore2.slice(-4);
-                kills2 = lastFour[0] || 0;
-                assists2 = lastFour[1] || 0;
-                captures2 = lastFour[2] || 0;
-                returns2 = lastFour[3] || 0;
-              }
-            }
+            const stats2 = extractStats(nums2, score2Val, score2Idx);
             
             statRows.push({
               score: score2Val,
-              kills: kills2,
-              assists: assists2,
-              captures: captures2,
-              returns: returns2,
+              kills: stats2.kills,
+              assists: stats2.assists,
+              captures: stats2.captures,
+              returns: stats2.returns,
               time: 0,
               lineIndex: idx,
               rawNumbers: nums2,
@@ -342,41 +398,67 @@
           }
           
           const scoreIndex = nums.indexOf(score);
-          let kills = 0, assists = 0, captures = 0, returns = 0;
           
-          if (scoreIndex < nums.length - 4) {
-            kills = nums[scoreIndex + 1] || 0;
-            assists = nums[scoreIndex + 2] || 0;
-            captures = nums[scoreIndex + 3] || 0;
-            returns = nums[scoreIndex + 4] || 0;
-          } else if (nums.length >= 5) {
-            const allButScore = nums.filter((n, i) => i !== scoreIndex);
-            if (allButScore.length >= 4) {
-              const lastFour = allButScore.slice(-4);
-              kills = lastFour[0] || 0;
-              assists = lastFour[1] || 0;
-              captures = lastFour[2] || 0;
-              returns = lastFour[3] || 0;
-            } else if (allButScore.length > 0) {
-              if (allButScore.length >= 1) kills = allButScore[0];
-              if (allButScore.length >= 2) assists = allButScore[1];
-              if (allButScore.length >= 3) captures = allButScore[2];
-              if (allButScore.length >= 4) returns = allButScore[3];
+          // Use the same validation logic
+          function extractStatsSingle(numbers, scoreValue, scoreIndex) {
+            let kills = 0, assists = 0, captures = 0, returns = 0;
+            
+            if (scoreIndex < numbers.length - 4) {
+              const candidateKills = numbers[scoreIndex + 1];
+              const candidateAssists = numbers[scoreIndex + 2];
+              const candidateCaptures = numbers[scoreIndex + 3];
+              const candidateReturns = numbers[scoreIndex + 4];
+              
+              if (candidateKills < 500 && candidateAssists < 500 && 
+                  candidateCaptures < 500 && candidateReturns < 500) {
+                kills = candidateKills || 0;
+                assists = candidateAssists || 0;
+                captures = candidateCaptures || 0;
+                returns = candidateReturns || 0;
+                return { kills, assists, captures, returns };
+              }
             }
-          } else if (nums.length >= 3) {
-            const allButScore = nums.filter((n, i) => i !== scoreIndex);
-            if (allButScore.length >= 1) kills = allButScore[0];
-            if (allButScore.length >= 2) assists = allButScore[1];
-            if (allButScore.length >= 3) captures = allButScore[2];
+            
+            const allButScore = numbers.filter((n, i) => i !== scoreIndex && n < scoreValue);
+            if (allButScore.length >= 4) {
+              const reasonableStats = allButScore.filter(n => n < 200).sort((a, b) => b - a);
+              if (reasonableStats.length >= 4) {
+                const lastFour = reasonableStats.slice(0, 4).sort((a, b) => {
+                  const aIdx = numbers.indexOf(a);
+                  const bIdx = numbers.indexOf(b);
+                  return aIdx - bIdx;
+                });
+                kills = lastFour[0] || 0;
+                assists = lastFour[1] || 0;
+                captures = lastFour[2] || 0;
+                returns = lastFour[3] || 0;
+              } else {
+                const lastFour = allButScore.slice(-4);
+                kills = lastFour[0] || 0;
+                assists = lastFour[1] || 0;
+                captures = lastFour[2] || 0;
+                returns = lastFour[3] || 0;
+              }
+            } else if (allButScore.length > 0) {
+              const validStats = allButScore.filter(n => n < 200);
+              if (validStats.length >= 1) kills = validStats[0];
+              if (validStats.length >= 2) assists = validStats[1];
+              if (validStats.length >= 3) captures = validStats[2];
+              if (validStats.length >= 4) returns = validStats[3];
+            }
+            
+            return { kills, assists, captures, returns };
           }
+          
+          const stats = extractStatsSingle(nums, score, scoreIndex);
           
           if (nums.length >= 2) {
             statRows.push({
               score: score,
-              kills: kills,
-              assists: assists,
-              captures: captures,
-              returns: returns,
+              kills: stats.kills,
+              assists: stats.assists,
+              captures: stats.captures,
+              returns: stats.returns,
               time: 0,
               lineIndex: idx,
               rawNumbers: nums
