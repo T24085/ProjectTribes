@@ -686,8 +686,8 @@
       const team1Roster = selectedTeam ? [...selectedTeam.players, ...selectedTeam.benchPlayers] : [];
       const team2Roster = opponentTeam ? [...opponentTeam.players, ...opponentTeam.benchPlayers] : [];
 
-      // Build entries: OCR stat rows + all roster players
-      // Users will match OCR stats to roster players via dropdown
+      // Build entries: Only OCR stat rows (no automatic roster loading)
+      // Users can manually add players via "Add Substitute Player" button if needed
       team1Entries = [];
       team2Entries = [];
 
@@ -701,25 +701,6 @@
         });
       });
 
-      // Team 1: Add all roster players (for manual entry or matching)
-      team1Roster.forEach(playerName => {
-        const playerNameStr = typeof playerName === 'string' ? playerName : playerName.name;
-        // Check if this player already has OCR stats matched
-        const hasOCR = team1Entries.some(e => e.matchedPlayer === playerNameStr);
-        if (!hasOCR) {
-          team1Entries.push({
-            player: playerNameStr,
-            score: 0,
-            kills: 0,
-            assists: 0,
-            captures: 0,
-            returns: 0,
-            time: 0,
-            isOCR: false
-          });
-        }
-      });
-
       // Team 2: Add OCR stat rows
       results.team2.forEach((statRow, idx) => {
         team2Entries.push({
@@ -728,24 +709,6 @@
           isOCR: true,
           originalIdx: idx
         });
-      });
-
-      // Team 2: Add all roster players
-      team2Roster.forEach(playerName => {
-        const playerNameStr = typeof playerName === 'string' ? playerName : playerName.name;
-        const hasOCR = team2Entries.some(e => e.matchedPlayer === playerNameStr);
-        if (!hasOCR) {
-          team2Entries.push({
-            player: playerNameStr,
-            score: 0,
-            kills: 0,
-            assists: 0,
-            captures: 0,
-            returns: 0,
-            time: 0,
-            isOCR: false
-          });
-        }
       });
 
       // Display team 1 entries
