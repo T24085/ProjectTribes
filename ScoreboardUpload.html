@@ -286,6 +286,8 @@
       statusEl.classList.remove('hidden');
       progressBar.style.width = '0%';
 
+      let progressInterval = null;
+
       try {
         // Create image element
         const img = new Image();
@@ -314,17 +316,24 @@
         }
 
         progressBar.style.width = '50%';
+        progressText.textContent = 'Running OCR... This may take a moment.';
+
+        // Simple progress animation while OCR runs (since logger causes DataCloneError)
+        let progressAnim = 50;
+        progressInterval = setInterval(() => {
+          progressAnim = Math.min(90, progressAnim + 2);
+          progressBar.style.width = `${progressAnim}%`;
+        }, 200);
 
         // Run OCR on preprocessed image
-        const { data: { text } } = await worker.recognize(canvas, {
-          logger: m => {
-            if (m.status === 'recognizing text') {
-              const progress = 50 + Math.round(m.progress * 40);
-              progressBar.style.width = `${progress}%`;
-              progressText.textContent = `Recognizing text... ${Math.round(m.progress * 100)}%`;
-            }
-          }
-        });
+        // Note: Logger removed to avoid DataCloneError - functions with closures can't be serialized to workers
+        const { data: { text } } = await worker.recognize(canvas);
+        
+        // Clear progress animation
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
 
         progressBar.style.width = '95%';
         progressText.textContent = 'Parsing results...';
@@ -344,6 +353,11 @@
         
         URL.revokeObjectURL(imageUrl);
       } catch (error) {
+        // Clear progress animation on error
+        if (progressInterval) {
+          clearInterval(progressInterval);
+          progressInterval = null;
+        }
         console.error('OCR Error:', error);
         alert('Failed to process image. Please ensure the image is clear and try again.');
         statusEl.classList.add('hidden');
