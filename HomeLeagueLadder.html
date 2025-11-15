@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ladder Board | Tribes Professional League</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" href="Tribes Professional League.png" type="image/png">
+  <style>
+    :root {
+      --bg-color: #030712;
+      --bg-gradient: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 55%), radial-gradient(circle at 80% 30%, rgba(129, 140, 248, 0.12), transparent 60%), linear-gradient(220deg, rgba(15, 23, 42, 0.88), rgba(2, 6, 23, 0.94));
+      --panel-bg: rgba(15, 23, 42, 0.82);
+      --surface-glass: rgba(17, 24, 39, 0.65);
+      --card-bg: rgba(13, 19, 33, 0.84);
+      --text-primary: #e2e8f0;
+      --text-muted: #94a3b8;
+      --accent: #8b5cf6;
+      --accent-strong: #38bdf8;
+      --success: #22c55e;
+      --danger: #f87171;
+      --warning: #f59e0b;
+      --transition-snappy: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-xl: 0 32px 65px -25px rgba(46, 78, 155, 0.48);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: var(--bg-gradient), var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Countdown Banner */
+    .countdown-banner {
+      position: sticky;
+      top: 80px;
+      z-index: 30;
+      background: var(--panel-bg);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      backdrop-filter: blur(16px);
+      padding: 1rem 2rem;
+      text-align: center;
+      transition: all var(--transition-snappy);
+    }
+
+    .countdown-banner.warning {
+      background: rgba(245, 158, 11, 0.15);
+      border-bottom-color: rgba(245, 158, 11, 0.3);
+    }
+
+    .countdown-banner.warning .countdown-timer {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .countdown-text {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .countdown-timer {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent-strong);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Page Header */
+    .page-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-strong), var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      background: var(--surface-glass);
+      padding: 0.5rem;
+      border-radius: 1rem;
+      backdrop-filter: blur(16px);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      font-weight: 500;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .tab:hover:not(.active) {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Ladder Table */
+    .ladder-table {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(16px);
+    }
+
+    .table-header {
+      background: var(--panel-bg);
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .table-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .table-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th {
+      background: var(--surface-glass);
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .table th.sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: color var(--transition-snappy);
+    }
+
+    .table th.sortable:hover {
+      color: var(--accent-strong);
+    }
+
+    .table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .table tr:hover {
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .team-cell {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .team-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 0.5rem;
+      object-fit: cover;
+      background: var(--surface-glass);
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .team-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .team-tag {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .elo-value {
+      font-weight: 600;
+      color: var(--accent-strong);
+    }
+
+    .record {
+      font-weight: 500;
+    }
+
+    .win-percentage {
+      font-weight: 600;
+    }
+
+    .last-five {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .result-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .result-indicator.win {
+      background: var(--success);
+    }
+
+    .result-indicator.loss {
+      background: var(--danger);
+    }
+
+    /* Status Badges */
+    .status-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-pending {
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--text-muted);
+    }
+
+    .status-reported {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+
+    .status-final {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--success);
+    }
+
+    .status-contested {
+      background: rgba(248, 113, 113, 0.2);
+      color: var(--danger);
+    }
+
+    .status-bye {
+      background: rgba(148, 163, 184, 0.3);
+      color: var(--text-muted);
+    }
+
+    /* Match Cards */
+    .matches-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .match-card {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(16px);
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .match-teams {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .vs-text {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .match-maps {
+      margin-top: 1rem;
+    }
+
+    .map-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    .map-item:last-child {
+      border-bottom: none;
+    }
+
+    .map-name {
+      font-weight: 500;
+    }
+
+    .map-score {
+      font-weight: 600;
+      color: var(--accent-strong);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--surface-glass);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 0.5rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-snappy);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #7c3aed;
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .btn-secondary {
+      background: var(--surface-glass);
+      color: var(--text-primary);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(148, 163, 184, 0.1);
+    }
+
+    /* Loading States */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-top: 2px solid var(--accent-strong);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      padding: 0;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      background: var(--panel-bg);
+      border-radius: 1rem 1rem 0 0;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: all var(--transition-snappy);
+    }
+
+    .modal-close:hover {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-primary);
+    }
+
+    .modal form {
+      padding: 1.5rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.16);
+    }
+
+    .match-info-display {
+      background: var(--surface-glass);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      text-align: center;
+    }
+
+    .map-result-input {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: var(--surface-glass);
+      border-radius: 0.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 1rem;
+      }
+
+      .page-title {
+        font-size: 2rem;
+      }
+
+      .tabs {
+        flex-direction: column;
+      }
+
+      .table {
+        font-size: 0.9rem;
+      }
+
+      .table th, .table td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      .team-cell {
+        gap: 0.5rem;
+      }
+
+      .team-logo {
+        width: 32px;
+        height: 32px;
+      }
+
+      .modal-content {
+        width: 95%;
+        margin: 1rem;
+      }
+
+      .form-actions {
+        flex-direction: column;
+      }
+
+      /* Admin panel responsive */
+      #adminPanelContent [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      #adminPanelContent .btn {
+        font-size: 0.8rem;
+        padding: 0.5rem 1rem;
+      }
+
+      #adminPanelContent h3 {
+        font-size: 1.1rem;
+      }
+
+      /* Admin table responsive */
+      #adminPanelContent table {
+        font-size: 0.9rem;
+      }
+
+      #adminPanelContent table th,
+      #adminPanelContent table td {
+        padding: 0.75rem 0.5rem;
+      }
+
+      #adminPanelContent table th:nth-child(3),
+      #adminPanelContent table td:nth-child(3) {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #adminPanelContent {
+        padding: 1rem !important;
+      }
+
+      #adminPanelContent [style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+      }
+
+      #adminPanelContent [style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+      }
+
+      /* Hide less important columns on very small screens */
+      #adminPanelContent table th:nth-child(4),
+      #adminPanelContent table td:nth-child(4) {
+        display: none;
+      }
+
+      /* Make map pool more compact on mobile */
+      #adminPanelContent [style*="flex-wrap"] {
+        gap: 0.5rem !important;
+      }
+
+      #adminPanelContent [style*="flex-wrap"] > div {
+        font-size: 0.8rem !important;
+        padding: 0.4rem 0.8rem !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div data-include="nav.html"></div>
+
+  <!-- Countdown Banner -->
+  <div class="countdown-banner" id="countdownBanner">
+    <div class="countdown-text">Next Ladder Refresh</div>
+    <div class="countdown-timer" id="countdownTimer">Loading...</div>
+  </div>
+
+  <div class="main-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1 class="page-title">Home League Ladder</h1>
+      <p class="page-subtitle">Create teams, manage matches, upload scoreboards, and track player stats</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="rankings">Rankings</button>
+      <button class="tab" data-tab="matches">Matches</button>
+      <button class="tab" data-tab="teams">Teams</button>
+      <button class="tab" data-tab="scoreboard">Upload Scoreboard</button>
+      <button class="tab" data-tab="stats">Player Stats</button>
+      <button class="tab" data-tab="rules">Rules & Schedule</button>
+      <button class="tab" data-tab="maps">Map Pool</button>
+      <button class="tab" data-tab="admin" id="adminTab" style="display: none;">Admin</button>
+    </div>
+
+    <!-- Rankings Tab -->
+    <div class="tab-content active" id="rankings">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Team Rankings</h2>
+          <p class="table-subtitle">Current ladder standings • Last updated: <span id="lastRefresh">Loading...</span></p>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="rank">Rank</th>
+              <th>Team</th>
+              <th class="sortable" data-sort="elo">Elo</th>
+              <th class="sortable" data-sort="record">W-L</th>
+              <th class="sortable" data-sort="winpct">Win%</th>
+              <th class="sortable" data-sort="maps">Maps W-L</th>
+              <th>Last 5</th>
+            </tr>
+          </thead>
+          <tbody id="rankingsTable">
+            <tr>
+              <td colspan="7" class="loading">
+                <div class="spinner"></div>
+                Loading rankings...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Matches Tab -->
+    <div class="tab-content" id="matches">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Week <span id="currentWeek">1</span> Matches</h2>
+          <p class="table-subtitle">Current week's matchups and results</p>
+        </div>
+        <div class="matches-grid" id="matchesGrid">
+          <div class="loading">
+            <div class="spinner"></div>
+            Loading matches...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams Tab - NEW -->
+    <div class="tab-content" id="teams">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Team Management</h2>
+          <p class="table-subtitle">Create and manage Home League teams</p>
+        </div>
+        <div style="padding: 2rem;">
+          <button class="btn btn-primary" onclick="homeLeagueLadder.openCreateTeamModal()" style="margin-bottom: 2rem;">+ Create New Team</button>
+          <div id="teamsList" class="loading">
+            <div class="spinner"></div>
+            Loading teams...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scoreboard Upload Tab - NEW -->
+    <div class="tab-content" id="scoreboard">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Upload Scoreboard</h2>
+          <p class="table-subtitle">Upload scoreboard images and match stats to players</p>
+        </div>
+        <div style="padding: 2rem;" id="scoreboardUploadContent">
+          <!-- Scoreboard upload form will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Player Stats Tab - NEW -->
+    <div class="tab-content" id="stats">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Player Statistics</h2>
+          <p class="table-subtitle">View player performance across all Home League matches</p>
+        </div>
+        <div style="padding: 2rem;" id="playerStatsContent">
+          <!-- Player stats will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Rules Tab -->
+    <div class="tab-content" id="rules">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Rules & Schedule</h2>
+          <p class="table-subtitle">How the ladder system works</p>
+        </div>
+        <div style="padding: 2rem;">
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Weekly Schedule</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;" id="rulesWeeklySchedule">
+            The ladder refreshes every <strong>Saturday at 11:00 PM America/New_York</strong> (10:00 PM America/Chicago). 
+            At this time, Elo ratings are updated and new weekly pairings are generated.
+          </p>
+
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Match Reporting</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;" id="rulesMatchReporting">
+            Team captains can report match results by uploading scoreboard images and entering map scores. 
+            Both teams must confirm the results for the match to be finalized. Disputed matches require admin review.
+          </p>
+
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Elo System</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;" id="rulesEloSystem">
+            Teams start with 1500 Elo. Wins and losses adjust Elo based on opponent strength. 
+            Elo changes are applied during the weekly refresh, not immediately after matches.
+          </p>
+
+          <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Rankings</h3>
+          <p style="margin-bottom: 1.5rem; line-height: 1.6;" id="rulesRankings">
+            Teams are ranked by Elo rating. Ties are broken by win percentage, then map differential.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maps Tab -->
+    <div class="tab-content" id="maps">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Map Pool</h2>
+          <p class="table-subtitle">Available maps for ladder matches</p>
+        </div>
+        <div style="padding: 2rem;">
+          <div id="mapPool" class="loading">
+            <div class="spinner"></div>
+            Loading map pool...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Tab -->
+    <div class="tab-content" id="admin">
+      <div class="ladder-table">
+        <div class="table-header">
+          <h2 class="table-title">Admin Panel</h2>
+          <p class="table-subtitle">Manage ladder settings and data</p>
+        </div>
+        <div style="padding: 2rem;">
+          <!-- Admin Login Form -->
+          <div id="adminLoginForm" style="text-align: center; margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Admin Login Required</h3>
+            <form id="adminLoginFormElement" style="max-width: 300px; margin: 0 auto;">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="adminEmail" placeholder="admin@example.com" autocomplete="username" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="adminPassword" placeholder="Password" autocomplete="current-password" required>
+              </div>
+              <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button type="button" class="btn btn-primary" id="adminLoginBtn">Login</button>
+                <button type="button" class="btn btn-secondary" id="adminLogoutBtn" style="display: none;">Logout</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Admin Panel Content -->
+          <div id="adminPanelContent" style="display: none;">
+            <!-- Season Management -->
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Season Management</h3>
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-danger" onclick="homeLeagueLadder.resetLadder()">Reset Ladder for New Season</button>
+                <button class="btn btn-secondary" onclick="homeLeagueLadder.advanceWeek()">Advance to Next Week</button>
+                <button class="btn btn-secondary" onclick="homeLeagueLadder.regenerateMatches()">Regenerate Current Week Matches</button>
+                <button class="btn btn-warning" onclick="homeLeagueLadder.nuclearReset()">Nuclear Reset (Clear All Data)</button>
+                <button class="btn btn-primary" onclick="homeLeagueLadder.refreshElo()">Refresh Elo Ratings</button>
+              </div>
+            </div>
+
+            <!-- Match Management -->
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Match Management</h3>
+              <div id="adminMatchesList" class="loading">
+                <div class="spinner"></div>
+                Loading matches...
+              </div>
+            </div>
+
+            <!-- Team Management -->
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Team Management</h3>
+              <div id="adminTeamsList" class="loading">
+                <div class="spinner"></div>
+                Loading teams...
+              </div>
+            </div>
+
+            <!-- Map Pool Management -->
+            <div style="margin-bottom: 2rem;">
+              <h3 style="margin-bottom: 1rem; color: var(--accent-strong);">Map Pool Management</h3>
+              <div id="adminMapPool">
+                <div class="loading">
+                  <div class="spinner"></div>
+                  Loading map pool...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Team Modal -->
+  <div id="createTeamModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Create New Team</h2>
+        <button class="modal-close" onclick="homeLeagueLadder.closeCreateTeamModal()">&times;</button>
+      </div>
+      <form id="createTeamForm">
+        <div class="form-group">
+          <label class="form-label">Team Name</label>
+          <input type="text" class="form-input" name="teamName" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Team Tag</label>
+          <input type="text" class="form-input" name="teamTag" placeholder="e.g., AV!" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Team Logo URL (Optional)</label>
+          <input type="url" class="form-input" name="logoUrl" placeholder="https://example.com/logo.png">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Players (one per line)</label>
+          <textarea class="form-textarea" name="players" placeholder="Player1&#10;Player2&#10;Player3" required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bench Players (one per line, optional)</label>
+          <textarea class="form-textarea" name="benchPlayers" placeholder="Sub1&#10;Sub2"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="homeLeagueLadder.closeCreateTeamModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Team</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Note: Additional modals (match reporting, confirmation, admin modals) will be added in the JavaScript section -->
+  <!-- These are similar to LadderBoard.html but adapted for Home League -->
+
+  <script src="./assets/include.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script type="module" src="./home-league-ladder.js"></script>
+</body>
+</html>
