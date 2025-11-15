@@ -132,5 +132,65 @@ service cloud.firestore {
       allow create: if true; // Allow anyone to create (first visitor)
       allow update: if true; // Allow anyone to update (increment counter)
     }
+
+    // Home League System Rules
+    match /homeLeague/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homeLeagueTeams/{teamId} {
+      allow read: if true;
+      allow create: if request.auth != null &&
+        request.resource.data.teamName is string &&
+        request.resource.data.teamTag is string &&
+        request.resource.data.elo == 1500 &&
+        request.resource.data.wins == 0 &&
+        request.resource.data.losses == 0 &&
+        request.resource.data.mapsWon == 0 &&
+        request.resource.data.mapsLost == 0 &&
+        request.resource.data.last5 == '' &&
+        request.resource.data.players is list &&
+        request.resource.data.benchPlayers is list;
+      allow update, delete: if isAdmin();
+    }
+
+    match /homeLeagueMatches/{matchId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homeLeagueReports/{reportId} {
+      allow read: if true;
+      allow create: if request.auth != null &&
+        request.resource.data.matchId is string &&
+        request.resource.data.submittedByTeamId is string &&
+        request.resource.data.declaredWinnerTeamId is string &&
+        request.resource.data.perMapScores is list &&
+        request.resource.data.submittedBy == request.auth.token.email;
+      allow update: if request.auth != null && (
+        resource.data.submittedBy == request.auth.token.email ||
+        resource.data.confirmedBy == request.auth.token.email ||
+        resource.data.disputedBy == request.auth.token.email
+      ) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /homeLeagueStats/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /homeLeaguePendingMatches/{pendingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.team1 is string &&
+        request.resource.data.team2 is string &&
+        request.resource.data.map is string &&
+        request.resource.data.stats is map &&
+        request.resource.data.submittedBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
   }
 }

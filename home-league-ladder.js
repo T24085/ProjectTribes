@@ -771,8 +771,9 @@ class HomeLeagueLadder {
             <div id="scoreboardTeam2Results"></div>
           </div>
         </div>
+        <div id="scoreboardValidationMsg" style="margin-top: 1.5rem;"></div>
         <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-          <button id="scoreboardSubmitBtn" class="btn btn-success">Submit for Review</button>
+          <button id="scoreboardSubmitBtn" class="btn btn-success" disabled>Submit for Review</button>
           <button id="scoreboardCancelBtn" class="btn btn-secondary">Cancel</button>
         </div>
       </div>
@@ -1199,6 +1200,62 @@ class HomeLeagueLadder {
     return { kills, assists, captures, returns };
   }
 
+  getAssignedPlayerCount(teamNum) {
+    let count = 0;
+    const entries = teamNum === 1 ? this.team1Entries : this.team2Entries;
+    entries.forEach((entry, idx) => {
+      const select = document.querySelector(`[data-team="${teamNum}"][data-index="${idx}"]`);
+      const playerName = select?.value;
+      if (playerName && playerName !== '__CUSTOM__' && playerName !== '') {
+        count++;
+      }
+    });
+    return count;
+  }
+
+  updateScoreboardValidation() {
+    const team1Count = this.getAssignedPlayerCount(1);
+    const team2Count = this.getAssignedPlayerCount(2);
+    const minPlayers = 7;
+    const isValid = team1Count >= minPlayers && team2Count >= minPlayers;
+    
+    // Update player count displays
+    const team1CountEl = document.getElementById('scoreboardTeam1Count');
+    const team2CountEl = document.getElementById('scoreboardTeam2Count');
+    const validationMsg = document.getElementById('scoreboardValidationMsg');
+    const submitBtn = document.getElementById('scoreboardSubmitBtn');
+    
+    if (team1CountEl) {
+      team1CountEl.textContent = `Players assigned: ${team1Count}/${minPlayers}`;
+      team1CountEl.style.color = team1Count >= minPlayers ? 'var(--success)' : 'var(--danger)';
+    }
+    
+    if (team2CountEl) {
+      team2CountEl.textContent = `Players assigned: ${team2Count}/${minPlayers}`;
+      team2CountEl.style.color = team2Count >= minPlayers ? 'var(--success)' : 'var(--danger)';
+    }
+    
+    if (validationMsg) {
+      if (isValid) {
+        validationMsg.innerHTML = '<div style="color: var(--success); padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.5rem; margin-bottom: 1rem;">✓ Both teams have at least 7 players assigned. Ready to submit!</div>';
+      } else {
+        const missing1 = Math.max(0, minPlayers - team1Count);
+        const missing2 = Math.max(0, minPlayers - team2Count);
+        validationMsg.innerHTML = `<div style="color: var(--danger); padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-radius: 0.5rem; margin-bottom: 1rem;">
+          ⚠ Minimum 7 players required per team.<br>
+          Team 1: ${missing1 > 0 ? `Need ${missing1} more player${missing1 > 1 ? 's' : ''}` : 'Complete'}<br>
+          Team 2: ${missing2 > 0 ? `Need ${missing2} more player${missing2 > 1 ? 's' : ''}` : 'Complete'}
+        </div>`;
+      }
+    }
+    
+    if (submitBtn) {
+      submitBtn.disabled = !isValid;
+      submitBtn.style.opacity = isValid ? '1' : '0.5';
+      submitBtn.style.cursor = isValid ? 'pointer' : 'not-allowed';
+    }
+  }
+
   displayScoreboardResults(results) {
     const team1Div = document.getElementById('scoreboardTeam1Results');
     const team2Div = document.getElementById('scoreboardTeam2Results');
@@ -1212,8 +1269,12 @@ class HomeLeagueLadder {
     const team1 = this.teams.find(t => t.id === team1Id);
     const team2 = this.teams.find(t => t.id === team2Id);
 
-    if (team1NameEl && team1) team1NameEl.textContent = `${team1.name} (Blue)`;
-    if (team2NameEl && team2) team2NameEl.textContent = `${team2.name} (Red)`;
+    if (team1NameEl && team1) {
+      team1NameEl.innerHTML = `${team1.name} (Blue) <span id="scoreboardTeam1Count" style="font-size: 0.9rem; font-weight: normal; margin-left: 0.5rem;">Players assigned: 0/7</span>`;
+    }
+    if (team2NameEl && team2) {
+      team2NameEl.innerHTML = `${team2.name} (Red) <span id="scoreboardTeam2Count" style="font-size: 0.9rem; font-weight: normal; margin-left: 0.5rem;">Players assigned: 0/7</span>`;
+    }
 
     this.team1Entries = results.team1.map((statRow, idx) => ({
       ...statRow,
@@ -1241,7 +1302,7 @@ class HomeLeagueLadder {
       div.style.cssText = 'padding: 0.75rem; background: var(--surface-glass); border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.5); margin-bottom: 0.75rem;';
       div.innerHTML = `
         <div style="margin-bottom: 0.5rem;">
-          <select class="form-select" style="width: 100%;" data-team="1" data-index="${idx}">
+          <select class="form-select scoreboard-player-select" style="width: 100%;" data-team="1" data-index="${idx}">
             <option value="">Select player for these stats</option>
             ${team1Roster.map(p => `<option value="${p}">${p}</option>`).join('')}
             <option value="__CUSTOM__">Add Custom Player</option>
@@ -1265,7 +1326,7 @@ class HomeLeagueLadder {
       div.style.cssText = 'padding: 0.75rem; background: var(--surface-glass); border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.5); margin-bottom: 0.75rem;';
       div.innerHTML = `
         <div style="margin-bottom: 0.5rem;">
-          <select class="form-select" style="width: 100%;" data-team="2" data-index="${idx}">
+          <select class="form-select scoreboard-player-select" style="width: 100%;" data-team="2" data-index="${idx}">
             <option value="">Select player for these stats</option>
             ${team2Roster.map(p => `<option value="${p}">${p}</option>`).join('')}
             <option value="__CUSTOM__">Add Custom Player</option>
@@ -1282,6 +1343,16 @@ class HomeLeagueLadder {
       `;
       team2Div.appendChild(div);
     });
+
+    // Add event listeners to all player selects for real-time validation
+    document.querySelectorAll('.scoreboard-player-select').forEach(select => {
+      select.addEventListener('change', () => {
+        this.updateScoreboardValidation();
+      });
+    });
+
+    // Initial validation update
+    this.updateScoreboardValidation();
   }
 
   removeScoreboardEntry(teamNum, index) {
@@ -1291,6 +1362,7 @@ class HomeLeagueLadder {
       this.team2Entries.splice(index, 1);
     }
     this.displayScoreboardResults({ team1: this.team1Entries, team2: this.team2Entries });
+    // Validation will be updated by displayScoreboardResults
   }
 
   async submitScoreboard() {
@@ -1313,6 +1385,16 @@ class HomeLeagueLadder {
 
     if (!team1 || !team2) {
       alert('Invalid team selection');
+      return;
+    }
+
+    // Validate minimum 7 players per team
+    const team1Count = this.getAssignedPlayerCount(1);
+    const team2Count = this.getAssignedPlayerCount(2);
+    const minPlayers = 7;
+
+    if (team1Count < minPlayers || team2Count < minPlayers) {
+      alert(`Error: Each team must have at least ${minPlayers} players assigned.\n\nTeam 1: ${team1Count}/${minPlayers} players\nTeam 2: ${team2Count}/${minPlayers} players\n\nPlease assign players to all stat rows before submitting.`);
       return;
     }
 
