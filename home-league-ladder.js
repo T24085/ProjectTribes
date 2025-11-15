@@ -1169,6 +1169,24 @@ class HomeLeagueLadder {
       }
     });
     
+    // Ensure we always have 7 entries per team (pad with zeros if needed)
+    const requiredPlayers = 7;
+    const emptyEntry = { score: 0, kills: 0, assists: 0, captures: 0, returns: 0, time: 0 };
+    
+    // Pad team1 to 7 entries
+    while (team1.length < requiredPlayers) {
+      team1.push({ ...emptyEntry });
+    }
+    // Keep only first 7 entries if more than 7
+    team1.splice(requiredPlayers);
+    
+    // Pad team2 to 7 entries
+    while (team2.length < requiredPlayers) {
+      team2.push({ ...emptyEntry });
+    }
+    // Keep only first 7 entries if more than 7
+    team2.splice(requiredPlayers);
+    
     return { team1, team2 };
   }
 
