@@ -1971,6 +1971,7 @@ class HomeLeagueLadder {
         <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Record</th>
         <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Maps</th>
         <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Last 5</th>
+        <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid rgba(148, 163, 184, 0.16);">Actions</th>
       </tr>
     `;
 
@@ -1995,6 +1996,9 @@ class HomeLeagueLadder {
         <td style="padding: 1rem; text-align: center;">${team.mapsWon}-${team.mapsLost}</td>
         <td style="padding: 1rem; text-align: center;">
           <div style="display: flex; gap: 0.25rem; justify-content: center;">${last5Html}</div>
+        </td>
+        <td style="padding: 1rem; text-align: center;">
+          <button class="btn btn-secondary" onclick="openEditTeamModal('${team.id}')" style="padding: 0.5rem 1rem; font-size: 0.8rem;">Edit</button>
         </td>
       `;
       tbody.appendChild(row);
@@ -2074,9 +2078,180 @@ class HomeLeagueLadder {
     }
   }
 
-  editTeam(teamId) {
-    // Team editing functionality
-    alert('Team editing functionality coming soon!');
+  openEditTeamModal(teamId) {
+    const team = this.teams.find(t => t.id === teamId);
+    if (!team) {
+      alert('Team not found.');
+      return;
+    }
+
+    let modal = document.getElementById('editTeamModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'editTeamModal';
+      modal.className = 'modal';
+      modal.style.display = 'none';
+      document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Team</h2>
+          <button class="modal-close" onclick="closeEditTeamModal()">&times;</button>
+        </div>
+        <form id="editTeamForm">
+          <div class="form-group">
+            <label class="form-label">Team Name *</label>
+            <input type="text" class="form-input" name="teamName" required placeholder="Enter team name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team Tag *</label>
+            <input type="text" class="form-input" name="teamTag" required placeholder="Enter team tag (e.g., AV!)" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Logo URL</label>
+            <input type="url" class="form-input" name="logoUrl" placeholder="https://example.com/logo.png">
+            <small style="color: var(--text-muted);">Leave empty to use default logo</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Players (one per line) *</label>
+            <textarea class="form-textarea" name="players" required placeholder="Player1&#10;Player2&#10;Player3" rows="5"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bench Players (one per line, optional)</label>
+            <textarea class="form-textarea" name="benchPlayers" placeholder="Sub1&#10;Sub2" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Elo Rating</label>
+            <input type="number" class="form-input" name="elo" min="0" placeholder="1500">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Wins</label>
+            <input type="number" class="form-input" name="wins" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Losses</label>
+            <input type="number" class="form-input" name="losses" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Maps Won</label>
+            <input type="number" class="form-input" name="mapsWon" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Maps Lost</label>
+            <input type="number" class="form-input" name="mapsLost" min="0" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last 5 Results (e.g., WWLLW)</label>
+            <input type="text" class="form-input" name="last5" maxlength="5" placeholder="WWLLW">
+            <small style="color: var(--text-muted);">W for win, L for loss</small>
+          </div>
+          <input type="hidden" name="teamId" value="${teamId}">
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeEditTeamModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    // Populate form with current team data
+    const form = document.getElementById('editTeamForm');
+    form.querySelector('[name="teamName"]').value = team.name;
+    form.querySelector('[name="teamTag"]').value = team.tag;
+    form.querySelector('[name="logoUrl"]').value = team.logo || '';
+    form.querySelector('[name="players"]').value = (team.players || []).join('\n');
+    form.querySelector('[name="benchPlayers"]').value = (team.benchPlayers || []).join('\n');
+    form.querySelector('[name="elo"]').value = team.elo || 1500;
+    form.querySelector('[name="wins"]').value = team.wins || 0;
+    form.querySelector('[name="losses"]').value = team.losses || 0;
+    form.querySelector('[name="mapsWon"]').value = team.mapsWon || 0;
+    form.querySelector('[name="mapsLost"]').value = team.mapsLost || 0;
+    form.querySelector('[name="last5"]').value = team.last5 || '';
+
+    // Setup form submission
+    form.addEventListener('submit', (e) => this.submitEditTeam(e));
+
+    modal.style.display = 'block';
+  }
+
+  closeEditTeamModal() {
+    const modal = document.getElementById('editTeamModal');
+    if (modal) {
+      modal.style.display = 'none';
+      const form = document.getElementById('editTeamForm');
+      if (form) form.reset();
+    }
+  }
+
+  async submitEditTeam(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const teamId = formData.get('teamId');
+    const teamName = formData.get('teamName');
+    const teamTag = formData.get('teamTag');
+    const logoUrl = formData.get('logoUrl') || 'images/NullLogo.png';
+    const players = formData.get('players').split('\n').filter(p => p.trim()).map(p => p.trim());
+    const benchPlayers = formData.get('benchPlayers') ? formData.get('benchPlayers').split('\n').filter(p => p.trim()).map(p => p.trim()) : [];
+    const elo = parseInt(formData.get('elo') || 1500);
+    const wins = parseInt(formData.get('wins') || 0);
+    const losses = parseInt(formData.get('losses') || 0);
+    const mapsWon = parseInt(formData.get('mapsWon') || 0);
+    const mapsLost = parseInt(formData.get('mapsLost') || 0);
+    const last5 = formData.get('last5') || '';
+
+    if (!teamName || !teamTag || players.length === 0) {
+      alert('Please fill in all required fields (Team Name, Team Tag, and at least one player).');
+      return;
+    }
+
+    try {
+      const teamRef = doc(db, 'homeLeagueTeams', teamId);
+      await updateDoc(teamRef, {
+        teamName,
+        teamTag,
+        logoUrl,
+        players,
+        benchPlayers,
+        elo,
+        wins,
+        losses,
+        mapsWon,
+        mapsLost,
+        last5,
+        updatedAt: serverTimestamp()
+      });
+
+      // Update local team data
+      const team = this.teams.find(t => t.id === teamId);
+      if (team) {
+        team.name = teamName;
+        team.tag = teamTag;
+        team.logo = logoUrl;
+        team.players = players;
+        team.benchPlayers = benchPlayers;
+        team.elo = elo;
+        team.wins = wins;
+        team.losses = losses;
+        team.mapsWon = mapsWon;
+        team.mapsLost = mapsLost;
+        team.last5 = last5;
+      }
+
+      this.closeEditTeamModal();
+      this.renderAdminTeams();
+      this.renderTeams();
+      this.renderRankings();
+      alert('Team updated successfully!');
+    } catch (error) {
+      console.error('Error updating team:', error);
+      if (error.code === 'permission-denied') {
+        alert('Permission denied. Please check Firebase security rules or contact an admin.');
+      } else {
+        alert('Error updating team. Please try again.');
+      }
+    }
   }
 
   editMatch(matchId) {
@@ -2332,6 +2507,25 @@ window.openCreateTeamModal = function() {
 window.closeCreateTeamModal = function() {
   if (window.homeLeagueLadder && typeof window.homeLeagueLadder.closeCreateTeamModal === 'function') {
     window.homeLeagueLadder.closeCreateTeamModal();
+  }
+};
+
+window.openEditTeamModal = function(teamId) {
+  if (window.homeLeagueLadder && typeof window.homeLeagueLadder.openEditTeamModal === 'function') {
+    window.homeLeagueLadder.openEditTeamModal(teamId);
+  } else {
+    console.error('homeLeagueLadder not initialized yet');
+    setTimeout(() => {
+      if (window.homeLeagueLadder) {
+        window.homeLeagueLadder.openEditTeamModal(teamId);
+      }
+    }, 500);
+  }
+};
+
+window.closeEditTeamModal = function() {
+  if (window.homeLeagueLadder && typeof window.homeLeagueLadder.closeEditTeamModal === 'function') {
+    window.homeLeagueLadder.closeEditTeamModal();
   }
 };
 
