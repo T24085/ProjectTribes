@@ -65,7 +65,7 @@ class HomeLeagueLadder {
     await this.loadData();
     this.setupEventListeners();
     this.setupAdminLogin();
-    this.setupScoreboardUpload();
+    this.createTeamModal(); // Create modal early so it's available
     this.startCountdown();
     this.renderRankings();
     this.renderMatches();
@@ -188,6 +188,10 @@ class HomeLeagueLadder {
       console.log('Loaded', this.teams.length, 'teams from Firebase');
     } catch (error) {
       console.error('Error loading teams:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('Firebase permission denied. Please check security rules. Continuing with empty teams list.');
+        this.teams = [];
+      }
     }
   }
 
@@ -241,6 +245,9 @@ class HomeLeagueLadder {
       }
     } catch (error) {
       console.error('Error loading from Firebase:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('Firebase permission denied. Please check security rules. Continuing with local data.');
+      }
     }
   }
 
@@ -301,6 +308,9 @@ class HomeLeagueLadder {
       }
     } catch (error) {
       console.error('Error saving to Firebase:', error);
+      if (error.code === 'permission-denied') {
+        console.warn('Firebase permission denied. Please check security rules. Changes not saved to Firebase.');
+      }
     }
   }
 
@@ -323,6 +333,139 @@ class HomeLeagueLadder {
         this.sortTable(column);
       });
     });
+  }
+
+  // Team Management Methods
+  openCreateTeamModal() {
+    const modal = document.getElementById('createTeamModal');
+    if (modal) {
+      modal.style.display = 'block';
+    } else {
+      // Create modal if it doesn't exist
+      this.createTeamModal();
+    }
+  }
+
+  closeCreateTeamModal() {
+    const modal = document.getElementById('createTeamModal');
+    if (modal) {
+      modal.style.display = 'none';
+      const form = document.getElementById('createTeamForm');
+      if (form) form.reset();
+    }
+  }
+
+  createTeamModal() {
+    // Create the modal HTML if it doesn't exist
+    let modal = document.getElementById('createTeamModal');
+    if (modal) return;
+
+    modal = document.createElement('div');
+    modal.id = 'createTeamModal';
+    modal.className = 'modal';
+    modal.style.display = 'none';
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Create New Team</h2>
+          <button class="modal-close" onclick="closeCreateTeamModal()">&times;</button>
+        </div>
+        <form id="createTeamForm">
+          <div class="form-group">
+            <label class="form-label">Team Name *</label>
+            <input type="text" class="form-input" name="teamName" required placeholder="Enter team name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team Tag *</label>
+            <input type="text" class="form-input" name="teamTag" required placeholder="Enter team tag (e.g., AV!)" maxlength="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Logo URL</label>
+            <input type="url" class="form-input" name="logoUrl" placeholder="https://example.com/logo.png">
+            <small style="color: var(--text-muted);">Leave empty to use default logo</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Players (one per line) *</label>
+            <textarea class="form-textarea" name="players" required placeholder="Player1&#10;Player2&#10;Player3" rows="5"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bench Players (one per line, optional)</label>
+            <textarea class="form-textarea" name="benchPlayers" placeholder="Sub1&#10;Sub2" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeCreateTeamModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create Team</button>
+          </div>
+        </form>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Setup form submission
+    const form = document.getElementById('createTeamForm');
+    if (form) {
+      form.addEventListener('submit', (e) => this.submitCreateTeam(e));
+    }
+  }
+
+  async submitCreateTeam(e) {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const teamName = formData.get('teamName');
+    const teamTag = formData.get('teamTag');
+    const logoUrl = formData.get('logoUrl') || 'images/NullLogo.png';
+    const players = formData.get('players').split('\n').filter(p => p.trim()).map(p => p.trim());
+    const benchPlayers = formData.get('benchPlayers') ? formData.get('benchPlayers').split('\n').filter(p => p.trim()).map(p => p.trim()) : [];
+    
+    if (!teamName || !teamTag || players.length === 0) {
+      alert('Please fill in all required fields (Team Name, Team Tag, and at least one player).');
+      return;
+    }
+
+    try {
+      const teamRef = await addDoc(collection(db, 'homeLeagueTeams'), {
+        teamName,
+        teamTag,
+        logoUrl,
+        players,
+        benchPlayers,
+        elo: 1500,
+        wins: 0,
+        losses: 0,
+        mapsWon: 0,
+        mapsLost: 0,
+        last5: '',
+        createdAt: serverTimestamp()
+      });
+      
+      const newTeam = {
+        id: teamRef.id,
+        name: teamName,
+        tag: teamTag,
+        logo: logoUrl,
+        elo: 1500,
+        wins: 0,
+        losses: 0,
+        mapsWon: 0,
+        mapsLost: 0,
+        last5: '',
+        players,
+        benchPlayers
+      };
+      
+      this.teams.push(newTeam);
+      this.closeCreateTeamModal();
+      this.renderTeams();
+      this.renderRankings();
+      alert('Team created successfully!');
+    } catch (error) {
+      console.error('Error creating team:', error);
+      if (error.code === 'permission-denied') {
+        alert('Permission denied. Please check Firebase security rules or contact an admin.');
+      } else {
+        alert('Error creating team. Please try again.');
+      }
+    }
   }
 
   switchTab(tabName) {
@@ -765,7 +908,11 @@ class HomeLeagueLadder {
       console.error('Error loading player stats:', error);
       const container = document.getElementById('playerStatsContent');
       if (container) {
-        container.innerHTML = '<p style="color: var(--danger);">Error loading player statistics.</p>';
+        if (error.code === 'permission-denied') {
+          container.innerHTML = '<p style="color: var(--text-muted);">Firebase permissions required to view player statistics. Please check security rules.</p>';
+        } else {
+          container.innerHTML = '<p style="color: var(--danger);">Error loading player statistics.</p>';
+        }
       }
     }
   }
@@ -2023,7 +2170,32 @@ class HomeLeagueLadder {
 // Initialize when DOM is ready
 let homeLeagueLadder;
 document.addEventListener('DOMContentLoaded', () => {
-  homeLeagueLadder = new HomeLeagueLadder();
-  window.homeLeagueLadder = homeLeagueLadder;
+  try {
+    homeLeagueLadder = new HomeLeagueLadder();
+    window.homeLeagueLadder = homeLeagueLadder;
+    console.log('HomeLeagueLadder initialized successfully');
+  } catch (error) {
+    console.error('Error initializing HomeLeagueLadder:', error);
+  }
 });
+
+// Safety wrapper for onclick handlers
+window.openCreateTeamModal = function() {
+  if (window.homeLeagueLadder && typeof window.homeLeagueLadder.openCreateTeamModal === 'function') {
+    window.homeLeagueLadder.openCreateTeamModal();
+  } else {
+    console.error('homeLeagueLadder not initialized yet');
+    setTimeout(() => {
+      if (window.homeLeagueLadder) {
+        window.homeLeagueLadder.openCreateTeamModal();
+      }
+    }, 500);
+  }
+};
+
+window.closeCreateTeamModal = function() {
+  if (window.homeLeagueLadder && typeof window.homeLeagueLadder.closeCreateTeamModal === 'function') {
+    window.homeLeagueLadder.closeCreateTeamModal();
+  }
+};
 
