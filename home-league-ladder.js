@@ -771,9 +771,8 @@ class HomeLeagueLadder {
             <div id="scoreboardTeam2Results"></div>
           </div>
         </div>
-        <div id="scoreboardValidationMsg" style="margin-top: 1.5rem;"></div>
         <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-          <button id="scoreboardSubmitBtn" class="btn btn-success" disabled>Submit for Review</button>
+          <button id="scoreboardSubmitBtn" class="btn btn-success">Submit for Review</button>
           <button id="scoreboardCancelBtn" class="btn btn-secondary">Cancel</button>
         </div>
       </div>
@@ -1288,10 +1287,10 @@ class HomeLeagueLadder {
     const team2 = this.teams.find(t => t.id === team2Id);
 
     if (team1NameEl && team1) {
-      team1NameEl.innerHTML = `${team1.name} (Blue) <span id="scoreboardTeam1Count" style="font-size: 0.9rem; font-weight: normal; margin-left: 0.5rem;">Players assigned: 0/7</span>`;
+      team1NameEl.textContent = `${team1.name} (Blue)`;
     }
     if (team2NameEl && team2) {
-      team2NameEl.innerHTML = `${team2.name} (Red) <span id="scoreboardTeam2Count" style="font-size: 0.9rem; font-weight: normal; margin-left: 0.5rem;">Players assigned: 0/7</span>`;
+      team2NameEl.textContent = `${team2.name} (Red)`;
     }
 
     this.team1Entries = results.team1.map((statRow, idx) => ({
@@ -1326,12 +1325,27 @@ class HomeLeagueLadder {
             <option value="__CUSTOM__">Add Custom Player</option>
           </select>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; font-size: 0.8rem;">
-          <div><strong>Score:</strong> ${entry.score || 0}</div>
-          <div><strong>Kills:</strong> ${entry.kills || 0}</div>
-          <div><strong>Assists:</strong> ${entry.assists || 0}</div>
-          <div><strong>Captures:</strong> ${entry.captures || 0}</div>
-          <div><strong>Returns:</strong> ${entry.returns || 0}</div>
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; font-size: 0.8rem; align-items: center;">
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Score:</label>
+            <input type="number" class="form-input" data-team="1" data-index="${idx}" data-stat="score" value="${entry.score || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Kills:</label>
+            <input type="number" class="form-input" data-team="1" data-index="${idx}" data-stat="kills" value="${entry.kills || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Assists:</label>
+            <input type="number" class="form-input" data-team="1" data-index="${idx}" data-stat="assists" value="${entry.assists || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Captures:</label>
+            <input type="number" class="form-input" data-team="1" data-index="${idx}" data-stat="captures" value="${entry.captures || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Returns:</label>
+            <input type="number" class="form-input" data-team="1" data-index="${idx}" data-stat="returns" value="${entry.returns || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
           <button class="btn btn-danger" onclick="homeLeagueLadder.removeScoreboardEntry(1, ${idx})" style="padding: 0.25rem 0.5rem; font-size: 0.7rem;">Remove</button>
         </div>
       `;
@@ -1350,27 +1364,33 @@ class HomeLeagueLadder {
             <option value="__CUSTOM__">Add Custom Player</option>
           </select>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; font-size: 0.8rem;">
-          <div><strong>Score:</strong> ${entry.score || 0}</div>
-          <div><strong>Kills:</strong> ${entry.kills || 0}</div>
-          <div><strong>Assists:</strong> ${entry.assists || 0}</div>
-          <div><strong>Captures:</strong> ${entry.captures || 0}</div>
-          <div><strong>Returns:</strong> ${entry.returns || 0}</div>
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; font-size: 0.8rem; align-items: center;">
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Score:</label>
+            <input type="number" class="form-input" data-team="2" data-index="${idx}" data-stat="score" value="${entry.score || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Kills:</label>
+            <input type="number" class="form-input" data-team="2" data-index="${idx}" data-stat="kills" value="${entry.kills || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Assists:</label>
+            <input type="number" class="form-input" data-team="2" data-index="${idx}" data-stat="assists" value="${entry.assists || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Captures:</label>
+            <input type="number" class="form-input" data-team="2" data-index="${idx}" data-stat="captures" value="${entry.captures || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.7rem; margin-bottom: 0.25rem;">Returns:</label>
+            <input type="number" class="form-input" data-team="2" data-index="${idx}" data-stat="returns" value="${entry.returns || 0}" min="0" style="width: 100%; padding: 0.25rem; font-size: 0.8rem;">
+          </div>
           <button class="btn btn-danger" onclick="homeLeagueLadder.removeScoreboardEntry(2, ${idx})" style="padding: 0.25rem 0.5rem; font-size: 0.7rem;">Remove</button>
         </div>
       `;
       team2Div.appendChild(div);
     });
 
-    // Add event listeners to all player selects for real-time validation
-    document.querySelectorAll('.scoreboard-player-select').forEach(select => {
-      select.addEventListener('change', () => {
-        this.updateScoreboardValidation();
-      });
-    });
-
-    // Initial validation update
-    this.updateScoreboardValidation();
   }
 
   removeScoreboardEntry(teamNum, index) {
@@ -1406,66 +1426,82 @@ class HomeLeagueLadder {
       return;
     }
 
-    // Validate minimum 7 players per team
-    const team1Count = this.getAssignedPlayerCount(1);
-    const team2Count = this.getAssignedPlayerCount(2);
-    const minPlayers = 7;
-
-    if (team1Count < minPlayers || team2Count < minPlayers) {
-      alert(`Error: Each team must have at least ${minPlayers} players assigned.\n\nTeam 1: ${team1Count}/${minPlayers} players\nTeam 2: ${team2Count}/${minPlayers} players\n\nPlease assign players to all stat rows before submitting.`);
-      return;
-    }
-
-    // Collect stats from entries
+    // Collect stats from entries (read from input fields)
     const stats = {
       [team1.name]: { players: {}, totals: { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 } },
       [team2.name]: { players: {}, totals: { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 } }
     };
 
-    // Process team 1 entries
+    // Process team 1 entries - read from input fields
     this.team1Entries.forEach((entry, idx) => {
-      const select = document.querySelector(`[data-team="1"][data-index="${idx}"]`);
+      const select = document.querySelector(`[data-team="1"][data-index="${idx}"].scoreboard-player-select`);
       const playerName = select?.value;
-      if (!playerName || playerName === '__CUSTOM__') return;
+      if (!playerName || playerName === '__CUSTOM__' || playerName === '') return;
+      
+      // Read stats from input fields
+      const scoreInput = document.querySelector(`[data-team="1"][data-index="${idx}"][data-stat="score"]`);
+      const killsInput = document.querySelector(`[data-team="1"][data-index="${idx}"][data-stat="kills"]`);
+      const assistsInput = document.querySelector(`[data-team="1"][data-index="${idx}"][data-stat="assists"]`);
+      const capturesInput = document.querySelector(`[data-team="1"][data-index="${idx}"][data-stat="captures"]`);
+      const returnsInput = document.querySelector(`[data-team="1"][data-index="${idx}"][data-stat="returns"]`);
+      
+      const score = parseInt(scoreInput?.value || 0);
+      const kills = parseInt(killsInput?.value || 0);
+      const assists = parseInt(assistsInput?.value || 0);
+      const captures = parseInt(capturesInput?.value || 0);
+      const returns = parseInt(returnsInput?.value || 0);
       
       if (!stats[team1.name].players[playerName]) {
         stats[team1.name].players[playerName] = { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 };
       }
       
-      stats[team1.name].players[playerName].score += entry.score || 0;
-      stats[team1.name].players[playerName].kills += entry.kills || 0;
-      stats[team1.name].players[playerName].assists += entry.assists || 0;
-      stats[team1.name].players[playerName].captures += entry.captures || 0;
-      stats[team1.name].players[playerName].returns += entry.returns || 0;
+      stats[team1.name].players[playerName].score += score;
+      stats[team1.name].players[playerName].kills += kills;
+      stats[team1.name].players[playerName].assists += assists;
+      stats[team1.name].players[playerName].captures += captures;
+      stats[team1.name].players[playerName].returns += returns;
       
-      stats[team1.name].totals.score += entry.score || 0;
-      stats[team1.name].totals.kills += entry.kills || 0;
-      stats[team1.name].totals.assists += entry.assists || 0;
-      stats[team1.name].totals.captures += entry.captures || 0;
-      stats[team1.name].totals.returns += entry.returns || 0;
+      stats[team1.name].totals.score += score;
+      stats[team1.name].totals.kills += kills;
+      stats[team1.name].totals.assists += assists;
+      stats[team1.name].totals.captures += captures;
+      stats[team1.name].totals.returns += returns;
     });
 
-    // Process team 2 entries
+    // Process team 2 entries - read from input fields
     this.team2Entries.forEach((entry, idx) => {
-      const select = document.querySelector(`[data-team="2"][data-index="${idx}"]`);
+      const select = document.querySelector(`[data-team="2"][data-index="${idx}"].scoreboard-player-select`);
       const playerName = select?.value;
-      if (!playerName || playerName === '__CUSTOM__') return;
+      if (!playerName || playerName === '__CUSTOM__' || playerName === '') return;
+      
+      // Read stats from input fields
+      const scoreInput = document.querySelector(`[data-team="2"][data-index="${idx}"][data-stat="score"]`);
+      const killsInput = document.querySelector(`[data-team="2"][data-index="${idx}"][data-stat="kills"]`);
+      const assistsInput = document.querySelector(`[data-team="2"][data-index="${idx}"][data-stat="assists"]`);
+      const capturesInput = document.querySelector(`[data-team="2"][data-index="${idx}"][data-stat="captures"]`);
+      const returnsInput = document.querySelector(`[data-team="2"][data-index="${idx}"][data-stat="returns"]`);
+      
+      const score = parseInt(scoreInput?.value || 0);
+      const kills = parseInt(killsInput?.value || 0);
+      const assists = parseInt(assistsInput?.value || 0);
+      const captures = parseInt(capturesInput?.value || 0);
+      const returns = parseInt(returnsInput?.value || 0);
       
       if (!stats[team2.name].players[playerName]) {
         stats[team2.name].players[playerName] = { kills: 0, assists: 0, score: 0, captures: 0, returns: 0, time: 0 };
       }
       
-      stats[team2.name].players[playerName].score += entry.score || 0;
-      stats[team2.name].players[playerName].kills += entry.kills || 0;
-      stats[team2.name].players[playerName].assists += entry.assists || 0;
-      stats[team2.name].players[playerName].captures += entry.captures || 0;
-      stats[team2.name].players[playerName].returns += entry.returns || 0;
+      stats[team2.name].players[playerName].score += score;
+      stats[team2.name].players[playerName].kills += kills;
+      stats[team2.name].players[playerName].assists += assists;
+      stats[team2.name].players[playerName].captures += captures;
+      stats[team2.name].players[playerName].returns += returns;
       
-      stats[team2.name].totals.score += entry.score || 0;
-      stats[team2.name].totals.kills += entry.kills || 0;
-      stats[team2.name].totals.assists += entry.assists || 0;
-      stats[team2.name].totals.captures += entry.captures || 0;
-      stats[team2.name].totals.returns += entry.returns || 0;
+      stats[team2.name].totals.score += score;
+      stats[team2.name].totals.kills += kills;
+      stats[team2.name].totals.assists += assists;
+      stats[team2.name].totals.captures += captures;
+      stats[team2.name].totals.returns += returns;
     });
 
     try {
